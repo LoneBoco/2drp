@@ -1,7 +1,6 @@
 // #include <Box2D.h>
 #include <deque>
 #include <set>
-#include <vector>
 
 #include "engine/common.h"
 
@@ -101,11 +100,10 @@ void Physics::add_collision_edge(const core::vector2df& v1, const core::vector2d
 } // end namespace physics
 */
 
-SceneObject::SceneObject(ObjectClass* c, uint32_t id)
+SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 : ID(id),
-Visible(true), RenderVisible(false),
-m_object_class(c), /*UpdateCallback(nullptr), PhysicsUpdateCallback(nullptr),*/
-SceneGraph(nullptr)
+Visible(true), RenderVisible(false), SceneGraph(),
+m_object_class(c) /*UpdateCallback(nullptr), PhysicsUpdateCallback(nullptr),*/
 {
 	if (c)
 	{

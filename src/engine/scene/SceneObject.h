@@ -1,9 +1,9 @@
 #pragma once
 
-// #include <Box2D.h>
 #include <deque>
 #include <set>
-#include <vector>
+
+#include <Box2D/Box2D.h>
 
 #include "engine/common.h"
 
@@ -165,13 +165,21 @@ class SceneObject
 {
 public:
 	//! Constructor.
-	SceneObject(ObjectClass* c, uint32_t id);
+	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
 
 	//! Destructor.
 	virtual ~SceneObject();
 
 	//! Gets the class of the object.
-	const ObjectClass* GetClass() const
+	//! \return A weak pointer to a const class.
+	std::weak_ptr<const ObjectClass> GetClass() const
+	{
+		return m_object_class;
+	}
+
+	//! Gets the class of the object.
+	//! \return A pointer to the class.
+	std::shared_ptr<ObjectClass> GetClass()
 	{
 		return m_object_class;
 	}
@@ -280,10 +288,10 @@ public:
 	bool RenderVisible;
 
 	//! The scene graph this scene object is a part of.
-	SceneGraph* SceneGraph;
+	std::weak_ptr<SceneGraph> SceneGraph;
 
 protected:
-	const ObjectClass* m_object_class;
+	const std::shared_ptr<ObjectClass> m_object_class;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;
 	// b2Vec2 PreviousPhysicsPosition;
@@ -293,7 +301,7 @@ class StaticSceneObject : public SceneObject
 {
 	public:
 		//! Constructor.
-		StaticSceneObject(ObjectClass* c, uint32_t id)
+		StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 		: SceneObject(c, id)
 		{
 		}
@@ -304,19 +312,19 @@ class StaticSceneObject : public SceneObject
 		}
 
 		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const
+		virtual SceneObjectType GetType() const override
 		{
 			return SceneObjectType::STATIC;
 		}
 
 		//! Returns the image.
-		virtual std::string GetImage()
+		virtual std::string GetImage() override
 		{
 			return Properties.Get(Property::IMAGE)->GetString();
 		}
 
 		//! Sets the image of the scene node.
-		virtual void SetImage(const std::string& image)
+		virtual void SetImage(const std::string& image) override
 		{
 			std::string old_image = Properties.Get(Property::IMAGE)->GetString();
 
@@ -332,7 +340,7 @@ class AnimatedSceneObject : public SceneObject
 {
 	public:
 		//! Constructor.
-		AnimatedSceneObject(ObjectClass* c, uint32_t id)
+		AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 		: SceneObject(c, id)
 		{
 		}
@@ -343,19 +351,19 @@ class AnimatedSceneObject : public SceneObject
 		}
 
 		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const
+		virtual SceneObjectType GetType() const override
 		{
 			return SceneObjectType::ANIMATED;
 		}
 
 		//! Returns the image.
-		virtual std::string GetImage()
+		virtual std::string GetImage() override
 		{
 			return Properties.Get(Property::IMAGE)->GetString();
 		}
 
 		//! Sets the image of the scene node.
-		virtual void SetImage(const std::string& image)
+		virtual void SetImage(const std::string& image) override
 		{
 			std::string old_image = Properties.Get(Property::IMAGE)->GetString();
 
@@ -371,7 +379,7 @@ class TiledSceneObject : public SceneObject
 {
 	public:
 		//! Constructor.
-		TiledSceneObject(ObjectClass* c, uint32_t id)
+		TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 		: SceneObject(c, id)
 		{
 		}
@@ -382,7 +390,7 @@ class TiledSceneObject : public SceneObject
 		}
 
 		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const
+		virtual SceneObjectType GetType() const override
 		{
 			return SceneObjectType::TILED;
 		}
@@ -391,7 +399,6 @@ class TiledSceneObject : public SceneObject
 		// core::dimension2du Tileset_Tile_Dimension;
 		// core::dimension2du Tile_Dimension;
 		std::vector<char> Tile_Data;
-
 };
 
 } // end namespace tdrp
