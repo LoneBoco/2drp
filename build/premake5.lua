@@ -72,6 +72,8 @@ project "2drp"
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
 
+	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
+
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
 	-- libdirs { os.getenv("AWE_DIR") .. "build/lib" }
@@ -129,6 +131,8 @@ project "2drp_server"
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
+
+	dependson { "box2d", "bzip2", "zlib", "enet" }
 
 	-- Per-platform libraries.
 	-- filter "system:windows"
