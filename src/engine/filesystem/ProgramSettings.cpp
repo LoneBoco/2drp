@@ -1,5 +1,4 @@
-#include <map>
-#include <vector>
+#include <sstream>
 
 #include "engine/common.h"
 
@@ -40,7 +39,7 @@ int32_t ProgramSettingsCategory::GetInt(const std::string& setting) const
 	auto i = m_settings.find(setting);
 	if (i == m_settings.end()) return 0;
 
-	std::istringstream str((char*)i->second.c_str());
+	std::istringstream str(i->second);
 	int32_t v;
 	str >> v;
 	return v;
@@ -51,7 +50,7 @@ float ProgramSettingsCategory::GetFloat(const std::string& setting) const
 	auto i = m_settings.find(setting);
 	if (i == m_settings.end()) return 0.0f;
 
-	std::istringstream str((char*)i->second.c_str());
+	std::istringstream str(i->second);
 	float v;
 	str >> v;
 	return v;
@@ -95,8 +94,6 @@ ProgramSettings::ProgramSettings()
 
 ProgramSettings::~ProgramSettings()
 {
-	for (auto i = m_categories.begin(); i != m_categories.end(); ++i)
-		delete i->second;
 	m_categories.clear();
 }
 
@@ -200,20 +197,27 @@ bool ProgramSettings::WriteToFile(const io::path& filename, io::IFileSystem* Fil
 }
 */
 
-ProgramSettingsCategory* ProgramSettings::Get(const std::string& category)
+std::shared_ptr<ProgramSettingsCategory> ProgramSettings::Get(const std::string& category)
 {
 	auto i = m_categories.find(category);
 	if (i == m_categories.end()) return nullptr;
 	return i->second;
 }
 
-ProgramSettingsCategory* ProgramSettings::Add(const std::string& category)
+std::shared_ptr<const ProgramSettingsCategory> ProgramSettings::Get(const std::string& category) const
+{
+	auto i = m_categories.find(category);
+	if (i == m_categories.end()) return nullptr;
+	return i->second;
+}
+
+std::weak_ptr<ProgramSettingsCategory> ProgramSettings::Add(const std::string& category)
 {
 	auto i = m_categories.find(category);
 	if (i != m_categories.end()) return i->second;
 
-	ProgramSettingsCategory* c = new ProgramSettingsCategory(category);
-	categories[category] = c;
+	auto c = std::make_shared<ProgramSettingsCategory>(category);
+	m_categories[category] = c;
 	return c;
 }
 

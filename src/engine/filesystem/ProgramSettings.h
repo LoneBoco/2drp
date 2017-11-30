@@ -1,8 +1,5 @@
 #pragma once
 
-#include <map>
-#include <vector>
-
 #include "engine/common.h"
 
 namespace tdrp
@@ -56,12 +53,13 @@ public:
 
 	// bool LoadFromFile(rha::fs::file& f);
 	// bool WriteToFile(const io::path& filename, io::IFileSystem* FileSystem);
-	ProgramSettingsCategory* Get(const std::string& category);
-	ProgramSettingsCategory* Add(const std::string& category);
+	std::shared_ptr<ProgramSettingsCategory> Get(const std::string& category);
+	std::shared_ptr<const ProgramSettingsCategory> Get(const std::string& category) const;
+	std::weak_ptr<ProgramSettingsCategory> Add(const std::string& category);
 
 private:
-	std::map<std::string, ProgramSettingsCategory*> m_categories;
-	std::vector<ProgramSettingsCategory*> m_category_order;
+	std::map<std::string, std::shared_ptr<ProgramSettingsCategory>> m_categories;
+	std::vector<std::shared_ptr<ProgramSettingsCategory>> m_category_order;
 };
 
 } // end namespace settings
