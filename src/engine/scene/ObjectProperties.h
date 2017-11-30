@@ -36,17 +36,19 @@ public:
 	ObjectProperties(const ObjectProperties& properties);
 	~ObjectProperties();
 
-	void operator=(const ObjectProperties& properties);
-
-	//! Gets the specified property.
-	//! \param prop The property to get.
-	//! \return A pointer to the attribute.
-	std::shared_ptr<Attribute> Get(const Property prop);
+	ObjectProperties& operator=(const ObjectProperties& properties);
+	const Attribute& operator[](const Property prop) const;
+	Attribute& operator[](const Property prop);
 
 	//! Gets the specified property.
 	//! \param prop The property to get.
 	//! \return A pointer to the attribute.
 	std::shared_ptr<const Attribute> Get(const Property prop) const;
+
+	//! Gets the specified property.
+	//! \param prop The property to get.
+	//! \return A pointer to the attribute.
+	std::shared_ptr<Attribute> Get(const Property prop);
 
 private:
 	void create();

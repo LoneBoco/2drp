@@ -24,17 +24,30 @@ ObjectProperties::~ObjectProperties()
 {
 }
 
-void ObjectProperties::operator=(const ObjectProperties& properties)
+ObjectProperties& ObjectProperties::operator=(const ObjectProperties& properties)
 {
 	clone(properties);
+	return *this;
 }
 
-std::shared_ptr<Attribute> ObjectProperties::Get(const Property prop)
+const Attribute& ObjectProperties::operator[](const Property prop) const
+{
+	auto a = Get(prop);
+	return *a;
+}
+
+Attribute& ObjectProperties::operator[](const Property prop)
+{
+	auto a = Get(prop);
+	return *a;
+}
+
+std::shared_ptr<const Attribute> ObjectProperties::Get(const Property prop) const
 {
 	return m_properties.Get((uint16_t)prop);
 }
 
-std::shared_ptr<const Attribute> ObjectProperties::Get(const Property prop) const
+std::shared_ptr<Attribute> ObjectProperties::Get(const Property prop)
 {
 	return m_properties.Get((uint16_t)prop);
 }

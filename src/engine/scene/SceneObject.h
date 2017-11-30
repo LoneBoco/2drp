@@ -272,12 +272,6 @@ public:
 	//! Properties.
 	ObjectProperties Properties;
 
-	//! List of changed attributes.
-	std::set<uint16_t> ChangedAttributes;
-
-	//! List of changed properties.
-	std::set<Property> ChangedProperties;
-
 	//! Physics.
 	// physics::Physics Physics;
 	

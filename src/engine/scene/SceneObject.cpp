@@ -130,10 +130,11 @@ SceneObject::~SceneObject()
 //! Returns the position of the scene object.
 Vector3df SceneObject::GetPosition() const
 {
-	return Vector3df(
-		Properties.Get(Property::X)->GetFloat(),
-		Properties.Get(Property::Y)->GetFloat(),
-		Properties.Get(Property::Z)->GetFloat());
+	return Vector3df{
+		Properties[Property::X].GetFloat(),
+		Properties[Property::Y].GetFloat(),
+		Properties[Property::Z].GetFloat()
+	};
 }
 
 //! Sets the position of the scene object.
@@ -141,63 +142,33 @@ Vector3df SceneObject::GetPosition() const
 void SceneObject::SetPosition(const Vector3df& position)
 {
 	// if (!Physics.Owner) return;
-
-	float old_x = Properties.Get(Property::X)->GetFloat();
-	float old_y = Properties.Get(Property::Y)->GetFloat();
-	float old_z = Properties.Get(Property::Z)->GetFloat();
-
-	if (old_x != position.x)
-	{
-		Properties.Get(Property::X)->Set(position.x);
-		ChangedProperties.insert(Property::X);
-	}
-	if (old_y != position.y)
-	{
-		Properties.Get(Property::Y)->Set(position.y);
-		ChangedProperties.insert(Property::Y);
-	}
-	if (old_z != position.z)
-	{
-		Properties.Get(Property::Z)->Set(position.z);
-		ChangedProperties.insert(Property::Z);
-	}
+	Properties[Property::X] = position.x;
+	Properties[Property::Y] = position.y;
+	Properties[Property::Z] = position.z;
 }
 
 float SceneObject::GetRotation() const
 {
-	return 0.0f;
-	// return Physics.GetRotation();
+	return Properties[Property::ROTATION].GetFloat();
 }
 
 void SceneObject::SetRotation(float rotation)
 {
-	// Physics.set_rotation(rotation);
+	Properties[Property::ROTATION] = rotation;
 }
 
 Vector2df SceneObject::GetScale() const
 {
-	float scale_x = Properties.Get(Property::SCALE_X)->GetFloat();
-	float scale_y = Properties.Get(Property::SCALE_Y)->GetFloat();
-	return Vector2df(scale_x, scale_y);
+	return Vector2df{
+		Properties[Property::SCALE_X].GetFloat(),
+		Properties[Property::SCALE_Y].GetFloat()
+	};
 }
 
 void SceneObject::SetScale(const Vector2df& scale)
 {
-	bool changed = false;
-	float old_x = Properties.Get(Property::SCALE_X)->GetFloat();
-	float old_y = Properties.Get(Property::SCALE_Y)->GetFloat();
-	if (old_x != scale.x)
-	{
-		changed = true;
-		Properties.Get(Property::SCALE_X)->Set(scale.x);
-		ChangedProperties.insert(Property::SCALE_X);
-	}
-	if (old_y != scale.y)
-	{
-		changed = true;
-		Properties.Get(Property::SCALE_Y)->Set(scale.y);
-		ChangedProperties.insert(Property::SCALE_Y);
-	}
+	Properties[Property::SCALE_X] = scale.x;
+	Properties[Property::SCALE_Y] = scale.y;
 
 /*
 	// Scale the physics objects.
