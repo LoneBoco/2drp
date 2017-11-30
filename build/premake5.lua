@@ -27,9 +27,11 @@ workspace "2drp"
 		optimize "On"
 		flags { "LinkTimeOptimization" }
 
-	-- C++17 support on GCC.
-	filter { "language:C++", "toolset:gcc" }
+	-- C++17 support.
+	filter { "language:C++", "toolset:gcc*" }
 		buildoptions { "-std=c++17" }
+	filter { "language:C++", "toolset:msc*" }
+		buildoptions { "/std:c++17" }
 
 	-- Windows defines.
 	filter "system:windows"
@@ -67,6 +69,7 @@ project "2drp"
 		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
+		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
 
 	-- Awesomium
@@ -124,6 +127,7 @@ project "2drp_server"
 		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
+		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
 
 	-- Per-platform libraries.
@@ -229,7 +233,7 @@ project "bx"
 	filter "Debug"
 		defines { "BX_CONFIG_DEBUG=1" }
 
-project "Box2D"
+project "box2d"
 	kind "StaticLib"
 	language "C++"
 	location "projects"
