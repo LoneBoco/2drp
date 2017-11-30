@@ -1,6 +1,5 @@
 #pragma once
 
-#include <map>
 #include <sstream>
 
 #include "engine/common.h"
@@ -221,12 +220,22 @@ class ObjectAttributes
 		//! Returns an attribute.
 		//! \param name The name of the attribute to get.
 		//! \return A pointer to the attribute structure, or 0 if the attribute was not found.
-		std::shared_ptr<Attribute> Get(const std::string& name) const;
+		std::shared_ptr<Attribute> Get(const std::string& name);
 
 		//! Returns an attribute.
 		//! \param id The id number of the attribute to get.
 		//! \return A pointer to the attribute structure, or 0 if the attribute was not found.
-		std::shared_ptr<Attribute> Get(const uint16_t id) const;
+		std::shared_ptr<Attribute> Get(const uint16_t id);
+
+		//! Returns an attribute.
+		//! \param name The name of the attribute to get.
+		//! \return A pointer to the attribute structure, or 0 if the attribute was not found.
+		std::shared_ptr<const Attribute> Get(const std::string& name) const;
+
+		//! Returns an attribute.
+		//! \param id The id number of the attribute to get.
+		//! \return A pointer to the attribute structure, or 0 if the attribute was not found.
+		std::shared_ptr<const Attribute> Get(const uint16_t id) const;
 
 		//! Returns the attribute map.
 		//! \return The attribute map.

@@ -1,7 +1,5 @@
 #pragma once
 
-#include <string>
-
 #include "engine/common.h"
 
 #include "ObjectAttributes.h"
@@ -13,7 +11,7 @@ class ObjectClass
 {
 public:
 	//! Constructor.
-	ObjectClass(std::string name) : m_name(name)
+	ObjectClass(const std::string& name) : m_name(name)
 	{
 	}
 

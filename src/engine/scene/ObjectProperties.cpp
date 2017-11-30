@@ -1,4 +1,3 @@
-#include <map>
 #include <sstream>
 
 #include "engine/common.h"
@@ -15,7 +14,7 @@ ObjectProperties::ObjectProperties()
 	create();
 }
 
-ObjectProperties::ObjectProperties(ObjectProperties& properties)
+ObjectProperties::ObjectProperties(const ObjectProperties& properties)
 {
 	create();
 	clone(properties);
@@ -25,12 +24,17 @@ ObjectProperties::~ObjectProperties()
 {
 }
 
-void ObjectProperties::operator=(ObjectProperties& properties)
+void ObjectProperties::operator=(const ObjectProperties& properties)
 {
 	clone(properties);
 }
 
-Attribute* ObjectProperties::Get(Property prop) const
+std::shared_ptr<Attribute> ObjectProperties::Get(const Property prop)
+{
+	return m_properties.Get((uint16_t)prop);
+}
+
+std::shared_ptr<const Attribute> ObjectProperties::Get(const Property prop) const
 {
 	return m_properties.Get((uint16_t)prop);
 }
@@ -39,7 +43,7 @@ void ObjectProperties::create()
 {
 #define _PROP(x, y) m_properties.AddAttribute(#x, y, (int32_t)x);
 
-	_PROP(Property::LEVEL, std::string(""));
+	_PROP(Property::LEVEL, "");
 	_PROP(Property::X, 0.0f);
 	_PROP(Property::Y, 0.0f);
 	_PROP(Property::Z, 0.0f);
@@ -58,7 +62,7 @@ void ObjectProperties::create()
 #undef _PROP
 }
 
-void ObjectProperties::clone(ObjectProperties& properties)
+void ObjectProperties::clone(const ObjectProperties& properties)
 {
 	m_properties = properties.m_properties;
 }

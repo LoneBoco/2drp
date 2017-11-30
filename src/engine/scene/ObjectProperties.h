@@ -33,23 +33,24 @@ class ObjectProperties
 {
 public:
 	ObjectProperties();
-	ObjectProperties(ObjectProperties& properties);
+	ObjectProperties(const ObjectProperties& properties);
 	~ObjectProperties();
 
-	void operator=(ObjectProperties& properties);
+	void operator=(const ObjectProperties& properties);
 
 	//! Gets the specified property.
-	Attribute* Get(Property prop) const;
+	//! \param prop The property to get.
+	//! \return A pointer to the attribute.
+	std::shared_ptr<Attribute> Get(const Property prop);
 
-	//! Gets the attributes directly.
-	ObjectAttributes& GetAttributes()
-	{
-		return m_properties;
-	}
+	//! Gets the specified property.
+	//! \param prop The property to get.
+	//! \return A pointer to the attribute.
+	std::shared_ptr<const Attribute> Get(const Property prop) const;
 
 private:
 	void create();
-	void clone(ObjectProperties& properties);
+	void clone(const ObjectProperties& properties);
 	ObjectAttributes m_properties;
 };
 

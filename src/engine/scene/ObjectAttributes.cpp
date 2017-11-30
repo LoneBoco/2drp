@@ -1,5 +1,3 @@
-#include <map>
-
 #include "engine/common.h"
 
 #include "ObjectAttributes.h"
@@ -121,7 +119,7 @@ std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name,
 	return a;
 }
 
-std::shared_ptr<Attribute> ObjectAttributes::Get(const std::string& name) const
+std::shared_ptr<Attribute> ObjectAttributes::Get(const std::string& name)
 {
 	if (name.size() == 0) return nullptr;
 	for (auto&& a : m_attributes)
@@ -132,7 +130,25 @@ std::shared_ptr<Attribute> ObjectAttributes::Get(const std::string& name) const
 	return nullptr;
 }
 
-std::shared_ptr<Attribute> ObjectAttributes::Get(const uint16_t id) const
+std::shared_ptr<Attribute> ObjectAttributes::Get(const uint16_t id)
+{
+	auto i = m_attributes.find(id);
+	if (i == m_attributes.end()) return nullptr;
+	return i->second;
+}
+
+std::shared_ptr<const Attribute> ObjectAttributes::Get(const std::string& name) const
+{
+	if (name.size() == 0) return nullptr;
+	for (auto&& a : m_attributes)
+	{
+		if (a.second->GetName() == name)
+			return a.second;
+	}
+	return nullptr;
+}
+
+std::shared_ptr<const Attribute> ObjectAttributes::Get(const uint16_t id) const
 {
 	auto i = m_attributes.find(id);
 	if (i == m_attributes.end()) return nullptr;
