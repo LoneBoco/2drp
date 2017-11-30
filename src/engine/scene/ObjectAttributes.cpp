@@ -7,13 +7,13 @@
 namespace tdrp
 {
 
-ObjectAttributes::ObjectAttributes(ObjectAttributes& props)
+ObjectAttributes::ObjectAttributes(const ObjectAttributes& props)
 : m_cid(0)
 {
 	for (auto i = props.m_attributes.begin(); i != props.m_attributes.end(); ++i)
 	{
 		uint16_t id = i->first;
-		Attribute* a = i->second;
+		std::shared_ptr<Attribute> a = i->second;
 
 		switch (a->GetType())
 		{
@@ -42,24 +42,18 @@ ObjectAttributes::ObjectAttributes(ObjectAttributes& props)
 
 ObjectAttributes::~ObjectAttributes()
 {
-	for (auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
-		delete i->second;
-
 	m_attributes.clear();
 }
 
 
-void ObjectAttributes::operator=(ObjectAttributes& props)
+void ObjectAttributes::operator=(const ObjectAttributes& props)
 {
-	for (auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
-		delete i->second;
-
 	m_attributes.clear();
 
 	for (auto i = props.m_attributes.begin(); i != props.m_attributes.end(); ++i)
 	{
 		uint16_t id = i->first;
-		Attribute* a = i->second;
+		std::shared_ptr<Attribute> a = i->second;
 
 		switch (a->GetType())
 		{
@@ -86,104 +80,89 @@ void ObjectAttributes::operator=(ObjectAttributes& props)
 	}
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, uint16_t id)
 {
 	// Get or create our new attribute.
 	return getOrCreateAttribute(name, id);
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, int64_t value, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, int64_t value, uint16_t id)
 {
-	// Get or create our new attribute.
-	Attribute* a = getOrCreateAttribute(name, id);
-
-	// Assign the new attribute.
-	a->Set(value);
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->Set(value);
 	return a;
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, uint64_t value, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, uint64_t value, uint16_t id)
 {
-	// Get or create our new attribute.
-	Attribute* a = getOrCreateAttribute(name, id);
-
-	// Assign the new attribute.
-	a->Set(value);
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->Set(value);
 	return a;
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, float value, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, float value, uint16_t id)
 {
-	// Get or create our new attribute.
-	Attribute* a = getOrCreateAttribute(name, id);
-
-	// Assign the new attribute.
-	a->Set(value);
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->Set(value);
 	return a;
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, double value, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, double value, uint16_t id)
 {
-	// Get or create our new attribute.
-	Attribute* a = getOrCreateAttribute(name, id);
-
-	// Assign the new attribute.
-	a->Set(value);
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->Set(value);
 	return a;
 }
 
-Attribute* ObjectAttributes::AddAttribute(const std::string& name, const std::string& value, int32_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, const std::string& value, uint16_t id)
 {
-	// Get or create our new attribute.
-	Attribute* a = getOrCreateAttribute(name, id);
-
-	// Assign the new attribute.
-	a->Set(value);
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->Set(value);
 	return a;
 }
 
-Attribute* ObjectAttributes::Get(const std::string& name) const
+std::shared_ptr<Attribute> ObjectAttributes::Get(const std::string& name) const
 {
-	if (name.size() == 0) return 0;
-	for (auto i = m_attributes.begin(); i != m_attributes.end(); ++i)
+	if (name.size() == 0) return nullptr;
+	for (auto&& a : m_attributes)
 	{
-		if (i->second->GetName() == name)
-			return i->second;
+		if (a.second->GetName() == name)
+			return a.second;
 	}
-	return 0;
+	return nullptr;
 }
 
-Attribute* ObjectAttributes::Get(const uint16_t id) const
+std::shared_ptr<Attribute> ObjectAttributes::Get(const uint16_t id) const
 {
 	auto i = m_attributes.find(id);
-	if (i == m_attributes.end()) return 0;
+	if (i == m_attributes.end()) return nullptr;
 	return i->second;
 }
 
 ////////////////////////////
 
-void ObjectAttributes::assignId(const int32_t id, Attribute* prop)
+void ObjectAttributes::assignId(const uint16_t id, Attribute& prop)
 {
-	if (id == -1)
+	if (id != -1)
+		prop.SetId(id);
+	else
 	{
-		prop->SetId((uint16_t)m_cid);
+		prop.SetId(m_cid);
 		++m_cid;
 	}
-	else
-		prop->SetId((uint16_t)id);
 }
 
-Attribute* ObjectAttributes::getOrCreateAttribute(const std::string& name, int32_t id)
+std::shared_ptr<Attribute> ObjectAttributes::getOrCreateAttribute(const std::string& name, uint16_t id)
 {
 	// Find the attribute.  Determine if we need to delete it.
-	Attribute* a = Get(name);
+	std::shared_ptr<Attribute> a = Get(name);
 	if (a != nullptr) return a;
 
-	a = new Attribute(AttributeType::UNSIGNED);
+	a = std::make_shared<Attribute>(AttributeType::UNSIGNED);
 	a->SetName(name);
-	assignId(id, a);
+	assignId(id, *a);
 
-	m_attributes.insert(std::pair<uint16_t, Attribute*>(a->GetId(), a));
+	m_attributes.insert(std::pair<uint16_t, std::shared_ptr<Attribute>>(a->GetId(), a));
 	return a;
 }
 
