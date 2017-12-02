@@ -1,0 +1,15 @@
+Main thread:
+
+1) Pull data from network thread / [Batch] Update state from data.
+2) JavaScript engine / [Batch] Resource loading.
+3) Physics updates.
+4) Render scene / [Batch] Package network data.
+5) Send data to network thread.
+
+UI thread:
+
+1) 
+
+Batch thread:
+
+1) whoop!
