@@ -7,14 +7,15 @@ stargetsuffix = ""
 
 workspace "2drp"
 	configurations { "Debug", "Release" }
-	platforms { "native", "x32", "x64" }
+	platforms { "x32", "x64" }
 	symbols "On"
+	targetdir ( "Build/%{_ACTION}/bin/%{cfg.buildcfg}" )
+	libdirs { "Build/%{_ACTION}/bin/%{cfg.buildcfg}" }
 
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
 
 	filter "configurations:Debug"
-		targetdir ( "Build/%{_ACTION}/bin/Debug" )
 	 	defines { "DEBUG" }
 		stargetsuffix = "_d"
 		targetsuffix "_d"
@@ -22,10 +23,15 @@ workspace "2drp"
 		optimize "Off"
 
 	filter "configurations:Release"
-		targetdir ( "Build/%{_ACTION}/bin/Release" )
 		defines { "NDEBUG" }
 		optimize "On"
 		flags { "LinkTimeOptimization" }
+
+	-- Set our platform architectures.
+	filter "platforms:x32"
+		architecture "x32"
+	filter "platforms:x64"
+		architecture "x64"
 
 	-- C++17 support.
 	filter { "language:C++", "toolset:gcc*" }
@@ -40,8 +46,8 @@ workspace "2drp"
 		defines { "WIN64", "_WIN64" }
 
 project "2drp"
-	kind "ConsoleApp"
-	-- kind "WindowedApp"
+	-- kind "ConsoleApp"
+	kind "WindowedApp"
 	language "C++"
 	location "projects"
 	local stargetdir = targetdir "../bin"
@@ -58,7 +64,9 @@ project "2drp"
 		"Box2D" .. stargetsuffix,
 		"bzip2" .. stargetsuffix,
 		"zlib" .. stargetsuffix,
-		"efnet" .. stargetsuffix,
+		"enet" .. stargetsuffix,
+		"SDL2", -- No suffix as we aren't building this one.
+		"SDL2main", -- No suffix as we aren't building this one.
 	}
 
 	-- Library includes.
@@ -70,9 +78,22 @@ project "2drp"
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
+		"../dependencies/sdl/include/",
 	}
 
 	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
+
+	-- Post build commands.
+	filter { "system:windows", "platforms:x32" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x86/SDL2.dll %{cfg.targetdir}" }
+	filter { "system:windows", "platforms:x64" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x64/SDL2.dll %{cfg.targetdir}" }
+
+	-- SDL
+	filter { "system:windows", "platforms:x32" }
+		libdirs "../dependencies/sdl/lib/x86/"
+	filter { "system:windows", "platforms:x64" }
+		libdirs "../dependencies/sdl/lib/x64/"
 
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
@@ -119,7 +140,7 @@ project "2drp_server"
 		"Box2D" .. stargetsuffix,
 		"bzip2" .. stargetsuffix,
 		"zlib" .. stargetsuffix,
-		"efnet" .. stargetsuffix,
+		"enet" .. stargetsuffix,
 	}
 
 	-- Library includes.
@@ -250,12 +271,20 @@ project "bzip2"
 	location "projects"
 	files { "../dependencies/bzip2/**.h", "../dependencies/bzip2/**.c" }
 	includedirs { "../dependencies/bzip2/" }
+	removefiles {
+		"../dependencies/bzip2/bzip2.c",
+		"../dependencies/bzip2/bzip2recover.c",
+		"../dependencies/bzip2/dlltest.c",
+		"../dependencies/bzip2/mk251.c",
+		"../dependencies/bzip2/spewG.c",
+		"../dependencies/bzip2/unzcrash.c"
+	}
 
 project "zlib"
 	kind "StaticLib"
 	language "C++"
 	location "projects"
-	files { "../dependencies/zlib/**.h", "../dependencies/zlib/**.c" }
+	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
 	includedirs { "../dependencies/zlib/" }
 
 project "enet"
