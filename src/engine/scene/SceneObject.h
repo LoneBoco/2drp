@@ -293,106 +293,100 @@ protected:
 
 class StaticSceneObject : public SceneObject
 {
-	public:
-		//! Constructor.
-		StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-		: SceneObject(c, id)
-		{
-		}
+public:
+	//! Constructor.
+	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
+	: SceneObject(c, id)
+	{
+	}
 
-		//! Destructor.
-		virtual ~StaticSceneObject()
-		{
-		}
+	//! Destructor.
+	virtual ~StaticSceneObject()
+	{
+	}
 
-		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const override
-		{
-			return SceneObjectType::STATIC;
-		}
+	//! Returns the scene object type.
+	virtual SceneObjectType GetType() const override
+	{
+		return SceneObjectType::STATIC;
+	}
 
-		//! Returns the image.
-		virtual std::string GetImage() override
-		{
-			return Properties.Get(Property::IMAGE)->GetString();
-		}
+	//! Returns the image.
+	virtual std::string GetImage() override
+	{
+		return Properties.Get(Property::IMAGE)->GetString();
+	}
 
-		//! Sets the image of the scene node.
-		virtual void SetImage(const std::string& image) override
-		{
-			std::string old_image = Properties.Get(Property::IMAGE)->GetString();
+	//! Sets the image of the scene node.
+	virtual void SetImage(const std::string& image) override
+	{
+		std::string old_image = Properties.Get(Property::IMAGE)->GetString();
 
-			if (old_image != image)
-			{
-				Properties.Get(Property::IMAGE)->Set(image);
-				ChangedProperties.insert(Property::IMAGE);
-			}
-		}
+		if (old_image != image)
+			Properties[Property::IMAGE] = image;
+	}
 };
 
 class AnimatedSceneObject : public SceneObject
 {
-	public:
-		//! Constructor.
-		AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-		: SceneObject(c, id)
-		{
-		}
+public:
+	//! Constructor.
+	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
+	: SceneObject(c, id)
+	{
+	}
 
-		//! Destructor.
-		virtual ~AnimatedSceneObject()
-		{
-		}
+	//! Destructor.
+	virtual ~AnimatedSceneObject()
+	{
+	}
 
-		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const override
-		{
-			return SceneObjectType::ANIMATED;
-		}
+	//! Returns the scene object type.
+	virtual SceneObjectType GetType() const override
+	{
+		return SceneObjectType::ANIMATED;
+	}
 
-		//! Returns the image.
-		virtual std::string GetImage() override
-		{
-			return Properties.Get(Property::IMAGE)->GetString();
-		}
+	//! Returns the image.
+	virtual std::string GetImage() override
+	{
+		return Properties.Get(Property::IMAGE)->GetString();
+	}
 
-		//! Sets the image of the scene node.
-		virtual void SetImage(const std::string& image) override
-		{
-			std::string old_image = Properties.Get(Property::IMAGE)->GetString();
+	//! Sets the image of the scene node.
+	virtual void SetImage(const std::string& image) override
+	{
+		std::string old_image = Properties.Get(Property::IMAGE)->GetString();
 
-			if (old_image != image)
-			{
-				Properties.Get(Property::IMAGE)->Set(image);
-				ChangedProperties.insert(Property::IMAGE);
-			}
-		}
+		if (old_image != image)
+			Properties[Property::IMAGE] = image;
+	}
 };
 
 class TiledSceneObject : public SceneObject
 {
-	public:
-		//! Constructor.
-		TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-		: SceneObject(c, id)
-		{
-		}
+public:
+	//! Constructor.
+	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
+	: SceneObject(c, id)
+	{
+	}
 
-		//! Destructor.
-		virtual ~TiledSceneObject()
-		{
-		}
+	//! Destructor.
+	virtual ~TiledSceneObject()
+	{
+	}
 
-		//! Returns the scene object type.
-		virtual SceneObjectType GetType() const override
-		{
-			return SceneObjectType::TILED;
-		}
+	//! Returns the scene object type.
+	virtual SceneObjectType GetType() const override
+	{
+		return SceneObjectType::TILED;
+	}
 
-		std::string Tileset_File;
-		// core::dimension2du Tileset_Tile_Dimension;
-		// core::dimension2du Tile_Dimension;
-		std::vector<char> Tile_Data;
+	std::string Tileset_File;
+	// core::dimension2du Tileset_Tile_Dimension;
+	// core::dimension2du Tile_Dimension;
+	std::vector<char> Tile_Data;
 };
 
 } // end namespace tdrp
