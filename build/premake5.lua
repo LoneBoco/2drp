@@ -58,6 +58,7 @@ project "2drp"
 		"bgfx",
 		"Box2D",
 		"enet",
+		"ziplib",
 		"SDL2", -- External.
 		"SDL2main", -- External.
 	}
@@ -66,13 +67,14 @@ project "2drp"
 	includedirs {
 		"../dependencies/bgfx/include/",
 		"../dependencies/box2d/Box2D/",
+		"../dependencies/ziplib/Source/ZipLib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/sdl/include/",
 	}
 
-	dependson { "bgfx", "box2d", "enet" }
+	dependson { "bgfx", "box2d", "ziplib", "enet" }
 
 	-- Post build commands.
 	filter {}
@@ -131,18 +133,20 @@ project "2drp_server"
 	-- Libraries.
 	links {
 		"Box2D",
+		"ziplib",
 		"enet",
 	}
 
 	-- Library includes.
 	includedirs {
 		"../dependencies/box2d/Box2D/",
+		"../dependencies/ziplib/Source/ZipLib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
 
-	dependson { "box2d", "enet" }
+	dependson { "box2d", "ziplib", "enet" }
 
 	-- Per-platform libraries.
 	-- filter "system:windows"
@@ -253,6 +257,20 @@ project "box2d"
 	location "projects"
 	files { "../dependencies/box2d/Box2D/Box2D/**.h", "../dependencies/box2d/Box2D/Box2D/**.cpp" }
 	includedirs { "../dependencies/box2d/Box2D/" }
+
+project "ziplib"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	files {
+		"../dependencies/ziplib/Source/ZipLib/**.h",
+		"../dependencies/ziplib/Source/ZipLib/**.cpp",
+		"../dependencies/ziplib/Source/ZipLib/**.c"
+	}
+	removefiles {
+		"../dependencies/ziplib/Source/ZipLib/extlibs/lzma/unix/**"
+	}
+	includedirs { "../dependencies/ziplib/Source/ZipLib" }
 
 project "enet"
 	kind "StaticLib"

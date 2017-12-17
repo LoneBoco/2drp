@@ -5,3 +5,4 @@ https://github.com/erincatto/Box2D  git@github.com:erincatto/Box2D.git
 https://github.com/lsalzman/enet  git@github.com:lsalzman/enet.git
 https://github.com/google/mathfu  git@github.com:google/mathfu.git
 https://github.com/google/protobuf
+https://bitbucket.org/wbenny/ziplib  git@bitbucket.org:wbenny/ziplib.git
