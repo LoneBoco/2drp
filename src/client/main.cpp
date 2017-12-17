@@ -1,4 +1,5 @@
 #include "engine/common.h"
+#include "client/game/Game.h"
 
 #include <iostream>
 
@@ -15,13 +16,18 @@ extern "C"
 #endif
 int SDL_main(int argc, char* argv[])
 {
+	tdrp::Game Game;
+
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
 		std::cout << "SDL_Init error: " << SDL_GetError() << std::endl;
 		return 1;
 	}
 
-	auto window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow("2drp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, 640, 480, ::SDL_WINDOW_SHOWN));
+	int width = Game.Settings.GetInt("window.width", 640);
+	int height = Game.Settings.GetInt("window.height", 480);
+
+	auto window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow("2drp", SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN));
 	if (window == nullptr)
 	{
 		std::cout << "SDL_CreateWindow error: " << SDL_GetError() << std::endl;
