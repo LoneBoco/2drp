@@ -1,3 +1,5 @@
+#include <algorithm>
+#include <locale>
 #include <sstream>
 
 #include "engine/common.h"
@@ -11,147 +13,47 @@ namespace settings
 
 /////////////////////////////
 
-ProgramSettingsCategory::ProgramSettingsCategory(const std::string& category)
-: m_category_name(category)
+bool ProgramSettings::LoadFromFile(const tdrp::fs::File& f)
 {
-}
+	std::string category{ "Global" };
 
-ProgramSettingsCategory::~ProgramSettingsCategory()
-{
-}
-
-bool ProgramSettingsCategory::Exists(const std::string& setting) const
-{
-	auto i = m_settings.find(setting);
-	if (i == m_settings.end()) return false;
-	return true;
-}
-
-std::string ProgramSettingsCategory::Get(const std::string& setting) const
-{
-	auto i = m_settings.find(setting);
-	if (i == m_settings.end()) return std::string();
-	return i->second;
-}
-
-int32_t ProgramSettingsCategory::GetInt(const std::string& setting) const
-{
-	auto i = m_settings.find(setting);
-	if (i == m_settings.end()) return 0;
-
-	std::istringstream str(i->second);
-	int32_t v;
-	str >> v;
-	return v;
-}
-
-float ProgramSettingsCategory::GetFloat(const std::string& setting) const
-{
-	auto i = m_settings.find(setting);
-	if (i == m_settings.end()) return 0.0f;
-
-	std::istringstream str(i->second);
-	float v;
-	str >> v;
-	return v;
-}
-
-void ProgramSettingsCategory::Set(const std::string& setting, const std::string& value)
-{
-	auto i = m_settings.find(setting);
-	if (i == m_settings.end())
+	while (!f.Finished())
 	{
-		m_settings[setting] = value;
-		m_setting_order.push_back(setting);
-	}
-	else i->second = value;
-}
+		std::string line = f.ReadLine();
 
-void ProgramSettingsCategory::Set(const std::string& setting, int value)
-{
-	std::stringstream str;
-	str << value;
-	Set(setting, str.str());
-}
+		// Erase any carriage returns.
+		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
-void ProgramSettingsCategory::Set(const std::string& setting, float value)
-{
-	std::stringstream str;
-	str << value;
-	Set(setting, str.str());
-}
+		// Trim.
+		trim(line);
 
-/////////////////////////////
-
-ProgramSettings::ProgramSettings()
-{
-}
-
-// ProgramSettings::ProgramSettings(rha::fs::file& f)
-// {
-// 	load_from_file(f);
-// }
-
-ProgramSettings::~ProgramSettings()
-{
-	m_categories.clear();
-}
-
-/*
-bool ProgramSettings::LoadFromFile(rha::fs::file& f)
-{
-	ProgramSettingsCategory* category = 0;
-	std::string filedata;
-	filedata.loadDataStream(&f.vector()[0], f.vector().size());
-	
-	uchar32_t delimeter[2] = { '\r', '\n' };
-	core::list<std::string> lines;
-	filedata.split<core::list<std::string> >(lines, delimeter, 2);
-
-	for (auto i = lines.begin(); i != lines.end(); ++i)
-	{
-		// Read the line and trim it.
-		std::string line = *i;
-		line.trim();
-		if (line.empty()) continue;
-
-		// Check if this is a category or an item.
-		if (line[0] == '[' && line.lastChar() == ']')
+		if (!line.empty())
 		{
-			// Save the old category.
-			if (category != nullptr)
+			// Check if this is a category.
+			if (line[0] == '[' && *(line.rbegin()) == ']')
 			{
-				categories[category->get_category_name()] = category;
-				category_order.push_back(category);
+				// Register the new category.
+				category = line.substr(1, line.size() - 2);
 			}
+			else
+			{
+				// Parse our string.
+				std::size_t sep = line.find('=');
+				std::string setting = line.substr(0, sep);
+				std::string value;
+				if (sep != std::string::npos)
+					value = line.substr(sep + 1, line.size() - sep - 1);
+				rtrim(setting);
+				ltrim(value);
 
-			// Create a new category.
-			category = new ProgramSettingsCategory(line.subString(1, line.size() - 2));
+				// Save it.
+				Set(category + "." + setting, value);
+			}
 		}
-		else
-		{
-			if (category == nullptr) continue;
-
-			// Parse our string.
-			s32 pos_e = line.findFirst('=');
-			std::string setting = line.subString(0, pos_e).trim();
-			std::string value = line.subString(pos_e + 1, line.size_raw()).trim();
-
-			// Save it to our current category.
-			category->set(setting, value);
-		}
-	}
-
-	// Save the category.
-	if (category != nullptr)
-	{
-		categories[category->get_category_name()] = category;
-		category_order.push_back(category);
 	}
 
 	return true;
 }
-*/
 
 /*
 bool ProgramSettings::WriteToFile(const io::path& filename, io::IFileSystem* FileSystem)
@@ -197,28 +99,106 @@ bool ProgramSettings::WriteToFile(const io::path& filename, io::IFileSystem* Fil
 }
 */
 
-std::shared_ptr<ProgramSettingsCategory> ProgramSettings::Get(const std::string& category)
+bool ProgramSettings::Exists(const std::string& setting) const
 {
-	auto i = m_categories.find(category);
-	if (i == m_categories.end()) return nullptr;
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end()) return false;
+	return true;
+}
+
+std::string ProgramSettings::Get(const std::string& setting, const std::string& def) const
+{
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end()) return def;
 	return i->second;
 }
 
-std::shared_ptr<const ProgramSettingsCategory> ProgramSettings::Get(const std::string& category) const
+int32_t ProgramSettings::GetInt(const std::string& setting, const int32_t def) const
 {
-	auto i = m_categories.find(category);
-	if (i == m_categories.end()) return nullptr;
-	return i->second;
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end()) return def;
+
+	std::istringstream str(i->second);
+	int32_t v;
+	str >> v;
+	return v;
 }
 
-std::weak_ptr<ProgramSettingsCategory> ProgramSettings::Add(const std::string& category)
+float ProgramSettings::GetFloat(const std::string& setting, const float def) const
 {
-	auto i = m_categories.find(category);
-	if (i != m_categories.end()) return i->second;
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
 
-	auto c = std::make_shared<ProgramSettingsCategory>(category);
-	m_categories[category] = c;
-	return c;
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end()) return def;
+
+	std::istringstream str(i->second);
+	float v;
+	str >> v;
+	return v;
+}
+
+bool ProgramSettings::GetBool(const std::string& setting, const bool def) const
+{
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end()) return def;
+
+	std::string lowervalue{ i->second };
+	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	if (lower == "on")
+		return true;
+	if (lower == "true")
+		return true;
+	if (lower == "yes")
+		return true;
+
+	return false;
+}
+
+void ProgramSettings::Set(const std::string& setting, const std::string& value)
+{
+	std::string lower{ setting };
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+
+	auto i = m_settings.find(lower);
+	if (i == m_settings.end())
+	{
+		m_settings[lower] = value;
+		m_settings_order.push_back(setting);
+	}
+	else i->second = value;
+}
+
+void ProgramSettings::Set(const std::string& setting, const int32_t value)
+{
+	std::stringstream str;
+	str << value;
+	Set(setting, str.str());
+}
+
+void ProgramSettings::Set(const std::string& setting, const float value)
+{
+	std::stringstream str;
+	str << value;
+	Set(setting, str.str());
+}
+
+void ProgramSettings::Set(const std::string& setting, const bool value)
+{
+	Set(setting, value ? std::string("true") : std::string("false"));
 }
 
 } // end namespace settings
