@@ -51,6 +51,7 @@ project "2drp"
 	language "C++"
 	location "projects"
 	local stargetdir = targetdir "../bin"
+	debugdir "../bin"
 
 	vectorextensions "SSE2"
 
@@ -84,6 +85,8 @@ project "2drp"
 	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
 
 	-- Post build commands.
+	filter {}
+		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
 	filter { "system:windows", "platforms:x32" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x86/SDL2.dll %{cfg.targetdir}" }
 	filter { "system:windows", "platforms:x64" }
