@@ -12,23 +12,23 @@ namespace fs
 File::File(const filesystem::path& file)
 	: m_file(file)
 {
-	m_stream = std::make_unique<std::ifstream>(file, std::ios::binary);
+	m_stream = std::make_shared<std::ifstream>(file, std::ios::binary);
 }
 
-File::File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream)
-	: m_file(file)
+File::File(const filesystem::path& file, ZipArchiveEntry::Ptr& zip )
+	: m_file(file), m_zip(zip)
 {
-	m_stream = std::move(stream);
+	m_stream = zip->GetDecompressionStream();
 }
 
 File::~File()
 {
-	m_stream->close();
+	//m_stream->close();
 }
 
 std::vector<char> File::Read() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (Finished())
 		return std::vector<char>();
 
 	// Seek to the end and get the file size.
@@ -44,7 +44,7 @@ std::vector<char> File::Read() const
 
 std::vector<char> File::Read(std::size_t count) const
 {
-	if (!m_stream->is_open() || Finished())
+	if (Finished())
 		return std::vector<char>();
 
 	std::vector<char> result(count);
@@ -65,7 +65,7 @@ std::vector<char> File::ReadUntil(const std::vector<char>& token) const
 
 std::string File::ReadAsString() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (Finished())
 		return std::string();
 
 	std::stringstream s;
@@ -75,7 +75,7 @@ std::string File::ReadAsString() const
 
 std::string File::ReadLine() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (Finished())
 		return std::string();
 
 
@@ -91,8 +91,7 @@ std::streampos File::GetReadPosition() const
 
 void File::SetReadPosition(const std::streampos& position)
 {
-	if (m_stream->is_open())
-		m_stream->seekg(position);
+	m_stream->seekg(position);
 }
 
 } // end namespace fs

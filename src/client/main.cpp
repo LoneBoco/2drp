@@ -14,7 +14,7 @@ struct sdl_deleter
 #ifdef __cplusplus
 extern "C"
 #endif
-int SDL_main(int argc, char* argv[])
+int main(int argc, char* argv[])
 {
 	tdrp::Game Game;
 
