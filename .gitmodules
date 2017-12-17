@@ -1,9 +1,3 @@
-[submodule "dependencies/bzip2"]
-	path = dependencies/bzip2
-	url = git@github.com:WardF/libbzip2.git
-[submodule "dependencies/zlib"]
-	path = dependencies/zlib
-	url = git@github.com:madler/zlib.git
 [submodule "dependencies/mathfu"]
 	path = dependencies/mathfu
 	url = git@github.com:google/mathfu.git

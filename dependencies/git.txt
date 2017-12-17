@@ -2,8 +2,6 @@ https://github.com/bkaradzic/bgfx  git@github.com:bkaradzic/bgfx.git
 https://github.com/bkaradzic/bimg  git@github.com:bkaradzic/bimg.git
 https://github.com/bkaradzic/bx  git@github.com:bkaradzic/bx.git
 https://github.com/erincatto/Box2D  git@github.com:erincatto/Box2D.git
-https://github.com/WardF/libbzip2  git@github.com:WardF/libbzip2.git
 https://github.com/lsalzman/enet  git@github.com:lsalzman/enet.git
 https://github.com/google/mathfu  git@github.com:google/mathfu.git
 https://github.com/google/protobuf
-https://github.com/madler/zlib  git@github.com:madler/zlib.git
