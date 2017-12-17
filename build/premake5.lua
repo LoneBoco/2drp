@@ -3,8 +3,6 @@ function getAbsoluteFromSolution(p)
 	return path.getabsolute(path.join(sol.basedir, p))
 end
 
-stargetsuffix = ""
-
 workspace "2drp"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
@@ -15,9 +13,11 @@ workspace "2drp"
 	configuration "vs*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }	
 
+	-- C++17 support
+	cppdialect "C++17"
+
 	filter "configurations:Debug"
 	 	defines { "DEBUG" }
-		stargetsuffix = "_d"
 		targetsuffix "_d"
 		editandcontinue "Off"
 		optimize "Off"
@@ -33,12 +33,6 @@ workspace "2drp"
 	filter "platforms:x64"
 		architecture "x64"
 
-	-- C++17 support.
-	filter { "language:C++", "toolset:gcc*" }
-		buildoptions { "-std=c++17" }
-	filter { "language:C++", "toolset:msc*" }
-		buildoptions { "/std:c++17" }
-
 	-- Windows defines.
 	filter "system:windows"
 		defines { "WIN32", "_WIN32" }
@@ -50,7 +44,7 @@ project "2drp"
 	kind "WindowedApp"
 	language "C++"
 	location "projects"
-	local stargetdir = targetdir "../bin"
+	targetdir "../bin"
 	debugdir "../bin"
 
 	vectorextensions "SSE2"
@@ -61,11 +55,11 @@ project "2drp"
 
 	-- Libraries.
 	links {
-		"bgfx" .. stargetsuffix,
-		"Box2D" .. stargetsuffix,
-		"bzip2" .. stargetsuffix,
-		"zlib" .. stargetsuffix,
-		"enet" .. stargetsuffix,
+		"bgfx",
+		"Box2D",
+		"bzip2",
+		"zlib",
+		"enet",
 		"SDL2", -- No suffix as we aren't building this one.
 		"SDL2main", -- No suffix as we aren't building this one.
 	}
@@ -140,10 +134,10 @@ project "2drp_server"
 
 	-- Libraries.
 	links {
-		"Box2D" .. stargetsuffix,
-		"bzip2" .. stargetsuffix,
-		"zlib" .. stargetsuffix,
-		"enet" .. stargetsuffix,
+		"Box2D",
+		"bzip2",
+		"zlib",
+		"enet",
 	}
 
 	-- Library includes.
