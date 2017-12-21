@@ -274,7 +274,7 @@ project "ziplib"
 
 project "enet"
 	kind "StaticLib"
-	language "C++"
+	language "C"
 	location "projects"
 	files { "../dependencies/enet/**.h", "../dependencies/enet/**.c" }
 	includedirs { "../dependencies/enet/include/" }
@@ -282,3 +282,12 @@ project "enet"
 -- project "mathfu"
 -- 	kind "None"
 -- 	files { "../dependencies/mathfu/include/**" }
+
+project "pugixml"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	files { "../dependencies/pugixml/src/**" }
+	flags { "NoPCH", "NoMinimalRebuild" }
+	editandcontinue "Off"
+	uuid "89A1E353-E2DC-495C-B403-742BE206ACED"

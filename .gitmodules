@@ -16,3 +16,6 @@
 [submodule "dependencies/bimg"]
 	path = dependencies/bimg
 	url = git@github.com:bkaradzic/bimg.git
+[submodule "dependencies/pugixml"]
+	path = dependencies/pugixml
+	url = git@github.com:zeux/pugixml.git
