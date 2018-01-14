@@ -11,10 +11,14 @@ struct sdl_deleter
 	void operator()(SDL_Window* p) const { SDL_DestroyWindow(p); }
 };
 
+#ifdef __GNUC__
+int main(int argc, char* argv[])
+#elif _MSC_VER
 #ifdef __cplusplus
 extern "C"
 #endif
-int main(int argc, char* argv[])
+int SDL_main(int argc, char* argv[])
+#endif
 {
 	tdrp::Game Game;
 

@@ -36,7 +36,7 @@ std::vector<char> File::Read() const
 	auto size = m_stream->tellg();
 
 	// Seek to the start and read into the vector.
-	std::vector<char> result(static_cast<size_t>(size.seekpos()));
+	std::vector<char> result(size);
 	m_stream->seekg(0);
 	m_stream->read(result.data(), size);
 	return result;
@@ -49,7 +49,7 @@ std::vector<char> File::Read(std::size_t count) const
 
 	std::vector<char> result(count);
 	auto read = m_stream->readsome(result.data(), count);
-	result.resize(static_cast<size_t>(read));
+	result.resize(read);
 	return result;
 }
 
@@ -81,6 +81,7 @@ std::string File::ReadLine() const
 
 	std::string result;
 	std::getline(*m_stream, result);
+
 	return result;
 }
 
