@@ -290,7 +290,7 @@ project "bzip2"
 
 project "zlib"
 	kind "StaticLib"
-	language "C++"
+	language "C"
 	location "projects"
 	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
 	includedirs { "../dependencies/zlib/" }
