@@ -281,7 +281,13 @@ project "ziplib"
 	removefiles {
 		"../dependencies/ziplib/Source/ZipLib/extlibs/lzma/unix/**"
 	}
-	includedirs { "../dependencies/ziplib/Source/ZipLib" }
+
+project "zlib"
+	kind "StaticLib"
+	language "C"
+	location "projects"
+	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
+	includedirs { "../dependencies/zlib/" }
 
 project "enet"
 	kind "StaticLib"
