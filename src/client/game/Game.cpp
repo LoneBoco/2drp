@@ -1,4 +1,4 @@
-#include "client/game/game.h"
+#include "client/game/Game.h"
 
 namespace tdrp
 {

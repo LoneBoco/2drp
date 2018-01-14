@@ -1,10 +1,14 @@
 #pragma once
 
+#ifdef __GNUC__
+#include <experimental/filesystem>
+#elif _MSC_VER
 #include <filesystem>
+#endif
 
 #include "engine/common.h"
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__GNUC__)
 namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;

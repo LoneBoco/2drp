@@ -282,9 +282,12 @@ public:
 	bool RenderVisible;
 
 	//! The scene graph this scene object is a part of.
-	std::weak_ptr<SceneGraph> SceneGraph;
+	std::weak_ptr<SceneGraph> ParentSceneGraph;
 
 protected:
+  //! Properties which have been changed since last update
+  std::set<Property> ChangedProperties;
+
 	const std::shared_ptr<ObjectClass> m_object_class;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;

@@ -18,7 +18,6 @@ workspace "2drp"
 
 	filter "configurations:Debug"
 	 	defines { "DEBUG" }
-		targetsuffix "_d"
 		editandcontinue "Off"
 		optimize "Off"
 
@@ -33,6 +32,18 @@ workspace "2drp"
 	filter "platforms:x64"
 		architecture "x64"
 
+	-- C++17 support.
+	filter { "language:C++", "toolset:gcc*" }
+		buildoptions { "-std=c++17" }
+	filter { "language:C++", "toolset:clang*" }
+		buildoptions { "-std=c++17" }
+    links {
+      "c++experimental",
+      "stdc++fs"
+    }
+	filter { "language:C++", "toolset:msc*" }
+		buildoptions { "/std:c++17" }
+
 	-- Windows defines.
 	filter "system:windows"
 		defines { "WIN32", "_WIN32" }
@@ -41,7 +52,7 @@ workspace "2drp"
 
 project "2drp"
 	-- kind "ConsoleApp"
-	kind "WindowedApp"
+  kind "WindowedApp"
 	language "C++"
 	location "projects"
 	targetdir "../bin"
@@ -264,7 +275,7 @@ project "box2d"
 
 project "bzip2"
 	kind "StaticLib"
-	language "C++"
+	language "C"
 	location "projects"
 	files { "../dependencies/bzip2/**.h", "../dependencies/bzip2/**.c" }
 	includedirs { "../dependencies/bzip2/" }
@@ -290,6 +301,9 @@ project "enet"
 	location "projects"
 	files { "../dependencies/enet/**.h", "../dependencies/enet/**.c" }
 	includedirs { "../dependencies/enet/include/" }
+
+	filter "system:linux"
+		defines { "HAS_SOCKLEN_T" }
 
 -- project "mathfu"
 -- 	kind "None"
