@@ -102,7 +102,7 @@ bool ProgramSettings::WriteToFile(const io::path& filename, io::IFileSystem* Fil
 bool ProgramSettings::Exists(const std::string& setting) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return false;
@@ -112,7 +112,7 @@ bool ProgramSettings::Exists(const std::string& setting) const
 std::string ProgramSettings::Get(const std::string& setting, const std::string& def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
@@ -122,7 +122,7 @@ std::string ProgramSettings::Get(const std::string& setting, const std::string& 
 int32_t ProgramSettings::GetInt(const std::string& setting, const int32_t def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
@@ -136,7 +136,7 @@ int32_t ProgramSettings::GetInt(const std::string& setting, const int32_t def) c
 float ProgramSettings::GetFloat(const std::string& setting, const float def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
@@ -150,13 +150,13 @@ float ProgramSettings::GetFloat(const std::string& setting, const float def) con
 bool ProgramSettings::GetBool(const std::string& setting, const bool def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
 
 	std::string lowervalue{ i->second };
-	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	if (lower == "on")
 		return true;
@@ -171,7 +171,7 @@ bool ProgramSettings::GetBool(const std::string& setting, const bool def) const
 void ProgramSettings::Set(const std::string& setting, const std::string& value)
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](unsigned char ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end())
