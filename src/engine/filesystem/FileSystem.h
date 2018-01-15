@@ -6,7 +6,7 @@
 #include <filesystem>
 #endif
 
-#if defined(_MSC_VER) || defined(__GNUC__)
+#ifdef _MSC_VER
 namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;
@@ -29,10 +29,7 @@ public:
 
 	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
 
-	int32_t LoadZipFiles(const filesystem::path& directory);
-
 private:
-	std::list<std::tuple<filesystem::path, ZipArchive::Ptr>> m_zip_files;
 };
 
 }

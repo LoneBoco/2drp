@@ -8,8 +8,6 @@
 
 #include <fstream>
 
-#include <ZipArchiveEntry.h>
-
 #include "engine/common.h"
 
 #if defined(_MSC_VER) || defined(__GNUC__)
@@ -27,7 +25,7 @@ class File
 {
 public:
 	File(const filesystem::path& file);
-	File(const filesystem::path& file, ZipArchiveEntry::Ptr& zip);
+	File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream);
 	~File();
 
 	//! Reads the full file.
@@ -63,15 +61,14 @@ public:
 	//! \return If we finished reading the file or not.
 	inline bool Finished() const
 	{
-		if (m_stream == nullptr)
+		if (m_stream == nullptr || !m_stream->is_open())
 			return true;
 		return m_stream->eof();
 	}
 
 protected:
 	filesystem::path m_file;
-	ZipArchiveEntry::Ptr m_zip;
-	mutable std::shared_ptr<std::istream> m_stream;
+	mutable std::unique_ptr<std::ifstream> m_stream;
 };
 
 } // end namespace fs
