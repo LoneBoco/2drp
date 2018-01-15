@@ -5,6 +5,9 @@
 
 #include <SDL.h>
 
+#include <algorithm>
+#include <string>
+#include <locale>
 
 struct sdl_deleter
 {
