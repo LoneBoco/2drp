@@ -6,7 +6,7 @@
 #include <filesystem>
 #endif
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__GNUC__)
 namespace filesystem = std::experimental::filesystem;
 #else
 namespace filesystem = std::filesystem;
