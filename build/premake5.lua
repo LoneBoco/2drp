@@ -68,22 +68,26 @@ project "2drp"
 	links {
 		"bgfx",
 		"Box2D",
+		"bzip2",
+		"zlib",
 		"enet",
-		"SDL2", -- External.
-		"SDL2main", -- External.
+		"SDL2", -- No suffix as we aren't building this one.
+		"SDL2main", -- No suffix as we aren't building this one.
 	}
 
 	-- Library includes.
 	includedirs {
 		"../dependencies/bgfx/include/",
 		"../dependencies/box2d/Box2D/",
+		"../dependencies/bzip2/",
+		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/sdl/include/",
 	}
 
-	dependson { "bgfx", "box2d", "enet" }
+	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
 
 	-- Post build commands.
 	filter {}
@@ -142,18 +146,22 @@ project "2drp_server"
 	-- Libraries.
 	links {
 		"Box2D",
+		"bzip2",
+		"zlib",
 		"enet",
 	}
 
 	-- Library includes.
 	includedirs {
 		"../dependencies/box2d/Box2D/",
+		"../dependencies/bzip2/",
+		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 	}
 
-	dependson { "box2d", "enet" }
+	dependson { "box2d", "bzip2", "zlib", "enet" }
 
 	-- Per-platform libraries.
 	-- filter "system:windows"
@@ -166,7 +174,7 @@ project "bgfx"
 	language "C++"
 	location "projects"
 	files { "../dependencies/bgfx/include/**" }
-	files { "../dependencies/bgfx/src/**.h", "../dependencies/bgfx/src/**.cpp" }
+	files { "../dependencies/bgfx/src/**.h", "../dependencies/bgfx/src/**.cpp", "../dependencies/bgfx/src/**.mm" }
 	removefiles { "../dependencies/bgfx/src/**.bin.h" }
 	removefiles { "../dependencies/bgfx/src/amalgamated.**" }
 	includedirs { "../dependencies/bgfx/include/" }
@@ -264,6 +272,28 @@ project "box2d"
 	location "projects"
 	files { "../dependencies/box2d/Box2D/Box2D/**.h", "../dependencies/box2d/Box2D/Box2D/**.cpp" }
 	includedirs { "../dependencies/box2d/Box2D/" }
+
+project "bzip2"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	files { "../dependencies/bzip2/**.h", "../dependencies/bzip2/**.c" }
+	includedirs { "../dependencies/bzip2/" }
+	removefiles {
+		"../dependencies/bzip2/bzip2.c",
+		"../dependencies/bzip2/bzip2recover.c",
+		"../dependencies/bzip2/dlltest.c",
+		"../dependencies/bzip2/mk251.c",
+		"../dependencies/bzip2/spewG.c",
+		"../dependencies/bzip2/unzcrash.c"
+	}
+
+project "zlib"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
+	includedirs { "../dependencies/zlib/" }
 
 project "enet"
 	kind "StaticLib"
