@@ -23,7 +23,7 @@ extern "C"
 int SDL_main(int argc, char* argv[])
 #endif
 {
-	tdrp::Game Game;
+	auto Game = tdrp::Game::Instance();
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{
