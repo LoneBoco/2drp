@@ -85,6 +85,7 @@ project "2drp"
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/sdl/include/",
+		"../dependencies/BabyDI/include/",
 	}
 
 	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }

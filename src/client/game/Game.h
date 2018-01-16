@@ -14,13 +14,6 @@ public:
 	Game();
 	~Game() = default;
 
-  static Game& Instance()
-  {
-    static Game instance;
-
-    return instance;
-  };
-
 	fs::FileSystem FileSystem;
 	settings::ProgramSettings Settings;
 

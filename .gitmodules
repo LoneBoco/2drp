@@ -25,3 +25,6 @@
 [submodule "dependencies/pugixml"]
 	path = dependencies/pugixml
 	url = git@github.com:zeux/pugixml.git
+[submodule "dependencies/BabyDI"]
+	path = dependencies/BabyDI
+	url = http://github.com/simply-jos/BabyDI

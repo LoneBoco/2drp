@@ -1,3 +1,5 @@
+#include "BabyDI.Configuration.h"
+
 #include "engine/common.h"
 #include "client/game/Game.h"
 
@@ -23,7 +25,7 @@ extern "C"
 int SDL_main(int argc, char* argv[])
 #endif
 {
-	auto Game = tdrp::Game::Instance();
+  tdrp::Game Game;
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{

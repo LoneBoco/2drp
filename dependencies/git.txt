@@ -7,3 +7,4 @@ https://github.com/lsalzman/enet  git@github.com:lsalzman/enet.git
 https://github.com/google/mathfu  git@github.com:google/mathfu.git
 https://github.com/google/protobuf
 https://github.com/madler/zlib  git@github.com:madler/zlib.git
+https://github.com/simply-jos/BabyDI  git@github.com:simply-jos/BabyDI.git
