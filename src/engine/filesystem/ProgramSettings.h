@@ -2,8 +2,6 @@
 
 #include "engine/common.h"
 
-#include "engine/filesystem/File.h"
-
 namespace tdrp
 {
 namespace settings
@@ -15,7 +13,7 @@ public:
 	ProgramSettings() = default;
 	~ProgramSettings() = default;
 
-	bool LoadFromFile(const tdrp::fs::File& f);
+	bool LoadFromFile(const filesystem::path& filename);
 	// bool WriteToFile(const io::path& filename, io::IFileSystem* FileSystem);
 
 	bool Exists(const std::string& setting) const;

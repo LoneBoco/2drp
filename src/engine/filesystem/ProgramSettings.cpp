@@ -3,6 +3,7 @@
 #include <sstream>
 
 #include "engine/common.h"
+#include "engine/filesystem/File.h"
 
 #include "ProgramSettings.h"
 
@@ -13,8 +14,10 @@ namespace settings
 
 /////////////////////////////
 
-bool ProgramSettings::LoadFromFile(const tdrp::fs::File& f)
+bool ProgramSettings::LoadFromFile(const filesystem::path& filename)
 {
+	tdrp::fs::File f{ filename };
+
 	std::string category{ "Global" };
 
 	while (!f.Finished())
