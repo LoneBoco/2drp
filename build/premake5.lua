@@ -33,16 +33,8 @@ workspace "2drp"
 		architecture "x64"
 
 	-- C++17 support.
-	filter { "language:C++", "toolset:gcc*" }
-		buildoptions { "-std=c++17" }
 	filter { "language:C++", "toolset:clang*" }
-		buildoptions { "-std=c++17" }
-    links {
-      "c++experimental",
-      "stdc++fs"
-    }
-	filter { "language:C++", "toolset:msc*" }
-		buildoptions { "/std:c++17" }
+		links { "c++experimental", "stdc++fs" }
 
 	-- Windows defines.
 	filter "system:windows"
@@ -52,7 +44,7 @@ workspace "2drp"
 
 project "2drp"
 	-- kind "ConsoleApp"
-  kind "WindowedApp"
+	kind "WindowedApp"
 	language "C++"
 	location "projects"
 	targetdir "../bin"
