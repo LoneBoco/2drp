@@ -4,12 +4,10 @@
 #include "client/game/Game.h"
 
 #include <iostream>
+#include <algorithm>
 
 #include <SDL.h>
 
-#include <algorithm>
-#include <string>
-#include <locale>
 
 struct sdl_deleter
 {
@@ -25,7 +23,7 @@ extern "C"
 int SDL_main(int argc, char* argv[])
 #endif
 {
-  tdrp::Game Game;
+	tdrp::Game Game;
 
 	if (SDL_Init(SDL_INIT_VIDEO) != 0)
 	{

@@ -15,7 +15,7 @@ public:
 	~Render() = default;
 
 private:
-  BabyDI::Injected<Game> game;
+	BabyDI::Injected<Game> game;
 
 };
 

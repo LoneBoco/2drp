@@ -63,8 +63,8 @@ project "2drp"
 		"bzip2",
 		"zlib",
 		"enet",
-		"SDL2", -- No suffix as we aren't building this one.
-		"SDL2main", -- No suffix as we aren't building this one.
+		"SDL2", -- External.
+		"SDL2main", -- External.
 	}
 
 	-- Library includes.
@@ -78,6 +78,7 @@ project "2drp"
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/sdl/include/",
 		"../dependencies/BabyDI/include/",
+		"../dependencies/pugixml/src/",
 	}
 
 	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
@@ -152,6 +153,7 @@ project "2drp_server"
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
+		"../dependencies/pugixml/src/",
 	}
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
@@ -268,7 +270,7 @@ project "box2d"
 
 project "bzip2"
 	kind "StaticLib"
-	language "C++"
+	language "C"
 	location "projects"
 	files { "../dependencies/bzip2/**.h", "../dependencies/bzip2/**.c" }
 	includedirs { "../dependencies/bzip2/" }
@@ -283,7 +285,7 @@ project "bzip2"
 
 project "zlib"
 	kind "StaticLib"
-	language "C++"
+	language "C"
 	location "projects"
 	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
 	includedirs { "../dependencies/zlib/" }
