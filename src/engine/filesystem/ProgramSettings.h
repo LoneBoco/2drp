@@ -2,9 +2,7 @@
 
 #include "engine/common.h"
 
-namespace tdrp
-{
-namespace settings
+namespace tdrp::settings
 {
 
 class ProgramSettings
@@ -33,5 +31,4 @@ private:
 	std::vector<std::string> m_settings_order;
 };
 
-} // end namespace settings
-} // end namespace tdrp
+} // end namespace tdrp::settings

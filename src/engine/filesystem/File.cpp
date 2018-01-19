@@ -2,9 +2,7 @@
 
 #include <sstream>
 
-namespace tdrp
-{
-namespace fs
+namespace tdrp::fs
 {
 
 /////////////////////////////
@@ -96,5 +94,4 @@ void File::SetReadPosition(const std::streampos& position)
 		m_stream->seekg(position);
 }
 
-} // end namespace fs
-} // end namespace tdrp
+} // end namespace tdrp::fs

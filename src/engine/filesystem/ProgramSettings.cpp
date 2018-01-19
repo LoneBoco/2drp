@@ -7,9 +7,7 @@
 
 #include "ProgramSettings.h"
 
-namespace tdrp
-{
-namespace settings
+namespace tdrp::settings
 {
 
 /////////////////////////////
@@ -204,5 +202,4 @@ void ProgramSettings::Set(const std::string& setting, const bool value)
 	Set(setting, value ? std::string("true") : std::string("false"));
 }
 
-} // end namespace settings
-} // end namespace tdrp
+} // end namespace tdrp::settings

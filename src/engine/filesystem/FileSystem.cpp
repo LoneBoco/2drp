@@ -1,9 +1,7 @@
 #include "engine/filesystem/FileSystem.h"
 #include "engine/filesystem/File.h"
 
-namespace tdrp
-{
-namespace fs
+namespace tdrp::fs
 {
 
 /////////////////////////////
@@ -69,5 +67,4 @@ void FileSystem::Update()
 
 /////////////////////////////
 
-} // end namespace fs
-} // end namespace tdrp
+} // end namespace tdrp::fs

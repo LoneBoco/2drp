@@ -16,9 +16,7 @@ namespace filesystem = std::experimental::filesystem;
 namespace filesystem = std::filesystem;
 #endif
 
-namespace tdrp
-{
-namespace fs
+namespace tdrp::fs
 {
 
 class File
@@ -71,5 +69,4 @@ protected:
 	mutable std::unique_ptr<std::ifstream> m_stream;
 };
 
-} // end namespace fs
-} // end namespace tdrp
+} // end namespace tdrp::fs
