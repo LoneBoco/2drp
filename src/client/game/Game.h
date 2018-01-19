@@ -14,6 +14,8 @@ public:
 	Game();
 	~Game() = default;
 
+	void Update();
+
 	fs::FileSystem FileSystem;
 	settings::ProgramSettings Settings;
 

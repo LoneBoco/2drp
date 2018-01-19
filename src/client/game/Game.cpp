@@ -10,6 +10,11 @@ Game::Game()
 	Settings.LoadFromFile("settings.ini");
 }
 
+void Game::Update()
+{
+	FileSystem.Update();
+}
+
 /////////////////////////////
 
 } // end namespace tdrp

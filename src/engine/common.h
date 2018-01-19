@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 
 #include "engine/helper/math.h"
 

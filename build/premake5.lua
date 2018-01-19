@@ -54,6 +54,7 @@ project "2drp"
 
 	files { "../src/**" }
 	removefiles { "../src/server/**" }
+	removefiles { "../src/engine/filesystem/watch/FileWatchOS_*" }
 	includedirs { "../src" }
 
 	-- Libraries.
@@ -96,6 +97,12 @@ project "2drp"
 		libdirs "../dependencies/sdl/lib/x86/"
 	filter { "system:windows", "platforms:x64" }
 		libdirs "../dependencies/sdl/lib/x64/"
+
+	-- Handle file watch properly.
+	filter { "system:windows" }
+		files { "../src/engine/filesystem/watch/FileWatchOS_Windows*" }
+	filter { "system:linux" }
+		files { "../src/engine/filesystem/watch/FileWatchOS_Linux*" }
 
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
