@@ -160,7 +160,6 @@ namespace physics
 //! Callback function used for updating a scene object.
 // typedef void (*FSceneObjectUpdate)(SceneObject*);
 
-class SceneGraph;
 class SceneObject
 {
 public:
@@ -261,7 +260,7 @@ public:
 	}
 
 	//! ID
-	uint32_t ID;
+	const uint32_t ID;
 
 	//! Name.
 	std::string Name;
@@ -281,12 +280,9 @@ public:
 	//! Set to true if it was visible during the render state.
 	bool RenderVisible;
 
-	//! The scene graph this scene object is a part of.
-	std::weak_ptr<SceneGraph> ParentSceneGraph;
-
 protected:
-  //! Properties which have been changed since last update
-  std::set<Property> ChangedProperties;
+	//! Properties which have been changed since last update
+	std::set<Property> m_changed_properties;
 
 	const std::shared_ptr<ObjectClass> m_object_class;
 	// FSceneObjectUpdate UpdateCallback;

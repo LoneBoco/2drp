@@ -64,6 +64,7 @@ project "2drp"
 		"bzip2",
 		"zlib",
 		"enet",
+		"pugixml",
 		"SDL2", -- External.
 		"SDL2main", -- External.
 	}
@@ -87,6 +88,7 @@ project "2drp"
 	-- Post build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
 	filter { "system:windows", "platforms:x32" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x86/SDL2.dll %{cfg.targetdir}" }
 	filter { "system:windows", "platforms:x64" }
@@ -142,6 +144,7 @@ project "2drp_server"
 
 	files { "../src/**" }
 	removefiles { "../src/client/**" }
+	removefiles { "../src/engine/filesystem/watch/FileWatchOS_*" }
 	includedirs { "../src" }
 
 	-- Libraries.
@@ -150,6 +153,7 @@ project "2drp_server"
 		"bzip2",
 		"zlib",
 		"enet",
+		"pugixml",
 	}
 
 	-- Library includes.
@@ -165,11 +169,11 @@ project "2drp_server"
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
 
-	-- Per-platform libraries.
-	-- filter "system:windows"
-	-- 	links { "ws2_32" }
-	-- filter { "system:linux or system:bsd or system:solaris" }
-	-- 	links { "boost_thread", "boost_filesystem" }
+	-- Handle file watch properly.
+	filter { "system:windows" }
+		files { "../src/engine/filesystem/watch/FileWatchOS_Windows*" }
+	filter { "system:linux" }
+		files { "../src/engine/filesystem/watch/FileWatchOS_Linux*" }
 
 project "bgfx"
 	kind "StaticLib"

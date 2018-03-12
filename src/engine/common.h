@@ -8,6 +8,7 @@
 #include <vector>
 #include <map>
 #include <functional>
+#include <algorithm>
 
 #include "engine/helper/math.h"
 

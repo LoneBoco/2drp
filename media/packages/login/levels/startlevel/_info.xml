@@ -1,0 +1,10 @@
+<level version="1" />
+<chunks width="4096" />
+<zones>
+	<zone>
+		<name>Test zone</name>
+		<shape type="square">
+			<coordinates>0,0 10,10</coordinates>
+		</shape>
+	</zone>
+</zones>

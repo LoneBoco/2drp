@@ -1,20 +1,9 @@
 #pragma once
 
-#ifdef __GNUC__
-#include <experimental/filesystem>
-#elif _MSC_VER
-#include <filesystem>
-#endif
-
 #include <fstream>
 
 #include "engine/common.h"
-
-#if defined(_MSC_VER) || defined(__GNUC__)
-namespace filesystem = std::experimental::filesystem;
-#else
-namespace filesystem = std::filesystem;
-#endif
+#include "engine/filesystem/common.h"
 
 namespace tdrp::fs
 {
@@ -25,6 +14,18 @@ public:
 	File(const filesystem::path& file);
 	File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream);
 	~File();
+
+	//! Converts directly into an ifstream.
+	operator std::ifstream&() const
+	{
+		return *(m_stream.get());
+	}
+
+	//! Returns if this is a valid file.
+	operator bool() const
+	{
+		return m_stream->is_open();
+	}
 
 	//! Reads the full file.
 	//! \return The file contents.

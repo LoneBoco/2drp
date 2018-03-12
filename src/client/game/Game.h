@@ -4,6 +4,7 @@
 
 #include "engine/filesystem/FileSystem.h"
 #include "engine/filesystem/ProgramSettings.h"
+#include "engine/package/Package.h"
 
 namespace tdrp
 {
@@ -16,8 +17,8 @@ public:
 
 	void Update();
 
-	fs::FileSystem FileSystem;
 	settings::ProgramSettings Settings;
+	std::shared_ptr<package::Package> Package;
 
 private:
 

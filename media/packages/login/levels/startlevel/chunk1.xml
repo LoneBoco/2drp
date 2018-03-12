@@ -1,0 +1,78 @@
+<levelchunk version="1" x="0" y="0" />
+<sceneobjects>
+	<object type="tiled" class="level">
+		<property name="x" type="float" value="0.0" />
+		<property name="y" type="float" value="0.0" />
+		<property name="z" type="float" value="5000.0" />
+		<tileset tile_w="16" tile_h="16" file="pics1.png" />
+		<tiledata width="64" height="64">
+			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
+			f/f/f/f/f/f/f/AAABK5K6f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/ARBgARf/f/f/f/AAABf/f/
+			AAABf/f/f/f/f/f/ARBgARf/f/K3f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/f/f/AAABf/f/f/f/f/OLf/f/f/f/f/f/f/f/AhBwAhARAQf/AAABf/f/AA
+			AQf/f/f/f/f/f/ARAhBwAhf/f/f/f/f/AAABf/f/f/f/AAABf/f/f/f/f/f/f/f/f/K3f/f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/f/f/f/AhARf/f/f/f/f/f/
+			f/f/f/AAABf/ARAhf/f/f/f/f/f/f/f/f/f/f/Knf/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/Knf/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/AgKpKqf/f/f/f/
+			f/f/f/f/KpKqAgf/f/f/AAABf/f/f/f/K4f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/ARK5K6AAABf/f/
+			f/f/f/f/K5K6ARf/f/f/f/f/AwAxAwAxf/f/f/AwAxAwAxAwAxf/f/f/f/AwAxAwAxAwAxAAABf/AwAxAwAxAwAxf/f/f/AwAxf/f/f/f/f/f/f/f/Ahf/f/f/f/f/f/
+			f/f/f/f/f/f/Ahf/f/f/AwAxAwAxAwAxAwAxf/AwAxAwAxAwAxAwAxf/f/AwAxAwAxAwAxf/f/f/AwAxAwAxAwAxAAABf/AwAxf/f/Knf/f/f/f/f/AAABf/f/f/f/f/
+			AAABf/f/f/f/f/f/AAABAwAxf/f/f/f/AwAxf/AwAxf/OLf/K3AwAxf/AwAxf/f/AAABAwAxf/AwAxf/f/f/f/AwAxAAABAwAxf/f/f/f/f/f/K4f/f/f/f/f/f/AQf/
+			f/AQf/f/f/f/f/K4f/AwAxf/f/f/AAABf/f/f/AwAxAAABf/f/AwAxf/AwAxK3f/f/f/AwAxf/AwAxAAABf/f/AwAxf/f/AwAxf/f/f/AAABf/f/f/f/f/AAABf/f/f/
+			f/f/f/AAABf/f/f/f/AwAxf/f/AAABf/OLf/f/AwAxf/AAABf/AwAxf/AwAxf/AAABf/AwAxf/AwAxf/f/Knf/AwAxf/f/AwAxf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/
+			f/f/f/f/f/f/f/f/f/AwAxf/Knf/f/f/f/AAABAwAxf/f/f/f/AwAxf/AwAxAAABf/f/AwAxf/AwAxK3f/f/f/AwAxf/f/AwAxf/f/f/f/f/f/f/f/f/f/AQf/f/f/f/
+			f/f/f/f/f/f/AAABf/AwAxf/f/f/K3f/f/f/f/AwAxAwAxAwAxAwAxf/AwAxAwAxAwAxAwAxf/AwAxAwAxAwAxAwAxf/f/AwAxAAABK3f/OLf/f/f/f/AAABf/f/f/AA
+			f/f/f/f/f/f/f/f/f/AwAxf/f/f/f/f/AwAxf/AwAxAwAxAwAxf/AAABAwAxAwAxAwAxAwAxf/AwAxAwAxAwAxAwAxf/K3AwAxf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/
+			f/AAABf/f/f/f/f/f/AwAxAAABf/AwAxAwAxf/AwAxf/f/f/AwAxf/f/AwAxf/f/f/f/AwAxf/AwAxf/f/f/f/AwAxf/f/AwAxf/f/f/f/f/f/AAABf/f/f/f/f/f/f/
+			f/f/f/f/AQf/f/f/f/AwAxf/f/f/AwAxAwAxf/AwAxf/AAABAwAxf/f/AwAxf/f/AAABAwAxf/AwAxf/f/f/K4AwAxf/f/AwAxf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/
+			f/f/f/f/AAABf/AAABAwAxf/f/f/f/f/AwAxf/AwAxf/Knf/f/AwAxf/AwAxK4f/OLf/AwAxf/AwAxf/AAABf/AwAxOLf/AwAxf/f/AAABKnf/f/f/f/f/f/f/f/f/f/
+			f/f/f/f/f/f/K4f/AAABAwAxf/K4AAABAwAxf/AwAxf/f/f/f/AwAxf/AwAxf/f/f/f/AwAxf/AwAxf/f/f/f/AwAxf/f/AwAxf/f/f/f/f/f/f/f/AAABf/f/f/AAAB
+			f/AQf/f/f/f/ARf/f/f/AwAxAwAxAwAxAwAxf/AwAxf/f/f/K4AwAxf/AwAxAAABf/K3AwAxf/AwAxK3f/AAABAwAxf/f/AwAxAwAxAwAxAwAxf/f/ARf/f/f/AAABAQ
+			AAABf/f/KpKqAgAAABf/K3f/AwAxAwAxf/f/f/AwAxf/f/f/f/AwAxf/AwAxf/f/f/f/AwAxf/AwAxf/f/f/f/AwAxf/f/AwAxAwAxAwAxAwAxf/f/AgKpKqf/f/f/f/
+			f/f/f/f/K5K6ARf/f/f/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/Knf/f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/ARK5K6f/f/f/f/
+			f/f/f/AAABf/AhARf/f/f/Knf/f/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/K3f/f/f/f/f/f/f/f/f/f/f/f/f/ARAhf/f/f/f/f/f/
+			f/f/f/f/f/f/f/AhARBgARf/f/OLf/f/f/f/AAABf/f/f/AAABf/f/K4f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/OLf/f/AAABARBgARAhAAABf/f/f/f/f/
+			f/f/f/f/f/AQf/f/AhBwAhABf/f/f/K4f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/OLf/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/AhBwAhf/f/AAABf/f/f/f/
+			AAABf/f/AAABf/f/f/KpKqAAABf/f/f/f/f/f/AAABf/f/f/f/AAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/f/AQKpKqf/f/f/f/AQf/f/f/
+			f/f/f/AAABAAABf/f/K5K6f/f/f/f/f/f/f/f/f/KpKqf/f/f/f/f/f/f/f/f/f/f/f/f/f/f/AAABf/f/f/f/f/f/f/f/AAABf/f/f/f/f/K5K6f/f/f/f/AAABf/AA
+			f/f/f/f/AAABAAABf/f/f/f/f/f/f/f/AQf/f/f/K5K6f/f/f/f/f/AQf/f/f/AAABf/f/0R0Rf/f/f/f/f/FKFLAAABf/AQf/f/f/f/f/AAABf/f/f/f/f/f/f/f/f/
+			f/f/ACADf/AAABf/AQf/f/f/f/f/f/f/f/AAABLILJLKKrf/f/f/f/AAABf/f/f/f/f/f/f/0g0h0Rf/f/f/FaFbFKFLAAABf/f/f/f/f/f/f/f/f/f/f/f/f/f/AAAB
+			AQf/ASATACADf/AAABf/f/f/f/f/f/f/f/KpKqLYLZLaK7KpKqf/f/f/f/f/f/f/f/f/f/f/0w0xFKFLf/f/f/f/FaFbf/f/G2HFHXH/f/f/f/f/AAABf/f/f/f/f/AA
+			f/AAAB0RASATACADf/f/f/f/f/f/f/f/f/K5K6LYLZLaK7K5K6f/f/f/f/f/f/f/H/f/AAAB0Rf/FaFbf/AAABf/f/f/f/f/HkGOHnHXf/f/f/f/f/AQACAD+4+5f/f/
+			f/f/f/f/ACADASATf/f/AAABf/f/f/f/AAABf/LoLpLqLLf/AAABf/f/f/f/f/f/f/f/f/f/f/AAABf/0Rf/f/G2HEHFHFHFHGH1GOG7AAABf/f/ACADASAT/I/Jf/f/
+			HEHXf/f/ASATAAABf/f/f/f/f/f/f/+4+5f/f/f/KpKqf/f/f/ACADf/f/f/ACADf/AQf/f/f/f/f/f/f/f/G2HGGOGOGOH1H0GOG3HHf/AAABf/ASATf/5+5/f/f/f/
+			H1HnHEHXf/f/f/f/f/f/f/f/f/AQf//I/Jf/f/f/K5K6f/f/f/ASATf/AAABASATf/f/f/f/f/G2HEHFHXf/HkGOH1H1H0GOG3H2HHf/f/f/f/f/f/AAAB6O6Pf/G2HG
+			GOGOGOHnHEHFHEHFHXf/f/f/f/f/f/AAABf/f/f/AAABf/f/AAABf/AAAB5+5/f/f/f/G2HEHFHGH1GOHnHXGmGWGOGOG3H2HHf/G2HEHFHEHFHEHXf/f/f/AAABHUH1
+			H6GOGOGOGOH1GOH1HnHEHXAAABf/f/f/f/f/f/f/AQf/f/f/f/f/f/f/f/6O6Pf/f/G2HGGOGOGOGOGOH0G7H/GmH2H3HHH/G2HEHGGOGOH0H1GOHnHFHXf/f/f/HkGO
+			FCFCFCFCH6GOGOGOGOH0HnHEHFHXf/f/f/f/G2HEHFHEHFHXf/f/f/f/f/f/AAABf/HkH1GOGOHIFCH6GOG7f/AQf/G2HEHFHGGOGOGOH1GOGOGOGOGOG7f/AQG2HGGO
+			FDFEFCFCFCH6GOGOH1GOGOGOGOHnHXG2HEHFHGGOH1GOGOHnHEHXf/f/AQf/f/f/f/HkGOH1GOFCFCFCGOHnHFHEHFHGGOGOGOGOGOGOGOGOHIFCH6GOHnHEHFHGGOHI
+			FCFCFCFCFCFDFEFCH6GOGOGOH1GOHnHGGOGOH0GOGOGOGOGOGOHnHXf/f/f/G2HEHFHGGOGOHIFCFCFCGOGOGOGOH1GOGOGOHIFCFCFCFCFCFCFCFCGOH1GOGOH0GOFC
+			HVHWFCFCFCFCFCFCFCFCFCH6GOGOGOGOH1GOGOHIFCFCFCH6H1GOG7f/G2HEHGGOGOGOGOHIFCFCFDFEH6GOH1GOGOGOHIFCFCFCFCFCFCFCFCFCFCH6GOGOGOGOHIFC
+			HlHmFCFSFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCH6H1G7G2HGH0GOH1GOHIFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFSFCFCFDFEFCFCGOGOHIFCFCFC
+			FCFCFCFCFCFCHVHWFCFSFCFCFCFCFCFDFEFCFCFCFCFCFSFCFCGOHnHGH1GOHIFCFCFSFCFCFCFCFCFCFCFCFCFSFCFCFCFCFCFCFCFCFCFCFCFCFCFCH6HIFCFDFEFC
+			FDFEFCFCFCFCHlHmFCFCFCFCFCHVHWFCFCFCFCHVHWFCFCFCFCH6GOGOGOHIFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCHVHWFCFCFCFCFCFCFCFCFCFCFCFCFCHV
+			FCFCFCFCFCFCFDFEFCFCFCFCFCHlHmFCFCFCFCHlHmFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCFCHVHWFCFCFC4c484dFCFCHlHmFCFCFCFCFCFCFCFCFCHVHWFCFCHl
+			FCFCFCFSFCFC4c4848484dFCFCFCFCFSFCFCFDFEFCHVHWFCFCFDFEFCFCFCFCFCFCFCFCFCFCFSHlHmFCFC4c484848FCFCFCFDFEHVHWFCFCFSFCHVHWHlHmFCFCFS
+			FCHVHWFCFC4c4848484848484dFCFCFCFCFCFCFCFCHlHmFCFCFCFCFCFCFCFCFCFDFEFCFCFCFCFCFS4c48484848484dFCFCFCFCHlHmFCFCFCFCHlHmFDFEFCFCFC
+		</tiledata>
+		<collision>
+			<blocking_tiles file="graal.tiles" />
+		</collision>
+	</object>
+</sceneobjects>
