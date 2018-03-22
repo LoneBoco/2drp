@@ -10,21 +10,6 @@
 #include <functional>
 #include <algorithm>
 
+#include <boost/algorithm/string.hpp>
+
 #include "engine/helper/math.h"
-
-
-static inline void ltrim(std::string& s)
-{
-	s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](auto ch) { return !std::isspace(ch, std::locale("")); }));
-}
-
-static inline void rtrim(std::string& s)
-{
-	s.erase(std::find_if(s.rbegin(), s.rend(), [](auto ch) { return !std::isspace(ch, std::locale("")); }).base(), s.end());
-}
-
-static inline void trim(std::string& s)
-{
-	ltrim(s);
-	rtrim(s);
-}

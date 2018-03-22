@@ -85,6 +85,10 @@ project "2drp"
 
 	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
 
+	-- Boost
+	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
+	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
+
 	-- Post build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
@@ -168,6 +172,10 @@ project "2drp_server"
 	}
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
+
+	-- Boost
+	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
+	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
 
 	-- Handle file watch properly.
 	filter { "system:windows" }

@@ -26,7 +26,7 @@ bool ProgramSettings::LoadFromFile(const filesystem::path& filename)
 		line.erase(std::remove(line.begin(), line.end(), '\r'), line.end());
 
 		// Trim.
-		trim(line);
+		boost::trim(line);
 
 		if (!line.empty())
 		{
@@ -44,8 +44,8 @@ bool ProgramSettings::LoadFromFile(const filesystem::path& filename)
 				std::string value;
 				if (sep != std::string::npos)
 					value = line.substr(sep + 1, line.size() - sep - 1);
-				rtrim(setting);
-				ltrim(value);
+				boost::trim_right(setting);
+				boost::trim_left(value);
 
 				// Save it.
 				Set(category + "." + setting, value);
