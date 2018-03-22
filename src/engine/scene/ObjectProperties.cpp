@@ -47,14 +47,25 @@ std::shared_ptr<const Attribute> ObjectProperties::Get(const Property prop) cons
 	return m_properties.Get((uint16_t)prop);
 }
 
+std::shared_ptr<const Attribute> ObjectProperties::Get(const std::string& prop) const
+{
+	return m_properties.Get(prop);
+}
+
 std::shared_ptr<Attribute> ObjectProperties::Get(const Property prop)
 {
 	return m_properties.Get((uint16_t)prop);
 }
 
+std::shared_ptr<Attribute> ObjectProperties::Get(const std::string& prop)
+{
+	return m_properties.Get(prop);
+}
+
 void ObjectProperties::create()
 {
-#define _PROP(x, y) m_properties.AddAttribute(#x, y, (int32_t)x);
+// Add 10 to move the pointer past 'Property::' because I am horrible.
+#define _PROP(x, y) m_properties.AddAttribute(#x + 10, y, (int32_t)x);
 
 	_PROP(Property::LEVEL, "");
 	_PROP(Property::X, 0.0f);

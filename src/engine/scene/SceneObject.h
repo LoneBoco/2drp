@@ -281,9 +281,6 @@ public:
 	bool RenderVisible;
 
 protected:
-	//! Properties which have been changed since last update
-	std::set<Property> m_changed_properties;
-
 	const std::shared_ptr<ObjectClass> m_object_class;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;
@@ -383,8 +380,8 @@ public:
 	}
 
 	std::string Tileset_File;
-	// core::dimension2du Tileset_Tile_Dimension;
-	// core::dimension2du Tile_Dimension;
+	Vector2di Tileset_Tile_Dimension;
+	Vector2di Tile_Dimension;
 	std::vector<char> Tile_Data;
 };
 

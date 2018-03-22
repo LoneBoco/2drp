@@ -5,6 +5,22 @@
 namespace tdrp
 {
 
+AttributeType Attribute::TypeFromString(const std::string& type)
+{
+	if (boost::iequals(type, "signed"))
+		return AttributeType::SIGNED;
+	if (boost::iequals(type, "unsigned"))
+		return AttributeType::UNSIGNED;
+	if (boost::iequals(type, "float"))
+		return AttributeType::FLOAT;
+	if (boost::iequals(type, "double"))
+		return AttributeType::DOUBLE;
+	if (boost::iequals(type, "string"))
+		return AttributeType::STRING;
+
+	return AttributeType::INVALID;
+}
+
 ObjectAttributes::ObjectAttributes(const ObjectAttributes& props)
 : m_cid(0)
 {
@@ -119,12 +135,19 @@ std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name,
 	return a;
 }
 
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, AttributeType type, const std::string& value, uint16_t id)
+{
+	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
+	if (a) a->SetAsType(type, value);
+	return a;
+}
+
 std::shared_ptr<Attribute> ObjectAttributes::Get(const std::string& name)
 {
 	if (name.size() == 0) return nullptr;
 	for (auto&& a : m_attributes)
 	{
-		if (a.second->GetName() == name)
+		if (boost::iequals(a.second->GetName(), name))
 			return a.second;
 	}
 	return nullptr;
@@ -142,7 +165,7 @@ std::shared_ptr<const Attribute> ObjectAttributes::Get(const std::string& name) 
 	if (name.size() == 0) return nullptr;
 	for (auto&& a : m_attributes)
 	{
-		if (a.second->GetName() == name)
+		if (boost::iequals(a.second->GetName(), name))
 			return a.second;
 	}
 	return nullptr;

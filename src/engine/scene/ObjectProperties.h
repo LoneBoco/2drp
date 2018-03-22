@@ -44,11 +44,13 @@ public:
 	//! \param prop The property to get.
 	//! \return A pointer to the attribute.
 	std::shared_ptr<const Attribute> Get(const Property prop) const;
+	std::shared_ptr<const Attribute> Get(const std::string& prop) const;
 
 	//! Gets the specified property.
 	//! \param prop The property to get.
 	//! \return A pointer to the attribute.
 	std::shared_ptr<Attribute> Get(const Property prop);
+	std::shared_ptr<Attribute> Get(const std::string& prop);
 
 private:
 	void create();
