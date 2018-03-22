@@ -2,6 +2,7 @@
 
 #include "engine/common.h"
 #include "engine/filesystem/FileSystem.h"
+#include "engine/scene/ObjectClass.h"
 
 namespace tdrp::package
 {
@@ -30,9 +31,20 @@ public:
 		return m_filesystem;
 	}
 
+	//! Returns an object class from this package.
+	std::shared_ptr<ObjectClass> GetObjectClass(const std::string objectClass);
+
+	//! Returns the next SceneObject ID.
+	uint32_t GetNextID()
+	{
+		return ++m_sceneobject_id;
+	}
+
 private:
 	std::string m_name;
 	fs::FileSystem m_filesystem;
+	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
+	uint32_t m_sceneobject_id;
 };
 
 } // end namespace tdrp::package

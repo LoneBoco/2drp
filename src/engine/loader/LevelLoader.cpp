@@ -6,10 +6,14 @@
 
 #include <pugixml.hpp>
 
+#include <boost/range/algorithm_ext.hpp>
+
 using namespace tdrp::scene;
 
 namespace tdrp::loader
 {
+
+const std::string base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
 std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& package, const std::string level)
 {
@@ -51,8 +55,32 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 			{
 				for (auto& object : sceneobjects)
 				{
-					std::string type = object.attribute("type").as_string("default");
 					std::string scriptclass = object.attribute("class").as_string();
+					auto c = package.GetObjectClass(scriptclass);
+					if (c == nullptr)
+						c = package.GetObjectClass("blank");
+
+					uint32_t id = package.GetNextID();
+
+					// Get the type of scene object we are loading.
+					std::string type = object.attribute("type").as_string("default");
+					SceneObjectType sotype = SceneObjectType::DEFAULT;
+					if (boost::iequals(type, "static"))
+						sotype = SceneObjectType::STATIC;
+					else if (boost::iequals(type, "animated"))
+						sotype = SceneObjectType::ANIMATED;
+					else if (boost::iequals(type, "tiled"))
+						sotype = SceneObjectType::TILED;
+
+					// Create our scene object.
+					std::shared_ptr<SceneObject> so = nullptr;
+					switch (sotype)
+					{
+						case SceneObjectType::STATIC: so = std::make_shared<StaticSceneObject>(c, id); break;
+						case SceneObjectType::ANIMATED: so = std::make_shared<AnimatedSceneObject>(c, id); break;
+						case SceneObjectType::TILED: so = std::make_shared<TiledSceneObject>(c, id); break;
+						default: so = std::make_shared<SceneObject>(c, id); break;
+					}
 
 					// Load all properties.
 					for (auto& prop : object.children("property"))
@@ -60,7 +88,65 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
+						so->Properties.Get(name)->SetAsType(Attribute::TypeFromString(type), value);
 					}
+
+					// Load all attributes.
+					for (auto& prop : object.children("attribute"))
+					{
+						std::string name = prop.attribute("name").as_string();
+						std::string type = prop.attribute("type").as_string();
+						std::string value = prop.attribute("value").as_string();
+						so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
+					}
+
+					// Load custom features.
+					if (sotype == SceneObjectType::TILED)
+					{
+						auto sop = so.get();
+						TiledSceneObject* tiled_so = dynamic_cast<TiledSceneObject*>(sop);
+						auto& tileset = object.child("tileset");
+						auto& tiledata = object.child("tiledata");
+
+						// Tileset
+						{
+							int width = tileset.attribute("tile_w").as_int();
+							int height = tileset.attribute("tile_h").as_int();
+							std::string file = tileset.attribute("file").as_string();
+							tiled_so->Tileset_File = file;
+							tiled_so->Tileset_Tile_Dimension.x = width;
+							tiled_so->Tileset_Tile_Dimension.y = height;
+						}
+
+						// Tiles
+						{
+							int width = tiledata.attribute("width").as_int();
+							int height = tiledata.attribute("height").as_int();
+							std::string tiles{ tiledata.text().get() };
+							boost::remove_erase_if(tiles, boost::is_any_of(" \t\r\n"));
+
+							tiled_so->Tile_Dimension.x = width;
+							tiled_so->Tile_Dimension.y = height;
+
+							if (tiles.size() == (width * height * 2))
+							{
+								tiled_so->Tile_Data.clear();
+								tiled_so->Tile_Data.reserve(width * height * 2);
+								for (size_t i = 0; i < tiles.size(); i += 2)
+								{
+									uint16_t tile = (base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]);
+									uint8_t x = ((tile / 512) * 16) + tile % 16;
+									uint8_t y = (tile % 512) / 16;
+
+									tiled_so->Tile_Data.push_back(x);
+									tiled_so->Tile_Data.push_back(y);
+								}
+							}
+						}
+					}
+
+					// Add the object to the scene.
+					scene->AddObject(so);
 				}
 			}
 		}
