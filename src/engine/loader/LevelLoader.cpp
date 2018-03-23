@@ -4,6 +4,8 @@
 #include "engine/filesystem/FileSystem.h"
 #include "engine/scene/SceneObject.h"
 
+#include "engine/helper/base64.h"
+
 #include <pugixml.hpp>
 
 #include <boost/range/algorithm_ext.hpp>
@@ -12,8 +14,6 @@ using namespace tdrp::scene;
 
 namespace tdrp::loader
 {
-
-const std::string base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
 
 std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& package, const std::string level)
 {
@@ -122,24 +122,46 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 						{
 							int width = tiledata.attribute("width").as_int();
 							int height = tiledata.attribute("height").as_int();
-							std::string tiles{ tiledata.text().get() };
-							boost::remove_erase_if(tiles, boost::is_any_of(" \t\r\n"));
+							std::string format = tiledata.attribute("format").as_string();
 
+							tiled_so->Tile_Data.clear();
 							tiled_so->Tile_Dimension.x = width;
 							tiled_so->Tile_Dimension.y = height;
 
-							if (tiles.size() == (width * height * 2))
-							{
-								tiled_so->Tile_Data.clear();
-								tiled_so->Tile_Data.reserve(width * height * 2);
-								for (size_t i = 0; i < tiles.size(); i += 2)
-								{
-									uint16_t tile = (base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]);
-									uint8_t x = ((tile / 512) * 16) + tile % 16;
-									uint8_t y = (tile % 512) / 16;
+							bool tdrp_format = true;
+							if (boost::iequals(format, "graalnw"))
+								tdrp_format = false;
 
-									tiled_so->Tile_Data.push_back(x);
-									tiled_so->Tile_Data.push_back(y);
+							if (tdrp_format)
+							{
+								std::vector<uint8_t> tiles = base64::from(tiledata.text().get());
+								if (tiles.size() == (width * height * 2))
+								{
+									for (size_t i = 0; i < tiles.size(); i += 2)
+									{
+										tiled_so->Tile_Data.push_back(tiles[i]);
+										tiled_so->Tile_Data.push_back(tiles[i + 1]);
+									}
+								}
+							}
+							else
+							{
+								const std::string base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+								std::string tiles{ tiledata.text().get() };
+								boost::remove_erase_if(tiles, boost::is_space());
+
+								if (tiles.size() == (width * height * 2))
+								{
+									tiled_so->Tile_Data.reserve(width * height * 2);
+									for (size_t i = 0; i < tiles.size(); i += 2)
+									{
+										uint16_t tile = (uint16_t)((base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]));
+										uint8_t x = ((tile / 512) * 16) + tile % 16;
+										uint8_t y = (tile % 512) / 16;
+
+										tiled_so->Tile_Data.push_back(x);
+										tiled_so->Tile_Data.push_back(y);
+									}
 								}
 							}
 						}
