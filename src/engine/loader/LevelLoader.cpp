@@ -53,7 +53,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 			// Load all of our scene objects.
 			for (auto& sceneobjects : chunkdoc.children("sceneobjects"))
 			{
-				for (auto& object : sceneobjects)
+				for (auto& object : sceneobjects.children("object"))
 				{
 					std::string scriptclass = object.attribute("class").as_string();
 					auto c = package.GetObjectClass(scriptclass);

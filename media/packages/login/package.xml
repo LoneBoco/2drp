@@ -1,0 +1,6 @@
+<package name="Login" version="1.0">
+	<logo file="logo.png" />
+	<description>Login package for online play.</description>
+	<objectclass file="classes.xml" />
+	<clientscript file="client.js" />
+</package>

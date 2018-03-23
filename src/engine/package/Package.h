@@ -4,11 +4,18 @@
 #include "engine/filesystem/FileSystem.h"
 #include "engine/scene/ObjectClass.h"
 
+namespace tdrp::loader
+{
+	class PackageLoader;
+}
+
 namespace tdrp::package
 {
 
 class Package
 {
+	friend class loader::PackageLoader;
+
 public:
 	Package(const std::string& name);
 	~Package() = default;
@@ -17,6 +24,12 @@ public:
 	inline const std::string GetName() const
 	{
 		return m_name;
+	}
+
+	//! Gets the package description.
+	inline const std::string GetDescription() const
+	{
+		return m_description;
 	}
 
 	//! Gets the base path for this package.
@@ -42,6 +55,7 @@ public:
 
 private:
 	std::string m_name;
+	std::string m_description;
 	fs::FileSystem m_filesystem;
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	uint32_t m_sceneobject_id;
