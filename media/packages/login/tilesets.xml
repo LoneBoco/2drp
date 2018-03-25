@@ -1,0 +1,6 @@
+<tilesets>
+	<tileset>
+		<file>pics1.png</file>
+		<tiledimension x="16" y="16" />
+	</tileset>
+</tilesets>

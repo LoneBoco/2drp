@@ -15,6 +15,7 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 
 	auto package = std::make_shared<package::Package>(name);
 	std::string object_class_file{ "classes.xml" };
+	std::string tileset_file{ "tilesets.xml" };
 	std::string client_script_file{ "client.js" };
 
 	// Create our default "blank" class.
@@ -36,6 +37,7 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 			auto node_logo = node_package.child("logo");
 			auto node_desc = node_package.child("description");
 			auto node_objectclass = node_package.child("objectclass");
+			auto node_tileset = node_package.child("tileset");
 			auto node_clientscript = node_package.child("clientscript");
 
 			//if (!node_logo.empty())
@@ -44,6 +46,8 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 				package->m_description = node_desc.text().get();
 			if (!node_objectclass.empty())
 				object_class_file = node_objectclass.attribute("file").as_string();
+			if (!node_tileset.empty())
+				tileset_file = node_tileset.attribute("file").as_string();
 			if (!node_clientscript.empty())
 				client_script_file = node_clientscript.attribute("file").as_string();
 		}
@@ -97,6 +101,40 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 				}
 
 				package->m_object_classes.insert(std::make_pair(classname, pc));
+			}
+		}
+	}
+
+	// Load our tilesets.
+	auto tilesets = package->GetFileSystem().GetFile(tileset_file);
+	if (tilesets != nullptr)
+	{
+		pugi::xml_document doc;
+		doc.load(*tilesets);
+
+		for (auto& node_tilesets : doc.children("tilesets"))
+		{
+			for (auto& node_tileset : node_tilesets.children("tileset"))
+			{
+				auto t = std::make_shared<scene::Tileset>();
+
+				// File.
+				// TODO: Throw error if empty.
+				auto& node_file = node_tileset.child("file");
+				if (node_file.empty())
+					continue;
+
+				t->File = node_file.text().get();
+
+				// Tile dimensions.
+				auto& node_tiledimension = node_tileset.child("tiledimension");
+				if (!node_tiledimension.empty())
+				{
+					t->TileDimensions.x = std::max(16, node_tiledimension.attribute("x").as_int());
+					t->TileDimensions.y = std::max(16, node_tiledimension.attribute("y").as_int());
+				}
+
+				package->m_tilesets.insert(std::make_pair(t->File, t));
 			}
 		}
 	}

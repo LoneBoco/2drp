@@ -8,9 +8,10 @@
 #include "engine/common.h"
 
 // #include "Managers/CPhysicsManager.h"
-#include "ObjectClass.h"
-#include "ObjectAttributes.h"
-#include "ObjectProperties.h"
+#include "engine/scene/ObjectClass.h"
+#include "engine/scene/ObjectAttributes.h"
+#include "engine/scene/ObjectProperties.h"
+#include "engine/scene/Tileset.h"
 
 namespace tdrp
 {
@@ -379,10 +380,9 @@ public:
 		return SceneObjectType::TILED;
 	}
 
-	std::string Tileset_File;
-	Vector2di Tileset_Tile_Dimension;
-	Vector2di Tile_Dimension;
-	std::vector<char> Tile_Data;
+	Vector2di Dimension;
+	std::vector<char> TileData;
+	std::shared_ptr<scene::Tileset> Tileset;
 };
 
 } // end namespace tdrp

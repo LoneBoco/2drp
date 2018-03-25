@@ -4,7 +4,7 @@
 		<property name="x" type="float" value="0.0" />
 		<property name="y" type="float" value="0.0" />
 		<property name="z" type="float" value="5000.0" />
-		<tileset tile_w="16" tile_h="16" file="pics1.png" />
+		<tileset file="pics1.png" />
 		<tiledata width="64" height="64" format="graalnw">
 			DADBALAMANAOAAABAYAZAaAbAcAdAeAff/BIBJBKBLBMBNBOBJBKBLBMBNBOBPf/AAABAoApAqArAsAtAuAvf/f/+4+5f/f/f/AAABf/B4B5B6DQAZAaAbAcAdAeAZAa
 			AZAaAbAcAdAeAff/AoApAqArAsAtAuAv0RBYBZBaBbBcBdBeBZBaBbBcBdBeBfAAABAQA4A5A6A7A8A9A+A/f/f//I/J5+5/ACADACADf/CJCKDgApAqArAsAtAuApAq

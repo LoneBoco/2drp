@@ -108,14 +108,14 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 						auto& tileset = object.child("tileset");
 						auto& tiledata = object.child("tiledata");
 
+						// TODO: Throw error.
+						if (tileset.empty() || tiledata.empty())
+							continue;
+
 						// Tileset
 						{
-							int width = tileset.attribute("tile_w").as_int();
-							int height = tileset.attribute("tile_h").as_int();
 							std::string file = tileset.attribute("file").as_string();
-							tiled_so->Tileset_File = file;
-							tiled_so->Tileset_Tile_Dimension.x = width;
-							tiled_so->Tileset_Tile_Dimension.y = height;
+							tiled_so->Tileset = package.GetTileset(file);
 						}
 
 						// Tiles
@@ -124,9 +124,9 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 							int height = tiledata.attribute("height").as_int();
 							std::string format = tiledata.attribute("format").as_string();
 
-							tiled_so->Tile_Data.clear();
-							tiled_so->Tile_Dimension.x = width;
-							tiled_so->Tile_Dimension.y = height;
+							tiled_so->TileData.clear();
+							tiled_so->Dimension.x = width;
+							tiled_so->Dimension.y = height;
 
 							bool tdrp_format = true;
 							if (boost::iequals(format, "graalnw"))
@@ -139,8 +139,8 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 								{
 									for (size_t i = 0; i < tiles.size(); i += 2)
 									{
-										tiled_so->Tile_Data.push_back(tiles[i]);
-										tiled_so->Tile_Data.push_back(tiles[i + 1]);
+										tiled_so->TileData.push_back(tiles[i]);
+										tiled_so->TileData.push_back(tiles[i + 1]);
 									}
 								}
 							}
@@ -152,15 +152,15 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 
 								if (tiles.size() == (width * height * 2))
 								{
-									tiled_so->Tile_Data.reserve(width * height * 2);
+									tiled_so->TileData.reserve(width * height * 2);
 									for (size_t i = 0; i < tiles.size(); i += 2)
 									{
 										uint16_t tile = (uint16_t)((base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]));
 										uint8_t x = ((tile / 512) * 16) + tile % 16;
 										uint8_t y = (tile % 512) / 16;
 
-										tiled_so->Tile_Data.push_back(x);
-										tiled_so->Tile_Data.push_back(y);
+										tiled_so->TileData.push_back(x);
+										tiled_so->TileData.push_back(y);
 									}
 								}
 							}
