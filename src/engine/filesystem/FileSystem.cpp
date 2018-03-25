@@ -45,7 +45,7 @@ void FileSystem::bind(const filesystem::path& directory)
 
 		// Check if the directory is in the exclusion list.
 		if (isExcluded(path))
-			return;
+			continue;
 
 		m_files.insert(std::make_pair(path.filename(), path.parent_path()));
 	}
@@ -66,9 +66,10 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 		auto iter = m_files.find(file);
 		if (iter != m_files.end())
 		{
-			if (filesystem::exists(iter->second))
+			filesystem::path fullfile = iter->second / iter->first;
+			if (filesystem::exists(fullfile))
 			{
-				auto f = std::make_shared<File>(file);
+				auto f = std::make_shared<File>(fullfile);
 				return f;
 			}
 		}
