@@ -1,0 +1,43 @@
+-------------------------------
+| SceneObject                 |
+-------------------------------
+
+Each entity in the game, players and npcs alike, is a SceneObject.
+
+Each SceneObject is constructed from an ObjectClass.  An ObjectClass has its own script and its own attributes.  Think of the ObjectClass as the prototype in JavaScript.  The SceneObject will inherit everything from it.
+
+SceneObject also has its own personal script and attributes.  The SceneObject will start with the attributes from the ObjectClass, and it will have two scripts.  The ObjectClass script should run first, then the SceneObject's script.
+
+There are currently four types of SceneObject: basic, StaticSceneObject, AnimatedSceneObject, and TiledSceneObject.  A basic SceneObject will not be rendered.  A StaticSceneObject will be a static image.  An AnimatedSceneObject will contain animation data.  A TiledSceneObject will be tiled level data.
+
+A new SceneObject can only be created with server-side script.
+
+Players take direct control of a SceneObject.  The server will spawn a new SceneObject for the player and give him control over it.
+
+
+
+-------------------------------
+| ObjectClass                 |
+-------------------------------
+
+An ObjectClass is a representation of an object.  Each SceneObject is built from an ObjectClass.  An ObjectClass provides a default script for the SceneObject (a SceneObject can include its own script if it wishes.)  It also provides the default starting attributes of a SceneObject.
+
+An ObjectClass can only be created and modified in the server configuration script.  The idea is that they represent an immutable aspect of every SceneObject that derives from it.  Changing an ObjectClass on the server should cascade its effects down to every SceneObject.
+
+
+
+-------------------------------
+| Attributes                  |
+-------------------------------
+
+A attribute is an integer, float point number, or string that is referenced by a name.  An ObjectClass will typically have a bunch of attributes bound to it.  Attributes are synchronized between all clients on the server.  For an example, an ObjectClass named Player is created.  Next, an integer attribute with the name "HP" is assigned to the Player object class.  Now, each SceneObject derived from Player will have an HP attribute that can be read by each client on the server.
+
+As a SceneObject will inherit the attributes of the ObjectClass it is derived from, server/client scripts can read/write the attributes of a SceneObject.
+
+
+
+-------------------------------
+| Properties                  |
+-------------------------------
+
+Properties are pre-defined attributes that belong to every SceneObject.  They are things like position, scale, rotation, level, etc.  They act the same as attributes, but they cannot be deleted from a SceneObject.

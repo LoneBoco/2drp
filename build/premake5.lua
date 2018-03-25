@@ -120,10 +120,8 @@ project "2drp"
 	-- 	postbuildcommands { "cp \"" .. os.getenv("AWE_DIR") .. "build/bin/*\" \"" .. getAbsoluteFromSolution(stargetdir) .. "/\"" }
 
 	-- Per-platform libraries.
-	-- filter "system:windows"
-	-- 	links { "ws2_32" }
-	-- filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-	-- 	links { "GL", "Xxf86vm", "boost_filesystem", "boost_thread" }
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread" }
 
 	-- Library directories.
 	-- filter { "system:windows", "platforms:native" }
