@@ -22,13 +22,13 @@ public:
 	~Package() = default;
 
 	//! Gets the package name.
-	inline const std::string GetName() const
+	inline const std::string& GetName() const
 	{
 		return m_name;
 	}
 
 	//! Gets the package description.
-	inline const std::string GetDescription() const
+	inline const std::string& GetDescription() const
 	{
 		return m_description;
 	}
@@ -46,7 +46,7 @@ public:
 	}
 
 	//! Returns the next SceneObject ID.
-	uint32_t GetNextID()
+	const uint32_t GetNextID()
 	{
 		return ++m_sceneobject_id;
 	}

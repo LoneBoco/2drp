@@ -13,7 +13,7 @@ public:
 	LevelLoader() = default;
 	~LevelLoader() = default;
 
-	static std::shared_ptr<tdrp::scene::Scene> CreateScene(package::Package& package, const std::string level);
+	static std::shared_ptr<tdrp::scene::Scene> CreateScene(package::Package& package, const std::string& level);
 
 private:
 };

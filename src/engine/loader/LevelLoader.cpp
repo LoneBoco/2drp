@@ -15,7 +15,7 @@ using namespace tdrp::scene;
 namespace tdrp::loader
 {
 
-std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& package, const std::string level)
+std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& package, const std::string& level)
 {
 	auto base = package.GetBasePath();
 	auto scene = std::make_shared<Scene>();
