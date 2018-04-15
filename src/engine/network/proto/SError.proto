@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SError
+{
+	string message = 1;
+}
