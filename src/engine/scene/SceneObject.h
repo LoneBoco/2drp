@@ -19,7 +19,7 @@ namespace tdrp
 //! The type of a scene object.
 enum class SceneObjectType
 {
-	DEFAULT,
+	DEFAULT = 0,
 	STATIC,
 	ANIMATED,
 	TILED,
@@ -257,7 +257,7 @@ public:
 	//! Returns if the object is global or not.
 	bool IsGlobal()
 	{
-		return (ID & 0x80000000) != 0;
+		return (ID & 0x80'00'00'00) != 0;
 	}
 
 	//! ID

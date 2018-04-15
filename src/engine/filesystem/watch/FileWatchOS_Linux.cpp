@@ -1,3 +1,5 @@
+#ifdef TDRP_LINUX
+
 #include "FileWatch.h"
 
 #include <sys/stat.h>
@@ -151,3 +153,5 @@ void FileWatch::Update()
 /////////////////////////////
 
 } // end namespace tdrp::fs::watch
+
+#endif // TDRP_LINUX

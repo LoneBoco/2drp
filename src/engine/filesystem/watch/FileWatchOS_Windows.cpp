@@ -1,3 +1,5 @@
+#ifdef TDRP_WINDOWS
+
 #include "FileWatch.h"
 
 #include <atomic>
@@ -230,3 +232,5 @@ void FileWatch::Update()
 /////////////////////////////
 
 } // end namespace tdrp::fs::watch
+
+#endif // TDRP_WINDOWS

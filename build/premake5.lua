@@ -42,6 +42,14 @@ workspace "2drp"
 	filter { "system:windows", "platforms:x64" }
 		defines { "WIN64", "_WIN64" }
 
+	-- OS defines
+	filter "system:windows"
+		defines { "TDRP_WINDOWS" }
+	filter "system:linux"
+		defines { "TDRP_LINUX" }
+	filter "system:macosx"
+		defines { "TDRP_MACOSX" }
+
 project "2drp"
 	-- kind "ConsoleApp"
 	kind "WindowedApp"
@@ -54,7 +62,6 @@ project "2drp"
 
 	files { "../src/**" }
 	removefiles { "../src/server/**" }
-	removefiles { "../src/engine/filesystem/watch/FileWatchOS_*" }
 	includedirs { "../src" }
 
 	-- Libraries.
@@ -104,12 +111,6 @@ project "2drp"
 	filter { "system:windows", "platforms:x64" }
 		libdirs "../dependencies/sdl/lib/x64/"
 
-	-- Handle file watch properly.
-	filter { "system:windows" }
-		files { "../src/engine/filesystem/watch/FileWatchOS_Windows*" }
-	filter { "system:linux" }
-		files { "../src/engine/filesystem/watch/FileWatchOS_Linux*" }
-
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
 	-- libdirs { os.getenv("AWE_DIR") .. "build/lib" }
@@ -146,7 +147,6 @@ project "2drp_server"
 
 	files { "../src/**" }
 	removefiles { "../src/client/**" }
-	removefiles { "../src/engine/filesystem/watch/FileWatchOS_*" }
 	includedirs { "../src" }
 
 	-- Libraries.
@@ -174,12 +174,6 @@ project "2drp_server"
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
-
-	-- Handle file watch properly.
-	filter { "system:windows" }
-		files { "../src/engine/filesystem/watch/FileWatchOS_Windows*" }
-	filter { "system:linux" }
-		files { "../src/engine/filesystem/watch/FileWatchOS_Linux*" }
 
 project "bgfx"
 	kind "StaticLib"
@@ -297,7 +291,7 @@ project "bzip2"
 		"../dependencies/bzip2/dlltest.c",
 		"../dependencies/bzip2/mk251.c",
 		"../dependencies/bzip2/spewG.c",
-		"../dependencies/bzip2/unzcrash.c"
+		"../dependencies/bzip2/unzcrash.c",
 	}
 
 project "zlib"
@@ -306,6 +300,8 @@ project "zlib"
 	location "projects"
 	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
 	includedirs { "../dependencies/zlib/" }
+	filter "toolset:msc*"
+		disablewarnings { "4996" }
 
 project "enet"
 	kind "StaticLib"
