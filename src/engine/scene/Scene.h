@@ -15,6 +15,11 @@ public:
 	Scene() = default;
 	~Scene() = default;
 
+	Scene(const Scene& other) = delete;
+	Scene(Scene&& other) = delete;
+	Scene& operator=(const Scene& other) = delete;
+	Scene& operator=(Scene&& other) = delete;
+
 	uint32_t AddObject(std::shared_ptr<SceneObject> so);
 	bool RemoveObject(std::shared_ptr<SceneObject> so);
 

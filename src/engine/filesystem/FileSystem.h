@@ -18,6 +18,11 @@ public:
 	FileSystem() = default;
 	~FileSystem() = default;
 
+	FileSystem(const FileSystem& other) = delete;
+	FileSystem(FileSystem&& other) = delete;
+	FileSystem& operator=(const FileSystem& other) = delete;
+	FileSystem& operator=(FileSystem&& other) = delete;
+
 	//! Binds to a directory.
 	//! \param directory The directory to bind to.
 	//! \param exclude_dirs A list of directories to exclude.  Will be pattern matched like *exclude_dir*

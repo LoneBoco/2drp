@@ -28,6 +28,9 @@ public:
 	Attribute(Attribute&& o) : m_id(o.m_id), m_type(o.m_type), m_isDirty(false), m_value_int(o.m_value_int), m_value_float(o.m_value_float), m_value_double(o.m_value_double), m_value_string(std::move(o.m_value_string)) {}
 	~Attribute() {}
 
+	Attribute& operator=(const Attribute& other) = delete;
+	Attribute& operator=(Attribute&& other) = delete;
+
 	Attribute& Set(const int64_t value)
 	{
 		if (m_type != AttributeType::SIGNED || m_value_int.s != value)
@@ -299,10 +302,12 @@ class ObjectAttributes
 {
 public:
 	ObjectAttributes() : m_cid(0) {}
-	ObjectAttributes(const ObjectAttributes& props);
 	~ObjectAttributes();
 
-	void operator=(const ObjectAttributes& prop);
+	ObjectAttributes(const ObjectAttributes& other);
+	ObjectAttributes(ObjectAttributes&& other) = delete;
+	ObjectAttributes& operator=(const ObjectAttributes& other);
+	ObjectAttributes& operator=(ObjectAttributes&& other) = delete;
 
 	//! Adds an attribute or changes the type of an existing one.
 	//! \param name The name of the attribute.

@@ -11,6 +11,11 @@ public:
 	ProgramSettings() = default;
 	~ProgramSettings() = default;
 
+	ProgramSettings(const ProgramSettings& other) = delete;
+	ProgramSettings(ProgramSettings&& other) = delete;
+	ProgramSettings& operator=(const ProgramSettings& other) = delete;
+	ProgramSettings& operator=(ProgramSettings&& other) = delete;
+
 	bool LoadFromFile(const filesystem::path& filename);
 	// bool WriteToFile(const io::path& filename, io::IFileSystem* FileSystem);
 

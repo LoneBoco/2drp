@@ -21,10 +21,10 @@ AttributeType Attribute::TypeFromString(const std::string& type)
 	return AttributeType::INVALID;
 }
 
-ObjectAttributes::ObjectAttributes(const ObjectAttributes& props)
+ObjectAttributes::ObjectAttributes(const ObjectAttributes& other)
 : m_cid(0)
 {
-	for (auto i = props.m_attributes.begin(); i != props.m_attributes.end(); ++i)
+	for (auto i = other.m_attributes.begin(); i != other.m_attributes.end(); ++i)
 	{
 		uint16_t id = i->first;
 		std::shared_ptr<Attribute> a = i->second;
@@ -60,11 +60,11 @@ ObjectAttributes::~ObjectAttributes()
 }
 
 
-void ObjectAttributes::operator=(const ObjectAttributes& props)
+ObjectAttributes& ObjectAttributes::operator=(const ObjectAttributes& other)
 {
 	m_attributes.clear();
 
-	for (auto i = props.m_attributes.begin(); i != props.m_attributes.end(); ++i)
+	for (auto i = other.m_attributes.begin(); i != other.m_attributes.end(); ++i)
 	{
 		uint16_t id = i->first;
 		std::shared_ptr<Attribute> a = i->second;
@@ -92,6 +92,8 @@ void ObjectAttributes::operator=(const ObjectAttributes& props)
 				break;
 		}
 	}
+
+	return *this;
 }
 
 std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, uint16_t id)

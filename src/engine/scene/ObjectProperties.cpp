@@ -14,19 +14,19 @@ ObjectProperties::ObjectProperties()
 	create();
 }
 
-ObjectProperties::ObjectProperties(const ObjectProperties& properties)
+ObjectProperties::ObjectProperties(const ObjectProperties& other)
 {
 	create();
-	clone(properties);
+	clone(other);
 }
 
 ObjectProperties::~ObjectProperties()
 {
 }
 
-ObjectProperties& ObjectProperties::operator=(const ObjectProperties& properties)
+ObjectProperties& ObjectProperties::operator=(const ObjectProperties& other)
 {
-	clone(properties);
+	clone(other);
 	return *this;
 }
 

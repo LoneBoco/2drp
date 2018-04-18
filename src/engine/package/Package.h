@@ -21,6 +21,11 @@ public:
 	Package(const std::string& name);
 	~Package() = default;
 
+	Package(const Package& other) = delete;
+	Package(Package&& other) = delete;
+	Package& operator=(const Package& other) = delete;
+	Package& operator=(Package&& other) = delete;
+
 	//! Gets the package name.
 	inline const std::string& GetName() const
 	{

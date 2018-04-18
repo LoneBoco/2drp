@@ -10,15 +10,14 @@ namespace tdrp
 class ObjectClass
 {
 public:
-	//! Constructor.
-	ObjectClass(const std::string& name) : m_name(name)
-	{
-	}
+	ObjectClass() = delete;
+	ObjectClass(const std::string& name) : m_name(name) {}
+	~ObjectClass() = default;
 
-	//! Destructor.
-	~ObjectClass()
-	{
-	}
+	ObjectClass(const ObjectClass& other) = delete;
+	ObjectClass(ObjectClass&& other) = delete;
+	ObjectClass& operator=(const ObjectClass& other) = delete;
+	ObjectClass& operator=(ObjectClass&& other) = delete;
 
 	//! Gets the name of the object class.
 	//! \return The name of the object class.

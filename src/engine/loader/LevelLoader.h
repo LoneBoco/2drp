@@ -13,6 +13,11 @@ public:
 	LevelLoader() = default;
 	~LevelLoader() = default;
 
+	LevelLoader(const LevelLoader& other) = delete;
+	LevelLoader(LevelLoader&& other) = delete;
+	LevelLoader& operator=(const LevelLoader& other) = delete;
+	LevelLoader& operator=(LevelLoader&& other) = delete;
+
 	static std::shared_ptr<tdrp::scene::Scene> CreateScene(package::Package& package, const std::string& level);
 
 private:

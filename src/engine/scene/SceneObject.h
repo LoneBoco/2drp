@@ -170,6 +170,12 @@ public:
 	//! Destructor.
 	virtual ~SceneObject();
 
+	SceneObject() = delete;
+	SceneObject(const SceneObject& other) = delete;
+	SceneObject(SceneObject&& other) = delete;
+	SceneObject& operator=(const SceneObject& other) = delete;
+	SceneObject& operator=(SceneObject&& other) = delete;
+
 	//! Gets the class of the object.
 	//! \return A weak pointer to a const class.
 	std::weak_ptr<const ObjectClass> GetClass() const

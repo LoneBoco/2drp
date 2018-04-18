@@ -24,6 +24,11 @@ public:
 	FileWatch();
 	~FileWatch();
 
+	FileWatch(const FileWatch& other) = delete;
+	FileWatch(FileWatch&& other) = delete;
+	FileWatch& operator=(const FileWatch& other) = delete;
+	FileWatch& operator=(FileWatch&& other) = delete;
+
 	uint32_t Add(const filesystem::path& directory, watch_cb callback, bool recursive = true);
 	void Remove(const filesystem::path& directory);
 	void Remove(uint32_t watch_id);

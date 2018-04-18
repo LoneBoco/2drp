@@ -10,7 +10,7 @@ namespace tdrp::fs
 File::File(const filesystem::path& file)
 	: m_file(file)
 {
-	m_stream = std::make_unique<std::ifstream>(file, std::ios::binary);
+	openStream();
 }
 
 File::File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream)
@@ -91,6 +91,14 @@ void File::SetReadPosition(const std::streampos& position)
 {
 	if (m_stream->is_open())
 		m_stream->seekg(position);
+}
+
+void File::openStream()
+{
+	if (m_stream)
+		m_stream->close();
+
+	m_stream = std::make_unique<std::ifstream>(m_file, std::ios::binary);
 }
 
 } // end namespace tdrp::fs

@@ -33,10 +33,13 @@ class ObjectProperties
 {
 public:
 	ObjectProperties();
-	ObjectProperties(const ObjectProperties& properties);
+	ObjectProperties(const ObjectProperties& other);
 	~ObjectProperties();
 
-	ObjectProperties& operator=(const ObjectProperties& properties);
+	ObjectProperties(ObjectProperties&& other) = delete;
+	ObjectProperties& operator=(ObjectProperties&& other) = delete;
+
+	ObjectProperties& operator=(const ObjectProperties& other);
 	const Attribute& operator[](const Property prop) const;
 	Attribute& operator[](const Property prop);
 

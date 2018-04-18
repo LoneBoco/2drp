@@ -11,9 +11,32 @@ namespace tdrp::fs
 class File
 {
 public:
+	File() = delete;
 	File(const filesystem::path& file);
 	File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream);
 	~File();
+
+	File(const File& other) : File(other.m_file)
+	{
+		SetReadPosition(other.GetReadPosition());
+	}
+
+	File(File&& other) : m_file(std::move(other.m_file))
+	{
+		m_stream.swap(other.m_stream);
+	}
+
+	File& operator=(const File& other)
+	{
+		m_file = other.m_file;
+		openStream();
+	}
+
+	File& operator=(File&& other)
+	{
+		std::swap(m_file, other.m_file);
+		std::swap(m_stream, other.m_stream);
+	}
 
 	//! Converts directly into an ifstream.
 	operator std::ifstream&() const
@@ -66,6 +89,8 @@ public:
 	}
 
 protected:
+	void openStream();
+
 	filesystem::path m_file;
 	mutable std::unique_ptr<std::ifstream> m_stream;
 };

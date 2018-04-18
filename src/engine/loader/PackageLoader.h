@@ -12,6 +12,11 @@ public:
 	PackageLoader() = default;
 	~PackageLoader() = default;
 
+	PackageLoader(const PackageLoader& other) = delete;
+	PackageLoader(PackageLoader&& other) = delete;
+	PackageLoader& operator=(const PackageLoader& other) = delete;
+	PackageLoader& operator=(PackageLoader&& other) = delete;
+
 	static std::shared_ptr<package::Package> CreatePackage(const std::string& name);
 };
 
