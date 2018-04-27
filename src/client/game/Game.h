@@ -26,13 +26,6 @@ public:
 	settings::ProgramSettings Settings;
 	network::Network Network;
 	std::shared_ptr<package::Package> Package;
-
-private:
-
-	void network_connect(const uint16_t id, ENetEvent& event);
-	void network_disconnect(const uint16_t id, ENetEvent& event);
-	void network_receive(const uint16_t id, ENetEvent& event);
-
 };
 
 } // end namespace tdrp

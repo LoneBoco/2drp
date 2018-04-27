@@ -88,16 +88,16 @@ void Network::Update()
 		if (event.type == ENET_EVENT_TYPE_NONE)
 			continue;
 
-		uint32_t id = 0;
+		uint16_t id = 0;
 		auto peer = std::find(m_peers.begin(), m_peers.end(), event.peer);
 		if (peer != m_peers.end())
-			id = static_cast<uint32_t>(std::distance(m_peers.begin(), peer));
+			id = static_cast<uint16_t>(std::distance(m_peers.begin(), peer));
 
 		// New peer with unused id.
 		if (event.type == ENET_EVENT_TYPE_CONNECT && peer == m_peers.end())
 		{
 			m_peers.push_back(event.peer);
-			id = m_peers.size() - 1;
+			id = static_cast<uint16_t>(m_peers.size() - 1);
 		}
 
 		// Sanity check.
@@ -109,19 +109,22 @@ void Network::Update()
 		{
 			case ENET_EVENT_TYPE_CONNECT:
 				if (m_connect_cb)
-					m_connect_cb(id, event);
+					m_connect_cb(id);
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
 				if (m_disconnect_cb)
-					m_disconnect_cb(id, event);
+					m_disconnect_cb(id);
 
 				event.peer->data = nullptr;
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				if (m_receive_cb && event.packet != nullptr && event.packet->dataLength != 0)
-					m_receive_cb(id, event);
+				if (m_receive_cb && event.packet != nullptr && event.packet->dataLength >= 2)
+				{
+					uint16_t packet_id = static_cast<uint16_t>(event.packet->data[0] & 0xFF | event.packet->data[1] << 8);
+					m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+				}
 
 				enet_packet_destroy(event.packet);
 				break;

@@ -1,0 +1,48 @@
+#include "client/network/PacketHandler.h"
+
+#include "client/game/Game.h"
+
+#include "engine/network/PacketID.h"
+#include "engine/network/packets/SError.pb.h"
+
+namespace tdrp::handlers
+{
+
+void network_connect(Game& game, const uint16_t peer_id)
+{
+}
+
+void network_disconnect(Game& game, const uint16_t peer_id)
+{
+}
+
+void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
+{
+	// Grab our packet id.
+	ServerPackets packet = static_cast<ServerPackets>(packet_id);
+	switch (packet)
+	{
+		case ServerPackets::ERROR:
+			handle(game, construct<packet::SError>(packet_data, packet_length));
+			break;
+	}
+}
+
+/////////////////////////////
+
+template <class T>
+T construct(const uint8_t* const packet_data, const size_t packet_length)
+{
+	T packet;
+	packet.ParseFromArray(packet_data, packet_length);
+	return packet;
+}
+
+/////////////////////////////
+
+void handle(Game& game, packet::SError& packet)
+{
+	std::string msg = packet.message();
+}
+
+} // end namespace tdrp::handlers

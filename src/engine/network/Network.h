@@ -14,7 +14,11 @@ struct enet_host_deleter
 	void operator()(ENetHost* host) const { enet_host_destroy(host); }
 };
 
-typedef std::function<void(const uint16_t, ENetEvent&)> enet_cb;
+//! Peer ID
+typedef std::function<void(const uint16_t)> enet_connection_cb;
+
+//! Peer ID, Packet ID, Packet Data, Packet Length
+typedef std::function<void(const uint16_t, const uint16_t, const uint8_t* const, const size_t)> enet_receive_cb;
 
 enum class Channel
 {
@@ -39,17 +43,17 @@ public:
 
 	void Update();
 
-	void SetConnectCallback(enet_cb callback)
+	void SetConnectCallback(enet_connection_cb callback)
 	{
 		m_connect_cb = callback;
 	}
 
-	void SetDisconnectCallback(enet_cb callback)
+	void SetDisconnectCallback(enet_connection_cb callback)
 	{
 		m_disconnect_cb = callback;
 	}
 
-	void SetReceiveCallback(enet_cb callback)
+	void SetReceiveCallback(enet_receive_cb callback)
 	{
 		m_receive_cb = callback;
 	}
@@ -59,9 +63,9 @@ public:
 	void Disconnect();
 
 private:
-	enet_cb m_connect_cb;
-	enet_cb m_disconnect_cb;
-	enet_cb m_receive_cb;
+	enet_connection_cb m_connect_cb;
+	enet_connection_cb m_disconnect_cb;
+	enet_receive_cb m_receive_cb;
 	std::unique_ptr<ENetHost, enet_host_deleter> m_host;
 	std::vector<ENetPeer*> m_peers;
 };
