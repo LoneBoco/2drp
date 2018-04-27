@@ -96,11 +96,11 @@ class SSceneObjectAdd_Attribute : public ::google::protobuf::Message /* @@protoc
   static const SSceneObjectAdd_Attribute& default_instance();
 
   enum ValueCase {
-    kAsint = 3,
-    kAsuint = 4,
-    kAsfloat = 5,
-    kAsdouble = 6,
-    kAsstring = 7,
+    kAsInt = 3,
+    kAsUint = 4,
+    kAsFloat = 5,
+    kAsDouble = 6,
+    kAsString = 7,
     VALUE_NOT_SET = 0,
   };
 
@@ -169,67 +169,67 @@ class SSceneObjectAdd_Attribute : public ::google::protobuf::Message /* @@protoc
   ::google::protobuf::uint32 type() const;
   void set_type(::google::protobuf::uint32 value);
 
-  // int64 asint = 3;
+  // int64 as_int = 3;
   private:
-  bool has_asint() const;
+  bool has_as_int() const;
   public:
-  void clear_asint();
-  static const int kAsintFieldNumber = 3;
-  ::google::protobuf::int64 asint() const;
-  void set_asint(::google::protobuf::int64 value);
+  void clear_as_int();
+  static const int kAsIntFieldNumber = 3;
+  ::google::protobuf::int64 as_int() const;
+  void set_as_int(::google::protobuf::int64 value);
 
-  // uint64 asuint = 4;
+  // uint64 as_uint = 4;
   private:
-  bool has_asuint() const;
+  bool has_as_uint() const;
   public:
-  void clear_asuint();
-  static const int kAsuintFieldNumber = 4;
-  ::google::protobuf::uint64 asuint() const;
-  void set_asuint(::google::protobuf::uint64 value);
+  void clear_as_uint();
+  static const int kAsUintFieldNumber = 4;
+  ::google::protobuf::uint64 as_uint() const;
+  void set_as_uint(::google::protobuf::uint64 value);
 
-  // float asfloat = 5;
+  // float as_float = 5;
   private:
-  bool has_asfloat() const;
+  bool has_as_float() const;
   public:
-  void clear_asfloat();
-  static const int kAsfloatFieldNumber = 5;
-  float asfloat() const;
-  void set_asfloat(float value);
+  void clear_as_float();
+  static const int kAsFloatFieldNumber = 5;
+  float as_float() const;
+  void set_as_float(float value);
 
-  // double asdouble = 6;
+  // double as_double = 6;
   private:
-  bool has_asdouble() const;
+  bool has_as_double() const;
   public:
-  void clear_asdouble();
-  static const int kAsdoubleFieldNumber = 6;
-  double asdouble() const;
-  void set_asdouble(double value);
+  void clear_as_double();
+  static const int kAsDoubleFieldNumber = 6;
+  double as_double() const;
+  void set_as_double(double value);
 
-  // string asstring = 7;
+  // string as_string = 7;
   private:
-  bool has_asstring() const;
+  bool has_as_string() const;
   public:
-  void clear_asstring();
-  static const int kAsstringFieldNumber = 7;
-  const ::std::string& asstring() const;
-  void set_asstring(const ::std::string& value);
+  void clear_as_string();
+  static const int kAsStringFieldNumber = 7;
+  const ::std::string& as_string() const;
+  void set_as_string(const ::std::string& value);
   #if LANG_CXX11
-  void set_asstring(::std::string&& value);
+  void set_as_string(::std::string&& value);
   #endif
-  void set_asstring(const char* value);
-  void set_asstring(const char* value, size_t size);
-  ::std::string* mutable_asstring();
-  ::std::string* release_asstring();
-  void set_allocated_asstring(::std::string* asstring);
+  void set_as_string(const char* value);
+  void set_as_string(const char* value, size_t size);
+  ::std::string* mutable_as_string();
+  ::std::string* release_as_string();
+  void set_allocated_as_string(::std::string* as_string);
 
   ValueCase value_case() const;
   // @@protoc_insertion_point(class_scope:tdrp.packet.SSceneObjectAdd.Attribute)
  private:
-  void set_has_asint();
-  void set_has_asuint();
-  void set_has_asfloat();
-  void set_has_asdouble();
-  void set_has_asstring();
+  void set_has_as_int();
+  void set_has_as_uint();
+  void set_has_as_float();
+  void set_has_as_double();
+  void set_has_as_string();
 
   inline bool has_value() const;
   void clear_value();
@@ -240,11 +240,11 @@ class SSceneObjectAdd_Attribute : public ::google::protobuf::Message /* @@protoc
   ::google::protobuf::uint32 type_;
   union ValueUnion {
     ValueUnion() {}
-    ::google::protobuf::int64 asint_;
-    ::google::protobuf::uint64 asuint_;
-    float asfloat_;
-    double asdouble_;
-    ::google::protobuf::internal::ArenaStringPtr asstring_;
+    ::google::protobuf::int64 as_int_;
+    ::google::protobuf::uint64 as_uint_;
+    float as_float_;
+    double as_double_;
+    ::google::protobuf::internal::ArenaStringPtr as_string_;
   } value_;
   mutable int _cached_size_;
   ::google::protobuf::uint32 _oneof_case_[1];
@@ -455,215 +455,215 @@ inline void SSceneObjectAdd_Attribute::set_type(::google::protobuf::uint32 value
   // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.type)
 }
 
-// int64 asint = 3;
-inline bool SSceneObjectAdd_Attribute::has_asint() const {
-  return value_case() == kAsint;
+// int64 as_int = 3;
+inline bool SSceneObjectAdd_Attribute::has_as_int() const {
+  return value_case() == kAsInt;
 }
-inline void SSceneObjectAdd_Attribute::set_has_asint() {
-  _oneof_case_[0] = kAsint;
+inline void SSceneObjectAdd_Attribute::set_has_as_int() {
+  _oneof_case_[0] = kAsInt;
 }
-inline void SSceneObjectAdd_Attribute::clear_asint() {
-  if (has_asint()) {
-    value_.asint_ = GOOGLE_LONGLONG(0);
+inline void SSceneObjectAdd_Attribute::clear_as_int() {
+  if (has_as_int()) {
+    value_.as_int_ = GOOGLE_LONGLONG(0);
     clear_has_value();
   }
 }
-inline ::google::protobuf::int64 SSceneObjectAdd_Attribute::asint() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.asint)
-  if (has_asint()) {
-    return value_.asint_;
+inline ::google::protobuf::int64 SSceneObjectAdd_Attribute::as_int() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.as_int)
+  if (has_as_int()) {
+    return value_.as_int_;
   }
   return GOOGLE_LONGLONG(0);
 }
-inline void SSceneObjectAdd_Attribute::set_asint(::google::protobuf::int64 value) {
-  if (!has_asint()) {
+inline void SSceneObjectAdd_Attribute::set_as_int(::google::protobuf::int64 value) {
+  if (!has_as_int()) {
     clear_value();
-    set_has_asint();
+    set_has_as_int();
   }
-  value_.asint_ = value;
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asint)
+  value_.as_int_ = value;
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_int)
 }
 
-// uint64 asuint = 4;
-inline bool SSceneObjectAdd_Attribute::has_asuint() const {
-  return value_case() == kAsuint;
+// uint64 as_uint = 4;
+inline bool SSceneObjectAdd_Attribute::has_as_uint() const {
+  return value_case() == kAsUint;
 }
-inline void SSceneObjectAdd_Attribute::set_has_asuint() {
-  _oneof_case_[0] = kAsuint;
+inline void SSceneObjectAdd_Attribute::set_has_as_uint() {
+  _oneof_case_[0] = kAsUint;
 }
-inline void SSceneObjectAdd_Attribute::clear_asuint() {
-  if (has_asuint()) {
-    value_.asuint_ = GOOGLE_ULONGLONG(0);
+inline void SSceneObjectAdd_Attribute::clear_as_uint() {
+  if (has_as_uint()) {
+    value_.as_uint_ = GOOGLE_ULONGLONG(0);
     clear_has_value();
   }
 }
-inline ::google::protobuf::uint64 SSceneObjectAdd_Attribute::asuint() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.asuint)
-  if (has_asuint()) {
-    return value_.asuint_;
+inline ::google::protobuf::uint64 SSceneObjectAdd_Attribute::as_uint() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.as_uint)
+  if (has_as_uint()) {
+    return value_.as_uint_;
   }
   return GOOGLE_ULONGLONG(0);
 }
-inline void SSceneObjectAdd_Attribute::set_asuint(::google::protobuf::uint64 value) {
-  if (!has_asuint()) {
+inline void SSceneObjectAdd_Attribute::set_as_uint(::google::protobuf::uint64 value) {
+  if (!has_as_uint()) {
     clear_value();
-    set_has_asuint();
+    set_has_as_uint();
   }
-  value_.asuint_ = value;
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asuint)
+  value_.as_uint_ = value;
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_uint)
 }
 
-// float asfloat = 5;
-inline bool SSceneObjectAdd_Attribute::has_asfloat() const {
-  return value_case() == kAsfloat;
+// float as_float = 5;
+inline bool SSceneObjectAdd_Attribute::has_as_float() const {
+  return value_case() == kAsFloat;
 }
-inline void SSceneObjectAdd_Attribute::set_has_asfloat() {
-  _oneof_case_[0] = kAsfloat;
+inline void SSceneObjectAdd_Attribute::set_has_as_float() {
+  _oneof_case_[0] = kAsFloat;
 }
-inline void SSceneObjectAdd_Attribute::clear_asfloat() {
-  if (has_asfloat()) {
-    value_.asfloat_ = 0;
+inline void SSceneObjectAdd_Attribute::clear_as_float() {
+  if (has_as_float()) {
+    value_.as_float_ = 0;
     clear_has_value();
   }
 }
-inline float SSceneObjectAdd_Attribute::asfloat() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.asfloat)
-  if (has_asfloat()) {
-    return value_.asfloat_;
+inline float SSceneObjectAdd_Attribute::as_float() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.as_float)
+  if (has_as_float()) {
+    return value_.as_float_;
   }
   return 0;
 }
-inline void SSceneObjectAdd_Attribute::set_asfloat(float value) {
-  if (!has_asfloat()) {
+inline void SSceneObjectAdd_Attribute::set_as_float(float value) {
+  if (!has_as_float()) {
     clear_value();
-    set_has_asfloat();
+    set_has_as_float();
   }
-  value_.asfloat_ = value;
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asfloat)
+  value_.as_float_ = value;
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_float)
 }
 
-// double asdouble = 6;
-inline bool SSceneObjectAdd_Attribute::has_asdouble() const {
-  return value_case() == kAsdouble;
+// double as_double = 6;
+inline bool SSceneObjectAdd_Attribute::has_as_double() const {
+  return value_case() == kAsDouble;
 }
-inline void SSceneObjectAdd_Attribute::set_has_asdouble() {
-  _oneof_case_[0] = kAsdouble;
+inline void SSceneObjectAdd_Attribute::set_has_as_double() {
+  _oneof_case_[0] = kAsDouble;
 }
-inline void SSceneObjectAdd_Attribute::clear_asdouble() {
-  if (has_asdouble()) {
-    value_.asdouble_ = 0;
+inline void SSceneObjectAdd_Attribute::clear_as_double() {
+  if (has_as_double()) {
+    value_.as_double_ = 0;
     clear_has_value();
   }
 }
-inline double SSceneObjectAdd_Attribute::asdouble() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.asdouble)
-  if (has_asdouble()) {
-    return value_.asdouble_;
+inline double SSceneObjectAdd_Attribute::as_double() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.as_double)
+  if (has_as_double()) {
+    return value_.as_double_;
   }
   return 0;
 }
-inline void SSceneObjectAdd_Attribute::set_asdouble(double value) {
-  if (!has_asdouble()) {
+inline void SSceneObjectAdd_Attribute::set_as_double(double value) {
+  if (!has_as_double()) {
     clear_value();
-    set_has_asdouble();
+    set_has_as_double();
   }
-  value_.asdouble_ = value;
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asdouble)
+  value_.as_double_ = value;
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_double)
 }
 
-// string asstring = 7;
-inline bool SSceneObjectAdd_Attribute::has_asstring() const {
-  return value_case() == kAsstring;
+// string as_string = 7;
+inline bool SSceneObjectAdd_Attribute::has_as_string() const {
+  return value_case() == kAsString;
 }
-inline void SSceneObjectAdd_Attribute::set_has_asstring() {
-  _oneof_case_[0] = kAsstring;
+inline void SSceneObjectAdd_Attribute::set_has_as_string() {
+  _oneof_case_[0] = kAsString;
 }
-inline void SSceneObjectAdd_Attribute::clear_asstring() {
-  if (has_asstring()) {
-    value_.asstring_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void SSceneObjectAdd_Attribute::clear_as_string() {
+  if (has_as_string()) {
+    value_.as_string_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
     clear_has_value();
   }
 }
-inline const ::std::string& SSceneObjectAdd_Attribute::asstring() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
-  if (has_asstring()) {
-    return value_.asstring_.GetNoArena();
+inline const ::std::string& SSceneObjectAdd_Attribute::as_string() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
+  if (has_as_string()) {
+    return value_.as_string_.GetNoArena();
   }
   return *&::google::protobuf::internal::GetEmptyStringAlreadyInited();
 }
-inline void SSceneObjectAdd_Attribute::set_asstring(const ::std::string& value) {
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
-  if (!has_asstring()) {
+inline void SSceneObjectAdd_Attribute::set_as_string(const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
+  if (!has_as_string()) {
     clear_value();
-    set_has_asstring();
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    set_has_as_string();
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  value_.asstring_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
+  value_.as_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
 }
 #if LANG_CXX11
-inline void SSceneObjectAdd_Attribute::set_asstring(::std::string&& value) {
-  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
-  if (!has_asstring()) {
+inline void SSceneObjectAdd_Attribute::set_as_string(::std::string&& value) {
+  // @@protoc_insertion_point(field_set:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
+  if (!has_as_string()) {
     clear_value();
-    set_has_asstring();
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    set_has_as_string();
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  value_.asstring_.SetNoArena(
+  value_.as_string_.SetNoArena(
     &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
+  // @@protoc_insertion_point(field_set_rvalue:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
 }
 #endif
-inline void SSceneObjectAdd_Attribute::set_asstring(const char* value) {
+inline void SSceneObjectAdd_Attribute::set_as_string(const char* value) {
   GOOGLE_DCHECK(value != NULL);
-  if (!has_asstring()) {
+  if (!has_as_string()) {
     clear_value();
-    set_has_asstring();
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    set_has_as_string();
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  value_.asstring_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+  value_.as_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
       ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
+  // @@protoc_insertion_point(field_set_char:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
 }
-inline void SSceneObjectAdd_Attribute::set_asstring(const char* value, size_t size) {
-  if (!has_asstring()) {
+inline void SSceneObjectAdd_Attribute::set_as_string(const char* value, size_t size) {
+  if (!has_as_string()) {
     clear_value();
-    set_has_asstring();
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    set_has_as_string();
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  value_.asstring_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
+  value_.as_string_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(
       reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
+  // @@protoc_insertion_point(field_set_pointer:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
 }
-inline ::std::string* SSceneObjectAdd_Attribute::mutable_asstring() {
-  if (!has_asstring()) {
+inline ::std::string* SSceneObjectAdd_Attribute::mutable_as_string() {
+  if (!has_as_string()) {
     clear_value();
-    set_has_asstring();
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    set_has_as_string();
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
-  // @@protoc_insertion_point(field_mutable:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
-  return value_.asstring_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  // @@protoc_insertion_point(field_mutable:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
+  return value_.as_string_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
-inline ::std::string* SSceneObjectAdd_Attribute::release_asstring() {
-  // @@protoc_insertion_point(field_release:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
-  if (has_asstring()) {
+inline ::std::string* SSceneObjectAdd_Attribute::release_as_string() {
+  // @@protoc_insertion_point(field_release:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
+  if (has_as_string()) {
     clear_has_value();
-    return value_.asstring_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    return value_.as_string_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   } else {
     return NULL;
   }
 }
-inline void SSceneObjectAdd_Attribute::set_allocated_asstring(::std::string* asstring) {
-  if (!has_asstring()) {
-    value_.asstring_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void SSceneObjectAdd_Attribute::set_allocated_as_string(::std::string* as_string) {
+  if (!has_as_string()) {
+    value_.as_string_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   }
   clear_value();
-  if (asstring != NULL) {
-    set_has_asstring();
-    value_.asstring_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-        asstring);
+  if (as_string != NULL) {
+    set_has_as_string();
+    value_.as_string_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
+        as_string);
   }
-  // @@protoc_insertion_point(field_set_allocated:tdrp.packet.SSceneObjectAdd.Attribute.asstring)
+  // @@protoc_insertion_point(field_set_allocated:tdrp.packet.SSceneObjectAdd.Attribute.as_string)
 }
 
 inline bool SSceneObjectAdd_Attribute::has_value() const {

@@ -314,6 +314,9 @@ project "enet"
 	files { "../dependencies/enet/**.h", "../dependencies/enet/**.c" }
 	includedirs { "../dependencies/enet/include/" }
 
+	filter "system:windows"
+		links { "ws2_32", "Winmm" }
+
 	filter "system:linux"
 		defines { "HAS_SOCKLEN_T" }
 

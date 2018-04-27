@@ -4,6 +4,7 @@
 
 #include "engine/filesystem/FileSystem.h"
 #include "engine/filesystem/ProgramSettings.h"
+#include "engine/network/Network.h"
 #include "engine/package/Package.h"
 
 namespace tdrp
@@ -13,7 +14,7 @@ class Game
 {
 public:
 	Game();
-	~Game() = default;
+	~Game();
 
 	Game(const Game& other) = delete;
 	Game(Game&& other) = delete;
@@ -23,9 +24,14 @@ public:
 	void Update();
 
 	settings::ProgramSettings Settings;
+	network::Network Network;
 	std::shared_ptr<package::Package> Package;
 
 private:
+
+	void network_connect(const uint16_t id, ENetEvent& event);
+	void network_disconnect(const uint16_t id, ENetEvent& event);
+	void network_receive(const uint16_t id, ENetEvent& event);
 
 };
 

@@ -25,11 +25,11 @@ class SSceneObjectAdd_AttributeDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<SSceneObjectAdd_Attribute>
       _instance;
-  ::google::protobuf::int64 asint_;
-  ::google::protobuf::uint64 asuint_;
-  float asfloat_;
-  double asdouble_;
-  ::google::protobuf::internal::ArenaStringPtr asstring_;
+  ::google::protobuf::int64 as_int_;
+  ::google::protobuf::uint64 as_uint_;
+  float as_float_;
+  double as_double_;
+  ::google::protobuf::internal::ArenaStringPtr as_string_;
 } _SSceneObjectAdd_Attribute_default_instance_;
 class SSceneObjectAddDefaultTypeInternal {
  public:
@@ -92,11 +92,11 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SSceneObjectAdd_Attribute, id_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SSceneObjectAdd_Attribute, type_),
-  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, asint_),
-  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, asuint_),
-  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, asfloat_),
-  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, asdouble_),
-  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, asstring_),
+  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, as_int_),
+  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, as_uint_),
+  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, as_float_),
+  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, as_double_),
+  offsetof(::tdrp::packet::SSceneObjectAdd_AttributeDefaultTypeInternal, as_string_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SSceneObjectAdd_Attribute, value_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SSceneObjectAdd, _internal_metadata_),
@@ -142,19 +142,19 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\022SSceneObject.proto\022\013tdrp.packet\"\321\002\n\017SS"
+      "\n\022SSceneObject.proto\022\013tdrp.packet\"\326\002\n\017SS"
       "ceneObjectAdd\022\n\n\002id\030\001 \001(\006\022\014\n\004type\030\002 \001(\r\022"
       "\r\n\005class\030\003 \001(\t\022\016\n\006script\030\004 \001(\t\022:\n\nproper"
       "ties\030\005 \003(\0132&.tdrp.packet.SSceneObjectAdd"
       ".Attribute\022:\n\nattributes\030\006 \003(\0132&.tdrp.pa"
-      "cket.SSceneObjectAdd.Attribute\032\214\001\n\tAttri"
-      "bute\022\n\n\002id\030\001 \001(\r\022\014\n\004type\030\002 \001(\r\022\017\n\005asint\030"
-      "\003 \001(\003H\000\022\020\n\006asuint\030\004 \001(\004H\000\022\021\n\007asfloat\030\005 \001"
-      "(\002H\000\022\022\n\010asdouble\030\006 \001(\001H\000\022\022\n\010asstring\030\007 \001"
-      "(\tH\000B\007\n\005valueb\006proto3"
+      "cket.SSceneObjectAdd.Attribute\032\221\001\n\tAttri"
+      "bute\022\n\n\002id\030\001 \001(\r\022\014\n\004type\030\002 \001(\r\022\020\n\006as_int"
+      "\030\003 \001(\003H\000\022\021\n\007as_uint\030\004 \001(\004H\000\022\022\n\010as_float\030"
+      "\005 \001(\002H\000\022\023\n\tas_double\030\006 \001(\001H\000\022\023\n\tas_strin"
+      "g\030\007 \001(\tH\000B\007\n\005valueb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 381);
+      descriptor, 386);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "SSceneObject.proto", &protobuf_RegisterTypes);
 }
@@ -176,21 +176,21 @@ namespace packet {
 // ===================================================================
 
 void SSceneObjectAdd_Attribute::InitAsDefaultInstance() {
-  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.asint_ = GOOGLE_LONGLONG(0);
-  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.asuint_ = GOOGLE_ULONGLONG(0);
-  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.asfloat_ = 0;
-  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.asdouble_ = 0;
-  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.asstring_.UnsafeSetDefault(
+  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.as_int_ = GOOGLE_LONGLONG(0);
+  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.as_uint_ = GOOGLE_ULONGLONG(0);
+  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.as_float_ = 0;
+  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.as_double_ = 0;
+  ::tdrp::packet::_SSceneObjectAdd_Attribute_default_instance_.as_string_.UnsafeSetDefault(
       &::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int SSceneObjectAdd_Attribute::kIdFieldNumber;
 const int SSceneObjectAdd_Attribute::kTypeFieldNumber;
-const int SSceneObjectAdd_Attribute::kAsintFieldNumber;
-const int SSceneObjectAdd_Attribute::kAsuintFieldNumber;
-const int SSceneObjectAdd_Attribute::kAsfloatFieldNumber;
-const int SSceneObjectAdd_Attribute::kAsdoubleFieldNumber;
-const int SSceneObjectAdd_Attribute::kAsstringFieldNumber;
+const int SSceneObjectAdd_Attribute::kAsIntFieldNumber;
+const int SSceneObjectAdd_Attribute::kAsUintFieldNumber;
+const int SSceneObjectAdd_Attribute::kAsFloatFieldNumber;
+const int SSceneObjectAdd_Attribute::kAsDoubleFieldNumber;
+const int SSceneObjectAdd_Attribute::kAsStringFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 SSceneObjectAdd_Attribute::SSceneObjectAdd_Attribute()
@@ -211,24 +211,24 @@ SSceneObjectAdd_Attribute::SSceneObjectAdd_Attribute(const SSceneObjectAdd_Attri
     reinterpret_cast<char*>(&id_)) + sizeof(type_));
   clear_has_value();
   switch (from.value_case()) {
-    case kAsint: {
-      set_asint(from.asint());
+    case kAsInt: {
+      set_as_int(from.as_int());
       break;
     }
-    case kAsuint: {
-      set_asuint(from.asuint());
+    case kAsUint: {
+      set_as_uint(from.as_uint());
       break;
     }
-    case kAsfloat: {
-      set_asfloat(from.asfloat());
+    case kAsFloat: {
+      set_as_float(from.as_float());
       break;
     }
-    case kAsdouble: {
-      set_asdouble(from.asdouble());
+    case kAsDouble: {
+      set_as_double(from.as_double());
       break;
     }
-    case kAsstring: {
-      set_asstring(from.asstring());
+    case kAsString: {
+      set_as_string(from.as_string());
       break;
     }
     case VALUE_NOT_SET: {
@@ -283,24 +283,24 @@ SSceneObjectAdd_Attribute* SSceneObjectAdd_Attribute::New(::google::protobuf::Ar
 void SSceneObjectAdd_Attribute::clear_value() {
 // @@protoc_insertion_point(one_of_clear_start:tdrp.packet.SSceneObjectAdd.Attribute)
   switch (value_case()) {
-    case kAsint: {
+    case kAsInt: {
       // No need to clear
       break;
     }
-    case kAsuint: {
+    case kAsUint: {
       // No need to clear
       break;
     }
-    case kAsfloat: {
+    case kAsFloat: {
       // No need to clear
       break;
     }
-    case kAsdouble: {
+    case kAsDouble: {
       // No need to clear
       break;
     }
-    case kAsstring: {
-      value_.asstring_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+    case kAsString: {
+      value_.as_string_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
       break;
     }
     case VALUE_NOT_SET: {
@@ -362,76 +362,76 @@ bool SSceneObjectAdd_Attribute::MergePartialFromCodedStream(
         break;
       }
 
-      // int64 asint = 3;
+      // int64 as_int = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(24u /* 24 & 0xFF */)) {
           clear_value();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_INT64>(
-                 input, &value_.asint_)));
-          set_has_asint();
+                 input, &value_.as_int_)));
+          set_has_as_int();
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // uint64 asuint = 4;
+      // uint64 as_uint = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(32u /* 32 & 0xFF */)) {
           clear_value();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_UINT64>(
-                 input, &value_.asuint_)));
-          set_has_asuint();
+                 input, &value_.as_uint_)));
+          set_has_as_uint();
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // float asfloat = 5;
+      // float as_float = 5;
       case 5: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(45u /* 45 & 0xFF */)) {
           clear_value();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    float, ::google::protobuf::internal::WireFormatLite::TYPE_FLOAT>(
-                 input, &value_.asfloat_)));
-          set_has_asfloat();
+                 input, &value_.as_float_)));
+          set_has_as_float();
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // double asdouble = 6;
+      // double as_double = 6;
       case 6: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(49u /* 49 & 0xFF */)) {
           clear_value();
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
                    double, ::google::protobuf::internal::WireFormatLite::TYPE_DOUBLE>(
-                 input, &value_.asdouble_)));
-          set_has_asdouble();
+                 input, &value_.as_double_)));
+          set_has_as_double();
         } else {
           goto handle_unusual;
         }
         break;
       }
 
-      // string asstring = 7;
+      // string as_string = 7;
       case 7: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(58u /* 58 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_asstring()));
+                input, this->mutable_as_string()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->asstring().data(), static_cast<int>(this->asstring().length()),
+            this->as_string().data(), static_cast<int>(this->as_string().length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tdrp.packet.SSceneObjectAdd.Attribute.asstring"));
+            "tdrp.packet.SSceneObjectAdd.Attribute.as_string"));
         } else {
           goto handle_unusual;
         }
@@ -474,34 +474,34 @@ void SSceneObjectAdd_Attribute::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteUInt32(2, this->type(), output);
   }
 
-  // int64 asint = 3;
-  if (has_asint()) {
-    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->asint(), output);
+  // int64 as_int = 3;
+  if (has_as_int()) {
+    ::google::protobuf::internal::WireFormatLite::WriteInt64(3, this->as_int(), output);
   }
 
-  // uint64 asuint = 4;
-  if (has_asuint()) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->asuint(), output);
+  // uint64 as_uint = 4;
+  if (has_as_uint()) {
+    ::google::protobuf::internal::WireFormatLite::WriteUInt64(4, this->as_uint(), output);
   }
 
-  // float asfloat = 5;
-  if (has_asfloat()) {
-    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->asfloat(), output);
+  // float as_float = 5;
+  if (has_as_float()) {
+    ::google::protobuf::internal::WireFormatLite::WriteFloat(5, this->as_float(), output);
   }
 
-  // double asdouble = 6;
-  if (has_asdouble()) {
-    ::google::protobuf::internal::WireFormatLite::WriteDouble(6, this->asdouble(), output);
+  // double as_double = 6;
+  if (has_as_double()) {
+    ::google::protobuf::internal::WireFormatLite::WriteDouble(6, this->as_double(), output);
   }
 
-  // string asstring = 7;
-  if (has_asstring()) {
+  // string as_string = 7;
+  if (has_as_string()) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->asstring().data(), static_cast<int>(this->asstring().length()),
+      this->as_string().data(), static_cast<int>(this->as_string().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SSceneObjectAdd.Attribute.asstring");
+      "tdrp.packet.SSceneObjectAdd.Attribute.as_string");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      7, this->asstring(), output);
+      7, this->as_string(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -528,35 +528,35 @@ void SSceneObjectAdd_Attribute::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(2, this->type(), target);
   }
 
-  // int64 asint = 3;
-  if (has_asint()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->asint(), target);
+  // int64 as_int = 3;
+  if (has_as_int()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteInt64ToArray(3, this->as_int(), target);
   }
 
-  // uint64 asuint = 4;
-  if (has_asuint()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->asuint(), target);
+  // uint64 as_uint = 4;
+  if (has_as_uint()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteUInt64ToArray(4, this->as_uint(), target);
   }
 
-  // float asfloat = 5;
-  if (has_asfloat()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->asfloat(), target);
+  // float as_float = 5;
+  if (has_as_float()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFloatToArray(5, this->as_float(), target);
   }
 
-  // double asdouble = 6;
-  if (has_asdouble()) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(6, this->asdouble(), target);
+  // double as_double = 6;
+  if (has_as_double()) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteDoubleToArray(6, this->as_double(), target);
   }
 
-  // string asstring = 7;
-  if (has_asstring()) {
+  // string as_string = 7;
+  if (has_as_string()) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->asstring().data(), static_cast<int>(this->asstring().length()),
+      this->as_string().data(), static_cast<int>(this->as_string().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SSceneObjectAdd.Attribute.asstring");
+      "tdrp.packet.SSceneObjectAdd.Attribute.as_string");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        7, this->asstring(), target);
+        7, this->as_string(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -591,35 +591,35 @@ size_t SSceneObjectAdd_Attribute::ByteSizeLong() const {
   }
 
   switch (value_case()) {
-    // int64 asint = 3;
-    case kAsint: {
+    // int64 as_int = 3;
+    case kAsInt: {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::Int64Size(
-          this->asint());
+          this->as_int());
       break;
     }
-    // uint64 asuint = 4;
-    case kAsuint: {
+    // uint64 as_uint = 4;
+    case kAsUint: {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::UInt64Size(
-          this->asuint());
+          this->as_uint());
       break;
     }
-    // float asfloat = 5;
-    case kAsfloat: {
+    // float as_float = 5;
+    case kAsFloat: {
       total_size += 1 + 4;
       break;
     }
-    // double asdouble = 6;
-    case kAsdouble: {
+    // double as_double = 6;
+    case kAsDouble: {
       total_size += 1 + 8;
       break;
     }
-    // string asstring = 7;
-    case kAsstring: {
+    // string as_string = 7;
+    case kAsString: {
       total_size += 1 +
         ::google::protobuf::internal::WireFormatLite::StringSize(
-          this->asstring());
+          this->as_string());
       break;
     }
     case VALUE_NOT_SET: {
@@ -662,24 +662,24 @@ void SSceneObjectAdd_Attribute::MergeFrom(const SSceneObjectAdd_Attribute& from)
     set_type(from.type());
   }
   switch (from.value_case()) {
-    case kAsint: {
-      set_asint(from.asint());
+    case kAsInt: {
+      set_as_int(from.as_int());
       break;
     }
-    case kAsuint: {
-      set_asuint(from.asuint());
+    case kAsUint: {
+      set_as_uint(from.as_uint());
       break;
     }
-    case kAsfloat: {
-      set_asfloat(from.asfloat());
+    case kAsFloat: {
+      set_as_float(from.as_float());
       break;
     }
-    case kAsdouble: {
-      set_asdouble(from.asdouble());
+    case kAsDouble: {
+      set_as_double(from.as_double());
       break;
     }
-    case kAsstring: {
-      set_asstring(from.asstring());
+    case kAsString: {
+      set_as_string(from.as_string());
       break;
     }
     case VALUE_NOT_SET: {

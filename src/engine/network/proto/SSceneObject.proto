@@ -10,11 +10,11 @@ message SSceneObjectAdd
 		uint32 type = 2;
 		oneof value
 		{
-			int64 asint = 3;
-			uint64 asuint = 4;
-			float asfloat = 5;
-			double asdouble = 6;
-			string asstring = 7;
+			int64 as_int = 3;
+			uint64 as_uint = 4;
+			float as_float = 5;
+			double as_double = 6;
+			string as_string = 7;
 		}
 	}
 
