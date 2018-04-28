@@ -12,8 +12,7 @@ namespace tdrp
 
 Game::Game()
 {
-	int ret = enet_initialize();
-	if (ret != 0)
+	if (!network::Network::Startup())
 		throw std::exception("ENet failed to initialize!");
 
 	Settings.LoadFromFile("settings.ini");
@@ -32,7 +31,7 @@ Game::Game()
 
 Game::~Game()
 {
-	enet_deinitialize();
+	network::Network::Shutdown();
 }
 
 void Game::Update()
