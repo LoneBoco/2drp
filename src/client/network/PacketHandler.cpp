@@ -3,7 +3,7 @@
 #include "client/game/Game.h"
 
 #include "engine/network/PacketID.h"
-#include "engine/network/packets/SError.pb.h"
+#include "engine/network/PacketsServer.h"
 
 namespace tdrp::handlers
 {
@@ -31,7 +31,7 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 /////////////////////////////
 
 template <class T>
-T construct(const uint8_t* const packet_data, const size_t packet_length)
+const T construct(const uint8_t* const packet_data, const size_t packet_length)
 {
 	T packet;
 	packet.ParseFromArray(packet_data, packet_length);

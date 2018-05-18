@@ -16,7 +16,7 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 /////////////////////////////
 
 template <class T>
-T construct(const uint8_t* const packet_data, const size_t packet_length);
+const T construct(const uint8_t* const packet_data, const size_t packet_length);
 
 /////////////////////////////
 
