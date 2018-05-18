@@ -105,8 +105,8 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 					{
 						auto sop = so.get();
 						TiledSceneObject* tiled_so = dynamic_cast<TiledSceneObject*>(sop);
-						auto& tileset = object.child("tileset");
-						auto& tiledata = object.child("tiledata");
+						const auto& tileset = object.child("tileset");
+						const auto& tiledata = object.child("tiledata");
 
 						// TODO: Throw error.
 						if (tileset.empty() || tiledata.empty())

@@ -20,6 +20,6 @@ T construct(const uint8_t* const packet_data, const size_t packet_length);
 
 /////////////////////////////
 
-void handle(Game& game, packet::SError& packet);
+void handle(Game& game, const packet::SError& packet);
 
 } // end namespace tdrp::handlers

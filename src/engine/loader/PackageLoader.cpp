@@ -75,7 +75,7 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 				auto pc = std::make_shared<ObjectClass>(classname);
 
 				// Script.
-				auto& node_script = node_class.child("script");
+				const auto& node_script = node_class.child("script");
 				if (!node_script.empty())
 				{
 					std::string file = node_script.attribute("file").as_string();
@@ -120,14 +120,14 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 
 				// File.
 				// TODO: Throw error if empty.
-				auto& node_file = node_tileset.child("file");
+				const auto& node_file = node_tileset.child("file");
 				if (node_file.empty())
 					continue;
 
 				t->File = node_file.text().get();
 
 				// Tile dimensions.
-				auto& node_tiledimension = node_tileset.child("tiledimension");
+				const auto& node_tiledimension = node_tileset.child("tiledimension");
 				if (!node_tiledimension.empty())
 				{
 					t->TileDimensions.x = std::max(16, node_tiledimension.attribute("x").as_int());

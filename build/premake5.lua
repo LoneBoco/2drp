@@ -35,6 +35,7 @@ workspace "2drp"
 	-- C++17 support.
 	filter { "language:C++", "toolset:clang*" }
 		links { "c++experimental", "stdc++fs" }
+    buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Windows defines.
 	filter "system:windows"
@@ -160,6 +161,9 @@ project "2drp_server"
 		"pugixml",
 		"protobuf",
 	}
+
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread" }
 
 	-- Library includes.
 	includedirs {
@@ -503,3 +507,5 @@ project "protobuf"
 	}
 	filter "toolset:msc*"
 		disablewarnings { "4018", "4146", "4244", "4251", "4267", "4305", "4355", "4800", "4996" }
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		defines { "HAVE_PTHREAD" }

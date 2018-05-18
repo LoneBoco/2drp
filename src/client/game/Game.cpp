@@ -13,7 +13,7 @@ namespace tdrp
 Game::Game()
 {
 	if (!network::Network::Startup())
-		throw std::exception("ENet failed to initialize!");
+		throw std::runtime_error("ENet failed to initialize!");
 
 	Settings.LoadFromFile("settings.ini");
 
