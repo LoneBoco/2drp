@@ -10,9 +10,6 @@ workspace "2drp"
 	targetdir ( "Build/%{_ACTION}/bin/%{cfg.buildcfg}" )
 	libdirs { "Build/%{_ACTION}/bin/%{cfg.buildcfg}" }
 
-	configuration "vs*"
-		defines { "_CRT_SECURE_NO_WARNINGS" }	
-
 	-- C++17 support
 	cppdialect "C++17"
 
@@ -35,7 +32,16 @@ workspace "2drp"
 	-- C++17 support.
 	filter { "language:C++", "toolset:clang*" }
 		links { "c++experimental", "stdc++fs" }
-    buildoptions { "-std=c++17", "-Wno-switch" }
+
+	-- Toolset specific
+	filter "toolset:msc*"
+		defines { "_CRT_SECURE_NO_WARNINGS" }	
+		buildoptions {
+			"/guard:cf",	-- Control Flow Guard
+			"/Qspectre",	-- Spectre Mitigation
+		}
+	filter "toolset:clang*"
+		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Windows defines.
 	filter "system:windows"
