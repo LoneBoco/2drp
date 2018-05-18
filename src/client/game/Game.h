@@ -6,6 +6,7 @@
 #include "engine/filesystem/ProgramSettings.h"
 #include "engine/network/Network.h"
 #include "engine/package/Package.h"
+#include "engine/server/Server.h"
 
 namespace tdrp
 {
@@ -24,7 +25,7 @@ public:
 	void Update();
 
 	settings::ProgramSettings Settings;
-	network::Network Network;
+	server::Server Server;
 	std::shared_ptr<package::Package> Package;
 };
 

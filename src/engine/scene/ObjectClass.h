@@ -26,6 +26,12 @@ public:
 	//! Object properties.
 	ObjectAttributes Attributes;
 
+	//! Client script.
+	std::string ScriptClient;
+
+	//! Server script.
+	std::string ScriptServer;
+
 private:
 	std::string m_name;
 };

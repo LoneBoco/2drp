@@ -15,14 +15,13 @@ using namespace tdrp::scene;
 namespace tdrp::loader
 {
 
-std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& package, const std::string& level)
+std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& server, const filesystem::path& level)
 {
-	auto base = package.GetBasePath();
 	auto scene = std::make_shared<Scene>();
 	int32_t version = 1;
 
 	// Get our _info.xml file.
-	fs::File info{ base / "levels" / level / "_info.xml" };
+	fs::File info{ level / "_info.xml" };
 	if (!info)
 		return scene;
 
@@ -38,7 +37,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 	}
 
 	// Load our chunks.
-	for (auto& f : filesystem::directory_iterator(base / "levels" / level))
+	for (auto& f : filesystem::directory_iterator(level))
 	{
 		// If it is not a regular file, abort.
 		if (!filesystem::is_regular_file(f.status()))
@@ -56,11 +55,11 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 				for (auto& object : sceneobjects.children("object"))
 				{
 					std::string scriptclass = object.attribute("class").as_string();
-					auto c = package.GetObjectClass(scriptclass);
+					auto c = server.GetObjectClass(scriptclass);
 					if (c == nullptr)
-						c = package.GetObjectClass("blank");
+						c = server.GetObjectClass("blank");
 
-					uint32_t id = package.GetNextID();
+					uint32_t id = server.GetNextSceneObjectID();
 
 					// Get the type of scene object we are loading.
 					std::string type = object.attribute("type").as_string("default");
@@ -115,7 +114,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(package::Package& p
 						// Tileset
 						{
 							std::string file = tileset.attribute("file").as_string();
-							tiled_so->Tileset = package.GetTileset(file);
+							tiled_so->Tileset = server.GetTileset(file);
 						}
 
 						// Tiles

@@ -7,19 +7,16 @@
 namespace tdrp::loader
 {
 
-std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string& name)
+	std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer(server::Server& server, const std::string& name)
 {
 	// Make sure our package directory exists.
 	if (!filesystem::exists(filesystem::path("packages") / name))
-		return std::shared_ptr<package::Package>(nullptr);
+		return std::make_pair(false, nullptr);
 
 	auto package = std::make_shared<package::Package>(name);
 	std::string object_class_file{ "classes.xml" };
 	std::string tileset_file{ "tilesets.xml" };
 	std::string client_script_file{ "client.js" };
-
-	// Create our default "blank" class.
-	package->m_object_classes.insert(std::make_pair("blank", std::make_shared<ObjectClass>("blank")));
 
 	// Load our package metadata.
 	if (filesystem::exists(package->GetBasePath() / "package.xml"))
@@ -57,7 +54,7 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 	auto client_script = package->GetFileSystem().GetFile(client_script_file);
 	if (client_script != nullptr)
 	{
-		// TODO: Load client script.
+		server.m_client_script = client_script->ReadAsString();
 	}
 
 	// Load our classes.
@@ -67,32 +64,40 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 		pugi::xml_document doc;
 		doc.load(*classes);
 
-		for (auto& node_classes : doc.children("objectclasses"))
+		for (const auto& node_classes : doc.children("objectclasses"))
 		{
-			for (auto& node_class : node_classes.children("class"))
+			for (const auto& node_class : node_classes.children("class"))
 			{
 				std::string classname = node_class.attribute("name").as_string();
 				auto pc = std::make_shared<ObjectClass>(classname);
 
 				// Script.
-				const auto& node_script = node_class.child("script");
-				if (!node_script.empty())
+				for (const auto& node_scripts : node_class.children("scripts"))
 				{
-					std::string file = node_script.attribute("file").as_string();
-					if (!file.empty())
+					for (const auto& node_script : node_scripts.children("script"))
 					{
-						// Load script from file.
-						auto scriptfile = package->GetFileSystem().GetFile(file);
-					}
-					else
-					{
-						// Load text directly.
-						std::string script{ node_script.text().get() };
+						const auto& attribute_type = node_script.attribute("type");
+						std::string* script = &pc->ScriptClient;
+						if (boost::iequals(attribute_type.as_string(), "server"))
+							script = &pc->ScriptServer;
+
+						std::string file = node_script.attribute("file").as_string();
+						if (!file.empty())
+						{
+							// Load script from file.
+							auto scriptfile = package->GetFileSystem().GetFile(file);
+							*script = scriptfile->ReadAsString();
+						}
+						else
+						{
+							// Load text directly.
+							script->assign(node_script.text().get());
+						}
 					}
 				}
 
 				// Attributes.
-				for (auto& node_attribute : node_class.children("attribute"))
+				for (const auto& node_attribute : node_class.children("attribute"))
 				{
 					std::string attrname = node_attribute.attribute("name").as_string();
 					std::string attrtype = node_attribute.attribute("type").as_string();
@@ -100,7 +105,7 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 					pc->Attributes.AddAttribute(name, Attribute::TypeFromString(attrtype), attrvalue);
 				}
 
-				package->m_object_classes.insert(std::make_pair(classname, pc));
+				server.m_object_classes.insert(std::make_pair(classname, pc));
 			}
 		}
 	}
@@ -112,9 +117,9 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 		pugi::xml_document doc;
 		doc.load(*tilesets);
 
-		for (auto& node_tilesets : doc.children("tilesets"))
+		for (const auto& node_tilesets : doc.children("tilesets"))
 		{
-			for (auto& node_tileset : node_tilesets.children("tileset"))
+			for (const auto& node_tileset : node_tilesets.children("tileset"))
 			{
 				auto t = std::make_shared<scene::Tileset>();
 
@@ -134,12 +139,12 @@ std::shared_ptr<package::Package> PackageLoader::CreatePackage(const std::string
 					t->TileDimensions.y = std::max(16, node_tiledimension.attribute("y").as_int());
 				}
 
-				package->m_tilesets.insert(std::make_pair(t->File, t));
+				server.m_tilesets.insert(std::make_pair(t->File, t));
 			}
 		}
 	}
 
-	return package;
+	return std::make_pair(true, package);
 }
 
 } // end namespace tdrp::loader

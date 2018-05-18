@@ -8,6 +8,7 @@ namespace tdrp::fs
 
 void FileSystem::bind(const filesystem::path& directory)
 {
+	m_directory_include.push_back(directory);
 	m_watcher.Add(directory, [&](uint32_t watch_id, const filesystem::path& dir, const filesystem::path& file, watch::Event e)
 	{
 		if (e == watch::Event::Invalid || e == watch::Event::Modified)
@@ -79,6 +80,23 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 	// TODO
 
 	return nullptr;
+}
+
+filesystem::directory_iterator FileSystem::GetFirstDirectoryIterator() const
+{
+	if (m_directory_include.empty())
+		return filesystem::directory_iterator{};
+	return filesystem::directory_iterator{ m_directory_include.front() };
+}
+
+std::list<filesystem::directory_iterator> FileSystem::GetDirectoryIterators() const
+{
+	std::list<filesystem::directory_iterator> directories;
+	std::for_each(m_directory_include.begin(), m_directory_include.end(), [&directories](auto& p)
+	{
+		directories.push_back(filesystem::directory_iterator{ p });
+	});
+	return directories;
 }
 
 void FileSystem::Update()

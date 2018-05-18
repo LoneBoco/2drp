@@ -37,6 +37,12 @@ public:
 	//! \return A shared pointer to the file.
 	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
 
+	//! Gets the first iterator for the directory we are watching.  Does not honor exclusion list.
+	filesystem::directory_iterator GetFirstDirectoryIterator() const;
+
+	//! Gets an iterator for the directory we are watching.  Does not honor exclusion list.
+	std::list<filesystem::directory_iterator> GetDirectoryIterators() const;
+
 	//! Checks for changes to the underlying OS filesystem.  Call this every so often.
 	void Update();
 
@@ -69,6 +75,7 @@ private:
 private:
 	watch::FileWatch m_watcher;
 	std::map<filesystem::path, filesystem::path> m_files;
+	std::list<filesystem::path> m_directory_include;
 	std::list<filesystem::path> m_directory_exclude;
 	mutable std::mutex m_file_mutex;
 };

@@ -17,16 +17,20 @@ Game::Game()
 
 	Settings.LoadFromFile("settings.ini");
 
+	/*
 	Package = loader::PackageLoader::CreatePackage("login");
 	if (Package)
 	{
 		auto scene = loader::LevelLoader::CreateScene(*Package, "startlevel");
 	}
+	*/
 
 	using namespace std::placeholders;
-	Network.SetConnectCallback(std::bind(handlers::network_connect, std::ref(*this), _1));
-	Network.SetDisconnectCallback(std::bind(handlers::network_disconnect, std::ref(*this), _1));
-	Network.SetReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
+	Server.Network.SetConnectCallback(std::bind(handlers::network_connect, std::ref(*this), _1));
+	Server.Network.SetDisconnectCallback(std::bind(handlers::network_disconnect, std::ref(*this), _1));
+	Server.Network.SetReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
+
+	Server.Initialize("login", server::ServerType::AUTHORITATIVE, static_cast<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING));
 }
 
 Game::~Game()
@@ -41,7 +45,7 @@ void Game::Update()
 		Package->GetFileSystem().Update();
 	}
 
-	Network.Update();
+	Server.Update();
 }
 
 /////////////////////////////
