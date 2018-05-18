@@ -6,7 +6,7 @@
 #include <utility>
 #include <string>
 
-#include "Resource.hpp"
+#include "Resource.h"
 
 namespace tdrp {
   class ResourcePool {
