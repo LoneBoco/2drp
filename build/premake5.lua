@@ -40,7 +40,7 @@ workspace "2drp"
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
 		}
-	filter "toolset:clang*"
+	filter "toolset:clang++"
 		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Windows defines.
