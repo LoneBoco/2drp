@@ -63,11 +63,12 @@ struct EnumMeta {
 
 template<typename T>
 struct EnumValue {
+  friend T;
+
+private:
   constexpr EnumValue(unsigned int underlying) : value(underlying) {};
 
-  EnumValue() : value(0) {
-  };
-
+public:
   constexpr operator unsigned int() const {
     return value;
   };
@@ -77,10 +78,14 @@ struct EnumValue {
   };
 
   constexpr operator T() const {
-    return T::FromUInt(value);
+    return *((T*)&value);
   };
 
-  unsigned int value;
+  T* operator->() const {
+    return (T*)&value;
+  };
+
+  uint32_t value;
 };
 
 #define ENUM_ENABLE(enumName) \
@@ -100,10 +105,6 @@ unsigned int GetValueByName(const char* name) { \
   \
   return E_NONE; \
 } \
-\
-static _enum_myType FromUInt(unsigned int value) { \
-  return { value }; \
-}; \
 \
 _enum_myType& operator=(const EnumValue<_enum_myType>& rhs) { \
   value = rhs.value; \
@@ -134,6 +135,10 @@ const EnumEntry* GetEnumEntry() const { \
 \
 const char* Name() const { \
   return GetEnumEntry()->name; \
+} \
+\
+_enum_myType* operator->() { \
+  return this; \
 } \
 \
 unsigned int value;
