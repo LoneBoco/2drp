@@ -12,7 +12,7 @@ namespace tdrp {
       ENUM(RGB_888)   // 3-component, 8-bpp (24-bit)
       ENUM(R_8)       // 1-component, 8-bpp (8-bit)
 
-      uint32_t GetWidth() {
+      uint32_t GetWidth() const {
         // Switch on the underlying value to get the byte width
         switch (value) {
           case PixelFormat::RGBA_8888:
