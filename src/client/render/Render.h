@@ -18,7 +18,7 @@ namespace tdrp {
 	    ~Render();
 
     private:
-	    BabyDI::Injected<Game> game;
+	    BabyDI::Injected<Game> Game;
     };
   }
 }
