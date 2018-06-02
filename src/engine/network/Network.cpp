@@ -160,7 +160,7 @@ void Network::Update()
 				if (m_receive_cb && event.packet != nullptr && event.packet->dataLength >= 2)
 				{
 					// The first two bytes make up the packet id.
-					uint16_t packet_id = static_cast<uint16_t>(event.packet->data[0] & 0xFF | event.packet->data[1] << 8);
+					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
 					m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 				}
 

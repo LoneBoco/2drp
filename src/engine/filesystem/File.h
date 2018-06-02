@@ -30,12 +30,16 @@ public:
 	{
 		m_file = other.m_file;
 		openStream();
+
+    return *this;
 	}
 
 	File& operator=(File&& other)
 	{
 		std::swap(m_file, other.m_file);
 		std::swap(m_stream, other.m_stream);
+
+    return *this;
 	}
 
 	//! Converts directly into an ifstream.
