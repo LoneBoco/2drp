@@ -40,8 +40,6 @@ workspace "2drp"
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
 		}
-	filter "toolset:clang++"
-		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Windows defines.
 	filter "system:windows"
@@ -83,6 +81,9 @@ project "2drp"
 		"SDL2", -- External.
 		"SDL2main", -- External.
 	}
+
+	filter "toolset:clang"
+		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Library includes.
 	includedirs {
@@ -184,6 +185,9 @@ project "2drp_server"
 	}
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
+
+	filter "toolset:clang"
+		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
