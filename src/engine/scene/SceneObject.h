@@ -13,6 +13,8 @@
 #include "engine/scene/ObjectProperties.h"
 #include "engine/scene/Tileset.h"
 
+#include "engine/component/Component.h"
+
 namespace tdrp
 {
 
@@ -161,7 +163,7 @@ namespace physics
 //! Callback function used for updating a scene object.
 // typedef void (*FSceneObjectUpdate)(SceneObject*);
 
-class SceneObject
+class SceneObject : public ComponentEntity
 {
 public:
 	//! Constructor.

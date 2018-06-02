@@ -1,14 +1,9 @@
 #include "client/render/Render.h"
 
-namespace tdrp
-{
+using namespace tdrp::render;
 
-/////////////////////////////
-
-tdrp::Render::Render()
-{
+Render::Render() {
 }
 
-/////////////////////////////
-
-} // end namespace tdrp
+Render::~Render() {
+}

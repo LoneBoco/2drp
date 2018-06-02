@@ -5,18 +5,20 @@
 
 #include "client/game/Game.h"
 
-namespace tdrp
-{
+#include "bgfx/bgfx.h"
 
-class Render
-{
-public:
-	Render();
-	~Render() = default;
+namespace tdrp {
+  namespace render {
+    class Render {
+    public:
+	    Render();
+      Render(const Render& other) = delete;
+      Render(Render&& other) = delete;
 
-private:
-	BabyDI::Injected<Game> game;
+	    ~Render();
 
-};
-
-} // end namespace tdrp
+    private:
+	    BabyDI::Injected<Game> game;
+    };
+  }
+}
