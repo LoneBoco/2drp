@@ -15,8 +15,6 @@ Game::Game()
 	if (!network::Network::Startup())
 		throw std::runtime_error("ENet failed to initialize!");
 
-	Settings.LoadFromFile("settings.ini");
-
 	/*
 	Package = loader::PackageLoader::CreatePackage("login");
 	if (Package)

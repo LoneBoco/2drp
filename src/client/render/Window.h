@@ -14,6 +14,10 @@ struct sdl_deleter {
 namespace tdrp {
   class Game;
 
+  namespace settings {
+    class ProgramSettings;
+  }
+
   namespace render {
     class Window {
     public:
@@ -29,6 +33,7 @@ namespace tdrp {
 
     private:
       BabyDI::Injected<tdrp::Game> Game;
+      BabyDI::Injected<tdrp::settings::ProgramSettings> Settings;
 
       std::unique_ptr<SDL_Window, sdl_deleter> m_window;
     };

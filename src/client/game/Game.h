@@ -3,7 +3,6 @@
 #include "engine/common.h"
 
 #include "engine/filesystem/FileSystem.h"
-#include "engine/filesystem/ProgramSettings.h"
 #include "engine/network/Network.h"
 #include "engine/package/Package.h"
 #include "engine/server/Server.h"
@@ -24,7 +23,6 @@ public:
 
 	void Update();
 
-	settings::ProgramSettings Settings;
 	server::Server Server;
 	std::shared_ptr<package::Package> Package;
 };

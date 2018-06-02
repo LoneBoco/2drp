@@ -1,10 +1,10 @@
 #include <stdio.h>
-#include "client/render/Window.h"
 
+#include "engine/filesystem/ProgramSettings.h"
+#include "client/render/Window.h"
 #include "client/game/Game.h"
 
 using namespace tdrp::render;
-
 
 Window::Window(const char* title) {
   // TODO: SDL itself obviously shouldn't be initialized here
@@ -15,9 +15,8 @@ Window::Window(const char* title) {
     return;
   }
 
-  // TODO: Inject Settings directly
-  int width  = Game->Settings.GetInt("window.width",  640);
-  int height = Game->Settings.GetInt("window.height", 480);
+  int width  = Settings->GetInt("window.width",  640);
+  int height = Settings->GetInt("window.height", 480);
 
   m_window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN));
 
