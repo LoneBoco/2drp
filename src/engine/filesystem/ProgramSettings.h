@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/common.h"
+#include "engine/filesystem/FileSystem.h"
 
 namespace tdrp::settings
 {
