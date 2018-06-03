@@ -13,6 +13,8 @@ workspace "2drp"
 	-- C++17 support
 	cppdialect "C++17"
 
+  linkgroups "On"
+
 	filter "configurations:Debug"
 	 	defines { "DEBUG" }
 		editandcontinue "Off"
@@ -69,19 +71,6 @@ project "2drp"
 	removefiles { "../src/server/**" }
 	includedirs { "../src" }
 
-	-- Libraries.
-	links {
-		"bgfx",
-		"Box2D",
-		"bzip2",
-		"zlib",
-		"enet",
-		"pugixml",
-		"protobuf",
-		"SDL2", -- External.
-		"SDL2main", -- External.
-	}
-
 	filter "toolset:clang"
 		buildoptions { "-std=c++17", "-Wno-switch" }
 
@@ -100,7 +89,22 @@ project "2drp"
 		"../dependencies/protobuf-3.5.1/src/",
 	}
 
-	dependson { "bgfx", "box2d", "bzip2", "zlib", "enet" }
+	dependson { "bx", "bimg", "bgfx", "box2d", "bzip2", "zlib", "enet" }
+
+	-- Libraries.
+	links {
+		"bx",
+		"bimg",
+		"bgfx",
+		"Box2D",
+		"bzip2",
+		"zlib",
+		"enet",
+		"pugixml",
+		"protobuf",
+		"SDL2", -- External.
+		"SDL2main", -- External.
+	}
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -132,7 +136,10 @@ project "2drp"
 
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-		links { "pthread" }
+		links { "pthread", "dl" }
+
+  filter { "system:linux" }
+    links { "X11", "GL" }
 
 	-- Library directories.
 	-- filter { "system:windows", "platforms:native" }
@@ -211,9 +218,9 @@ project "bgfx"
 	links {
 		"gdi32",
 		"psapi",
+		"bx",
 		"bimg",
 		"bimg_decode",
-		"bx",
 	}
 	defines {
 		"__STDC_LIMIT_MACROS",
