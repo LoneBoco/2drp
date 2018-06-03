@@ -76,6 +76,7 @@ project "2drp"
 
 	-- Library includes.
 	includedirs {
+		"../dependencies/bx/include/",
 		"../dependencies/bgfx/include/",
 		"../dependencies/box2d/Box2D/",
 		"../dependencies/bzip2/",
@@ -83,7 +84,6 @@ project "2drp"
 		"../dependencies/enet/include/",
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
-		"../dependencies/sdl/include/",
 		"../dependencies/BabyDI/include/",
 		"../dependencies/pugixml/src/",
 		"../dependencies/protobuf-3.5.1/src/",
@@ -120,10 +120,16 @@ project "2drp"
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x64/SDL2.dll %{cfg.targetdir}" }
 
 	-- SDL
+  -- Linux uses the system verison of SDL
 	filter { "system:windows", "platforms:x32" }
 		libdirs "../dependencies/sdl/lib/x86/"
 	filter { "system:windows", "platforms:x64" }
 		libdirs "../dependencies/sdl/lib/x64/"
+	filter { "system:windows" }
+    includedirs "../dependencies/sdl/include/"
+
+	filter "system:linux"
+    includedirs "/usr/include/SDL2"
 
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
