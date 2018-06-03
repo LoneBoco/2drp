@@ -9,7 +9,6 @@ using namespace tdrp::render;
 Window::Window(const char* title) {
   // TODO: SDL itself obviously shouldn't be initialized here
   // Initialize SDL and window with title
-
   if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     std::cout << "SDL_Init error: " << SDL_GetError() << std::endl;
     return;
@@ -18,7 +17,7 @@ Window::Window(const char* title) {
   int width  = Settings->GetInt("window.width",  640);
   int height = Settings->GetInt("window.height", 480);
 
-  m_window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN));
+  m_window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN | ::SDL_WINDOW_OPENGL));
 
   if (m_window == nullptr) {
     std::cout << "SDL_CreateWindow error: " << SDL_GetError() << std::endl;

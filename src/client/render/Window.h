@@ -29,6 +29,24 @@ namespace tdrp {
 
       Window& operator=(const Window& other) = delete;
 
+      int32_t GetWidth() const {
+        int32_t w;
+        SDL_GetWindowSize(m_window.get(), &w, nullptr);
+
+        return w;
+      }
+
+      int32_t GetHeight() const {
+        int32_t h;
+        SDL_GetWindowSize(m_window.get(), nullptr, &h);
+
+        return h;
+      }
+
+      SDL_Window* GetSDLWindow() const {
+        return m_window.get();
+      }
+
       void EventLoop();
 
     private:

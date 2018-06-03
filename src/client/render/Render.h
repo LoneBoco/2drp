@@ -9,6 +9,8 @@
 
 namespace tdrp {
   namespace render {
+    class Window;
+
     class Render {
     public:
 	    Render();
@@ -18,6 +20,7 @@ namespace tdrp {
 	    ~Render();
 
     private:
+	    BabyDI::Injected<Window> Window;
 	    BabyDI::Injected<Game> Game;
     };
   }
