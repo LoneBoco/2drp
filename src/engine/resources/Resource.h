@@ -63,6 +63,9 @@ namespace tdrp {
   template <typename T>
   class ResourceHandle {
   public:
+    ResourceHandle() {
+    };
+
     ResourceHandle(const std::shared_ptr< const Resource<T> >& resource)
       : m_resource(resource) {
     };
@@ -105,7 +108,7 @@ namespace tdrp {
       return m_resource == other.m_resource;
     };
 
-    T* operator->() {
+    T* operator->() const {
       return m_resource->m_underlying.get();
     };
 
