@@ -46,7 +46,7 @@ void Image::SetPixels(
   const uint32_t byteWidth  = std::min(srcW, m_width  - srcX) * m_format.GetWidth();
   const uint32_t height     = std::min(srcH, m_height - srcY);
 
-  for (int y=0;y<height;++y) {
+  for (uint32_t y=0;y<height;++y) {
     memcpy(writePtr, readPtr, byteWidth);
 
     writePtr += m_width * m_format.GetWidth();

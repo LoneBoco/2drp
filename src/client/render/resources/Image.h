@@ -14,7 +14,6 @@ namespace tdrp {
       Image(const Image&) = delete;
       Image(Image&&) = delete;
       Image& operator=(const Image&) = delete;
-      Image& operator=(Image&) = delete;
 
       void Resize(uint32_t width, uint32_t height);
       void SetPixels(const unsigned char* buffer);

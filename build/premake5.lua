@@ -13,7 +13,7 @@ workspace "2drp"
 	-- C++17 support
 	cppdialect "C++17"
 
-  linkgroups "On"
+	linkgroups "On"
 
 	filter "configurations:Debug"
 	 	defines { "DEBUG" }
@@ -34,6 +34,8 @@ workspace "2drp"
 	-- C++17 support.
 	filter { "language:C++", "toolset:clang*" }
 		links { "c++experimental", "stdc++fs" }
+	filter "toolset:clang"
+		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Toolset specific
 	filter "toolset:msc*"
@@ -70,9 +72,6 @@ project "2drp"
 	files { "../src/**" }
 	removefiles { "../src/server/**" }
 	includedirs { "../src" }
-
-	filter "toolset:clang"
-		buildoptions { "-std=c++17", "-Wno-switch" }
 
 	-- Library includes.
 	includedirs {
@@ -119,8 +118,9 @@ project "2drp"
 	filter { "system:windows", "platforms:x64" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x64/SDL2.dll %{cfg.targetdir}" }
 
+
 	-- SDL
-  -- Linux uses the system verison of SDL
+	-- Linux uses the system verison of SDL
 	filter { "system:windows", "platforms:x32" }
 		libdirs "../dependencies/sdl/lib/x86/"
 	filter { "system:windows", "platforms:x64" }
@@ -144,8 +144,8 @@ project "2drp"
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
 		links { "pthread", "dl" }
 
-  filter { "system:linux" }
-    links { "X11", "GL" }
+	filter { "system:linux" }
+		links { "X11", "GL" }
 
 	-- Library directories.
 	-- filter { "system:windows", "platforms:native" }
@@ -182,9 +182,6 @@ project "2drp_server"
 		"protobuf",
 	}
 
-	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-		links { "pthread" }
-
 	-- Library includes.
 	includedirs {
 		"../dependencies/box2d/Box2D/",
@@ -199,12 +196,14 @@ project "2drp_server"
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
 
-	filter "toolset:clang"
-		buildoptions { "-std=c++17", "-Wno-switch" }
-
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
+
+	-- Per-platform libraries.
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread" }
+
 
 project "bgfx"
 	kind "StaticLib"
@@ -291,7 +290,7 @@ project "bx"
 		"__STDC_FORMAT_MACROS",
 		"__STDC_CONSTANT_MACROS",
 		"_HAS_EXCEPTIONS=0",
-		"_HAS_ITERATOR_DEBUGGING=0",
+		-- "_HAS_ITERATOR_DEBUGGING=0",
 		"_SCL_SECURE=0",
 		"_SECURE_SCL=0",
 		"_SCL_SECURE_NO_WARNINGS",

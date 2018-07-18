@@ -7,7 +7,7 @@
 namespace tdrp::loader
 {
 
-	std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer(server::Server& server, const std::string& name)
+std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer(server::Server& server, const std::string& name)
 {
 	// Make sure our package directory exists.
 	if (!filesystem::exists(filesystem::path("packages") / name))
