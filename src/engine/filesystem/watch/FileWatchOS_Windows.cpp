@@ -141,7 +141,11 @@ FileWatch::~FileWatch()
 		Watch* watch = w.second;
 
 		CancelIo(watch->dir_handle);
-		RefreshWatch(watch);
+		RefreshWatch(watch, true);
+
+		if (!HasOverlappedIoCompleted(&watch->overlapped))
+			SleepEx(5, TRUE);
+
 		DeleteWatch(watch);
 	}
 }
@@ -153,7 +157,10 @@ uint32_t FileWatch::Add(const filesystem::path& directory, watch_cb callback, bo
 	// Create the directory handle.
 	watch->dir_handle = CreateFile(directory.c_str(), FILE_LIST_DIRECTORY, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED, NULL);
 	if (watch->dir_handle == INVALID_HANDLE_VALUE)
+	{
+		delete watch;
 		return 0;
+	}
 
 	watch->overlapped.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 	watch->notify_filter = FILE_NOTIFY_CHANGE_CREATION | FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_FILE_NAME;
@@ -167,8 +174,7 @@ uint32_t FileWatch::Add(const filesystem::path& directory, watch_cb callback, bo
 
 	if (!RefreshWatch(watch))
 	{
-		CloseHandle(watch->overlapped.hEvent);
-		CloseHandle(watch->dir_handle);
+		DeleteWatch(watch);
 		return 0;
 	}
 
