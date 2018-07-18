@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <cstdlib>
+
 
 #include "engine/filesystem/ProgramSettings.h"
 #include "client/render/Window.h"
@@ -14,6 +16,8 @@ Window::Window(const char* title) {
     return;
   }
 
+	std::atexit(SDL_Quit);
+
   int width  = Settings->GetInt("window.width",  640);
   int height = Settings->GetInt("window.height", 480);
 
@@ -21,7 +25,6 @@ Window::Window(const char* title) {
 
   if (m_window == nullptr) {
     std::cout << "SDL_CreateWindow error: " << SDL_GetError() << std::endl;
-    SDL_Quit();
 
     return;
   }
