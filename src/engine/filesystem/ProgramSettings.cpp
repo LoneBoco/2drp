@@ -2,6 +2,8 @@
 #include <locale>
 #include <sstream>
 
+#include <boost/program_options.hpp>
+
 #include "engine/common.h"
 #include "engine/filesystem/File.h"
 
@@ -50,6 +52,45 @@ bool ProgramSettings::LoadFromFile(const filesystem::path& filename)
 				// Save it.
 				Set(category + "." + setting, value);
 			}
+		}
+	}
+
+	return true;
+}
+
+bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
+{
+	namespace po = boost::program_options;
+	po::options_description desc;
+	desc.add_options()
+		("host", po::value<uint16_t>()->implicit_value(13131), "host on port")
+		("connect", po::value<std::vector<std::string>>()->multitoken(), "connect to server on port")
+		;
+
+	po::variables_map vm;
+	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::notify(vm);
+
+	if (vm.count("host"))
+	{
+		Set("game.starthosting", true);
+		Set("server.peers", 32);
+		Set("network.port", vm["host"].as<uint16_t>());
+	}
+
+	if (vm.count("connect"))
+	{
+		auto connect_opts = vm["connect"].as<std::vector<std::string>>();
+		if (connect_opts.size() == 2)
+		{
+			std::string server = connect_opts.at(0);
+			uint16_t port = 13131;
+
+			std::istringstream ss(connect_opts.at(1));
+			ss >> port;
+
+			Set("network.server", server);
+			Set("network.port", port);
 		}
 	}
 
@@ -112,61 +153,7 @@ bool ProgramSettings::Exists(const std::string& setting) const
 
 std::string ProgramSettings::Get(const std::string& setting, const std::string& def) const
 {
-	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
-
-	auto i = m_settings.find(lower);
-	if (i == m_settings.end()) return def;
-	return i->second;
-}
-
-int32_t ProgramSettings::GetInt(const std::string& setting, const int32_t def) const
-{
-	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
-
-	auto i = m_settings.find(lower);
-	if (i == m_settings.end()) return def;
-
-	std::istringstream str(i->second);
-	int32_t v;
-	str >> v;
-	return v;
-}
-
-float ProgramSettings::GetFloat(const std::string& setting, const float def) const
-{
-	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
-
-	auto i = m_settings.find(lower);
-	if (i == m_settings.end()) return def;
-
-	std::istringstream str(i->second);
-	float v;
-	str >> v;
-	return v;
-}
-
-bool ProgramSettings::GetBool(const std::string& setting, const bool def) const
-{
-	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
-
-	auto i = m_settings.find(lower);
-	if (i == m_settings.end()) return def;
-
-	std::string lowervalue{ i->second };
-	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
-
-	if (lower == "on")
-		return true;
-	if (lower == "true")
-		return true;
-	if (lower == "yes")
-		return true;
-
-	return false;
+	return GetAs<std::string>(setting, def);
 }
 
 void ProgramSettings::Set(const std::string& setting, const std::string& value)

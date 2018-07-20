@@ -1,4 +1,7 @@
+#include <iostream>
+
 #include "engine/network/Network.h"
+#include "engine/network/PacketID.h"
 
 #include <enet/enet.h>
 
@@ -67,6 +70,7 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 	else
 	{
 		ENetAddress address;
+		//enet_address_set_host(&address, "127.0.0.1");
 		address.host = ENET_HOST_ANY;
 		address.port = port;
 
@@ -83,25 +87,34 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 
 std::future<bool> Network::Connect(const std::string& hostname, const uint16_t port)
 {
-	auto f = std::async(std::launch::async, [&] () -> bool {
+	auto f = std::async(std::launch::async, [=] () -> bool {
+		std::cout << "setting host" << std::endl;
+
 		ENetAddress address;
 		if (enet_address_set_host(&address, hostname.c_str()) != 0)
 			return false;
 
 		address.port = port;
 
+		std::cout << "host connect" << std::endl;
 		ENetPeer* peer = enet_host_connect(m_host.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
 		if (peer == nullptr)
 			return false;
 
+		std::cout << "host service" << std::endl;
 		ENetEvent event;
-		if (enet_host_service(m_host.get(), &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
+		if (enet_host_service(m_host.get(), &event, 5000) > 0)
 		{
-			m_peers.clear();
-			m_peers[0] = peer;
-			return true;
+			std::cout << "got event " << event.type << std::endl;
+			if (event.type == ENET_EVENT_TYPE_CONNECT)
+			{
+				m_peers.clear();
+				m_peers[0] = peer;
+				return true;
+			}
 		}
 
+		std::cout << "failure" << std::endl;
 		enet_peer_reset(peer);
 		return false;
 	});
@@ -126,7 +139,7 @@ void Network::Disconnect()
 void Network::Update()
 {
 	if (!m_host) return;
-	if (m_host->connectedPeers == 0) return;
+	//if (m_host->connectedPeers == 0) return;
 
 	ENetEvent event;
 	while (enet_host_service(m_host.get(), &event, 0) > 0)
@@ -145,6 +158,7 @@ void Network::Update()
 				if (m_connect_cb)
 					m_connect_cb(id);
 
+				std::cout << "Got connect for " << id << std::endl;
 				m_peers[id] = event.peer;
 				break;
 
@@ -152,16 +166,29 @@ void Network::Update()
 				if (m_disconnect_cb)
 					m_disconnect_cb(id);
 
+				// Delete our account data tied to this player.
+				if (event.peer->data != nullptr)
+				{
+					auto peeraccount = static_cast<server::Account*>(event.peer->data);
+					delete peeraccount;
+				}
+
 				event.peer->data = nullptr;
 				m_peers.erase(id);
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				if (m_receive_cb && event.packet != nullptr && event.packet->dataLength >= 2)
+				if (event.packet != nullptr && event.packet->dataLength >= 2)
 				{
 					// The first two bytes make up the packet id.
 					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
-					m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+
+					// If login packet, call the login callback.
+					// Otherwise, pass it to the normal receive callback.
+					if (packet_id == static_cast<uint16_t>(ClientPackets::LOGIN) && m_login_cb)
+						m_login_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+					else if (m_receive_cb)
+						m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 				}
 
 				enet_packet_destroy(event.packet);
@@ -211,6 +238,32 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
 }
+
+/////////////////////////////
+
+bool Network::BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account)
+{
+	if (m_peers.find(peer_id) == m_peers.end())
+		return false;
+
+	auto peeraccount = static_cast<server::Account*>(m_peers[peer_id]->data);
+	if (peeraccount != nullptr)
+		delete peeraccount;
+
+	m_peers[peer_id]->data = account.release();
+	return true;
+}
+
+server::Account* Network::GetAccountFromPeer(const uint16_t peer_id)
+{
+	auto iter = m_peers.find(peer_id);
+	if (iter == m_peers.end())
+		return nullptr;
+
+	return static_cast<server::Account*>(iter->second->data);
+}
+
+/////////////////////////////
 
 _ENetPacket* Network::construct_packet(const Channel channel, const uint16_t packet_id, google::protobuf::Message* message)
 {

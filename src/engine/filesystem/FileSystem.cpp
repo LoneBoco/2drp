@@ -8,6 +8,22 @@ namespace tdrp::fs
 
 void FileSystem::bind(const filesystem::path& directory)
 {
+	// Fill our filesystem with file information.
+	for (auto& file : filesystem::recursive_directory_iterator(directory))
+	{
+		// If it is not a regular file, abort.
+		if (!filesystem::is_regular_file(file.status()))
+			continue;
+
+		auto& path = file.path();
+
+		// Check if the directory is in the exclusion list.
+		if (isExcluded(path))
+			continue;
+
+		m_files.insert(std::make_pair(path.filename(), path.parent_path()));
+	}
+
 	m_directory_include.push_back(directory);
 	m_watcher.Add(directory, [&](uint32_t watch_id, const filesystem::path& dir, const filesystem::path& file, watch::Event e)
 	{
@@ -34,22 +50,6 @@ void FileSystem::bind(const filesystem::path& directory)
 				m_files.insert(std::make_pair(file, dir));
 		}
 	});
-
-	// Fill our filesystem with file information.
-	for (auto& file : filesystem::recursive_directory_iterator(directory))
-	{
-		// If it is not a regular file, abort.
-		if (!filesystem::is_regular_file(file.status()))
-			continue;
-
-		auto& path = file.path();
-
-		// Check if the directory is in the exclusion list.
-		if (isExcluded(path))
-			continue;
-
-		m_files.insert(std::make_pair(path.filename(), path.parent_path()));
-	}
 }
 
 std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const

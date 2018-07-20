@@ -5,6 +5,7 @@
 
 #include "engine/common.h"
 #include "engine/package/Package.h"
+#include "engine/server/Account.h"
 
 
 struct _ENetHost;
@@ -62,12 +63,17 @@ public:
 	void Broadcast(const uint16_t packet_id, const Channel channel);
 	void Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 
+public:
+	bool BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account);
+	server::Account* GetAccountFromPeer(const uint16_t peer_id);
+
 private:
 	_ENetPacket* construct_packet(const Channel channel, const uint16_t packet_id, google::protobuf::Message* message = nullptr);
 
 public:
 	void SetConnectCallback(enet_connection_cb callback) { m_connect_cb = callback; }
 	void SetDisconnectCallback(enet_connection_cb callback) { m_disconnect_cb = callback; }
+	void SetLoginCallback(enet_receive_cb callback) { m_login_cb = callback; }
 	void SetReceiveCallback(enet_receive_cb callback) { m_receive_cb = callback; }
 
 private:
@@ -75,6 +81,7 @@ private:
 
 	enet_connection_cb m_connect_cb;
 	enet_connection_cb m_disconnect_cb;
+	enet_receive_cb m_login_cb;
 	enet_receive_cb m_receive_cb;
 	std::unique_ptr<_ENetHost, enet_host_deleter> m_host;
 	std::map<uint16_t, _ENetPeer*> m_peers;

@@ -18,8 +18,8 @@ Window::Window(const char* title) {
 
 	std::atexit(SDL_Quit);
 
-  int width  = Settings->GetInt("window.width",  640);
-  int height = Settings->GetInt("window.height", 480);
+    int width  = Settings->GetAs<int>("window.width",  640);
+  int height = Settings->GetAs<int>("window.height", 480);
 
   m_window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN | ::SDL_WINDOW_OPENGL));
 

@@ -6,6 +6,7 @@
 
 #include "engine/common.h"
 
+#include "client/game/Game.h"
 #include "client/render/Window.h"
 
 #include <iostream>
@@ -14,7 +15,7 @@
 #ifdef __GNUC__
 int main(int argc, char* argv[])
 {
-  SDL_SetMainReady();
+	SDL_SetMainReady();
 #elif _MSC_VER
 #ifdef __cplusplus
 extern "C"
@@ -24,7 +25,15 @@ int SDL_main(int argc, char* argv[])
 #endif
 	ConfigureBabyDI();
 
-	// Pull out the injected window and start the event loop
+	// Inject command line arguments into the settings.
+	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
+	settings->LoadFromCommandLine(argc, argv);
+
+	// Initialize the Game.
+	BabyDI::Injected<tdrp::Game> game;
+	game->Initialize();
+
+	// Pull out the injected window and start the event loop.
 	BabyDI::Injected<tdrp::render::Window> window;
 	window->EventLoop();
 

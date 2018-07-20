@@ -4,6 +4,6 @@
 #pragma warning (push)
 #pragma warning (disable : 4146)
 
-//
+#include "engine/network/packets/CLogin.pb.h"
 
 #pragma warning (pop)

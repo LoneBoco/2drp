@@ -3,4 +3,5 @@
 	<description>Login package for online play.</description>
 	<objectclass file="classes.xml" />
 	<clientscript file="client.js" />
+	<startingscene>startlevel</startingscene>
 </package>

@@ -14,6 +14,7 @@
 
 #include "engine/helper/math.h"
 
+#include "BabyDI.hpp"
 
 /*
 namespace tdrp

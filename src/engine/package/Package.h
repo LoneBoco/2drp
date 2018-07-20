@@ -27,19 +27,31 @@ public:
 	Package& operator=(Package&& other) = delete;
 
 	//! Gets the package name.
-	inline const std::string& GetName() const
+	const std::string& GetName() const
 	{
 		return m_name;
 	}
 
+	//! Gets the package logo.
+	const std::string& GetLogo() const
+	{
+		return m_logo;
+	}
+
 	//! Gets the package description.
-	inline const std::string& GetDescription() const
+	const std::string& GetDescription() const
 	{
 		return m_description;
 	}
+	
+	//! Gets the package starting scene.
+	const std::string& GetStartingScene() const
+	{
+		return m_starting_scene;
+	}
 
 	//! Gets the base path for this package.
-	inline const filesystem::path GetBasePath() const
+	const filesystem::path GetBasePath() const
 	{
 		return filesystem::path("packages") / m_name;
 	}
@@ -52,7 +64,9 @@ public:
 
 private:
 	std::string m_name;
+	std::string m_logo;
 	std::string m_description;
+	std::string m_starting_scene;
 	fs::FileSystem m_filesystem;
 };
 

@@ -11,7 +11,7 @@ class PackageLoader
 {
 public:
 	PackageLoader() = delete;
-	~PackageLoader() = default;
+	~PackageLoader() = delete;
 
 	PackageLoader(const PackageLoader& other) = delete;
 	PackageLoader(PackageLoader&& other) = delete;

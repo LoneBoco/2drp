@@ -36,9 +36,10 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			auto node_objectclass = node_package.child("objectclass");
 			auto node_tileset = node_package.child("tileset");
 			auto node_clientscript = node_package.child("clientscript");
+			auto node_startingscene = node_package.child("startingscene");
 
-			//if (!node_logo.empty())
-			//	; // <logo file="logo.png" />
+			if (!node_logo.empty())
+				package->m_logo = node_logo.attribute("file").as_string();
 			if (!node_desc.empty())
 				package->m_description = node_desc.text().get();
 			if (!node_objectclass.empty())
@@ -47,6 +48,8 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 				tileset_file = node_tileset.attribute("file").as_string();
 			if (!node_clientscript.empty())
 				client_script_file = node_clientscript.attribute("file").as_string();
+			if (!node_startingscene.empty())
+				package->m_starting_scene = node_startingscene.text().get();
 		}
 	}
 

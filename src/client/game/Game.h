@@ -21,10 +21,11 @@ public:
 	Game& operator=(const Game& other) = delete;
 	Game& operator=(Game&& other) = delete;
 
+	void Initialize();
+
 	void Update();
 
 	server::Server Server;
-	std::shared_ptr<package::Package> Package;
 };
 
 } // end namespace tdrp

@@ -102,7 +102,8 @@ void CALLBACK WatchCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, 
 			}
 #			endif
 
-			pWatch->callback(pWatch->watch_id, pWatch->dir, filesystem::path{ szFile }, translateAction(pNotify->Action));
+			if (pWatch->callback != nullptr)
+				pWatch->callback(pWatch->watch_id, pWatch->dir, filesystem::path{ szFile }, translateAction(pNotify->Action));
 		}
 		while (pNotify->NextEntryOffset != 0);
 	}

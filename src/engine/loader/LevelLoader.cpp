@@ -23,7 +23,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 	// Get our _info.xml file.
 	fs::File info{ level / "_info.xml" };
 	if (!info)
-		return scene;
+		return nullptr;
 
 	// Load our _info.xml file.
 	{
