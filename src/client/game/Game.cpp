@@ -27,14 +27,12 @@ void Game::Initialize()
 	if (settings->Exists("game.starthosting"))
 	{
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		std::cout << "hosting on port " << port << std::endl;
 		Server.Host(port);
 	}
 	else if (settings->Exists("network.server"))
 	{
 		std::string host{ settings->Get("network.server") };
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		std::cout << "connecting to " << host << " on port " << port << std::endl;
 		Server.Connect(host, port);
 	}
 }

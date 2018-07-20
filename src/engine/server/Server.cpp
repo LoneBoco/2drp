@@ -37,14 +37,14 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	m_server_type = type;
 	m_server_flags = flags;
 
-	std::cout << "Initializing server" << std::endl;
+	std::cout << ":: Initializing server." << std::endl;
 
 	auto[load_success, package] = loader::PackageLoader::LoadIntoServer(*this, package_name);
 
 	// Load everything.
 	if (m_server_flags & static_cast<uint16_t>(ServerFlags::PRELOAD_EVERYTHING))
 	{
-		std::cout << "Loading everything" << std::endl;
+		std::cout << ":: Loading everything." << std::endl;
 
 		// Load all scenes.
 		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "levels" })
@@ -59,7 +59,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	}
 	else
 	{
-		std::cout << "Loading the starting scene" << std::endl;
+		std::cout << ":: Loading the starting scene: " << package->GetStartingScene() << "." << std::endl;
 
 		// Load our starting scene.
 		auto scene = loader::LevelLoader::CreateScene(*this, package->GetBasePath() / "levels" / package->GetStartingScene());
@@ -81,7 +81,7 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	if (!network::Network::Startup())
 		return false;
 
-	std::cout << "Hosting on port " << port << " for " << peers << " peers" << std::endl;
+	std::cout << ":: Hosting on port " << port << " for " << peers << " peers." << std::endl;
 
 	Network.Initialize(peers, port);
 	return true;
@@ -95,7 +95,7 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 	if (!network::Network::Startup())
 		return false;
 
-	std::cout << "Connecting to " << hostname << " on port " << port << std::endl;
+	std::cout << ":: Connecting to " << hostname << " on port " << port << "." << std::endl;
 
 	Network.Initialize();
 	m_connecting = true;
@@ -113,12 +113,10 @@ void Server::Update()
 		{
 			m_connecting = false;
 
-			std::cout << "Connection finished" << std::endl;
-
 			bool success = m_connecting_future.get();
 			if (success)
 			{
-				std::cout << "Connection was successful, sending packet" << std::endl;
+				std::cout << ":: Connection was successful, sending login packet." << std::endl;
 
 				packet::CLogin packet;
 				packet.set_account("test");
@@ -127,6 +125,11 @@ void Server::Update()
 				packet.set_version("first");
 
 				Network.Send(0, static_cast<uint16_t>(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
+			}
+			else
+			{
+				std::cout << "!! Connection failed." << std::endl;
+				Network.Disconnect();
 			}
 		}
 	}
@@ -168,13 +171,13 @@ void Server::network_connect(const uint16_t id)
 	if (IsSinglePlayer())
 		return;
 
-	std::cout << "connection from " << id << std::endl;
+	std::cout << "<- Connection from " << id << "." << std::endl;
 }
 
 void Server::network_disconnect(const uint16_t id)
 {
 	// TODO: Send disconnection packet to peers.
-	std::cout << "disconnection from " << id << std::endl;
+	std::cout << "<- Disconnection from " << id << "." << std::endl;
 }
 
 void Server::network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
@@ -182,7 +185,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	if (packet_id != static_cast<uint16_t>(ClientPackets::LOGIN))
 		return;
 
-	std::cout << "login packet!" << std::endl;
+	std::cout << "<- Received login packet!" << std::endl;
 
 	packet::CLogin packet;
 	packet.ParseFromArray(packet_data, packet_length);

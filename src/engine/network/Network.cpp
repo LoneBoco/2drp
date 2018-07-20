@@ -87,34 +87,36 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 
 std::future<bool> Network::Connect(const std::string& hostname, const uint16_t port)
 {
-	auto f = std::async(std::launch::async, [=] () -> bool {
-		std::cout << "setting host" << std::endl;
-
+	auto f = std::async(std::launch::async, [=] () -> bool
+	{
 		ENetAddress address;
-		if (enet_address_set_host(&address, hostname.c_str()) != 0)
-			return false;
-
 		address.port = port;
+		if (enet_address_set_host(&address, hostname.c_str()) != 0)
+		{
+			std::cout << "!! Network connect - Failed to determine host address." << std::endl;
+			return false;
+		}
 
-		std::cout << "host connect" << std::endl;
 		ENetPeer* peer = enet_host_connect(m_host.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
 		if (peer == nullptr)
+		{
+			std::cout << "!! Network connect - Failed to connect to host." << std::endl;
 			return false;
+		}
 
-		std::cout << "host service" << std::endl;
 		ENetEvent event;
 		if (enet_host_service(m_host.get(), &event, 5000) > 0)
 		{
-			std::cout << "got event " << event.type << std::endl;
 			if (event.type == ENET_EVENT_TYPE_CONNECT)
 			{
+				std::cout << ":: Network connect - Established link to host." << std::endl;
 				m_peers.clear();
 				m_peers[0] = peer;
 				return true;
 			}
 		}
 
-		std::cout << "failure" << std::endl;
+		std::cout << "!! Network connect - Failure to establish link to host." << std::endl;
 		enet_peer_reset(peer);
 		return false;
 	});
@@ -158,7 +160,6 @@ void Network::Update(bool isServer)
 				if (m_connect_cb)
 					m_connect_cb(id);
 
-				std::cout << "Got connect for " << id << std::endl;
 				m_peers[id] = event.peer;
 				break;
 
