@@ -136,7 +136,7 @@ void Network::Disconnect()
 
 /////////////////////////////
 
-void Network::Update()
+void Network::Update(bool isServer)
 {
 	if (!m_host) return;
 	//if (m_host->connectedPeers == 0) return;
@@ -149,7 +149,7 @@ void Network::Update()
 			continue;
 
 		// Get our peer id.
-		uint16_t id = event.peer->outgoingPeerID;
+		uint16_t id = isServer ? event.peer->incomingPeerID : event.peer->outgoingPeerID;
 
 		// Callbacks.
 		switch (event.type)

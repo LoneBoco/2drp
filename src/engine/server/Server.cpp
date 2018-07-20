@@ -132,7 +132,7 @@ void Server::Update()
 	}
 
 	if (!IsSinglePlayer())
-		Network.Update();
+		Network.Update(m_server_type == ServerType::AUTHORITATIVE);
 }
 
 std::shared_ptr<ObjectClass> Server::GetObjectClass(const std::string& name)

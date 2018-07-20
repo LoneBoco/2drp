@@ -55,7 +55,7 @@ public:
 	void Disconnect();
 
 public:
-	void Update();
+	void Update(bool isServer = false);
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel);
