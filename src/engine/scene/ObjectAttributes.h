@@ -31,240 +31,24 @@ public:
 	Attribute& operator=(const Attribute& other) = delete;
 	Attribute& operator=(Attribute&& other) = delete;
 
-	Attribute& Set(const int64_t value)
-	{
-		if (m_type != AttributeType::SIGNED || m_value_int.s != value)
-			m_isDirty = true;
+	Attribute& Set(const int64_t value);
+	Attribute& Set(const uint64_t value);
+	Attribute& Set(const float value);
+	Attribute& Set(const double value);
+	Attribute& Set(const std::string& value);
+	Attribute& SetAsType(const AttributeType type, const std::string& value);
 
-		m_value_string.clear();
-		m_value_int.s = value;
-		m_type = AttributeType::SIGNED;
+	Attribute& operator=(const int64_t value);
+	Attribute& operator=(const uint64_t value);
+	Attribute& operator=(const float value);
+	Attribute& operator=(const double value);
+	Attribute& operator=(const std::string& value);
 
-		return *this;
-	}
-
-	Attribute& Set(const uint64_t value)
-	{
-		if (m_type != AttributeType::UNSIGNED || m_value_int.u != value)
-			m_isDirty = true;
-
-		m_value_string.clear();
-		m_value_int.u = value;
-		m_type = AttributeType::UNSIGNED;
-
-		return *this;
-	}
-
-	Attribute& Set(const float value)
-	{
-		if (m_type != AttributeType::FLOAT || m_value_float != value)
-			m_isDirty = true;
-
-		m_value_string.clear();
-		m_value_float = value;
-		m_type = AttributeType::FLOAT;
-
-		return *this;
-	}
-
-	Attribute& Set(const double value)
-	{
-		if (m_type != AttributeType::DOUBLE || m_value_double != value)
-			m_isDirty = true;
-
-		m_value_string.clear();
-		m_value_double = value;
-		m_type = AttributeType::DOUBLE;
-
-		return *this;
-	}
-
-	Attribute& Set(const std::string& value)
-	{
-		if (m_type != AttributeType::STRING || m_value_string != value)
-			m_isDirty = true;
-
-		m_value_string = value;
-		m_type = AttributeType::STRING;
-
-		return *this;
-	}
-
-	Attribute& SetAsType(const AttributeType type, const std::string& value)
-	{
-		if (type == AttributeType::STRING)
-		{
-			Set(value);
-			return *this;
-		}
-
-		std::istringstream str(value);
-		switch (type)
-		{
-			case AttributeType::SIGNED:
-				int64_t s;
-				str >> s;
-				Set(s);
-				break;
-			case AttributeType::UNSIGNED:
-				uint64_t u;
-				str >> u;
-				Set(u);
-				break;
-			case AttributeType::FLOAT:
-				float f;
-				str >> f;
-				Set(f);
-				break;
-			case AttributeType::DOUBLE:
-				double d;
-				str >> d;
-				Set(d);
-				break;
-		}
-		return *this;
-	}
-
-	Attribute& operator=(const int64_t value)
-	{
-		Set(value);
-		return *this;
-	}
-	Attribute& operator=(const uint64_t value)
-	{
-		Set(value);
-		return *this;
-	}
-	Attribute& operator=(const float value)
-	{
-		Set(value);
-		return *this;
-	}
-	Attribute& operator=(const double value)
-	{
-		Set(value);
-		return *this;
-	}
-	Attribute& operator=(const std::string& value)
-	{
-		Set(value);
-		return *this;
-	}
-
-	int64_t GetSigned() const
-	{
-		switch (m_type)
-		{
-			case AttributeType::SIGNED:
-				return m_value_int.s;
-			case AttributeType::UNSIGNED:
-				return static_cast<int64_t>(m_value_int.u);
-			case AttributeType::FLOAT:
-				return static_cast<int64_t>(m_value_float);
-			case AttributeType::DOUBLE:
-				return static_cast<int64_t>(m_value_double);
-			case AttributeType::STRING:
-			{
-				std::istringstream str(m_value_string);
-				int64_t r;
-				str >> r;
-				return r;
-			}
-		}
-		return 0;
-	}
-
-	uint64_t GetUnsigned() const
-	{
-		switch (m_type)
-		{
-			case AttributeType::SIGNED:
-				return static_cast<uint64_t>(m_value_int.s);
-			case AttributeType::UNSIGNED:
-				return m_value_int.u;
-			case AttributeType::FLOAT:
-				return static_cast<uint64_t>(m_value_float);
-			case AttributeType::DOUBLE:
-				return static_cast<uint64_t>(m_value_double);
-			case AttributeType::STRING:
-			{
-				std::istringstream str(m_value_string);
-				uint64_t r;
-				str >> r;
-				return r;
-			}
-		}
-		return 0;
-	}
-
-	float GetFloat() const
-	{
-		switch (m_type)
-		{
-			case AttributeType::SIGNED:
-				return static_cast<float>(m_value_int.s);
-			case AttributeType::UNSIGNED:
-				return static_cast<float>(m_value_int.u);
-			case AttributeType::FLOAT:
-				return m_value_float;
-			case AttributeType::DOUBLE:
-				return static_cast<float>(m_value_double);
-			case AttributeType::STRING:
-			{
-				std::istringstream str(m_value_string);
-				float r;
-				str >> r;
-				return r;
-			}
-		}
-		return 0;
-	}
-
-	double GetDouble() const
-	{
-		switch (m_type)
-		{
-			case AttributeType::SIGNED:
-				return static_cast<double>(m_value_int.s);
-			case AttributeType::UNSIGNED:
-				return static_cast<double>(m_value_int.u);
-			case AttributeType::FLOAT:
-				return static_cast<double>(m_value_float);
-			case AttributeType::DOUBLE:
-				return m_value_double;
-			case AttributeType::STRING:
-			{
-				std::istringstream str(m_value_string);
-				double r;
-				str >> r;
-				return r;
-			}
-		}
-		return 0;
-	}
-
-	std::string GetString() const
-	{
-		std::stringstream str;
-		switch (m_type)
-		{
-			case AttributeType::SIGNED:
-				str << m_value_int.s;
-				break;
-			case AttributeType::UNSIGNED:
-				str << m_value_int.u;
-				break;
-			case AttributeType::FLOAT:
-				str << m_value_float;
-				break;
-			case AttributeType::DOUBLE:
-				str << m_value_double;
-				break;
-			case AttributeType::STRING:
-				return m_value_string;
-		}
-		return str.str();
-	}
+	int64_t GetSigned() const;
+	uint64_t GetUnsigned() const;
+	float GetFloat() const;
+	double GetDouble() const;
+	std::string GetString() const;
 
 	const uint16_t GetId() const		{ return m_id; }
 	void SetId(const uint16_t value)	{ m_id = value; }
@@ -297,9 +81,84 @@ protected:
 	std::string m_value_string;
 };
 
-
 class ObjectAttributes
 {
+public:
+
+	class IteratorDirty
+	{
+	public:
+		using iterator_category = std::bidirectional_iterator_tag;
+		using value_type = Attribute;
+		using difference_type = int;
+		using pointer = Attribute * ;
+		using reference = Attribute & ;
+
+	public:
+		IteratorDirty(ObjectAttributes& attributes, std::map<uint16_t, std::shared_ptr<Attribute>>::iterator iterator)
+		{
+			m_begin = attributes.m_attributes.begin();
+			m_end = attributes.m_attributes.end();
+			m_iter = iterator;
+		}
+		IteratorDirty(IteratorDirty& other) : m_begin(other.m_begin), m_end(other.m_end), m_iter(other.m_iter) {}
+
+	public:
+		bool operator==(const IteratorDirty& other) const { return m_iter == other.m_iter; }
+		bool operator!=(const IteratorDirty& other) const { return m_iter != other.m_iter; }
+		reference operator*() { return *m_iter->second; }
+		pointer operator->() { return m_iter->second.get(); }
+
+		IteratorDirty operator++()
+		{
+			IteratorDirty i = *this;
+			while (m_iter != m_end)
+			{
+				++m_iter;
+				if (m_iter->second->GetIsDirty())
+					break;
+			}
+			return i;
+		}
+		IteratorDirty operator--()
+		{
+			IteratorDirty i = *this;
+			while (m_iter != m_begin)
+			{
+				--m_iter;
+				if (m_iter->second->GetIsDirty())
+					break;
+			}
+			return i;
+		}
+
+		IteratorDirty operator++(int)
+		{
+			while (m_iter != m_end)
+			{
+				++m_iter;
+				if (m_iter->second->GetIsDirty())
+					break;
+			}
+			return *this;
+		}
+		IteratorDirty operator--(int)
+		{
+			while (m_iter != m_begin)
+			{
+				--m_iter;
+				if (m_iter->second->GetIsDirty())
+					break;
+			}
+			return *this;
+		}
+
+	protected:
+		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_begin;
+		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_iter;
+		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_end;
+	};
+
 public:
 	ObjectAttributes() : m_cid(0) {}
 	~ObjectAttributes();
@@ -346,6 +205,19 @@ public:
 	//! \return The attribute map.
 	std::map<uint16_t, std::shared_ptr<Attribute>>& GetMap()		{ return m_attributes; }
 
+	//! Returns an iterator to iterate over dirty attributes.
+	IteratorDirty GetDirtyBegin() { return IteratorDirty(*this, m_attributes.begin()); }
+	IteratorDirty GetDirtyEnd() { return IteratorDirty(*this, m_attributes.end()); }
+
+	//! Returns if we have any dirty attributes.
+	bool HasDirty() const
+	{
+		return std::any_of(m_attributes.begin(), m_attributes.end(), [](const auto& v) -> bool
+		{
+			return v.second->GetIsDirty();
+		});
+	}
+
 private:
 	//! Assigns an id to the attribute.
 	void assignId(const uint16_t id, Attribute& prop);
@@ -355,6 +227,18 @@ private:
 
 	std::map<uint16_t, std::shared_ptr<Attribute>> m_attributes;
 	uint16_t m_cid;
+
+public:
+	class Dirty
+	{
+	public:
+		Dirty(ObjectAttributes& attributes) { m_attributes = std::shared_ptr<ObjectAttributes>(&attributes); }
+		IteratorDirty begin() { return m_attributes->GetDirtyBegin(); }
+		IteratorDirty end() { return m_attributes->GetDirtyEnd(); }
+
+	protected:
+		std::shared_ptr<ObjectAttributes> m_attributes;
+	};
 };
 
 } // end namespace tdrp

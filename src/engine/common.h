@@ -30,6 +30,7 @@ public:
 	MyClass(MyClass&& other) = delete;
 	MyClass& operator=(const MyClass& other) = delete;
 	MyClass& operator=(MyClass&& other) = delete;
+	bool operator==(const MyClass& other) = delete;
 };
 
 } // end namespace tdrp

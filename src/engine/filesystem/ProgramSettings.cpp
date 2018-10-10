@@ -68,7 +68,7 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 		;
 
 	po::variables_map vm;
-	po::store(po::parse_command_line(argc, argv, desc), vm);
+	po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), vm);
 	po::notify(vm);
 
 	if (vm.count("host"))
@@ -81,13 +81,16 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 	if (vm.count("connect"))
 	{
 		auto connect_opts = vm["connect"].as<std::vector<std::string>>();
-		if (connect_opts.size() == 2)
+		if (!connect_opts.empty())
 		{
 			std::string server = connect_opts.at(0);
 			uint16_t port = 13131;
 
-			std::istringstream ss(connect_opts.at(1));
-			ss >> port;
+			if (connect_opts.size() == 2)
+			{
+				std::istringstream ss(connect_opts.at(1));
+				ss >> port;
+			}
 
 			Set("network.server", server);
 			Set("network.port", port);
