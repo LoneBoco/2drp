@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SSceneObjectDelete
+{
+	fixed32 id = 1;
+}

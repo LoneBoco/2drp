@@ -2,12 +2,12 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SSceneObjectAdd
+message SSceneObjectNew
 {
 	message Attribute
 	{
 		uint32 id = 1;
-		uint32 type = 2;
+		string name = 2;
 		oneof value
 		{
 			int64 as_int = 3;
@@ -18,7 +18,7 @@ message SSceneObjectAdd
 		}
 	}
 
-	fixed64 id = 1;
+	fixed32 id = 1;
 	uint32 type = 2;
 	string class = 3;
 	string script = 4;

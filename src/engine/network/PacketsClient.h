@@ -5,5 +5,6 @@
 #pragma warning (disable : 4146)
 
 #include "engine/network/packets/CLogin.pb.h"
+#include "engine/network/packets/CSceneObjectChange.pb.h"
 
 #pragma warning (pop)

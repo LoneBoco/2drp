@@ -4,7 +4,14 @@
 #pragma warning (push)
 #pragma warning (disable : 4146)
 
+#include "engine/network/packets/SClass.pb.h"
+#include "engine/network/packets/SClassDelete.pb.h"
+#include "engine/network/packets/SClientScript.pb.h"
+#include "engine/network/packets/SClientScriptDelete.pb.h"
 #include "engine/network/packets/SError.pb.h"
-#include "engine/network/packets/SSceneObject.pb.h"
+#include "engine/network/packets/SLoginStatus.pb.h"
+#include "engine/network/packets/SSceneObjectChange.pb.h"
+#include "engine/network/packets/SSceneObjectDelete.pb.h"
+#include "engine/network/packets/SSceneObjectNew.pb.h"
 
 #pragma warning (pop)

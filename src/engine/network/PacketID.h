@@ -9,10 +9,10 @@ enum class ClientPackets
 {
 	NOTHING = 0,
 	LOGIN,
+	SCENEOBJECTCHANGE,
+
 	WANTFILE,				// [INT4 mod time][filename]
 	SERVERATTRIBUTES,		// {[INT2 id][value], ...}
-	OBJECTATTRIBUTES,		// [INT4 id] {[INT2 id][value], ...}
-	OBJECTPROPERTIES,		// [INT4 id] {[INT1 id][value], ...}
 
 	COUNT
 };
@@ -21,11 +21,19 @@ enum class ServerPackets
 {
 	NOTHING = 0,
 	ERROR,					// [STRING error]
+	LOGINSTATUS,
+	CLIENTSCRIPT,
+	CLIENTSCRIPTDELETE,
+	CLASS,
+	CLASSDELETE,
+	SCENEOBJECTNEW,
+	SCENEOBJECTCHANGE,
+	SCENEOBJECTDELETE,
+
 	FILESTART,				// [INT2 id][INT1 type][file name]
 	FILEDATA,				// [INT2 id][data]
 	FILEEND,				// [INT2 id]
 	SERVERTYPE,				// [type]
-	CLIENTSCRIPT,			// [script]
 	CLASSADD,				// [name]
 	CLASSATTRIBUTEADD,		// [INT1 class length][class][INT2 id][name]
 	CLASSSCRIPT,			// [STRING class name][script]

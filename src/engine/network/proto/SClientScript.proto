@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SClientScript
+{
+	string name = 1;
+	string script = 2;
+}
