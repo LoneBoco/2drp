@@ -17,7 +17,7 @@ namespace tdrp::loader
 
 std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& server, const filesystem::path& level)
 {
-	auto scene = std::make_shared<Scene>();
+	auto scene = std::make_shared<Scene>(level.parent_path().filename().string());
 	int32_t version = 1;
 
 	// Get our _info.xml file.
@@ -34,6 +34,11 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 		auto n_level = infodoc.child("level");
 		if (n_level)
 			version = n_level.attribute("version").as_int(1);
+
+		// Packet transmission.
+		auto n_transmission = infodoc.child("transmission");
+		if (n_transmission)
+			scene->m_transmission_distance = n_transmission.attribute("distance").as_float(2000);
 	}
 
 	// Load our chunks.

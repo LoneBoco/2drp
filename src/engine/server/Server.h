@@ -9,6 +9,7 @@
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
+#include "engine/server/Player.h"
 
 namespace tdrp::server
 {
@@ -31,6 +32,7 @@ enum class ServerFlags : uint16_t
 class Server
 {
 	friend class loader::PackageLoader;
+	friend class network::Network;
 
 public:
 	Server();
@@ -50,12 +52,22 @@ public:
 	void Update();
 
 public:
+	void AddClientScript(const std::string& name, const std::string& script);
+
+public:
 	std::shared_ptr<ObjectClass> GetObjectClass(const std::string& name);
 	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name);
 	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
 
+public:
+	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
+	bool DeleteClientScript(const std::string& name);
+
+public:
+
 	const uint32_t GetNextSceneObjectID();
 	const bool IsSinglePlayer() const;
+	const bool IsHost() const;
 
 	network::Network Network;
 
@@ -76,7 +88,9 @@ protected:
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;
-	std::string m_client_script;
+	std::map<std::string, std::string> m_client_scripts;
+
+	std::map<uint16_t, std::shared_ptr<server::Player>> m_player_list;
 };
 
 inline const uint32_t Server::GetNextSceneObjectID()
@@ -87,6 +101,11 @@ inline const uint32_t Server::GetNextSceneObjectID()
 inline const bool Server::IsSinglePlayer() const
 {
 	return m_server_flags & static_cast<uint16_t>(ServerFlags::SINGLEPLAYER_ONLY);
+}
+
+inline const bool Server::IsHost() const
+{
+	return m_server_type == ServerType::AUTHORITATIVE;
 }
 
 } // end namespace tdrp::server

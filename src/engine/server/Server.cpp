@@ -8,6 +8,7 @@
 #include "engine/filesystem/File.h"
 #include "engine/network/PacketID.h"
 #include "engine/network/PacketsClient.h"
+#include "engine/network/PacketsServer.h"
 
 namespace tdrp::server
 {
@@ -22,6 +23,9 @@ Server::Server()
 	using namespace std::placeholders;
 	Network.SetConnectCallback(std::bind(&Server::network_connect, this, _1));
 	Network.SetDisconnectCallback(std::bind(&Server::network_disconnect, this, _1));
+	Network.SetLoginCallback(std::bind(&Server::network_login, this, _1, _2, _3, _4));
+
+	Network.BindServer(this);
 }
 
 Server::~Server()
@@ -75,7 +79,7 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	if (IsSinglePlayer())
 		return false;
 
-	if (m_server_type != ServerType::AUTHORITATIVE)
+	if (!IsHost())
 		return false;
 
 	if (!network::Network::Startup())
@@ -104,6 +108,44 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 }
 
 /////////////////////////////
+
+template <class T>
+T getPropsPacket(ObjectAttributes& attributes)
+{
+	// Create a packet that contains our updated attributes.
+	T packet;
+
+	// Loop through all dirty attributes and add them to the packet.
+	for (auto& attribute : ObjectAttributes::Dirty(attributes))
+	{
+		attribute.SetIsDirty(false);
+
+		auto attr = packet.add_attributes();
+		attr->set_id(attribute.GetId());
+
+		switch (attribute.GetType())
+		{
+		case AttributeType::SIGNED:
+			attr->set_as_int(attribute.GetSigned());
+			break;
+		case AttributeType::UNSIGNED:
+			attr->set_as_uint(attribute.GetUnsigned());
+			break;
+		case AttributeType::FLOAT:
+			attr->set_as_float(attribute.GetFloat());
+			break;
+		case AttributeType::DOUBLE:
+			attr->set_as_double(attribute.GetDouble());
+			break;
+		default:
+		case AttributeType::STRING:
+			attr->set_as_string(attribute.GetString());
+			break;
+		}
+	}
+
+	return packet;
+}
 
 void Server::Update()
 {
@@ -134,15 +176,62 @@ void Server::Update()
 		}
 	}
 
+	// Find any dirty attributes and update them.
+	for (auto&[name, scene] : m_scenes)
+	{
+		// Loop through all scene objects.
+		for (auto&[id, object] : scene->m_graph)
+		{
+			// Check if we have dirty attributes.
+			if (object->Attributes.HasDirty())
+			{
+				// Create a packet that contains our updated attributes.
+				auto packet = getPropsPacket<packet::SSceneObjectChange>(object->Attributes);
+
+				if (!IsSinglePlayer())
+				{
+					if (IsHost())
+					{
+						auto location = object->GetPosition();
+						Network.SendToScene(*scene, location.xy(), static_cast<uint16_t>(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
+					}
+				}
+			}
+		}
+	}
+
 	if (!IsSinglePlayer())
-		Network.Update(m_server_type == ServerType::AUTHORITATIVE);
+		Network.Update(IsHost());
 }
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Server::AddClientScript(const std::string& name, const std::string& script)
+{
+	m_client_scripts[name] = script;
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
+	{
+		packet::SClientScript packet;
+		packet.set_name(name);
+		packet.set_script(script);
+
+		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
+	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<ObjectClass> Server::GetObjectClass(const std::string& name)
 {
 	auto iter = m_object_classes.find(name);
 	if (iter == m_object_classes.end())
-		return nullptr;
+	{
+		auto c = std::make_shared<ObjectClass>(name);
+		m_object_classes.insert(std::make_pair(name, c));
+		return c;
+	}
 	return iter->second;
 }
 
@@ -162,6 +251,49 @@ std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
 	return iter->second;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
+{
+	auto iter = m_object_classes.find(name);
+	if (iter == m_object_classes.end())
+		return nullptr;
+
+	auto c = iter->second;
+	m_object_classes.erase(iter);
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
+	{
+		packet::SClassDelete packet;
+		packet.set_name(name);
+
+		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
+	}
+
+	return c;
+}
+
+bool Server::DeleteClientScript(const std::string& name)
+{
+	auto iter = m_client_scripts.find(name);
+	if (iter == m_client_scripts.end())
+		return false;
+
+	m_client_scripts.erase(iter);
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
+	{
+		packet::SClientScriptDelete packet;
+		packet.set_name(name);
+
+		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+	}
+
+	return true;
+}
+
 /////////////////////////////
 
 void Server::network_connect(const uint16_t id)
@@ -172,12 +304,14 @@ void Server::network_connect(const uint16_t id)
 		return;
 
 	std::cout << "<- Connection from " << id << "." << std::endl;
+	m_player_list[id] = std::make_shared<Player>(id);
 }
 
 void Server::network_disconnect(const uint16_t id)
 {
 	// TODO: Send disconnection packet to peers.
 	std::cout << "<- Disconnection from " << id << "." << std::endl;
+	m_player_list.erase(id);
 }
 
 void Server::network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
@@ -195,6 +329,11 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	// TODO: Verify account is valid.
 
 	// TODO: Notify client that they are logged in or rejected.
+	packet::SLoginStatus login_status;
+	login_status.set_success(true);
+	//login_status.set_message("Invalid username or password.");
+	Network.Send(id, static_cast<uint16_t>(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+	std::cout << "-> Sending login status." << std::endl;
 
 	// If accepted, bind the account.
 	Network.BindAccountToPeer(id, std::move(account));

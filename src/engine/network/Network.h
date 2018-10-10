@@ -5,13 +5,19 @@
 
 #include "engine/common.h"
 #include "engine/package/Package.h"
-#include "engine/server/Account.h"
+#include "engine/scene/Scene.h"
 
+#include "engine/server/Account.h"
 
 struct _ENetHost;
 struct _ENetPeer;
 struct _ENetPacket;
 struct enet_host_deleter;
+
+namespace tdrp::server
+{
+	class Server;
+}
 
 namespace tdrp::network
 {
@@ -46,6 +52,8 @@ public:
 	Network& operator=(const Network& other) = delete;
 	Network& operator=(Network&& other) = delete;
 
+	void BindServer(server::Server* server);
+
 	static bool Startup();
 	static void Shutdown();
 	bool Initialize(const size_t peers = 1, const uint16_t port = 0);
@@ -62,6 +70,14 @@ public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const Channel channel);
 	void Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, uint16_t packet_id, const Channel channel);
+	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel);
+	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+
+protected:
+	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
+	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
 
 public:
 	bool BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account);
@@ -78,6 +94,7 @@ public:
 
 private:
 	static bool ms_started;
+	server::Server* m_server;
 
 	enet_connection_cb m_connect_cb;
 	enet_connection_cb m_disconnect_cb;

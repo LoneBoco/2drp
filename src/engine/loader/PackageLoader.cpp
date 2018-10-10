@@ -57,7 +57,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	auto client_script = package->GetFileSystem().GetFile(client_script_file);
 	if (client_script != nullptr)
 	{
-		server.m_client_script = client_script->ReadAsString();
+		server.m_client_scripts.insert(std::make_pair("default", client_script->ReadAsString()));
 	}
 
 	// Load our classes.

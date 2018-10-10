@@ -16,8 +16,4 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 template <class T>
 const T construct(const uint8_t* const packet_data, const size_t packet_length);
 
-/////////////////////////////
-
-void handle(Game& game, const packet::SError& packet);
-
 } // end namespace tdrp::handlers

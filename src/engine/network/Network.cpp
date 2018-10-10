@@ -3,6 +3,8 @@
 #include "engine/network/Network.h"
 #include "engine/network/PacketID.h"
 
+#include "engine/server/Server.h"
+
 #include <enet/enet.h>
 
 namespace tdrp::network
@@ -81,6 +83,11 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 		return false;
 
 	return true;
+}
+
+void Network::BindServer(server::Server* server)
+{
+	m_server = server;
 }
 
 /////////////////////////////
@@ -238,6 +245,80 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 	if (packet == nullptr) return;
 
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
+}
+
+int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, uint16_t packet_id, const Channel channel)
+{
+	if (m_host == nullptr) return 0;
+	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id));
+}
+
+int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+{
+	if (m_host == nullptr) return 0;
+	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message));
+}
+
+int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel)
+{
+	if (m_host == nullptr) return 0;
+	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id));
+}
+
+int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+{
+	if (m_host == nullptr) return 0;
+	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message));
+}
+
+/////////////////////////////
+
+int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+{
+	if (packet == nullptr) return 0;
+
+	int count = 0;
+	for (auto[player_id, player] : m_server->m_player_list)
+	{
+		if (auto player_scene = player->GetCurrentScene().lock())
+		{
+			if (*player_scene == scene)
+			{
+				if (auto player_object = player->GetCurrentControlledSceneObject().lock())
+				{
+					auto player_position = player_object->GetPosition();
+					auto distance = Vector2df::DistanceSquared(location, player_position.xy());
+					if (distance <= scene.GetTransmissionDistance())
+					{
+						++count;
+						enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
+					}
+				}
+			}
+		}
+	}
+
+	return count;
+}
+
+int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+{
+	if (packet == nullptr) return 0;
+
+	int count = 0;
+	for (auto[player_id, player] : m_server->m_player_list)
+	{
+		if (auto player_scene = player->GetCurrentScene().lock())
+		{
+			if (*player_scene == scene)
+			{
+				++count;
+				enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
+			}
+		}
+	}
+
+	return count;
 }
 
 /////////////////////////////

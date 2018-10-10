@@ -22,7 +22,7 @@ bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
 	return true;
 }
 
-std::weak_ptr<SceneObject> Scene::FindObject(uint32_t id)
+std::weak_ptr<SceneObject> Scene::FindObject(uint32_t id) const
 {
 	auto p = m_graph.find(id);
 	if (p == m_graph.end())
@@ -31,7 +31,7 @@ std::weak_ptr<SceneObject> Scene::FindObject(uint32_t id)
 	return std::weak_ptr<SceneObject>(p->second);
 }
 
-std::weak_ptr<SceneObject> Scene::FindObject(const std::string& name)
+std::weak_ptr<SceneObject> Scene::FindObject(const std::string& name) const
 {
 	for (auto p : m_graph)
 	{
