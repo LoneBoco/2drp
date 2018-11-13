@@ -4,115 +4,126 @@
 #include <string>
 #include <functional>
 
-namespace tdrp {
-  /**
-   * Base class to hide templated implementation for a resource.
-   *
-   * Resource and BaseResource should always be owned by ResourcePool.
-   * For shared ownership, look at ResourceHandle.
-   */
-  class BaseResource {
-  public:
-    BaseResource(const BaseResource& other) = delete;
+namespace tdrp
+{
 
-    BaseResource(const std::string& name)
-      : m_name(name) {
-    };
+/**
+ * Base class to hide templated implementation for a resource.
+ *
+ * Resource and BaseResource should always be owned by ResourcePool.
+ * For shared ownership, look at ResourceHandle.
+ */
+class BaseResource
+{
+public:
+	BaseResource(const BaseResource& other) = delete;
 
-    virtual ~BaseResource() {};
+	BaseResource(const std::string& name)
+		: m_name(name)
+	{};
 
-    const std::string& GetName() const {
-      return m_name;
-    };
+	virtual ~BaseResource() {};
 
-  protected:
-    const virtual void* GetOpaquePointerToResource() const = 0;
+	const std::string& GetName() const
+	{
+		return m_name;
+	};
 
-    const std::string m_name;
-  };
+protected:
+	const virtual void* GetOpaquePointerToResource() const = 0;
 
-  template <typename T>
-  class ResourceHandle;
+	const std::string m_name;
+};
 
-  /**
-   * Resource class holds an underlying resource type.
-   */
-  template <typename T>
-  class Resource : public BaseResource {
-    friend ResourceHandle<T>;
+template <typename T>
+class ResourceHandle;
 
-  public:
-    Resource(const Resource<T>& other) = delete;
+/**
+ * Resource class holds an underlying resource type.
+ */
+template <typename T>
+class Resource : public BaseResource
+{
+	friend ResourceHandle<T>;
 
-    Resource(const std::string& name, std::unique_ptr<T> underlying)
-      : BaseResource(name),
-        m_underlying(std::move(underlying)) {
-    };
+public:
+	Resource(const Resource<T>& other) = delete;
 
-    const void* GetOpaquePointerToResource() const override {
-      return (void*)m_underlying.get();
-    };
+	Resource(const std::string& name, std::unique_ptr<T> underlying)
+		: BaseResource(name), m_underlying(std::move(underlying))
+	{};
 
-  private:
-    std::unique_ptr<T> m_underlying;
-  };
+	const void* GetOpaquePointerToResource() const override
+	{
+		return (void*)m_underlying.get();
+	};
 
-  /**
-   * Handle to a resource
-   */
-  template <typename T>
-  class ResourceHandle {
-  public:
-    ResourceHandle() {
-    };
+private:
+	std::unique_ptr<T> m_underlying;
+};
 
-    ResourceHandle(const std::shared_ptr< const Resource<T> >& resource)
-      : m_resource(resource) {
-    };
+/**
+ * Handle to a resource
+ */
+template <typename T>
+class ResourceHandle
+{
+public:
+	ResourceHandle() {};
 
-    ResourceHandle(const ResourceHandle<T>& other)
-      : ResourceHandle(other.GetResource()) {
-    };
+	ResourceHandle(const std::shared_ptr< const Resource<T> >& resource)
+		: m_resource(resource)
+	{};
 
-    ResourceHandle(ResourceHandle<T>&& other) noexcept
-      : m_resource(other.GetResource()) {
-      other.m_resource.reset();
-    };
+	ResourceHandle(const ResourceHandle<T>& other)
+		: ResourceHandle(other.GetResource())
+	{};
 
-    ~ResourceHandle() noexcept {
-    };
+	ResourceHandle(ResourceHandle<T>&& other) noexcept
+		: m_resource(other.GetResource())
+	{
+		other.m_resource.reset();
+	};
 
-    ResourceHandle<T>& operator=(const ResourceHandle<T>& other) {
-      ResourceHandle<T> tmp(other);
-      *this = std::move(tmp);
+	~ResourceHandle() noexcept {
+	};
 
-      return *this;
-    };
+	ResourceHandle<T>& operator=(const ResourceHandle<T>& other)
+	{
+		ResourceHandle<T> tmp(other);
+		*this = std::move(tmp);
 
-    ResourceHandle<T>& operator=(const ResourceHandle<T>&& other) {
-      if (this == &other) {
-        return *this;
-      }
+		return *this;
+	};
 
-      m_resource = other.m_resource;
-      other.m_resource.reset();
+	ResourceHandle<T>& operator=(const ResourceHandle<T>&& other)
+	{
+		if (this == &other)
+			return *this;
 
-      return *this;
-    };
+		m_resource = other.m_resource;
+		other.m_resource.reset();
 
-    const std::shared_ptr< const Resource<T> >& GetResource() const {
-      return m_resource;
-    };
+		return *this;
+	};
 
-    bool operator==(const ResourceHandle& other) const {
-      return m_resource == other.m_resource;
-    };
+	const std::shared_ptr< const Resource<T> >& GetResource() const
+	{
+		return m_resource;
+	};
 
-    T* operator->() const {
-      return m_resource->m_underlying.get();
-    };
+	bool operator==(const ResourceHandle& other) const
+	{
+		return m_resource == other.m_resource;
+	};
 
-  private:
-    const std::shared_ptr< const Resource<T> > m_resource;
-  };
-}
+	T* operator->() const
+	{
+		return m_resource->m_underlying.get();
+	};
+
+private:
+	const std::shared_ptr<const Resource<T>> m_resource;
+};
+
+} // end namespace tdrp

@@ -47,7 +47,7 @@ workspace "2drp"
 
 	-- Windows defines.
 	filter "system:windows"
-		defines { "WIN32", "_WIN32" }
+		defines { "WIN32", "_WIN32", "_WINDOWS" }
 	filter { "system:windows", "platforms:x64" }
 		defines { "WIN64", "_WIN64" }
 
@@ -75,8 +75,7 @@ project "2drp"
 
 	-- Library includes.
 	includedirs {
-		"../dependencies/bx/include/",
-		"../dependencies/bgfx/include/",
+		"../dependencies/SFML/include/",
 		"../dependencies/box2d/Box2D/",
 		"../dependencies/bzip2/",
 		"../dependencies/zlib/",
@@ -88,48 +87,29 @@ project "2drp"
 		"../dependencies/protobuf-3.5.1/src/",
 	}
 
-	dependson { "bx", "bimg", "bgfx", "box2d", "bzip2", "zlib", "enet" }
+	dependson { "SFML", "box2d", "bzip2", "zlib", "enet" }
 
 	-- Libraries.
 	links {
-		"bx",
-		"bimg",
-		"bgfx",
+		"SFML",
 		"Box2D",
 		"bzip2",
 		"zlib",
 		"enet",
 		"pugixml",
-		"protobuf",
-		"SDL2", -- External.
-		"SDL2main", -- External.
+		"protobuf"
 	}
+
+	defines { "SFML_STATIC" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
 
-	-- Post build commands.
+	-- Post-build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
 		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
-	filter { "system:windows", "platforms:x32" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x86/SDL2.dll %{cfg.targetdir}" }
-	filter { "system:windows", "platforms:x64" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/sdl/lib/x64/SDL2.dll %{cfg.targetdir}" }
-
-
-	-- SDL
-	-- Linux uses the system verison of SDL
-	filter { "system:windows", "platforms:x32" }
-		libdirs "../dependencies/sdl/lib/x86/"
-	filter { "system:windows", "platforms:x64" }
-		libdirs "../dependencies/sdl/lib/x64/"
-	filter { "system:windows" }
-    includedirs "../dependencies/sdl/include/"
-
-	filter "system:linux"
-    includedirs "/usr/include/SDL2"
 
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
@@ -205,102 +185,153 @@ project "2drp_server"
 		links { "pthread" }
 
 
-project "bgfx"
+project "SFML"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++14"
 	location "projects"
-	files { "../dependencies/bgfx/include/**" }
-	files { "../dependencies/bgfx/src/**.h", "../dependencies/bgfx/src/**.cpp", "../dependencies/bgfx/src/**.mm" }
-	removefiles { "../dependencies/bgfx/src/**.bin.h" }
-	removefiles { "../dependencies/bgfx/src/amalgamated.**" }
-	includedirs { "../dependencies/bgfx/include/" }
-	includedirs { "../dependencies/bgfx/3rdparty/" }
-	includedirs { "../dependencies/bgfx/3rdparty/dxsdk/include/" }
-	includedirs { "../dependencies/bgfx/3rdparty/khronos/" }
-	includedirs { "../dependencies/bimg/include/" }
-	includedirs { "../dependencies/bx/include/" }
-	dependson { "bx", "bimg", "bimg_decode" }
+	dependson { "flac", "ogg", "vorbis" }
+	includedirs {
+		"../dependencies/SFML/include/",
+		"../dependencies/SFML/src/",
+		"../dependencies/SFML/extlibs/headers/stb_image/",
+		"../dependencies/flac/include/",
+		"../dependencies/freetype2/include/",
+		"../dependencies/_config/ogg/include/",
+		"../dependencies/ogg/include/",
+		"../dependencies/OpenAL/include/AL/",
+		"../dependencies/vorbis/include/",
+	}
+	files {
+		"../dependencies/SFML/src/SFML/Audio/**",
+		"../dependencies/SFML/src/SFML/Graphics/**",
+		"../dependencies/SFML/src/SFML/System/*.cpp",
+		"../dependencies/SFML/src/SFML/Window/*",
+	}
+	removefiles {
+		"../dependencies/SFML/src/SFML/Window/EGLCheck.*",
+		"../dependencies/SFML/src/SFML/Window/EglContext.*",
+	}
 	links {
-		"gdi32",
-		"psapi",
-		"bx",
-		"bimg",
-		"bimg_decode",
+		"flac",
+		"ogg",
+		"vorbis",
+		"freetype", -- external
+		"OpenAL32", -- external
+		"OpenGL32", -- external
 	}
 	defines {
-		"__STDC_LIMIT_MACROS",
-		"__STDC_FORMAT_MACROS",
-		"__STDC_CONSTANT_MACROS",
+		"OV_EXCLUDE_STATIC_CALLBACKS",
+		"FLAC__NO_DLL",
+		"SFML_STATIC",
 	}
-	-- defines { "ENTRY_CONFIG_USE_SDL=1" }
-	-- links   { "SDL2" }
-	filter "toolset:msc*"
-		includedirs { "../dependencies/bx/include/compat/msvc" }
-	filter "Debug"
-		defines { "BGFX_CONFIG_DEBUG=1" }
+	filter { "system:windows", "platforms:x32" }
+		libdirs { "../dependencies/freetype2/win32/", "../dependencies/OpenAL/lib/win32/" }
+	filter { "system:windows", "platforms:x64" }
+		libdirs { "../dependencies/freetype2/win64/", "../dependencies/OpenAL/lib/win64/" }
+	filter "system:windows"
+		files {
+			"../dependencies/SFML/src/SFML/Main/MainWin32.cpp",
+			"../dependencies/SFML/src/SFML/System/Win32/**",
+			"../dependencies/SFML/src/SFML/Window/Win32/**",
+		}
+		defines { "UNICODE", "_UNICODE" }
+		links { "winmm", "gdi32" }
+	filter "system:linux"
+		files {
+			"../dependencies/SFML/src/SFML/System/Unix/**",
+			"../dependencies/SFML/src/SFML/Window/Unix/**",
+		}
+		links { "pthread" }
+	filter { "toolset:gcc", "files:ImageLoader.cpp" }
+		buildoptions { "-fno-strict-aliasing" }
 
-project "bimg"
-	kind "StaticLib"
-	language "C++"
-	location "projects"
-	files { "../dependencies/bimg/include/**", "../dependencies/bimg/src/image.**" }
-	includedirs { "../dependencies/bimg/include/" }
-	includedirs { "../dependencies/bx/include/" }
-	dependson { "bx" }
-	links { "bx" }
-	defines {
-		"__STDC_LIMIT_MACROS",
-		"__STDC_FORMAT_MACROS",
-		"__STDC_CONSTANT_MACROS",
-	}
-	filter "toolset:msc*"
-		includedirs { "../dependencies/bx/include/compat/msvc" }
+	-- Post-build commands
+	filter { "system:windows", "platforms:x32" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype2/win32/freetype.dll %{cfg.targetdir}" }
+	filter { "system:windows", "platforms:x64" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype2/win64/freetype.dll %{cfg.targetdir}" }
 
-project "bimg_decode"
+project "flac"
 	kind "StaticLib"
-	language "C++"
+	language "C"
+	compileas "C"
 	location "projects"
-	files { "../dependencies/bimg/include/**", "../dependencies/bimg/src/image_decode.**" }
-	includedirs { "../dependencies/bimg/include/" }
-	includedirs { "../dependencies/bx/include/" }
-	includedirs { "../dependencies/bimg/3rdparty/" }
-	includedirs { "../dependencies/bimg/3rdparty/nvtt/" }
-	includedirs { "../dependencies/bimg/3rdparty/iqa/include/" }
-	dependson { "bx" }
-	links { "bx" }
-	defines {
-		"__STDC_LIMIT_MACROS",
-		"__STDC_FORMAT_MACROS",
-		"__STDC_CONSTANT_MACROS",
+	dependson { "ogg" }
+	includedirs {
+		"../dependencies/flac/include/",
+		"../dependencies/flac/src/libFLAC/include/",
+		"../dependencies/_config/ogg/include/",
+		"../dependencies/ogg/include/"
 	}
-	filter "toolset:msc*"
-		includedirs { "../dependencies/bx/include/compat/msvc" }
+	files { "../dependencies/flac/src/libFLAC/*.c" }
+	links { "ogg" }
+	defines {
+		"_LIB",
+		"FLAC__HAS_OGG",
+		"FLAC__CPU_X86_64",
+		"FLAC__NO_ASM",
+		"FLAC__HAS_X86INTRIN",
+		"FLAC__ALIGN_MALLOC_DATA",
+		"PACKAGE_VERSION=\"1.3.2\"",
+		"FLAC__NO_DLL",
+		"FLaC__INLINE=_inline",
+	}
 
-project "bx"
+project "vorbis"
 	kind "StaticLib"
-	language "C++"
+	language "C"
+	compileas "C"
 	location "projects"
-	files { "../dependencies/bx/include/**.h", "../dependencies/bx/include/**.inl", "../dependencies/bx/src/**.cpp" }
-	removefiles { "../dependencies/bx/src/amalgamated.**" }
-	includedirs { "../dependencies/bx/include/" }
-	includedirs { "../dependencies/bx/3rdparty/" }
-	links { "psapi" }
-	defines {
-		"__STDC_LIMIT_MACROS",
-		"__STDC_FORMAT_MACROS",
-		"__STDC_CONSTANT_MACROS",
-		"_HAS_EXCEPTIONS=0",
-		-- "_HAS_ITERATOR_DEBUGGING=0",
-		"_SCL_SECURE=0",
-		"_SECURE_SCL=0",
-		"_SCL_SECURE_NO_WARNINGS",
-		"_CRT_SECURE_NO_WARNINGS",
-		"_CRT_SECURE_NO_DEPRECATE",
+	dependson "ogg"
+	includedirs {
+		"../dependencies/vorbis/include/",
+		"../dependencies/vorbis/lib/",
+		"../dependencies/_config/ogg/include/",
+		"../dependencies/ogg/include/",
 	}
+	files {
+		"../dependencies/vorbis/lib/analysis.c",
+		"../dependencies/vorbis/lib/bitrate.c",
+		"../dependencies/vorbis/lib/block.c",
+		"../dependencies/vorbis/lib/codebook.c",
+		"../dependencies/vorbis/lib/envelope.c",
+		"../dependencies/vorbis/lib/floor0.c",
+		"../dependencies/vorbis/lib/floor1.c",
+		"../dependencies/vorbis/lib/info.c",
+		"../dependencies/vorbis/lib/lookup.c",
+		"../dependencies/vorbis/lib/lpc.c",
+		"../dependencies/vorbis/lib/lsp.c",
+		"../dependencies/vorbis/lib/mapping0.c",
+		"../dependencies/vorbis/lib/mdct.c",
+		"../dependencies/vorbis/lib/psy.c",
+		"../dependencies/vorbis/lib/registry.c",
+		"../dependencies/vorbis/lib/res0.c",
+		"../dependencies/vorbis/lib/sharedbook.c",
+		"../dependencies/vorbis/lib/smallft.c",
+		"../dependencies/vorbis/lib/synthesis.c",
+		"../dependencies/vorbis/lib/vorbisenc.c",
+		"../dependencies/vorbis/lib/window.c",
+		"../dependencies/vorbis/lib/vorbisenc.c",
+		"../dependencies/vorbis/lib/vorbisfile.c",
+	}
+	links { "ogg" }
+	callingconvention "Cdecl"
+	defines { "_USRDLL", "LIBVORBIS_EXPORTS" }
 	filter "toolset:msc*"
-		includedirs { "../dependencies/bx/include/compat/msvc" }
-	filter "Debug"
-		defines { "BX_CONFIG_DEBUG=1" }
+		disablewarnings { "4244", "4100", "4267", "4189", "4305", "4127", "4706" }
+
+project "ogg"
+	kind "StaticLib"
+	language "C"
+	compileas "C"
+	location "projects"
+	includedirs {
+		"../dependencies/_config/ogg/include/",
+		"../dependencies/ogg/include/",
+	}
+	files { "../dependencies/ogg/src/*.c" }
+	defines { "INCLUDE_STDINT_H" }
 
 project "box2d"
 	kind "StaticLib"
@@ -312,6 +343,7 @@ project "box2d"
 project "bzip2"
 	kind "StaticLib"
 	language "C"
+	compileas "C"
 	location "projects"
 	files { "../dependencies/bzip2/**.h", "../dependencies/bzip2/**.c" }
 	includedirs { "../dependencies/bzip2/" }
@@ -327,6 +359,7 @@ project "bzip2"
 project "zlib"
 	kind "StaticLib"
 	language "C"
+	compileas "C"
 	location "projects"
 	files { "../dependencies/zlib/*.h", "../dependencies/zlib/*.c" }
 	includedirs { "../dependencies/zlib/" }
@@ -336,6 +369,7 @@ project "zlib"
 project "enet"
 	kind "StaticLib"
 	language "C"
+	compileas "C"
 	location "projects"
 	files { "../dependencies/enet/**.h", "../dependencies/enet/**.c" }
 	includedirs { "../dependencies/enet/include/" }

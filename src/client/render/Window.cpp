@@ -1,52 +1,47 @@
 #include <stdio.h>
 #include <cstdlib>
 
-
+#include "engine/common.h"
 #include "engine/filesystem/ProgramSettings.h"
+
 #include "client/render/Window.h"
 #include "client/game/Game.h"
 
-using namespace tdrp::render;
+namespace tdrp::render
+{
 
-Window::Window(const char* title) {
-  // TODO: SDL itself obviously shouldn't be initialized here
-  // Initialize SDL and window with title
-  if (SDL_Init(SDL_INIT_VIDEO) != 0) {
-    std::cout << "SDL_Init error: " << SDL_GetError() << std::endl;
-    return;
-  }
+Window::Window(const char* title)
+{
+	auto width = Settings->GetAs<uint32_t>("window.width", 640);
+	auto height = Settings->GetAs<uint32_t>("window.height", 480);
 
-	std::atexit(SDL_Quit);
+	sf::VideoMode vm{ width, height };
 
-    int width  = Settings->GetAs<int>("window.width",  640);
-  int height = Settings->GetAs<int>("window.height", 480);
-
-  m_window = std::unique_ptr<SDL_Window, sdl_deleter>(SDL_CreateWindow(title, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, ::SDL_WINDOW_SHOWN | ::SDL_WINDOW_OPENGL));
-
-  if (m_window == nullptr) {
-    std::cout << "SDL_CreateWindow error: " << SDL_GetError() << std::endl;
-
-    return;
-  }
+	m_window = std::make_unique<sf::RenderWindow>(vm, title);
+	m_window->setFramerateLimit(60);
 }
 
-Window::~Window() {
+Window::~Window()
+{
 }
 
-void Window::EventLoop() {
-  // TODO: This probably shouldn't even be here..
-  // A more basic window type would be useful for GUI windows and shit, so this should do way less
-  bool quit = false;
-  SDL_Event e;
+void Window::EventLoop()
+{
+	while (m_window->isOpen())
+	{
+		sf::Event event;
+		while (m_window->pollEvent(event))
+		{
+			if (event.type == sf::Event::Closed)
+				m_window->close();
+		}
 
-  while (!quit) {
-    while (SDL_PollEvent(&e) != 0) {
-      if (e.type == SDL_QUIT)
-        quit = true;
-    }
+		m_window->clear(sf::Color::Black);
 
-    Game->Update();
+		Game->Update();
 
-    SDL_Delay(10);
-  }
+		m_window->display();
+	}
 }
+
+} // end namespace tdrp::render

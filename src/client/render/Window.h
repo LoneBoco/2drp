@@ -2,58 +2,54 @@
 
 #include <memory>
 
-#include <SDL.h>
+#include <SFML/Graphics.hpp>
+
 #include "BabyDI.hpp"
 
-// TODO: this can be less lame
-struct sdl_deleter {
-  void operator()(SDL_Window* p) const { SDL_DestroyWindow(p); }
+namespace tdrp
+{
+	class Game;
+}
+
+namespace tdrp::settings
+{
+	class ProgramSettings;
+}
+
+namespace tdrp::render
+{
+
+class Window
+{
+public:
+	Window(const char* title);
+	Window(const Window& other) = delete;
+	Window(Window&& other) = delete;
+
+	~Window();
+
+	Window& operator=(const Window& other) = delete;
+
+	int32_t GetWidth() const;
+	int32_t GetHeight() const;
+
+	void EventLoop();
+
+private:
+	BabyDI::Injected<::tdrp::Game> Game;
+	BabyDI::Injected<tdrp::settings::ProgramSettings> Settings;
+
+	std::unique_ptr<sf::RenderWindow> m_window;
 };
 
-// Wrap an SDL window for BGFX
-namespace tdrp {
-  class Game;
-
-  namespace settings {
-    class ProgramSettings;
-  }
-
-  namespace render {
-    class Window {
-    public:
-      Window(const char* title);
-      Window(const Window& other) = delete;
-      Window(Window&& other) = delete;
-
-      ~Window();
-
-      Window& operator=(const Window& other) = delete;
-
-      int32_t GetWidth() const {
-        int32_t w;
-        SDL_GetWindowSize(m_window.get(), &w, nullptr);
-
-        return w;
-      }
-
-      int32_t GetHeight() const {
-        int32_t h;
-        SDL_GetWindowSize(m_window.get(), nullptr, &h);
-
-        return h;
-      }
-
-      SDL_Window* GetSDLWindow() const {
-        return m_window.get();
-      }
-
-      void EventLoop();
-
-    private:
-      BabyDI::Injected<tdrp::Game> Game;
-      BabyDI::Injected<tdrp::settings::ProgramSettings> Settings;
-
-      std::unique_ptr<SDL_Window, sdl_deleter> m_window;
-    };
-  }
+inline int32_t Window::GetWidth() const
+{
+	return m_window->getSize().x;
 }
+
+inline int32_t Window::GetHeight() const
+{
+	return m_window->getSize().y;
+}
+
+} // end namespace tdrp::render

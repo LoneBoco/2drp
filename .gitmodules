@@ -13,18 +13,24 @@
 [submodule "dependencies/box2d"]
 	path = dependencies/box2d
 	url = git@github.com:erincatto/Box2D.git
-[submodule "dependencies/bgfx"]
-	path = dependencies/bgfx
-	url = git@github.com:bkaradzic/bgfx.git
-[submodule "dependencies/bx"]
-	path = dependencies/bx
-	url = git@github.com:bkaradzic/bx.git
-[submodule "dependencies/bimg"]
-	path = dependencies/bimg
-	url = git@github.com:bkaradzic/bimg.git
 [submodule "dependencies/pugixml"]
 	path = dependencies/pugixml
 	url = git@github.com:zeux/pugixml.git
 [submodule "dependencies/BabyDI"]
 	path = dependencies/BabyDI
 	url = http://github.com/simply-jos/BabyDI
+[submodule "dependencies/SFML"]
+	path = dependencies/SFML
+	url = git@github.com:SFML/SFML.git
+[submodule "dependencies/flac"]
+	path = dependencies/flac
+	url = https://git.xiph.org/flac.git
+[submodule "dependencies/vorbis"]
+	path = dependencies/vorbis
+	url = https://git.xiph.org/vorbis.git
+[submodule "dependencies/ogg"]
+	path = dependencies/ogg
+	url = https://git.xiph.org/ogg.git
+[submodule "dependencies/freetype2"]
+	path = dependencies/freetype2
+	url = git@github.com:ubawurinna/freetype-windows-binaries.git
