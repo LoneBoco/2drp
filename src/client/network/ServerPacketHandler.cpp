@@ -1,9 +1,12 @@
-#include "client/network/PacketHandler.h"
+#include "client/network/ServerPacketHandler.h"
 
 #include "client/game/Game.h"
 
-#include "engine/network/PacketID.h"
+#include "engine/network/Packet.h"
 #include "engine/network/PacketsServer.h"
+
+using tdrp::network::ServerPackets;
+using tdrp::network::construct;
 
 namespace tdrp::handlers
 {
@@ -54,16 +57,6 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			handle(game, construct<packet::SSceneObjectDelete>(packet_data, packet_length));
 			break;
 	}
-}
-
-/////////////////////////////
-
-template <class T>
-const T construct(const uint8_t* const packet_data, const size_t packet_length)
-{
-	T packet;
-	packet.ParseFromArray(packet_data, packet_length);
-	return packet;
 }
 
 /////////////////////////////

@@ -6,9 +6,13 @@
 #include "engine/loader/PackageLoader.h"
 #include "engine/loader/LevelLoader.h"
 #include "engine/filesystem/File.h"
-#include "engine/network/PacketID.h"
+#include "engine/network/Packet.h"
 #include "engine/network/PacketsClient.h"
 #include "engine/network/PacketsServer.h"
+
+using tdrp::network::PACKETID;
+using tdrp::network::ClientPackets;
+using tdrp::network::ServerPackets;
 
 namespace tdrp::server
 {
@@ -166,7 +170,7 @@ void Server::Update()
 				packet.set_type(0);
 				packet.set_version("first");
 
-				Network.Send(0, static_cast<uint16_t>(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
+				Network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
 			}
 			else
 			{
@@ -182,6 +186,9 @@ void Server::Update()
 		// Loop through all scene objects.
 		for (auto&[id, object] : scene->m_graph)
 		{
+			// TODO: Run the server tick script on the object.
+
+
 			// Check if we have dirty attributes.
 			if (object->Attributes.HasDirty())
 			{
@@ -193,7 +200,7 @@ void Server::Update()
 					if (IsHost())
 					{
 						auto location = object->GetPosition();
-						Network.SendToScene(*scene, location.xy(), static_cast<uint16_t>(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
+						Network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
 					}
 				}
 			}
@@ -217,7 +224,7 @@ void Server::AddClientScript(const std::string& name, const std::string& script)
 		packet.set_name(name);
 		packet.set_script(script);
 
-		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
+		Network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
 	}
 }
 
@@ -268,7 +275,7 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 		packet::SClassDelete packet;
 		packet.set_name(name);
 
-		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
+		Network.Broadcast(PACKETID(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
 	}
 
 	return c;
@@ -288,7 +295,7 @@ bool Server::DeleteClientScript(const std::string& name)
 		packet::SClientScriptDelete packet;
 		packet.set_name(name);
 
-		Network.Broadcast(static_cast<uint16_t>(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+		Network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
 	}
 
 	return true;
@@ -316,7 +323,7 @@ void Server::network_disconnect(const uint16_t id)
 
 void Server::network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
 {
-	if (packet_id != static_cast<uint16_t>(ClientPackets::LOGIN))
+	if (packet_id != PACKETID(ClientPackets::LOGIN))
 		return;
 
 	std::cout << "<- Received login packet!" << std::endl;
@@ -332,7 +339,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	packet::SLoginStatus login_status;
 	login_status.set_success(true);
 	//login_status.set_message("Invalid username or password.");
-	Network.Send(id, static_cast<uint16_t>(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+	Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 	std::cout << "-> Sending login status." << std::endl;
 
 	// If accepted, bind the account.

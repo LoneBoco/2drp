@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message CSendEvent
+{
+	fixed32 sender = 1;
+	string name = 2;
+	string data = 3;
+	float x = 4;
+	float y = 5;
+	float radius = 6;
+}

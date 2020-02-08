@@ -70,14 +70,14 @@ public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const Channel channel);
 	void Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
-	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, uint16_t packet_id, const Channel channel);
-	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
-	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel);
-	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel);
+	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel);
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 
 protected:
-	int SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
-	int BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
+	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
 
 public:
 	bool BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account);

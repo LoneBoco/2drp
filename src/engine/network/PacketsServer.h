@@ -13,5 +13,6 @@
 #include "engine/network/packets/SSceneObjectChange.pb.h"
 #include "engine/network/packets/SSceneObjectDelete.pb.h"
 #include "engine/network/packets/SSceneObjectNew.pb.h"
+#include "engine/network/packets/SSendEvent.pb.h"
 
 #pragma warning (pop)

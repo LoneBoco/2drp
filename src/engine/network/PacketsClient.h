@@ -6,5 +6,6 @@
 
 #include "engine/network/packets/CLogin.pb.h"
 #include "engine/network/packets/CSceneObjectChange.pb.h"
+#include "engine/network/packets/CSendEvent.pb.h"
 
 #pragma warning (pop)

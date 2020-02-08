@@ -34,6 +34,12 @@ void Window::EventLoop()
 		{
 			if (event.type == sf::Event::Closed)
 				m_window->close();
+
+			if (event.type == sf::Event::Resized)
+			{
+				sf::FloatRect visibleArea(0.f, 0.f, event.size.width, event.size.height);
+				m_window->setView(sf::View(visibleArea));
+			}
 		}
 
 		m_window->clear(sf::Color::Black);

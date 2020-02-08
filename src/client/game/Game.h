@@ -6,6 +6,8 @@
 #include "engine/network/Network.h"
 #include "engine/package/Package.h"
 #include "engine/server/Server.h"
+#include "engine/server/Player.h"
+#include "engine/script/Script.h"
 
 namespace tdrp
 {
@@ -26,6 +28,9 @@ public:
 	void Update();
 
 	server::Server Server;
+	script::Script Script;
+
+	std::shared_ptr<server::Player> Player;
 };
 
 } // end namespace tdrp

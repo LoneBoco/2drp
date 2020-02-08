@@ -88,7 +88,7 @@ public:
 	virtual ~ComponentEntity() {}
 
 	/**
-	 * Requires a component as a corequisite ot the current component.
+	 * Requires a component as a corequisite of the current component.
 	 *
 	 * @return The newly created component, or the component that already exists.
 	 */
@@ -160,7 +160,6 @@ public:
 	{
 		return Util_ComponentItr<Args...>::HasComponents(*this);
 	}
-
 
 	/**
 	 * Checks if this entity has a specific component type

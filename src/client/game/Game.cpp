@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include "client/game/Game.h"
-#include "client/network/PacketHandler.h"
+#include "client/network/ServerPacketHandler.h"
+#include "client/script/Script.h"
 
 #include "engine/filesystem/ProgramSettings.h"
 #include "engine/loader/LevelLoader.h"
@@ -35,6 +36,9 @@ void Game::Initialize()
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
 		Server.Connect(host, port);
 	}
+
+	// Bind game script classes.
+	bind_game(Script.GetLuaState());
 }
 
 Game::~Game()
@@ -44,6 +48,8 @@ Game::~Game()
 
 void Game::Update()
 {
+	// TODO: Run the client frame tick script.
+
 	Server.Update();
 }
 

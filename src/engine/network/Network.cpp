@@ -1,7 +1,8 @@
 #include <iostream>
 
 #include "engine/network/Network.h"
-#include "engine/network/PacketID.h"
+#include "engine/network/Packet.h"
+#include "engine/network/ClientPacketHandler.h"
 
 #include "engine/server/Server.h"
 
@@ -10,7 +11,7 @@
 namespace tdrp::network
 {
 
-uint32_t _determine_flags(const Channel channel)
+constexpr uint32_t _determine_flags(const Channel channel)
 {
 	uint32_t flags = 0;
 	switch (channel)
@@ -54,6 +55,7 @@ void Network::Shutdown()
 /////////////////////////////
 
 Network::Network()
+	: m_server(nullptr)
 {
 }
 
@@ -192,11 +194,22 @@ void Network::Update(bool isServer)
 					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
 
 					// If login packet, call the login callback.
-					// Otherwise, pass it to the normal receive callback.
-					if (packet_id == static_cast<uint16_t>(ClientPackets::LOGIN) && m_login_cb)
+					// Otherwise, if we are the host, attempt to handle client packets.
+					// Finally, if not handled, pass it to the normal receive callback.
+					if (packet_id == PACKETID(ClientPackets::LOGIN) && m_login_cb)
 						m_login_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
-					else if (m_receive_cb)
-						m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+					else
+					{
+						bool handled = false;
+
+						// If we are a server, handle incoming client packets.
+						if (isServer)
+							handled = tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(m_server), id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+						
+						// If we have a receive callback and we haven't handled our packet yet, do the callback.
+						if (!handled && m_receive_cb)
+							m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+					}
 				}
 
 				enet_packet_destroy(event.packet);
@@ -247,25 +260,25 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
 }
 
-int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, uint16_t packet_id, const Channel channel)
+int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel)
 {
 	if (m_host == nullptr) return 0;
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id));
 }
 
-int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
 	if (m_host == nullptr) return 0;
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message));
 }
 
-int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel)
 {
 	if (m_host == nullptr) return 0;
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id));
 }
 
-int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
 	if (m_host == nullptr) return 0;
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message));
@@ -273,7 +286,7 @@ int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t pa
 
 /////////////////////////////
 
-int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
 {
 	if (packet == nullptr) return 0;
 
@@ -282,13 +295,13 @@ int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df locati
 	{
 		if (auto player_scene = player->GetCurrentScene().lock())
 		{
-			if (*player_scene == scene)
+			if (*player_scene == *scene)
 			{
 				if (auto player_object = player->GetCurrentControlledSceneObject().lock())
 				{
 					auto player_position = player_object->GetPosition();
 					auto distance = Vector2df::DistanceSquared(location, player_position.xy());
-					if (distance <= scene.GetTransmissionDistance())
+					if (distance <= scene->GetTransmissionDistance())
 					{
 						++count;
 						enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
@@ -301,7 +314,7 @@ int Network::SendToScene(const tdrp::scene::Scene& scene, const Vector2df locati
 	return count;
 }
 
-int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
 {
 	if (packet == nullptr) return 0;
 
@@ -310,7 +323,7 @@ int Network::BroadcastToScene(const tdrp::scene::Scene& scene, const uint16_t pa
 	{
 		if (auto player_scene = player->GetCurrentScene().lock())
 		{
-			if (*player_scene == scene)
+			if (*player_scene == *scene)
 			{
 				++count;
 				enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);

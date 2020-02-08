@@ -23,10 +23,10 @@ enum class ServerType
 enum class ServerFlags : uint16_t
 {
 	//! Loads all resources at the start instead of on-demand.
-	PRELOAD_EVERYTHING = 0b00000001,
+	PRELOAD_EVERYTHING = 0b0000'0001,
 
 	//! Only single player mode, don't start up the network.
-	SINGLEPLAYER_ONLY = 0b00000010,
+	SINGLEPLAYER_ONLY = 0b0000'0010,
 };
 
 class Server
@@ -64,10 +64,10 @@ public:
 	bool DeleteClientScript(const std::string& name);
 
 public:
-
 	const uint32_t GetNextSceneObjectID();
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
+	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
 
 	network::Network Network;
 
@@ -106,6 +106,11 @@ inline const bool Server::IsSinglePlayer() const
 inline const bool Server::IsHost() const
 {
 	return m_server_type == ServerType::AUTHORITATIVE;
+}
+
+inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
+{
+	return m_player_list[id];
 }
 
 } // end namespace tdrp::server

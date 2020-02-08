@@ -34,3 +34,10 @@
 [submodule "dependencies/freetype2"]
 	path = dependencies/freetype2
 	url = git@github.com:ubawurinna/freetype-windows-binaries.git
+[submodule "dependencies/luajit-2.0"]
+	path = dependencies/luajit-2.0
+	url = http://luajit.org/git/luajit-2.0.git
+	branch = v2.1
+[submodule "dependencies/sol2"]
+	path = dependencies/sol2
+	url = https://github.com/ThePhD/sol2.git

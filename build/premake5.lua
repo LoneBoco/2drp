@@ -1,5 +1,5 @@
 function getAbsoluteFromSolution(p)
-	local sol = solution() 
+	local sol = solution()
 	return path.getabsolute(path.join(sol.basedir, p))
 end
 
@@ -39,7 +39,7 @@ workspace "2drp"
 
 	-- Toolset specific
 	filter "toolset:msc*"
-		defines { "_CRT_SECURE_NO_WARNINGS" }	
+		defines { "_CRT_SECURE_NO_WARNINGS" }
 		buildoptions {
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
@@ -85,6 +85,8 @@ project "2drp"
 		"../dependencies/BabyDI/include/",
 		"../dependencies/pugixml/src/",
 		"../dependencies/protobuf-3.5.1/src/",
+		"../dependencies/sol2/include/",
+		"../dependencies/luajit-2.0/src/",
 	}
 
 	dependson { "SFML", "box2d", "bzip2", "zlib", "enet" }
@@ -97,7 +99,8 @@ project "2drp"
 		"zlib",
 		"enet",
 		"pugixml",
-		"protobuf"
+		"protobuf",
+		"lua51",
 	}
 
 	defines { "SFML_STATIC" }
@@ -110,6 +113,15 @@ project "2drp"
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
 		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
+
+	-- Pre-link LuaJIT building.
+	libdirs { "../dependencies/luajit-2.0/src/" }
+	filter { "system:windows", "platforms:x32" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+	filter { "system:windows", "platforms:x64" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+	filter { "system:windows" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
 
 	-- Awesomium
 	-- includedirs { os.getenv("AWE_DIR") .. "include" }
@@ -160,6 +172,7 @@ project "2drp_server"
 		"enet",
 		"pugixml",
 		"protobuf",
+		"lua51",
 	}
 
 	-- Library includes.
@@ -172,6 +185,8 @@ project "2drp_server"
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/pugixml/src/",
 		"../dependencies/protobuf-3.5.1/src/",
+		"../dependencies/sol2/include/",
+		"../dependencies/luajit-2.0/src/",
 	}
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
@@ -180,9 +195,18 @@ project "2drp_server"
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
 
+	-- Pre-link LuaJIT building.
+	libdirs { "../dependencies/luajit-2.0/src/" }
+	filter { "system:windows", "platforms:x32" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+	filter { "system:windows", "platforms:x64" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+	filter { "system:windows" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
+
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-		links { "pthread" }
+		links { "pthread", "dl" }
 
 
 project "SFML"
@@ -195,6 +219,8 @@ project "SFML"
 		"../dependencies/SFML/include/",
 		"../dependencies/SFML/src/",
 		"../dependencies/SFML/extlibs/headers/stb_image/",
+		"../dependencies/SFML/extlibs/headers/glad/include/",
+		"../dependencies/SFML/extlibs/headers/vulkan/",
 		"../dependencies/flac/include/",
 		"../dependencies/freetype2/include/",
 		"../dependencies/_config/ogg/include/",
