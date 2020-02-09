@@ -290,6 +290,11 @@ public:
 	//! Set to true if it was visible during the render state.
 	bool RenderVisible;
 
+public:
+	sol::protected_function OnCreated;
+	sol::protected_function OnUpdate;
+	sol::protected_function OnEvent;
+
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;
 	// FSceneObjectUpdate UpdateCallback;

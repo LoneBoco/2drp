@@ -19,7 +19,7 @@ self:OnClientFrameTick = function(tick)
 	-- Determine if we can move.
 	local domove = false;
 	local dir = 0;
-	local move = vector2df.new(0, 0);
+	local move = Vector2df.new(0, 0);
 	if (Game.keydown(Key.Up)) then
 		move.x = move.y - 1.0; dir = 0; domove = true;
 	elseif (Game.keydown(Key.Left)) then
@@ -39,7 +39,7 @@ self:OnClientFrameTick = function(tick)
 
 		-- self.Physics.Velocity = move;
 	else
-		-- self.Physics.Velocity = vector2df.new(0, 0);
+		-- self.Physics.Velocity = Vector2df.new(0, 0);
 	end
 
 	-- Show us walking.
@@ -65,14 +65,14 @@ self:OnKeyPress = function (key)
 	if (aself == nil) then return end
 
 	if (key == KEY_KEY_M) then
-		self.scale = vector2df.new(0.8, 0.8);
+		self.scale = Vector2df.new(0.8, 0.8);
 	end
 
 	if (key == KEY_KEY_S or key == KEY_KEY_SPACE or key == KEY_NUMPAD_5) then
 		aself.Animation = "sword";
-		-- aself.Physics.Velocity = vector2df.new(0, 0);
+		-- aself.Physics.Velocity = Vector2df.new(0, 0);
 
-		local pos = vector2df.new(aself.Position.x + (1.5 * 16.0), aself.Position.y + (2.0 * 16.0));
+		local pos = Vector2df.new(aself.Position.x + (1.5 * 16.0), aself.Position.y + (2.0 * 16.0));
 		if (aself.Direction == 0) then pos.y = pos.y - (1.5 * 16.0) end
 		if (aself.Direction == 2) then pos.y = pos.y + (0.5 * 16.0) end
 		if (aself.Direction == 1) then pos.x = pos.x - (2.5 * 16.0) end
@@ -87,7 +87,7 @@ self:OnKeyPress = function (key)
 end
 
 self:OnMouseWheel = function (x, y, delta)
-	local scale = vector2df.new(self.Scale);
+	local scale = Vector2df.new(self.Scale);
 	scale.x = scale.x + (delta > 0 ? 0.1 : -0.1) * abs(delta);
 	scale.y = scale.y + (delta > 0 ? 0.1 : -0.1) * abs(delta);
 	if (scale.x < 0.5) then scale.x = 0.5 end
