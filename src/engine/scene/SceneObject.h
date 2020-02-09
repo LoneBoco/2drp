@@ -4,6 +4,7 @@
 #include <set>
 
 #include <Box2D/Box2D.h>
+#include <sol/sol.hpp>
 
 #include "engine/common.h"
 
@@ -199,11 +200,11 @@ public:
 	}
 
 	//! Returns the position of the scene object.
-	virtual Vector3df GetPosition() const;
+	virtual Vector2df GetPosition() const;
 
 	//! Sets the position of the scene object.
 	//! \param position The new position to set.
-	virtual void SetPosition(const Vector3df& position);
+	virtual void SetPosition(const Vector2df& position);
 
 	//! Returns the rotation of the scene object.
 	virtual float GetRotation() const;

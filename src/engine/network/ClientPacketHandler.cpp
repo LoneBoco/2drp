@@ -62,7 +62,12 @@ void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, cons
 		const auto& y = packet.y();
 		const auto& radius = packet.radius();
 
-		// TODO: Determine objects within the event and handle script.
+		// Determine objects within the event and handle script.
+		auto& hits = scene->FindObjectsInRangeOf({ x, y }, radius);
+		for (auto p : hits)
+		{
+			// TODO: Handle the event script.
+		}
 
 		tdrp::packet::SSendEvent message;
 		message.set_sender(sender);

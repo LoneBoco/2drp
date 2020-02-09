@@ -299,8 +299,7 @@ int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const 
 			{
 				if (auto player_object = player->GetCurrentControlledSceneObject().lock())
 				{
-					auto player_position = player_object->GetPosition();
-					auto distance = Vector2df::DistanceSquared(location, player_position.xy());
+					auto distance = Vector2df::DistanceSquared(location, player_object->GetPosition());
 					if (distance <= scene->GetTransmissionDistance())
 					{
 						++count;

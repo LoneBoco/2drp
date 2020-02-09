@@ -42,4 +42,17 @@ std::weak_ptr<SceneObject> Scene::FindObject(const std::string& name) const
 	return std::weak_ptr<SceneObject>();
 }
 
+std::list<std::weak_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vector2df position, float radius)
+{
+	std::list<std::weak_ptr<SceneObject>> result;
+
+	for (auto p : m_graph)
+	{
+		if (Vector2df::DistanceSquared(p.second->GetPosition(), position) <= radius)
+			result.push_back(std::weak_ptr<SceneObject>(p.second));
+	}
+
+	return result;
+}
+
 } // end namespace tdrp::scene

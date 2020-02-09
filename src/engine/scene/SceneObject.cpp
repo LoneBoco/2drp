@@ -128,23 +128,21 @@ SceneObject::~SceneObject()
 }
 
 //! Returns the position of the scene object.
-Vector3df SceneObject::GetPosition() const
+Vector2df SceneObject::GetPosition() const
 {
-	return Vector3df{
+	return Vector2df{
 		Properties[Property::X].GetFloat(),
-		Properties[Property::Y].GetFloat(),
-		Properties[Property::Z].GetFloat()
+		Properties[Property::Y].GetFloat()
 	};
 }
 
 //! Sets the position of the scene object.
 //! \param position The new position to set.
-void SceneObject::SetPosition(const Vector3df& position)
+void SceneObject::SetPosition(const Vector2df& position)
 {
 	// if (!Physics.Owner) return;
 	Properties[Property::X] = position.x;
 	Properties[Property::Y] = position.y;
-	Properties[Property::Z] = position.z;
 }
 
 float SceneObject::GetRotation() const

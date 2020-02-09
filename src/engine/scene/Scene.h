@@ -44,6 +44,8 @@ public:
 	std::weak_ptr<SceneObject> FindObject(uint32_t id) const;
 	std::weak_ptr<SceneObject> FindObject(const std::string& name) const;
 
+	std::list<std::weak_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df position, float radius);
+
 	const float GetTransmissionDistance() const;
 
 	std::atomic_bool IsLoading;
