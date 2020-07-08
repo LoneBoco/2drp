@@ -2,15 +2,16 @@
 #define SDL_MAIN_HANDLED
 #endif
 
+#include <iostream>
+#include <algorithm>
+
 #include "BabyDI.Configuration.h"
 
 #include "engine/common.h"
+#include "engine/resources/Resource.h"
 
 #include "client/game/Game.h"
 #include "client/render/Window.h"
-
-#include <iostream>
-#include <algorithm>
 
 
 int main(int argc, char* argv[])
@@ -20,6 +21,9 @@ int main(int argc, char* argv[])
 	// Inject command line arguments into the settings.
 	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
 	settings->LoadFromCommandLine(argc, argv);
+
+	// Inject the resource managers.
+	BabyDI::Injected<tdrp::ResourceManager> resources;
 
 	// Initialize the Game.
 	BabyDI::Injected<tdrp::Game> game;
