@@ -163,6 +163,8 @@ int send_event(std::shared_ptr<SceneObject> sender, const char* name, const char
 
     BabyDI::Injected<tdrp::Game> game;
     game->Server.Network.Send(0, PACKETID(ClientPackets::SENDEVENT), tdrp::network::Channel::RELIABLE, packet);
+
+    return 0;
 }
 
 } // end namespace tdrp

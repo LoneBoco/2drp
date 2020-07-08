@@ -372,7 +372,7 @@ std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name,
 	return a;
 }
 
-std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, AttributeType type, const std::string& value, uint16_t id)
+std::weak_ptr<Attribute> ObjectAttributes::AddAttribute(const std::string& name, const AttributeType type, const std::string& value, uint16_t id)
 {
 	std::shared_ptr<Attribute> a = getOrCreateAttribute(name, id);
 	if (a) a->SetAsType(type, value);

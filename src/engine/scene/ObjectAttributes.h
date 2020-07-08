@@ -179,7 +179,7 @@ public:
 	std::weak_ptr<Attribute> AddAttribute(const std::string& name, float value, uint16_t id = -1);
 	std::weak_ptr<Attribute> AddAttribute(const std::string& name, double value, uint16_t id = -1);
 	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const std::string& value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, AttributeType type, const std::string& value, uint16_t id = -1);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const AttributeType type, const std::string& value, uint16_t id = -1);
 
 	//! Returns an attribute.
 	//! \param name The name of the attribute to get.

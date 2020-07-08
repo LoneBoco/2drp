@@ -101,7 +101,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
-						so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
+						(void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
 					}
 
 					// Load custom features.

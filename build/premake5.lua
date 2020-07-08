@@ -68,6 +68,7 @@ project "2drp"
 	debugdir "../bin"
 
 	vectorextensions "SSE2"
+	rtti "On"
 
 	files { "../src/**" }
 	removefiles { "../src/server/**" }
@@ -159,6 +160,7 @@ project "2drp_server"
 	targetdir "../bin_server"
 
 	vectorextensions "SSE2"
+	rtti "On"
 
 	files { "../src/**" }
 	removefiles { "../src/client/**" }
