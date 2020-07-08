@@ -258,6 +258,17 @@ std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
 	return iter->second;
 }
 
+std::weak_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
+{
+	for (auto& [key, scene] : m_scenes)
+	{
+		if (auto so = scene->FindObject(id); !so.expired())
+			return so;
+	}
+
+	return std::weak_ptr<tdrp::SceneObject>{};
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)

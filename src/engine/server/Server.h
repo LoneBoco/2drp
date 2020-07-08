@@ -68,6 +68,7 @@ public:
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
 	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
+	std::weak_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
 
 	network::Network Network;
 
