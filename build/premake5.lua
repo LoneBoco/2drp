@@ -16,7 +16,7 @@ workspace "2drp"
 	linkgroups "On"
 
 	filter "configurations:Debug"
-	 	defines { "DEBUG" }
+	 	defines { "DEBUG", "_DEBUG" }
 		editandcontinue "Off"
 		optimize "Off"
 
@@ -88,6 +88,7 @@ project "2drp"
 		"../dependencies/protobuf-3.5.1/src/",
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
+		"../dependencies/ziplib/Source/ZipLib/",
 	}
 
 	dependson { "SFML", "box2d", "bzip2", "zlib", "enet" }
@@ -102,6 +103,7 @@ project "2drp"
 		"pugixml",
 		"protobuf",
 		"lua51",
+		"ziplib",
 	}
 
 	defines { "SFML_STATIC" }
@@ -175,6 +177,7 @@ project "2drp_server"
 		"pugixml",
 		"protobuf",
 		"lua51",
+		"ziplib",
 	}
 
 	-- Library includes.
@@ -189,6 +192,7 @@ project "2drp_server"
 		"../dependencies/protobuf-3.5.1/src/",
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
+		"../dependencies/ziplib/Source/ZipLib/",
 	}
 
 	dependson { "box2d", "bzip2", "zlib", "enet" }
@@ -593,3 +597,25 @@ project "protobuf"
 		disablewarnings { "4018", "4146", "4244", "4251", "4267", "4305", "4355", "4800", "4996" }
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
 		defines { "HAVE_PTHREAD" }
+
+project "ziplib"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	defines { "_LIB" }
+	includedirs {
+		"../dependencies/ziplib/Source/ZipLib/"
+	}
+	files {
+		"../dependencies/ziplib/Source/ZipLib/**.h",
+		"../dependencies/ziplib/Source/ZipLib/**.cpp",
+		"../dependencies/ziplib/Source/ZipLib/**.c",
+	}
+	filter "system:windows"
+		removefiles {
+			"../dependencies/ziplib/Source/ZipLib/extlibs/lzma/unix/**",
+		}
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread" }
+	filter "toolset:msc*"
+		disablewarnings { "4996" }
