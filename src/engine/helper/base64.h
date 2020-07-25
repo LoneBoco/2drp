@@ -10,8 +10,6 @@
 #include <boost/archive/iterators/insert_linebreaks.hpp>
 #include <boost/archive/iterators/transform_width.hpp>
 
-using namespace boost::archive::iterators;
-
 namespace tdrp::base64
 {
 
@@ -66,6 +64,8 @@ std::vector<uint8_t> from(const std::string& input)
 template <typename T>
 std::string to(const T& input)
 {
+	using namespace boost::archive::iterators;
+
 	typedef insert_linebreaks<base64_from_binary<transform_width<decltype(std::begin(input)), 6, 8>>, 72> iter_to_base64;
 	auto padding = 3 - (std::size(input) % 3);
 

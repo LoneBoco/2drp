@@ -1,12 +1,12 @@
 #include <iostream>
 
+#include <enet/enet.h>
+
 #include "engine/network/Network.h"
 #include "engine/network/Packet.h"
 #include "engine/network/ClientPacketHandler.h"
 
 #include "engine/server/Server.h"
-
-#include <enet/enet.h>
 
 namespace tdrp::network
 {
