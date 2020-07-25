@@ -21,6 +21,19 @@ void FileSystem::bind(const filesystem::path& directory)
 		if (isExcluded(path))
 			continue;
 
+		// Check if it is an archive file.
+		if (path.extension() == "zip" || path.extension() == "pak")
+		{
+			auto archive = ZipFile::Open(path.string());
+			if (archive)
+			{
+				std::cout << "[ARCHIVE] " << path.filename() << std::endl;
+
+				m_archives.insert(std::make_pair(path.filename(), archive));
+				continue;
+			}
+		}
+
 		m_files.insert(std::make_pair(path.filename(), path.parent_path()));
 	}
 
@@ -77,7 +90,18 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 	}
 
 	// Check if the file exists in our attached zip files.
-	// TODO
+	// TODO: File list should be cached at some point.
+	for (auto& [key, archive] : m_archives)
+	{
+		for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
+		{
+			auto entry = archive->GetEntry(i);
+			if (entry->GetName() == file)
+			{
+				return std::make_shared<FileZip>(entry->GetFullName(), entry);
+			}
+		}
+	}
 
 	return nullptr;
 }

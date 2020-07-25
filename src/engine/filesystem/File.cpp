@@ -7,26 +7,9 @@ namespace tdrp::fs
 
 /////////////////////////////
 
-File::File(const filesystem::path& file)
-	: m_file(file)
-{
-	openStream();
-}
-
-File::File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream)
-	: m_file(file)
-{
-	m_stream = std::move(stream);
-}
-
-File::~File()
-{
-	m_stream->close();
-}
-
 std::vector<char> File::Read() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (!Opened() || Finished())
 		return std::vector<char>();
 
 	// Seek to the end and get the file size.
@@ -42,7 +25,7 @@ std::vector<char> File::Read() const
 
 std::vector<char> File::Read(std::size_t count) const
 {
-	if (!m_stream->is_open() || Finished())
+	if (!Opened() || Finished())
 		return std::vector<char>();
 
 	std::vector<char> result(count);
@@ -63,7 +46,7 @@ std::vector<char> File::ReadUntil(const std::vector<char>& token) const
 
 std::string File::ReadAsString() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (!Opened() || Finished())
 		return std::string();
 
 	std::stringstream s;
@@ -73,7 +56,7 @@ std::string File::ReadAsString() const
 
 std::string File::ReadLine() const
 {
-	if (!m_stream->is_open() || Finished())
+	if (!Opened() || Finished())
 		return std::string();
 
 	std::string result;
@@ -89,16 +72,51 @@ std::streampos File::GetReadPosition() const
 
 void File::SetReadPosition(const std::streampos& position)
 {
-	if (m_stream->is_open())
+	if (Opened())
 		m_stream->seekg(position);
 }
 
-void File::openStream()
+/////////////////////////////
+
+bool FileDisk::Opened() const
+{
+	return dynamic_cast<std::ifstream&>(*m_stream).is_open();
+}
+
+bool FileDisk::Finished() const
+{
+	if (m_stream == nullptr || !Opened())
+		return true;
+	return m_stream->eof();
+}
+
+void FileDisk::openStream()
 {
 	if (m_stream)
-		m_stream->close();
+		dynamic_cast<std::ifstream&>(*m_stream).close();
 
 	m_stream = std::make_unique<std::ifstream>(m_file, std::ios::binary);
+}
+
+/////////////////////////////
+
+FileZip::FileZip(const filesystem::path& file, ZipArchive::Ptr& archive)
+	: File(file)
+{
+	m_zipfile = archive->GetEntry(file.string());
+	m_stream = std::unique_ptr<std::istream>(m_zipfile->GetDecompressionStream());
+}
+
+FileZip::FileZip(const filesystem::path& file, ZipArchiveEntry::Ptr& zipfile)
+	: File(file), m_zipfile(zipfile)
+{
+	m_stream = std::unique_ptr<std::istream>(m_zipfile->GetDecompressionStream());
+}
+
+FileZip::~FileZip()
+{
+	m_stream.release();
+	m_zipfile->CloseDecompressionStream();
 }
 
 } // end namespace tdrp::fs

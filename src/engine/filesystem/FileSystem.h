@@ -3,6 +3,8 @@
 #include <list>
 #include <mutex>
 
+#include <ZipFile.h>
+
 #include "engine/common.h"
 #include "engine/filesystem/common.h"
 
@@ -77,6 +79,7 @@ private:
 	std::map<filesystem::path, filesystem::path> m_files;
 	std::list<filesystem::path> m_directory_include;
 	std::list<filesystem::path> m_directory_exclude;
+	std::map<filesystem::path, ZipArchive::Ptr> m_archives;
 	mutable std::mutex m_file_mutex;
 };
 
