@@ -61,6 +61,7 @@ public:
 public:
 	std::future<bool> Connect(const std::string& hostname, const uint16_t port);
 	void Disconnect();
+	void DisconnectPeer(const uint16_t peer_id);
 
 public:
 	void Update(bool isServer = false);

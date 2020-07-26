@@ -8,7 +8,7 @@ message SPackageFiles
 	{
 		string name = 1;
 		fixed64 size = 2;
-		fixed64 date = 3;	// Duration from epoch.
+		sfixed64 date = 3;	// Duration from epoch.
 		fixed32 crc32 = 4;
 	}
 

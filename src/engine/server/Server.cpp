@@ -342,19 +342,55 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	packet::CLogin packet;
 	packet.ParseFromArray(packet_data, packet_length);
 
+	// Bind the account.
 	auto account = std::make_unique<server::Account>();
-
-	// TODO: Verify account is valid.
-
-	// TODO: Notify client that they are logged in or rejected.
-	packet::SLoginStatus login_status;
-	login_status.set_success(true);
-	//login_status.set_message("Invalid username or password.");
-	Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-	std::cout << "-> Sending login status." << std::endl;
-
-	// If accepted, bind the account.
 	Network.BindAccountToPeer(id, std::move(account));
+
+	packet::SLoginStatus login_status;
+
+	// If this is single player, just accept the login.
+	if (IsSinglePlayer())
+	{
+		login_status.set_success(true);
+		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		std::cout << "-> Sending login status - Singleplayer." << std::endl;
+		return;
+	}
+
+	// TODO: Properly handle account verification for servers that use it.
+
+	// Login successful.
+	if (true)
+	{
+		login_status.set_success(true);
+		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		std::cout << "-> Sending login status - success." << std::endl;
+	}
+	// Login failure.
+	else
+	{
+		login_status.set_success(false);
+		login_status.set_message("Invalid username or password.");
+		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		std::cout << "-> Sending login status - failure." << std::endl;
+
+		Network.DisconnectPeer(id);
+	}
+
+	// TODO: Send package file information.
+
+	// Send archive file details.
+	packet::SPackageFiles package_files;
+	auto& file_details = m_filesystem.GetArchiveInfo();
+	for (auto& detail : file_details)
+	{
+		auto* file = package_files.add_files();
+		file->set_name(detail.File.filename().string());
+		file->set_size(detail.FileSize);
+		file->set_crc32(detail.CRC32);
+		file->set_date(detail.TimeSinceEpoch);
+	}
+	Network.Send(id, PACKETID(ServerPackets::PACKAGEFILES), network::Channel::RELIABLE, package_files);
 }
 
 } // end namespace tdrp::server

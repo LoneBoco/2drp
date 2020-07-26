@@ -145,6 +145,14 @@ void Network::Disconnect()
 	// If we aren't disconnecting after a certain time, force with enet_peer_reset.
 }
 
+void Network::DisconnectPeer(const uint16_t peer_id)
+{
+	if (m_peers.size() == 0)
+		return;
+
+	enet_peer_disconnect_later(m_peers.at(peer_id), 0);
+}
+
 /////////////////////////////
 
 void Network::Update(bool isServer)

@@ -131,7 +131,7 @@ void AddDescriptorsImpl() {
       "\n\023SPackageFiles.proto\022\013tdrp.packet\"\200\001\n\rS"
       "PackageFiles\022.\n\005files\030\001 \003(\0132\037.tdrp.packe"
       "t.SPackageFiles.File\032\?\n\004File\022\014\n\004name\030\001 \001"
-      "(\t\022\014\n\004size\030\002 \001(\006\022\014\n\004date\030\003 \001(\006\022\r\n\005crc32\030"
+      "(\t\022\014\n\004size\030\002 \001(\006\022\014\n\004date\030\003 \001(\020\022\r\n\005crc32\030"
       "\004 \001(\007b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
@@ -281,13 +281,13 @@ bool SPackageFiles_File::MergePartialFromCodedStream(
         break;
       }
 
-      // fixed64 date = 3;
+      // sfixed64 date = 3;
       case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(25u /* 25 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED64>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_SFIXED64>(
                  input, &date_)));
         } else {
           goto handle_unusual;
@@ -350,9 +350,9 @@ void SPackageFiles_File::SerializeWithCachedSizes(
     ::google::protobuf::internal::WireFormatLite::WriteFixed64(2, this->size(), output);
   }
 
-  // fixed64 date = 3;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFixed64(3, this->date(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteSFixed64(3, this->date(), output);
   }
 
   // fixed32 crc32 = 4;
@@ -390,9 +390,9 @@ void SPackageFiles_File::SerializeWithCachedSizes(
     target = ::google::protobuf::internal::WireFormatLite::WriteFixed64ToArray(2, this->size(), target);
   }
 
-  // fixed64 date = 3;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFixed64ToArray(3, this->date(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteSFixed64ToArray(3, this->date(), target);
   }
 
   // fixed32 crc32 = 4;
@@ -429,7 +429,7 @@ size_t SPackageFiles_File::ByteSizeLong() const {
     total_size += 1 + 8;
   }
 
-  // fixed64 date = 3;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
     total_size += 1 + 8;
   }

@@ -168,11 +168,11 @@ class SPackageFiles_File : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::uint64 size() const;
   void set_size(::google::protobuf::uint64 value);
 
-  // fixed64 date = 3;
+  // sfixed64 date = 3;
   void clear_date();
   static const int kDateFieldNumber = 3;
-  ::google::protobuf::uint64 date() const;
-  void set_date(::google::protobuf::uint64 value);
+  ::google::protobuf::int64 date() const;
+  void set_date(::google::protobuf::int64 value);
 
   // fixed32 crc32 = 4;
   void clear_crc32();
@@ -186,7 +186,7 @@ class SPackageFiles_File : public ::google::protobuf::Message /* @@protoc_insert
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr name_;
   ::google::protobuf::uint64 size_;
-  ::google::protobuf::uint64 date_;
+  ::google::protobuf::int64 date_;
   ::google::protobuf::uint32 crc32_;
   mutable int _cached_size_;
   friend struct ::protobuf_SPackageFiles_2eproto::TableStruct;
@@ -377,15 +377,15 @@ inline void SPackageFiles_File::set_size(::google::protobuf::uint64 value) {
   // @@protoc_insertion_point(field_set:tdrp.packet.SPackageFiles.File.size)
 }
 
-// fixed64 date = 3;
+// sfixed64 date = 3;
 inline void SPackageFiles_File::clear_date() {
-  date_ = GOOGLE_ULONGLONG(0);
+  date_ = GOOGLE_LONGLONG(0);
 }
-inline ::google::protobuf::uint64 SPackageFiles_File::date() const {
+inline ::google::protobuf::int64 SPackageFiles_File::date() const {
   // @@protoc_insertion_point(field_get:tdrp.packet.SPackageFiles.File.date)
   return date_;
 }
-inline void SPackageFiles_File::set_date(::google::protobuf::uint64 value) {
+inline void SPackageFiles_File::set_date(::google::protobuf::int64 value) {
   
   date_ = value;
   // @@protoc_insertion_point(field_set:tdrp.packet.SPackageFiles.File.date)
