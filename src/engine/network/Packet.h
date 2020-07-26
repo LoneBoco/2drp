@@ -19,24 +19,31 @@ const T construct(const uint8_t* const packet_data, const size_t packet_length)
 	return packet;
 }
 
+//! If this changes, it means we re-ordered the packet numbers or did something else to make versions incompatible.
+constexpr int PACKETVERSION = 1;
+
+// Don't adjust packet order without changing PACKETVERSION.
 enum class ClientPackets
 {
 	NOTHING = 0,
 	LOGIN,
+	REQUESTFILE,
 	SCENEOBJECTCHANGE,
 	SENDEVENT,
 
-	WANTFILE,				// [INT4 mod time][filename]
-	SERVERATTRIBUTES,		// {[INT2 id][value], ...}
+	SERVERATTRIBUTES,
 
 	COUNT
 };
 
+// Don't adjust packet order without changing PACKETVERSION.
 enum class ServerPackets
 {
 	NOTHING = 0,
-	ERROR,					// [STRING error]
+	ERROR,
 	LOGINSTATUS,
+	PACKAGEFILES,
+	TRANSFERFILE,
 	CLIENTSCRIPT,
 	CLIENTSCRIPTDELETE,
 	CLASS,
@@ -46,9 +53,6 @@ enum class ServerPackets
 	SCENEOBJECTDELETE,
 	SENDEVENT,
 
-	FILESTART,				// [INT2 id][INT1 type][file name]
-	FILEDATA,				// [INT2 id][data]
-	FILEEND,				// [INT2 id]
 	SERVERTYPE,				// [type]
 	CLASSADD,				// [name]
 	CLASSATTRIBUTEADD,		// [INT1 class length][class][INT2 id][name]

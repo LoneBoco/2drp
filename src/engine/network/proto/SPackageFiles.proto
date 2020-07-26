@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SPackageFiles
+{
+	message File
+	{
+		string name = 1;
+		fixed64 size = 2;
+		fixed64 date = 3;	// Duration from epoch.
+		fixed32 crc32 = 4;
+	}
+
+	repeated File files = 1;
+}

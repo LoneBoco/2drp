@@ -5,6 +5,7 @@
 #pragma warning (disable : 4146)
 
 #include "engine/network/packets/CLogin.pb.h"
+#include "engine/network/packets/CRequestFile.pb.h"
 #include "engine/network/packets/CSceneObjectChange.pb.h"
 #include "engine/network/packets/CSendEvent.pb.h"
 
