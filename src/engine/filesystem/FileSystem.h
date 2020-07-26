@@ -16,6 +16,35 @@ namespace tdrp::fs
 class File;
 class FileSystem
 {
+private:
+	enum class FileEntryType
+	{
+		SYSTEM = 0,
+		ARCHIVE,
+		ARCHIVEFILE,
+
+		COUNT
+	};
+
+	struct FileEntry
+	{
+		FileEntry(FileEntryType type, const filesystem::path& file)
+			: Type(type), File(file), Archive(nullptr)
+		{
+		}
+
+		FileEntry(FileEntryType type, const filesystem::path& file, ZipArchive::Ptr& archive)
+			: Type(type), File(file), Archive(archive)
+		{
+		}
+
+		FileEntryType Type;
+		ZipArchive::Ptr Archive;
+		filesystem::path File;		// Full path + filename
+	};
+
+	using FileEntryPtr = std::unique_ptr<FileEntry, std::default_delete<FileEntry>>;
+
 public:
 	FileSystem() = default;
 	~FileSystem() = default;
@@ -76,7 +105,7 @@ private:
 
 private:
 	watch::FileWatch m_watcher;
-	std::map<filesystem::path, filesystem::path> m_files;
+	std::map<filesystem::path, FileEntryPtr> m_files;
 	std::list<filesystem::path> m_directory_include;
 	std::list<filesystem::path> m_directory_exclude;
 	std::map<filesystem::path, ZipArchive::Ptr> m_archives;
