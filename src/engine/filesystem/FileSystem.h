@@ -13,6 +13,14 @@
 namespace tdrp::fs
 {
 
+struct FileData
+{
+	filesystem::path File;
+	uint32_t CRC32 = 0;
+	intmax_t TimeSinceEpoch = 0;
+	uintmax_t FileSize = 0;
+};
+
 class File;
 class FileSystem
 {
@@ -28,19 +36,15 @@ private:
 
 	struct FileEntry
 	{
-		FileEntry(FileEntryType type, const filesystem::path& file)
-			: Type(type), File(file), Archive(nullptr)
-		{
-		}
-
-		FileEntry(FileEntryType type, const filesystem::path& file, ZipArchive::Ptr& archive)
-			: Type(type), File(file), Archive(archive)
-		{
-		}
+		FileEntry(FileEntryType type, const filesystem::path& file) : Type(type), File(file) {}
+		FileEntry(FileEntryType type, const filesystem::path& file, ZipArchive::Ptr& archive) : Type(type), File(file), Archive(archive) {}
 
 		FileEntryType Type;
 		ZipArchive::Ptr Archive;
 		filesystem::path File;		// Full path + filename
+		std::filesystem::file_time_type ModifiedTime;
+		uint32_t CRC32 = 0;
+		size_t FileSize = 0;
 	};
 
 	using FileEntryPtr = std::unique_ptr<FileEntry, std::default_delete<FileEntry>>;
@@ -67,6 +71,10 @@ public:
 	//! Gets a file by name.
 	//! \return A shared pointer to the file.
 	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
+
+	//! Gets all the archive CRC32s.
+	//! \return A map of the archive CRC32s.
+	std::vector<FileData> GetArchiveInfo() const;
 
 	//! Gets the first iterator for the directory we are watching.  Does not honor exclusion list.
 	filesystem::directory_iterator GetFirstDirectoryIterator() const;
@@ -106,9 +114,9 @@ private:
 private:
 	watch::FileWatch m_watcher;
 	std::map<filesystem::path, FileEntryPtr> m_files;
+	std::map<filesystem::path, FileEntryPtr> m_archives;
 	std::list<filesystem::path> m_directory_include;
 	std::list<filesystem::path> m_directory_exclude;
-	std::map<filesystem::path, ZipArchive::Ptr> m_archives;
 	mutable std::mutex m_file_mutex;
 };
 

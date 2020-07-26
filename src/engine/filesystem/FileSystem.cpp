@@ -1,4 +1,7 @@
 #include <future>
+#include <fstream>
+
+#include <boost/crc.hpp>
 
 #include "engine/filesystem/FileSystem.h"
 #include "engine/filesystem/File.h"
@@ -11,20 +14,46 @@ bool isArchive(const filesystem::path& file)
 	return (file.extension() == "zip" || file.extension() == "pak");
 }
 
-using ArchiveEntriesFuture = std::tuple<ZipArchive::Ptr, std::vector<filesystem::path>>;
-std::future<ArchiveEntriesFuture> collectArchiveEntries(ZipArchive::Ptr archive)
+uint32_t calculateCRC32(const filesystem::path& file)
 {
-	auto f = std::async(std::launch::async, [&archive]() -> ArchiveEntriesFuture
+	// Calculate CRC32 if we can.
+	boost::crc_32_type crc32;
+	std::ifstream ifs{ file, std::ios::binary };
+	if (ifs)
+	{
+		do
+		{
+			constexpr size_t READBUFFER_SIZE = 1024 * 8;
+
+			char buffer[READBUFFER_SIZE];
+			ifs.read(buffer, READBUFFER_SIZE);
+
+			crc32.process_bytes(buffer, ifs.gcount());
+		} while (ifs);
+	}
+	else return 0;
+
+	return crc32.checksum();
+}
+
+using ArchiveEntriesFuture = std::tuple<ZipArchive::Ptr, std::vector<filesystem::path>, uint32_t>;
+std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path file, ZipArchive::Ptr archive)
+{
+	auto f = std::async(std::launch::async, [file, archive]() -> ArchiveEntriesFuture
 	{
 		std::vector<filesystem::path> result;
 		result.reserve(archive->GetEntriesCount());
 
+		// Collect all full path names.
 		for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 		{
 			result.push_back(archive->GetEntry(i)->GetFullName());
 		}
 
-		return std::make_tuple(archive, result);
+		// Collect CRC32.
+		uint32_t checksum = calculateCRC32(file);
+
+		return std::make_tuple(archive, result, checksum);
 	});
 
 	return f;
@@ -43,7 +72,7 @@ void FileSystem::bind(const filesystem::path& directory)
 		if (!filesystem::is_regular_file(file.status()))
 			continue;
 
-		auto& path = file.path();
+		const auto& path = file.path();
 
 		// Check if the directory is in the exclusion list.
 		if (isExcluded(path))
@@ -55,14 +84,18 @@ void FileSystem::bind(const filesystem::path& directory)
 			auto archive = ZipFile::Open(path.string());
 			if (archive)
 			{
+				auto archive_entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVE, path, archive);
+				archive_entry->FileSize = file.file_size();
+				archive_entry->ModifiedTime = file.last_write_time();
+
 				std::cout << "[ARCHIVE] " << path.filename() << std::endl;
-				m_archives.insert(std::make_pair(path.filename(), archive));
+				m_archives.insert(std::make_pair(path.filename(), std::move(archive_entry)));
 
 				auto entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVE, path);
 				m_files.insert(std::make_pair(path.filename(), std::move(entry)));
 
 				// Queue up archive file processing.
-				processingArchives.insert(std::make_pair(path.filename(), collectArchiveEntries(archive)));
+				processingArchives.insert(std::make_pair(path.filename(), collectArchiveEntries(path, archive)));
 				continue;
 			}
 		}
@@ -79,12 +112,21 @@ void FileSystem::bind(const filesystem::path& directory)
 
 	// Merge all archive maps.
 	std::map<filesystem::path, FileEntryPtr> finalFiles;
-	std::for_each(processingArchives.begin(), processingArchives.end(), [&finalFiles](decltype(processingArchives)::value_type& pair)
+	std::for_each(processingArchives.begin(), processingArchives.end(), [this, &finalFiles](decltype(processingArchives)::value_type& pair)
 	{
 		auto& data = pair.second.get();
 		auto& archive = std::get<0>(data);
 		auto& files = std::get<1>(data);
+		auto& crc32 = std::get<2>(data);
 
+		// Update file entry with CRC32.
+		auto& archive_name_iter = std::find_if(m_archives.begin(), m_archives.end(), [&archive](decltype(m_archives)::value_type& pair) { return pair.second->Archive == archive; });
+		if (archive_name_iter != std::end(m_archives))
+		{
+			archive_name_iter->second->CRC32 = crc32;
+		}
+
+		// Create entries for the files.
 		for (const auto& file : files)
 		{
 			auto entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVEFILE, file, archive);
@@ -116,7 +158,7 @@ void FileSystem::bind(const filesystem::path& directory)
 			auto archive_iter = m_archives.find(file);
 			if (archive_iter != m_archives.end())
 			{
-				auto archive = archive_iter->second;
+				auto archive = archive_iter->second->Archive;
 
 				// Remove all registered files that came from this archive.
 				for (auto i = std::begin(m_files); i != std::end(m_files);)
@@ -133,7 +175,7 @@ void FileSystem::bind(const filesystem::path& directory)
 			// We start from our found archive as precedence is by alphabetical order.  Later archives will never be overwritten.
 			for (auto iter = std::make_reverse_iterator(archive_iter)++; iter != m_archives.rend(); ++iter)
 			{
-				auto& archive = iter->second;
+				auto& archive = iter->second->Archive;
 
 				// Loop through all the files looking for ones that aren't in the file system (because they got removed).
 				for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
@@ -163,8 +205,13 @@ void FileSystem::bind(const filesystem::path& directory)
 			if (archive == nullptr)
 				return;
 
+			auto archive_entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVE, dir / file, archive);
+			archive_entry->CRC32 = calculateCRC32(dir / file);
+			archive_entry->FileSize = filesystem::file_size(dir / file);
+			archive_entry->ModifiedTime = filesystem::last_write_time(dir / file);
+
 			std::cout << "[ARCHIVE] " << file << std::endl;
-			m_archives.insert(std::make_pair(file, archive));
+			m_archives.insert(std::make_pair(file, std::move(archive_entry)));
 
 			// Collecting entries from our new version of this archive.
 			for (auto i = 0; i < archive->GetEntriesCount(); ++i)
@@ -189,7 +236,7 @@ void FileSystem::bind(const filesystem::path& directory)
 					if (existing_entry->second->Type == FileEntryType::ARCHIVEFILE)
 					{
 						auto& existing_archive = existing_entry->second->Archive;
-						auto& existing_archive_name = std::find_if(m_archives.begin(), m_archives.end(), [&existing_archive](decltype(m_archives)::value_type& pair) { return pair.second == existing_archive; });
+						auto& existing_archive_name = std::find_if(m_archives.begin(), m_archives.end(), [&existing_archive](decltype(m_archives)::value_type& pair) { return pair.second->Archive == existing_archive; });
 
 						if (existing_archive_name == std::end(m_archives) || file > existing_archive_name->first)
 						{
@@ -296,6 +343,20 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 	}
 
 	return nullptr;
+}
+
+std::vector<FileData> FileSystem::GetArchiveInfo() const
+{
+	std::vector<FileData> result;
+	result.reserve(m_archives.size());
+
+	for (const auto& [filename, entry] : m_archives)
+	{
+		auto modified_time = entry->ModifiedTime.time_since_epoch().count();
+		result.push_back(FileData{ filename, entry->CRC32, modified_time, entry->FileSize });
+	}
+
+	return result;
 }
 
 filesystem::directory_iterator FileSystem::GetFirstDirectoryIterator() const
