@@ -15,6 +15,7 @@ void handle(Game& game, const packet::SError& packet);
 void handle(Game& game, const packet::SLoginStatus& packet);
 void handle(Game& game, const packet::SServerInfo& packet);
 void handle(Game& game, const packet::SPackageFiles& packet);
+void handle(Game& game, const packet::STransferFile& packet);
 void handle(Game& game, const packet::SClientScript& packet);
 void handle(Game& game, const packet::SClientScriptDelete& packet);
 void handle(Game& game, const packet::SClass& packet);
@@ -42,6 +43,9 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::PACKAGEFILES:
 			handle(game, construct<packet::SPackageFiles>(packet_data, packet_length));
+			break;
+		case ServerPackets::TRANSFERFILE:
+			handle(game, construct<packet::STransferFile>(packet_data, packet_length));
 			break;
 		case ServerPackets::CLIENTSCRIPT:
 			handle(game, construct<packet::SClientScript>(packet_data, packet_length));
@@ -114,6 +118,13 @@ void handle(Game& game, const packet::SPackageFiles& packet)
 		const auto& date = file_entry.date();
 		const auto& crc32 = file_entry.crc32();
 	}
+}
+
+void handle(Game& game, const packet::STransferFile& packet)
+{
+	const auto& name = packet.name();
+	const auto& date = packet.date();
+	const auto& file = packet.file();
 }
 
 void handle(Game& game, const packet::SClientScript& packet)

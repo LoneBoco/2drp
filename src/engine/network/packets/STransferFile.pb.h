@@ -28,6 +28,7 @@
 #include <google/protobuf/message.h>
 #include <google/protobuf/repeated_field.h>  // IWYU pragma: export
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
+#include <google/protobuf/generated_enum_reflection.h>
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
 
@@ -58,6 +59,27 @@ extern STransferFileDefaultTypeInternal _STransferFile_default_instance_;
 namespace tdrp {
 namespace packet {
 
+enum STransferFile_Type {
+  STransferFile_Type_PACKAGE = 0,
+  STransferFile_Type_IMAGE = 1,
+  STransferFile_Type_STransferFile_Type_INT_MIN_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32min,
+  STransferFile_Type_STransferFile_Type_INT_MAX_SENTINEL_DO_NOT_USE_ = ::google::protobuf::kint32max
+};
+bool STransferFile_Type_IsValid(int value);
+const STransferFile_Type STransferFile_Type_Type_MIN = STransferFile_Type_PACKAGE;
+const STransferFile_Type STransferFile_Type_Type_MAX = STransferFile_Type_IMAGE;
+const int STransferFile_Type_Type_ARRAYSIZE = STransferFile_Type_Type_MAX + 1;
+
+const ::google::protobuf::EnumDescriptor* STransferFile_Type_descriptor();
+inline const ::std::string& STransferFile_Type_Name(STransferFile_Type value) {
+  return ::google::protobuf::internal::NameOfEnum(
+    STransferFile_Type_descriptor(), value);
+}
+inline bool STransferFile_Type_Parse(
+    const ::std::string& name, STransferFile_Type* value) {
+  return ::google::protobuf::internal::ParseNamedEnum<STransferFile_Type>(
+    STransferFile_Type_descriptor(), name, value);
+}
 // ===================================================================
 
 class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_point(class_definition:tdrp.packet.STransferFile) */ {
@@ -140,11 +162,37 @@ class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_p
 
   // nested types ----------------------------------------------------
 
+  typedef STransferFile_Type Type;
+  static const Type PACKAGE =
+    STransferFile_Type_PACKAGE;
+  static const Type IMAGE =
+    STransferFile_Type_IMAGE;
+  static inline bool Type_IsValid(int value) {
+    return STransferFile_Type_IsValid(value);
+  }
+  static const Type Type_MIN =
+    STransferFile_Type_Type_MIN;
+  static const Type Type_MAX =
+    STransferFile_Type_Type_MAX;
+  static const int Type_ARRAYSIZE =
+    STransferFile_Type_Type_ARRAYSIZE;
+  static inline const ::google::protobuf::EnumDescriptor*
+  Type_descriptor() {
+    return STransferFile_Type_descriptor();
+  }
+  static inline const ::std::string& Type_Name(Type value) {
+    return STransferFile_Type_Name(value);
+  }
+  static inline bool Type_Parse(const ::std::string& name,
+      Type* value) {
+    return STransferFile_Type_Parse(name, value);
+  }
+
   // accessors -------------------------------------------------------
 
-  // string name = 1;
+  // string name = 2;
   void clear_name();
-  static const int kNameFieldNumber = 1;
+  static const int kNameFieldNumber = 2;
   const ::std::string& name() const;
   void set_name(const ::std::string& value);
   #if LANG_CXX11
@@ -156,9 +204,9 @@ class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::std::string* release_name();
   void set_allocated_name(::std::string* name);
 
-  // bytes file = 3;
+  // bytes file = 4;
   void clear_file();
-  static const int kFileFieldNumber = 3;
+  static const int kFileFieldNumber = 4;
   const ::std::string& file() const;
   void set_file(const ::std::string& value);
   #if LANG_CXX11
@@ -170,11 +218,17 @@ class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::std::string* release_file();
   void set_allocated_file(::std::string* file);
 
-  // fixed64 date = 2;
+  // sfixed64 date = 3;
   void clear_date();
-  static const int kDateFieldNumber = 2;
-  ::google::protobuf::uint64 date() const;
-  void set_date(::google::protobuf::uint64 value);
+  static const int kDateFieldNumber = 3;
+  ::google::protobuf::int64 date() const;
+  void set_date(::google::protobuf::int64 value);
+
+  // .tdrp.packet.STransferFile.Type type = 1;
+  void clear_type();
+  static const int kTypeFieldNumber = 1;
+  ::tdrp::packet::STransferFile_Type type() const;
+  void set_type(::tdrp::packet::STransferFile_Type value);
 
   // @@protoc_insertion_point(class_scope:tdrp.packet.STransferFile)
  private:
@@ -182,7 +236,8 @@ class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_p
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
   ::google::protobuf::internal::ArenaStringPtr name_;
   ::google::protobuf::internal::ArenaStringPtr file_;
-  ::google::protobuf::uint64 date_;
+  ::google::protobuf::int64 date_;
+  int type_;
   mutable int _cached_size_;
   friend struct ::protobuf_STransferFile_2eproto::TableStruct;
   friend void ::protobuf_STransferFile_2eproto::InitDefaultsSTransferFileImpl();
@@ -198,7 +253,21 @@ class STransferFile : public ::google::protobuf::Message /* @@protoc_insertion_p
 #endif  // __GNUC__
 // STransferFile
 
-// string name = 1;
+// .tdrp.packet.STransferFile.Type type = 1;
+inline void STransferFile::clear_type() {
+  type_ = 0;
+}
+inline ::tdrp::packet::STransferFile_Type STransferFile::type() const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.STransferFile.type)
+  return static_cast< ::tdrp::packet::STransferFile_Type >(type_);
+}
+inline void STransferFile::set_type(::tdrp::packet::STransferFile_Type value) {
+  
+  type_ = value;
+  // @@protoc_insertion_point(field_set:tdrp.packet.STransferFile.type)
+}
+
+// string name = 2;
 inline void STransferFile::clear_name() {
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -251,21 +320,21 @@ inline void STransferFile::set_allocated_name(::std::string* name) {
   // @@protoc_insertion_point(field_set_allocated:tdrp.packet.STransferFile.name)
 }
 
-// fixed64 date = 2;
+// sfixed64 date = 3;
 inline void STransferFile::clear_date() {
-  date_ = GOOGLE_ULONGLONG(0);
+  date_ = GOOGLE_LONGLONG(0);
 }
-inline ::google::protobuf::uint64 STransferFile::date() const {
+inline ::google::protobuf::int64 STransferFile::date() const {
   // @@protoc_insertion_point(field_get:tdrp.packet.STransferFile.date)
   return date_;
 }
-inline void STransferFile::set_date(::google::protobuf::uint64 value) {
+inline void STransferFile::set_date(::google::protobuf::int64 value) {
   
   date_ = value;
   // @@protoc_insertion_point(field_set:tdrp.packet.STransferFile.date)
 }
 
-// bytes file = 3;
+// bytes file = 4;
 inline void STransferFile::clear_file() {
   file_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
@@ -326,6 +395,18 @@ inline void STransferFile::set_allocated_file(::std::string* file) {
 
 }  // namespace packet
 }  // namespace tdrp
+
+namespace google {
+namespace protobuf {
+
+template <> struct is_proto_enum< ::tdrp::packet::STransferFile_Type> : ::google::protobuf::internal::true_type {};
+template <>
+inline const EnumDescriptor* GetEnumDescriptor< ::tdrp::packet::STransferFile_Type>() {
+  return ::tdrp::packet::STransferFile_Type_descriptor();
+}
+
+}  // namespace protobuf
+}  // namespace google
 
 // @@protoc_insertion_point(global_scope)
 

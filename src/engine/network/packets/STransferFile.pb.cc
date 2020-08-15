@@ -51,6 +51,7 @@ void InitDefaultsSTransferFile() {
 }
 
 ::google::protobuf::Metadata file_level_metadata[1];
+const ::google::protobuf::EnumDescriptor* file_level_enum_descriptors[1];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   ~0u,  // no _has_bits_
@@ -58,6 +59,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::STransferFile, type_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::STransferFile, name_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::STransferFile, date_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::STransferFile, file_),
@@ -75,7 +77,7 @@ void protobuf_AssignDescriptors() {
   ::google::protobuf::MessageFactory* factory = NULL;
   AssignDescriptors(
       "STransferFile.proto", schemas, file_default_instances, TableStruct::offsets, factory,
-      file_level_metadata, NULL, NULL);
+      file_level_metadata, file_level_enum_descriptors, NULL);
 }
 
 void protobuf_AssignDescriptorsOnce() {
@@ -92,12 +94,14 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\023STransferFile.proto\022\013tdrp.packet\"9\n\rST"
-      "ransferFile\022\014\n\004name\030\001 \001(\t\022\014\n\004date\030\002 \001(\006\022"
-      "\014\n\004file\030\003 \001(\014b\006proto3"
+      "\n\023STransferFile.proto\022\013tdrp.packet\"\210\001\n\rS"
+      "TransferFile\022-\n\004type\030\001 \001(\0162\037.tdrp.packet"
+      ".STransferFile.Type\022\014\n\004name\030\002 \001(\t\022\014\n\004dat"
+      "e\030\003 \001(\020\022\014\n\004file\030\004 \001(\014\"\036\n\004Type\022\013\n\007PACKAGE"
+      "\020\000\022\t\n\005IMAGE\020\001b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 101);
+      descriptor, 181);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "STransferFile.proto", &protobuf_RegisterTypes);
 }
@@ -115,12 +119,34 @@ struct StaticDescriptorInitializer {
 }  // namespace protobuf_STransferFile_2eproto
 namespace tdrp {
 namespace packet {
+const ::google::protobuf::EnumDescriptor* STransferFile_Type_descriptor() {
+  protobuf_STransferFile_2eproto::protobuf_AssignDescriptorsOnce();
+  return protobuf_STransferFile_2eproto::file_level_enum_descriptors[0];
+}
+bool STransferFile_Type_IsValid(int value) {
+  switch (value) {
+    case 0:
+    case 1:
+      return true;
+    default:
+      return false;
+  }
+}
+
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const STransferFile_Type STransferFile::PACKAGE;
+const STransferFile_Type STransferFile::IMAGE;
+const STransferFile_Type STransferFile::Type_MIN;
+const STransferFile_Type STransferFile::Type_MAX;
+const int STransferFile::Type_ARRAYSIZE;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 // ===================================================================
 
 void STransferFile::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int STransferFile::kTypeFieldNumber;
 const int STransferFile::kNameFieldNumber;
 const int STransferFile::kDateFieldNumber;
 const int STransferFile::kFileFieldNumber;
@@ -147,14 +173,18 @@ STransferFile::STransferFile(const STransferFile& from)
   if (from.file().size() > 0) {
     file_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.file_);
   }
-  date_ = from.date_;
+  ::memcpy(&date_, &from.date_,
+    static_cast<size_t>(reinterpret_cast<char*>(&type_) -
+    reinterpret_cast<char*>(&date_)) + sizeof(type_));
   // @@protoc_insertion_point(copy_constructor:tdrp.packet.STransferFile)
 }
 
 void STransferFile::SharedCtor() {
   name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   file_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  date_ = GOOGLE_ULONGLONG(0);
+  ::memset(&date_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&type_) -
+      reinterpret_cast<char*>(&date_)) + sizeof(type_));
   _cached_size_ = 0;
 }
 
@@ -199,7 +229,9 @@ void STransferFile::Clear() {
 
   name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   file_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  date_ = GOOGLE_ULONGLONG(0);
+  ::memset(&date_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&type_) -
+      reinterpret_cast<char*>(&date_)) + sizeof(type_));
   _internal_metadata_.Clear();
 }
 
@@ -213,10 +245,25 @@ bool STransferFile::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string name = 1;
+      // .tdrp.packet.STransferFile.Type type = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(8u /* 8 & 0xFF */)) {
+          int value;
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   int, ::google::protobuf::internal::WireFormatLite::TYPE_ENUM>(
+                 input, &value)));
+          set_type(static_cast< ::tdrp::packet::STransferFile_Type >(value));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // string name = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_name()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -229,13 +276,13 @@ bool STransferFile::MergePartialFromCodedStream(
         break;
       }
 
-      // fixed64 date = 2;
-      case 2: {
+      // sfixed64 date = 3;
+      case 3: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(17u /* 17 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(25u /* 25 & 0xFF */)) {
 
           DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED64>(
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_SFIXED64>(
                  input, &date_)));
         } else {
           goto handle_unusual;
@@ -243,10 +290,10 @@ bool STransferFile::MergePartialFromCodedStream(
         break;
       }
 
-      // bytes file = 3;
-      case 3: {
+      // bytes file = 4;
+      case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+            static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadBytes(
                 input, this->mutable_file()));
         } else {
@@ -281,25 +328,31 @@ void STransferFile::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
+  // .tdrp.packet.STransferFile.Type type = 1;
+  if (this->type() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteEnum(
+      1, this->type(), output);
+  }
+
+  // string name = 2;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), static_cast<int>(this->name().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "tdrp.packet.STransferFile.name");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->name(), output);
+      2, this->name(), output);
   }
 
-  // fixed64 date = 2;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteFixed64(2, this->date(), output);
+    ::google::protobuf::internal::WireFormatLite::WriteSFixed64(3, this->date(), output);
   }
 
-  // bytes file = 3;
+  // bytes file = 4;
   if (this->file().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::WriteBytesMaybeAliased(
-      3, this->file(), output);
+      4, this->file(), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -316,7 +369,13 @@ void STransferFile::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
+  // .tdrp.packet.STransferFile.Type type = 1;
+  if (this->type() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteEnumToArray(
+      1, this->type(), target);
+  }
+
+  // string name = 2;
   if (this->name().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->name().data(), static_cast<int>(this->name().length()),
@@ -324,19 +383,19 @@ void STransferFile::SerializeWithCachedSizes(
       "tdrp.packet.STransferFile.name");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->name(), target);
+        2, this->name(), target);
   }
 
-  // fixed64 date = 2;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteFixed64ToArray(2, this->date(), target);
+    target = ::google::protobuf::internal::WireFormatLite::WriteSFixed64ToArray(3, this->date(), target);
   }
 
-  // bytes file = 3;
+  // bytes file = 4;
   if (this->file().size() > 0) {
     target =
       ::google::protobuf::internal::WireFormatLite::WriteBytesToArray(
-        3, this->file(), target);
+        4, this->file(), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -356,23 +415,29 @@ size_t STransferFile::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // string name = 1;
+  // string name = 2;
   if (this->name().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->name());
   }
 
-  // bytes file = 3;
+  // bytes file = 4;
   if (this->file().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::BytesSize(
         this->file());
   }
 
-  // fixed64 date = 2;
+  // sfixed64 date = 3;
   if (this->date() != 0) {
     total_size += 1 + 8;
+  }
+
+  // .tdrp.packet.STransferFile.Type type = 1;
+  if (this->type() != 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::EnumSize(this->type());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -415,6 +480,9 @@ void STransferFile::MergeFrom(const STransferFile& from) {
   if (from.date() != 0) {
     set_date(from.date());
   }
+  if (from.type() != 0) {
+    set_type(from.type());
+  }
 }
 
 void STransferFile::CopyFrom(const ::google::protobuf::Message& from) {
@@ -444,6 +512,7 @@ void STransferFile::InternalSwap(STransferFile* other) {
   name_.Swap(&other->name_);
   file_.Swap(&other->file_);
   swap(date_, other->date_);
+  swap(type_, other->type_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }
