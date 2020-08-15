@@ -93,7 +93,7 @@ protected:
 	uint16_t m_server_flags;
 
 	uint32_t m_sceneobject_counter;
-	fs::FileSystem m_filesystem;
+	std::shared_ptr<package::Package> m_package;
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;

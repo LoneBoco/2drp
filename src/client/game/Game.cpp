@@ -51,6 +51,9 @@ void Game::Update()
 	// TODO: Run the client frame tick script.
 
 	Server.Update();
+
+	if (Filesystem != nullptr)
+		Filesystem->Update();
 }
 
 /////////////////////////////

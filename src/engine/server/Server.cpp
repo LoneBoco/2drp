@@ -52,9 +52,11 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 
 	std::cout << ":: Initializing server." << std::endl;
 
+	// Load the package.
 	auto[load_success, package] = loader::PackageLoader::LoadIntoServer(*this, package_name);
+	m_package = package;
 
-	// Load everything.
+	// Load everything from the package into the server.
 	if (m_server_flags & static_cast<uint16_t>(ServerFlags::PRELOAD_EVERYTHING))
 	{
 		std::cout << ":: Loading everything." << std::endl;
@@ -70,6 +72,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 				m_scenes.insert(std::make_pair(d.path().filename().string(), scene));
 		}
 	}
+	// Load only the starting scene into the server.
 	else
 	{
 		std::cout << ":: Loading the starting scene: " << package->GetStartingScene() << "." << std::endl;
@@ -214,6 +217,9 @@ void Server::Update()
 
 	if (!IsSinglePlayer())
 		Network.Update(IsHost());
+
+	if (m_package != nullptr)
+		m_package->GetFileSystem()->Update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -395,14 +401,17 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 
 	// Send archive file details.
 	packet::SPackageFiles package_files;
-	auto& file_details = m_filesystem.GetArchiveInfo();
-	for (auto& detail : file_details)
+	if (m_package != nullptr)
 	{
-		auto* file = package_files.add_files();
-		file->set_name(detail.File.filename().string());
-		file->set_size(detail.FileSize);
-		file->set_crc32(detail.CRC32);
-		file->set_date(detail.TimeSinceEpoch);
+		auto& file_details = m_package->GetFileSystem()->GetArchiveInfo();
+		for (auto& detail : file_details)
+		{
+			auto* file = package_files.add_files();
+			file->set_name(detail.File.filename().string());
+			file->set_size(detail.FileSize);
+			file->set_crc32(detail.CRC32);
+			file->set_date(detail.TimeSinceEpoch);
+		}
 	}
 	Network.Send(id, PACKETID(ServerPackets::PACKAGEFILES), network::Channel::RELIABLE, package_files);
 }

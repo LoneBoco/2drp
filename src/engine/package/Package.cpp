@@ -8,7 +8,8 @@ namespace tdrp::package
 Package::Package(const std::string& name)
 	: m_name(name)
 {
-	m_filesystem.Bind(filesystem::path("packages") / name, "levels");
+	m_filesystem = std::make_shared<fs::FileSystem>();
+	m_filesystem->Bind(filesystem::path("packages") / name, "levels");
 }
 
 /////////////////////////////

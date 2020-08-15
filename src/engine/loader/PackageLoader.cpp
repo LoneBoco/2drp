@@ -56,14 +56,14 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	}
 
 	// Load our client script.
-	auto client_script = package->GetFileSystem().GetFile(client_script_file);
+	auto client_script = package->GetFileSystem()->GetFile(client_script_file);
 	if (client_script != nullptr)
 	{
 		server.m_client_scripts.insert(std::make_pair("default", client_script->ReadAsString()));
 	}
 
 	// Load our classes.
-	auto classes = package->GetFileSystem().GetFile(object_class_file);
+	auto classes = package->GetFileSystem()->GetFile(object_class_file);
 	if (classes != nullptr)
 	{
 		pugi::xml_document doc;
@@ -90,7 +90,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 						if (!file.empty())
 						{
 							// Load script from file.
-							auto scriptfile = package->GetFileSystem().GetFile(file);
+							auto scriptfile = package->GetFileSystem()->GetFile(file);
 							*script = scriptfile->ReadAsString();
 						}
 						else
@@ -116,7 +116,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	}
 
 	// Load our tilesets.
-	auto tilesets = package->GetFileSystem().GetFile(tileset_file);
+	auto tilesets = package->GetFileSystem()->GetFile(tileset_file);
 	if (tilesets != nullptr)
 	{
 		pugi::xml_document doc;

@@ -63,7 +63,7 @@ public:
 	}
 
 	//! Gets the filesystem for this package.
-	fs::FileSystem& GetFileSystem()
+	std::shared_ptr<fs::FileSystem> GetFileSystem()
 	{
 		return m_filesystem;
 	}
@@ -74,7 +74,7 @@ private:
 	std::string m_version;
 	std::string m_description;
 	std::string m_starting_scene;
-	fs::FileSystem m_filesystem;
+	std::shared_ptr<fs::FileSystem> m_filesystem;
 };
 
 } // end namespace tdrp::package
