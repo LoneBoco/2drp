@@ -38,6 +38,12 @@ public:
 		return m_logo;
 	}
 
+	//! Gets the package version.
+	const std::string& GetVersion() const
+	{
+		return m_version;
+	}
+
 	//! Gets the package description.
 	const std::string& GetDescription() const
 	{
@@ -65,6 +71,7 @@ public:
 private:
 	std::string m_name;
 	std::string m_logo;
+	std::string m_version;
 	std::string m_description;
 	std::string m_starting_scene;
 	fs::FileSystem m_filesystem;

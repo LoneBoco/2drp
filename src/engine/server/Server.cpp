@@ -1,6 +1,8 @@
 #include <chrono>
 #include <iostream>
 
+#include "engine/os/Utils.h"
+
 #include "engine/server/Server.h"
 #include "engine/server/Account.h"
 #include "engine/loader/PackageLoader.h"
@@ -18,8 +20,11 @@ namespace tdrp::server
 {
 
 Server::Server()
-	: m_connecting(false), m_server_type(ServerType::AUTHORITATIVE), m_server_flags(0), m_sceneobject_counter(0)
+	: m_connecting(false), m_server_type(ServerType::AUTHORITATIVE), m_server_flags(0), m_sceneobject_counter(0), m_server_name("PEER"), m_max_players(8)
 {
+	// Make up unique id.
+	m_unique_id = tdrp::os::CalculateComputerName();
+
 	// Create blank object class.
 	m_object_classes.insert(std::make_pair("blank", std::make_shared<ObjectClass>("blank")));
 
@@ -377,7 +382,16 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		Network.DisconnectPeer(id);
 	}
 
-	// TODO: Send package file information.
+	// Send server info.
+	packet::SServerInfo server_info;
+	server_info.set_uniqueid(m_unique_id);
+	server_info.set_name(m_server_name);
+	server_info.set_package(m_package->GetName());
+	server_info.set_version(m_package->GetVersion());
+	//server_info.set_host();
+	//server_info.set_port();
+	server_info.set_maxplayers(8);
+	Network.Send(id, PACKETID(ServerPackets::SERVERINFO), network::Channel::RELIABLE, server_info);
 
 	// Send archive file details.
 	packet::SPackageFiles package_files;

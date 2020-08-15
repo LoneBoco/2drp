@@ -38,6 +38,8 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			auto node_clientscript = node_package.child("clientscript");
 			auto node_startingscene = node_package.child("startingscene");
 
+			package->m_name = name;
+			package->m_version = version;
 			if (!node_logo.empty())
 				package->m_logo = node_logo.attribute("file").as_string();
 			if (!node_desc.empty())

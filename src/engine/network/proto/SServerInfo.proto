@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SServerInfo {
+	string uniqueid = 1;
+	string name = 2;
+	string package = 3;
+	string version = 4;
+	string host = 5;
+	uint32 port = 6;
+	uint32 maxplayers = 7;
+}

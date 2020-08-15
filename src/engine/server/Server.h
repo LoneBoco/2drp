@@ -52,6 +52,14 @@ public:
 	void Update();
 
 public:
+	void SetUniqueId(const std::string& id);
+	void SetServerName(const std::string& name);
+	void SetMaxPlayers(const uint32_t max_players);
+	const std::string& GetUniqueId();
+	const std::string& GetServerName();
+	const uint32_t GetMaxPlayers();
+
+public:
 	void AddClientScript(const std::string& name, const std::string& script);
 
 public:
@@ -92,7 +100,41 @@ protected:
 	std::map<std::string, std::string> m_client_scripts;
 
 	std::map<uint16_t, std::shared_ptr<server::Player>> m_player_list;
+
+	std::string m_unique_id;
+	std::string m_server_name;
+	uint32_t m_max_players;
 };
+
+inline void Server::SetUniqueId(const std::string& id)
+{
+	m_unique_id = id;
+}
+
+inline void Server::SetServerName(const std::string& name)
+{
+	m_server_name = name;
+}
+
+inline void Server::SetMaxPlayers(const uint32_t max_players)
+{
+	m_max_players = max_players;
+}
+
+inline const std::string& Server::GetUniqueId()
+{
+	return m_unique_id;
+}
+
+inline const std::string& Server::GetServerName()
+{
+	return m_server_name;
+}
+
+inline const uint32_t Server::GetMaxPlayers()
+{
+	return m_max_players;
+}
 
 inline const uint32_t Server::GetNextSceneObjectID()
 {

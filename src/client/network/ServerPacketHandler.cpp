@@ -13,6 +13,7 @@ namespace tdrp::handlers
 
 void handle(Game& game, const packet::SError& packet);
 void handle(Game& game, const packet::SLoginStatus& packet);
+void handle(Game& game, const packet::SServerInfo& packet);
 void handle(Game& game, const packet::SClientScript& packet);
 void handle(Game& game, const packet::SClientScriptDelete& packet);
 void handle(Game& game, const packet::SClass& packet);
@@ -34,6 +35,9 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::LOGINSTATUS:
 			handle(game, construct<packet::SLoginStatus>(packet_data, packet_length));
+			break;
+		case ServerPackets::SERVERINFO:
+			handle(game, construct<packet::SServerInfo>(packet_data, packet_length));
 			break;
 		case ServerPackets::CLIENTSCRIPT:
 			handle(game, construct<packet::SClientScript>(packet_data, packet_length));
@@ -79,6 +83,20 @@ void handle(Game& game, const packet::SLoginStatus& packet)
 	{
 		std::cout << "<- Login failed: " << msg << std::endl;
 	}
+}
+
+void handle(Game& game, const packet::SServerInfo& packet)
+{
+	const auto& uniqueid = packet.uniqueid();
+	const auto& name = packet.name();
+	const auto& package = packet.package();
+	const auto& version = packet.version();
+	const auto& host = packet.host();
+	const auto& port = packet.port();
+	const auto& maxplayers = packet.maxplayers();
+
+	game.Filesystem = std::make_unique<fs::FileSystem>();
+	game.Filesystem->Bind(filesystem::path("downloads") / uniqueid);
 }
 
 void handle(Game& game, const packet::SClientScript& packet)
