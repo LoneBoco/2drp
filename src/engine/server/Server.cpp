@@ -386,6 +386,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		std::cout << "-> Sending login status - failure." << std::endl;
 
 		Network.DisconnectPeer(id);
+		return;
 	}
 
 	// Send server info.
