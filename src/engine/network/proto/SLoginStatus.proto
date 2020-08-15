@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SLoginStatus
-{
+message SLoginStatus {
 	bool success = 1;
 	string message = 2;
 }

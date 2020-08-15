@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SSendEvent
-{
+message SSendEvent {
 	fixed32 sender = 1;
 	string name = 2;
 	string data = 3;

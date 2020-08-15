@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message CRequestFile
-{
+message CRequestFile {
 	string name = 1;
 }

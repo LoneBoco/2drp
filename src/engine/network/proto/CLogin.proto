@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message CLogin
-{
+message CLogin {
 	string account = 1;
 	string passwordhash = 2;
 	uint32 type = 3;

@@ -2,10 +2,8 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SPackageFiles
-{
-	message File
-	{
+message SPackageFiles {
+	message File {
 		string name = 1;
 		fixed64 size = 2;
 		sfixed64 date = 3;	// Duration from epoch.

@@ -2,8 +2,7 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message STransferFile
-{
+message STransferFile {
 	string name = 1;
 	fixed64 date = 2;	// Duration from epoch.
 	bytes file = 3;

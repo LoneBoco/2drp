@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SClientScriptDelete
-{
+message SClientScriptDelete {
 	string name = 1;
 }

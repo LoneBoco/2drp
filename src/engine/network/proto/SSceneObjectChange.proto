@@ -2,13 +2,10 @@ syntax = "proto3";
 
 package tdrp.packet;
 
-message SSceneObjectChange
-{
-	message Attribute
-	{
+message SSceneObjectChange {
+	message Attribute {
 		uint32 id = 1;
-		oneof value
-		{
+		oneof value {
 			int64 as_int = 2;
 			uint64 as_uint = 3;
 			float as_float = 4;
