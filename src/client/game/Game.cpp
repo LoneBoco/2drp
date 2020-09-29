@@ -54,12 +54,24 @@ Game::~Game()
 
 void Game::Update()
 {
-	// TODO: Run the client frame tick script.
-
 	Server.Update();
 
 	if (Filesystem != nullptr)
 		Filesystem->Update();
+
+	if (State == GameState::LOADING)
+	{
+		if (!Filesystem->IsSearchingForFiles() && (Server.GetPackage() && !Server.GetPackage()->GetFileSystem()->IsSearchingForFiles()))
+		{
+			State = GameState::PLAYING;
+			
+			// Send the finished loading packet.
+		}
+	}
+	else if (State == GameState::PLAYING)
+	{
+		// TODO: Run the client frame tick script.
+	}
 }
 
 /////////////////////////////

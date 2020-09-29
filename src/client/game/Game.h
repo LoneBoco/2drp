@@ -12,6 +12,13 @@
 namespace tdrp
 {
 
+enum class GameState
+{
+	INITIALIZING,
+	LOADING,
+	PLAYING
+};
+
 class Game
 {
 public:
@@ -26,6 +33,8 @@ public:
 	void Initialize();
 
 	void Update();
+
+	GameState State = GameState::INITIALIZING;
 
 	server::Server Server;
 	script::Script Script;
