@@ -291,9 +291,14 @@ public:
 	bool RenderVisible;
 
 public:
-	sol::protected_function OnCreated;
-	sol::protected_function OnUpdate;
-	sol::protected_function OnEvent;
+	void SetLuaOnCreated(sol::this_state s, sol::protected_function func);
+	void SetLuaOnUpdate(sol::this_state s, sol::protected_function func);
+	void SetLuaOnEvent(sol::this_state s, sol::protected_function func);
+
+protected:
+	std::map<std::string, sol::protected_function> m_lua_created;
+	std::map<std::string, sol::protected_function> m_lua_update;
+	std::map<std::string, sol::protected_function> m_lua_event;
 
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;

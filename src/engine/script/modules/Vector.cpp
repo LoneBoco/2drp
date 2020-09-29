@@ -27,13 +27,16 @@ void bind_vector(sol::state& lua)
 
 		sol::meta_function::unary_minus, sol::resolve<Vector2df(const Vector2df&)>(mathfu::operator-),
 
+		sol::meta_function::index, [](Vector2df& vector, int i) -> float { if (i == 0) return vector.x; else return vector.y; },
+		sol::meta_function::new_index, [](Vector2df& vector, int i, float v) -> void { if (i == 0) vector.x = v; else vector.y = v; },
+
 		"Length", &Vector2df::Length,
 		"LengthSquared", &Vector2df::LengthSquared,
 		"Normalize", &Vector2df::Normalize,
 		"Normalized", &Vector2df::Normalized,
 		
-		"x", &Vector2df::x,
-		"y", &Vector2df::y,
+		"X", &Vector2df::x,
+		"Y", &Vector2df::y,
 
 		"Angle", &Vector2df::Angle,
 		//"CrossProduct", &Vector2df::CrossProduct,

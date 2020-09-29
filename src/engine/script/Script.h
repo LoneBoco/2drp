@@ -3,6 +3,7 @@
 #include <sol/sol.hpp>
 
 #include "engine/common.h"
+#include "engine/scene/SceneObject.h"
 
 namespace tdrp::fs
 {
@@ -36,9 +37,7 @@ public:
 	}
 
 public:
-	void RunScript(const char* script);
-	void RunScript(const std::string& script);
-	void RunScript(const tdrp::fs::File& file);
+	void RunScript(const std::string& name, tdrp::SceneObject& so, const std::string_view& script);
 
 protected:
 	sol::state lua;

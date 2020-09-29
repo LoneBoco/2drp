@@ -12,9 +12,9 @@ void bind_sceneobject(sol::state& lua)
 		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
 		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
 
-		"OnCreated", &SceneObject::OnCreated,
-		"OnUpdate", &SceneObject::OnUpdate,
-		"OnEvent", &SceneObject::OnEvent
+		"OnCreated", sol::writeonly_property(&SceneObject::SetLuaOnCreated),
+		"OnUpdate", sol::writeonly_property(&SceneObject::SetLuaOnUpdate),
+		"OnEvent", sol::writeonly_property(&SceneObject::SetLuaOnEvent)
 	);
 }
 
