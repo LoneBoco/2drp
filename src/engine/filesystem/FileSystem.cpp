@@ -230,7 +230,7 @@ void FileSystem::bind(const filesystem::path& directory)
 			}
 		};
 
-		std::lock_guard<std::mutex> guard(m_file_mutex);
+		std::scoped_lock guard(m_file_mutex);
 		auto iter = m_files.find(file);
 
 		if (iter != m_files.end())
@@ -296,7 +296,7 @@ bool FileSystem::HasFile(const filesystem::path& file) const
 
 	// Check if our file is saved in the file system list.
 	{
-		std::lock_guard<std::mutex> guard(m_file_mutex);
+		std::scoped_lock guard(m_file_mutex);
 
 		/*
 		if (std::any_of(m_directory_include.begin(), m_directory_include.end(), [&file](const filesystem::path& p) -> bool { return filesystem::exists(p / file); }))
@@ -337,7 +337,7 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 
 	// Check if the file exists in the native file system and file is a filename we want to find.
 	{
-		std::lock_guard<std::mutex> guard(m_file_mutex);
+		std::scoped_lock guard(m_file_mutex);
 		auto iter = m_files.find(file);
 		if (iter != m_files.end())
 		{
