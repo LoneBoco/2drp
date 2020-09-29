@@ -55,6 +55,12 @@ public:
 	{
 		return m_starting_scene;
 	}
+	
+	//! Gets the package loading scene.
+	const std::string& GetLoadingScene() const
+	{
+		return m_loading_scene;
+	}
 
 	//! Gets the base path for this package.
 	const filesystem::path GetBasePath() const
@@ -74,6 +80,7 @@ private:
 	std::string m_version;
 	std::string m_description;
 	std::string m_starting_scene;
+	std::string m_loading_scene;
 	std::shared_ptr<fs::FileSystem> m_filesystem;
 };
 

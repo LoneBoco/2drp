@@ -10,7 +10,6 @@
 #include "engine/network/packets/SClientScriptDelete.pb.h"
 #include "engine/network/packets/SError.pb.h"
 #include "engine/network/packets/SLoginStatus.pb.h"
-#include "engine/network/packets/SPackageFiles.pb.h"
 #include "engine/network/packets/SSceneObjectChange.pb.h"
 #include "engine/network/packets/SSceneObjectDelete.pb.h"
 #include "engine/network/packets/SSceneObjectNew.pb.h"

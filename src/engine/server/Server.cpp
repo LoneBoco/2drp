@@ -397,29 +397,21 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	// Send server info.
 	packet::SServerInfo server_info;
 	server_info.set_uniqueid(m_unique_id);
-	server_info.set_name(m_server_name);
 	server_info.set_package(m_package->GetName());
-	server_info.set_version(m_package->GetVersion());
-	//server_info.set_host();
-	//server_info.set_port();
-	server_info.set_maxplayers(8);
-	Network.Send(id, PACKETID(ServerPackets::SERVERINFO), network::Channel::RELIABLE, server_info);
-
-	// Send archive file details.
-	packet::SPackageFiles package_files;
+	server_info.set_loadingscene(m_package->GetLoadingScene());
 	if (m_package != nullptr)
 	{
 		auto& file_details = m_package->GetFileSystem()->GetArchiveInfo();
 		for (auto& detail : file_details)
 		{
-			auto* file = package_files.add_files();
+			auto* file = server_info.add_files();
 			file->set_name(detail.File.filename().string());
 			file->set_size(detail.FileSize);
 			file->set_crc32(detail.CRC32);
 			file->set_date(detail.TimeSinceEpoch);
 		}
 	}
-	Network.Send(id, PACKETID(ServerPackets::PACKAGEFILES), network::Channel::RELIABLE, package_files);
+	Network.Send(id, PACKETID(ServerPackets::SERVERINFO), network::Channel::RELIABLE, server_info);
 }
 
 } // end namespace tdrp::server

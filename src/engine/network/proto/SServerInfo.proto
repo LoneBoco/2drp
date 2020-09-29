@@ -3,11 +3,16 @@ syntax = "proto3";
 package tdrp.packet;
 
 message SServerInfo {
+	message File {
+		string name = 1;
+		fixed64 size = 2;
+		sfixed64 date = 3;	// Duration from epoch.
+		fixed32 crc32 = 4;
+	}
+
 	string uniqueid = 1;
-	string name = 2;
-	string package = 3;
-	string version = 4;
-	string host = 5;
-	uint32 port = 6;
-	uint32 maxplayers = 7;
+	string package = 2;
+	string loadingscene = 3;
+
+	repeated File files = 4;
 }

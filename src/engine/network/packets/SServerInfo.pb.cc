@@ -21,6 +21,11 @@
 // @@protoc_insertion_point(includes)
 namespace tdrp {
 namespace packet {
+class SServerInfo_FileDefaultTypeInternal {
+ public:
+  ::google::protobuf::internal::ExplicitlyConstructed<SServerInfo_File>
+      _instance;
+} _SServerInfo_File_default_instance_;
 class SServerInfoDefaultTypeInternal {
  public:
   ::google::protobuf::internal::ExplicitlyConstructed<SServerInfo>
@@ -29,6 +34,27 @@ class SServerInfoDefaultTypeInternal {
 }  // namespace packet
 }  // namespace tdrp
 namespace protobuf_SServerInfo_2eproto {
+void InitDefaultsSServerInfo_FileImpl() {
+  GOOGLE_PROTOBUF_VERIFY_VERSION;
+
+#ifdef GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+  ::google::protobuf::internal::InitProtobufDefaultsForceUnique();
+#else
+  ::google::protobuf::internal::InitProtobufDefaults();
+#endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+  {
+    void* ptr = &::tdrp::packet::_SServerInfo_File_default_instance_;
+    new (ptr) ::tdrp::packet::SServerInfo_File();
+    ::google::protobuf::internal::OnShutdownDestroyMessage(ptr);
+  }
+  ::tdrp::packet::SServerInfo_File::InitAsDefaultInstance();
+}
+
+void InitDefaultsSServerInfo_File() {
+  static GOOGLE_PROTOBUF_DECLARE_ONCE(once);
+  ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsSServerInfo_FileImpl);
+}
+
 void InitDefaultsSServerInfoImpl() {
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
@@ -37,6 +63,7 @@ void InitDefaultsSServerInfoImpl() {
 #else
   ::google::protobuf::internal::InitProtobufDefaults();
 #endif  // GOOGLE_PROTOBUF_ENFORCE_UNIQUENESS
+  protobuf_SServerInfo_2eproto::InitDefaultsSServerInfo_File();
   {
     void* ptr = &::tdrp::packet::_SServerInfo_default_instance_;
     new (ptr) ::tdrp::packet::SServerInfo();
@@ -50,27 +77,35 @@ void InitDefaultsSServerInfo() {
   ::google::protobuf::GoogleOnceInit(&once, &InitDefaultsSServerInfoImpl);
 }
 
-::google::protobuf::Metadata file_level_metadata[1];
+::google::protobuf::Metadata file_level_metadata[2];
 
 const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
+  ~0u,  // no _has_bits_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo_File, _internal_metadata_),
+  ~0u,  // no _extensions_
+  ~0u,  // no _oneof_case_
+  ~0u,  // no _weak_field_map_
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo_File, name_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo_File, size_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo_File, date_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo_File, crc32_),
   ~0u,  // no _has_bits_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, _internal_metadata_),
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, uniqueid_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, name_),
   GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, package_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, version_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, host_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, port_),
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, maxplayers_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, loadingscene_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::SServerInfo, files_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-  { 0, -1, sizeof(::tdrp::packet::SServerInfo)},
+  { 0, -1, sizeof(::tdrp::packet::SServerInfo_File)},
+  { 9, -1, sizeof(::tdrp::packet::SServerInfo)},
 };
 
 static ::google::protobuf::Message const * const file_default_instances[] = {
+  reinterpret_cast<const ::google::protobuf::Message*>(&::tdrp::packet::_SServerInfo_File_default_instance_),
   reinterpret_cast<const ::google::protobuf::Message*>(&::tdrp::packet::_SServerInfo_default_instance_),
 };
 
@@ -90,20 +125,21 @@ void protobuf_AssignDescriptorsOnce() {
 void protobuf_RegisterTypes(const ::std::string&) GOOGLE_PROTOBUF_ATTRIBUTE_COLD;
 void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
-  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 1);
+  ::google::protobuf::internal::RegisterAllTypes(file_level_metadata, 2);
 }
 
 void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
-      "\n\021SServerInfo.proto\022\013tdrp.packet\"\177\n\013SSer"
-      "verInfo\022\020\n\010uniqueid\030\001 \001(\t\022\014\n\004name\030\002 \001(\t\022"
-      "\017\n\007package\030\003 \001(\t\022\017\n\007version\030\004 \001(\t\022\014\n\004hos"
-      "t\030\005 \001(\t\022\014\n\004port\030\006 \001(\r\022\022\n\nmaxplayers\030\007 \001("
-      "\rb\006proto3"
+      "\n\021SServerInfo.proto\022\013tdrp.packet\"\265\001\n\013SSe"
+      "rverInfo\022\020\n\010uniqueid\030\001 \001(\t\022\017\n\007package\030\002 "
+      "\001(\t\022\024\n\014loadingscene\030\003 \001(\t\022,\n\005files\030\004 \003(\013"
+      "2\035.tdrp.packet.SServerInfo.File\032\?\n\004File\022"
+      "\014\n\004name\030\001 \001(\t\022\014\n\004size\030\002 \001(\006\022\014\n\004date\030\003 \001("
+      "\020\022\r\n\005crc32\030\004 \001(\007b\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
-      descriptor, 169);
+      descriptor, 224);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "SServerInfo.proto", &protobuf_RegisterTypes);
 }
@@ -124,16 +160,380 @@ namespace packet {
 
 // ===================================================================
 
+void SServerInfo_File::InitAsDefaultInstance() {
+}
+#if !defined(_MSC_VER) || _MSC_VER >= 1900
+const int SServerInfo_File::kNameFieldNumber;
+const int SServerInfo_File::kSizeFieldNumber;
+const int SServerInfo_File::kDateFieldNumber;
+const int SServerInfo_File::kCrc32FieldNumber;
+#endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
+
+SServerInfo_File::SServerInfo_File()
+  : ::google::protobuf::Message(), _internal_metadata_(NULL) {
+  if (GOOGLE_PREDICT_TRUE(this != internal_default_instance())) {
+    ::protobuf_SServerInfo_2eproto::InitDefaultsSServerInfo_File();
+  }
+  SharedCtor();
+  // @@protoc_insertion_point(constructor:tdrp.packet.SServerInfo.File)
+}
+SServerInfo_File::SServerInfo_File(const SServerInfo_File& from)
+  : ::google::protobuf::Message(),
+      _internal_metadata_(NULL),
+      _cached_size_(0) {
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.name().size() > 0) {
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  ::memcpy(&size_, &from.size_,
+    static_cast<size_t>(reinterpret_cast<char*>(&crc32_) -
+    reinterpret_cast<char*>(&size_)) + sizeof(crc32_));
+  // @@protoc_insertion_point(copy_constructor:tdrp.packet.SServerInfo.File)
+}
+
+void SServerInfo_File::SharedCtor() {
+  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(&size_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&crc32_) -
+      reinterpret_cast<char*>(&size_)) + sizeof(crc32_));
+  _cached_size_ = 0;
+}
+
+SServerInfo_File::~SServerInfo_File() {
+  // @@protoc_insertion_point(destructor:tdrp.packet.SServerInfo.File)
+  SharedDtor();
+}
+
+void SServerInfo_File::SharedDtor() {
+  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+}
+
+void SServerInfo_File::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* SServerInfo_File::descriptor() {
+  ::protobuf_SServerInfo_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_SServerInfo_2eproto::file_level_metadata[kIndexInFileMessages].descriptor;
+}
+
+const SServerInfo_File& SServerInfo_File::default_instance() {
+  ::protobuf_SServerInfo_2eproto::InitDefaultsSServerInfo_File();
+  return *internal_default_instance();
+}
+
+SServerInfo_File* SServerInfo_File::New(::google::protobuf::Arena* arena) const {
+  SServerInfo_File* n = new SServerInfo_File;
+  if (arena != NULL) {
+    arena->Own(n);
+  }
+  return n;
+}
+
+void SServerInfo_File::Clear() {
+// @@protoc_insertion_point(message_clear_start:tdrp.packet.SServerInfo.File)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  // Prevent compiler warnings about cached_has_bits being unused
+  (void) cached_has_bits;
+
+  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  ::memset(&size_, 0, static_cast<size_t>(
+      reinterpret_cast<char*>(&crc32_) -
+      reinterpret_cast<char*>(&size_)) + sizeof(crc32_));
+  _internal_metadata_.Clear();
+}
+
+bool SServerInfo_File::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!GOOGLE_PREDICT_TRUE(EXPRESSION)) goto failure
+  ::google::protobuf::uint32 tag;
+  // @@protoc_insertion_point(parse_start:tdrp.packet.SServerInfo.File)
+  for (;;) {
+    ::std::pair< ::google::protobuf::uint32, bool> p = input->ReadTagWithCutoffNoLastTag(127u);
+    tag = p.first;
+    if (!p.second) goto handle_unusual;
+    switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
+      // string name = 1;
+      case 1: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_name()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->name().data(), static_cast<int>(this->name().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "tdrp.packet.SServerInfo.File.name"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // fixed64 size = 2;
+      case 2: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(17u /* 17 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint64, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED64>(
+                 input, &size_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // sfixed64 date = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(25u /* 25 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::int64, ::google::protobuf::internal::WireFormatLite::TYPE_SFIXED64>(
+                 input, &date_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // fixed32 crc32 = 4;
+      case 4: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(37u /* 37 & 0xFF */)) {
+
+          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
+                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_FIXED32>(
+                 input, &crc32_)));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      default: {
+      handle_unusual:
+        if (tag == 0) {
+          goto success;
+        }
+        DO_(::google::protobuf::internal::WireFormat::SkipField(
+              input, tag, _internal_metadata_.mutable_unknown_fields()));
+        break;
+      }
+    }
+  }
+success:
+  // @@protoc_insertion_point(parse_success:tdrp.packet.SServerInfo.File)
+  return true;
+failure:
+  // @@protoc_insertion_point(parse_failure:tdrp.packet.SServerInfo.File)
+  return false;
+#undef DO_
+}
+
+void SServerInfo_File::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  // @@protoc_insertion_point(serialize_start:tdrp.packet.SServerInfo.File)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string name = 1;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "tdrp.packet.SServerInfo.File.name");
+    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
+      1, this->name(), output);
+  }
+
+  // fixed64 size = 2;
+  if (this->size() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFixed64(2, this->size(), output);
+  }
+
+  // sfixed64 date = 3;
+  if (this->date() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteSFixed64(3, this->date(), output);
+  }
+
+  // fixed32 crc32 = 4;
+  if (this->crc32() != 0) {
+    ::google::protobuf::internal::WireFormatLite::WriteFixed32(4, this->crc32(), output);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), output);
+  }
+  // @@protoc_insertion_point(serialize_end:tdrp.packet.SServerInfo.File)
+}
+
+::google::protobuf::uint8* SServerInfo_File::InternalSerializeWithCachedSizesToArray(
+    bool deterministic, ::google::protobuf::uint8* target) const {
+  (void)deterministic; // Unused
+  // @@protoc_insertion_point(serialize_to_array_start:tdrp.packet.SServerInfo.File)
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  // string name = 1;
+  if (this->name().size() > 0) {
+    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+      this->name().data(), static_cast<int>(this->name().length()),
+      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
+      "tdrp.packet.SServerInfo.File.name");
+    target =
+      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
+        1, this->name(), target);
+  }
+
+  // fixed64 size = 2;
+  if (this->size() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFixed64ToArray(2, this->size(), target);
+  }
+
+  // sfixed64 date = 3;
+  if (this->date() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteSFixed64ToArray(3, this->date(), target);
+  }
+
+  // fixed32 crc32 = 4;
+  if (this->crc32() != 0) {
+    target = ::google::protobuf::internal::WireFormatLite::WriteFixed32ToArray(4, this->crc32(), target);
+  }
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()), target);
+  }
+  // @@protoc_insertion_point(serialize_to_array_end:tdrp.packet.SServerInfo.File)
+  return target;
+}
+
+size_t SServerInfo_File::ByteSizeLong() const {
+// @@protoc_insertion_point(message_byte_size_start:tdrp.packet.SServerInfo.File)
+  size_t total_size = 0;
+
+  if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
+  }
+  // string name = 1;
+  if (this->name().size() > 0) {
+    total_size += 1 +
+      ::google::protobuf::internal::WireFormatLite::StringSize(
+        this->name());
+  }
+
+  // fixed64 size = 2;
+  if (this->size() != 0) {
+    total_size += 1 + 8;
+  }
+
+  // sfixed64 date = 3;
+  if (this->date() != 0) {
+    total_size += 1 + 8;
+  }
+
+  // fixed32 crc32 = 4;
+  if (this->crc32() != 0) {
+    total_size += 1 + 4;
+  }
+
+  int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = cached_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void SServerInfo_File::MergeFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_merge_from_start:tdrp.packet.SServerInfo.File)
+  GOOGLE_DCHECK_NE(&from, this);
+  const SServerInfo_File* source =
+      ::google::protobuf::internal::DynamicCastToGenerated<const SServerInfo_File>(
+          &from);
+  if (source == NULL) {
+  // @@protoc_insertion_point(generalized_merge_from_cast_fail:tdrp.packet.SServerInfo.File)
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+  // @@protoc_insertion_point(generalized_merge_from_cast_success:tdrp.packet.SServerInfo.File)
+    MergeFrom(*source);
+  }
+}
+
+void SServerInfo_File::MergeFrom(const SServerInfo_File& from) {
+// @@protoc_insertion_point(class_specific_merge_from_start:tdrp.packet.SServerInfo.File)
+  GOOGLE_DCHECK_NE(&from, this);
+  _internal_metadata_.MergeFrom(from._internal_metadata_);
+  ::google::protobuf::uint32 cached_has_bits = 0;
+  (void) cached_has_bits;
+
+  if (from.name().size() > 0) {
+
+    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
+  }
+  if (from.size() != 0) {
+    set_size(from.size());
+  }
+  if (from.date() != 0) {
+    set_date(from.date());
+  }
+  if (from.crc32() != 0) {
+    set_crc32(from.crc32());
+  }
+}
+
+void SServerInfo_File::CopyFrom(const ::google::protobuf::Message& from) {
+// @@protoc_insertion_point(generalized_copy_from_start:tdrp.packet.SServerInfo.File)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void SServerInfo_File::CopyFrom(const SServerInfo_File& from) {
+// @@protoc_insertion_point(class_specific_copy_from_start:tdrp.packet.SServerInfo.File)
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool SServerInfo_File::IsInitialized() const {
+  return true;
+}
+
+void SServerInfo_File::Swap(SServerInfo_File* other) {
+  if (other == this) return;
+  InternalSwap(other);
+}
+void SServerInfo_File::InternalSwap(SServerInfo_File* other) {
+  using std::swap;
+  name_.Swap(&other->name_);
+  swap(size_, other->size_);
+  swap(date_, other->date_);
+  swap(crc32_, other->crc32_);
+  _internal_metadata_.Swap(&other->_internal_metadata_);
+  swap(_cached_size_, other->_cached_size_);
+}
+
+::google::protobuf::Metadata SServerInfo_File::GetMetadata() const {
+  protobuf_SServerInfo_2eproto::protobuf_AssignDescriptorsOnce();
+  return ::protobuf_SServerInfo_2eproto::file_level_metadata[kIndexInFileMessages];
+}
+
+
+// ===================================================================
+
 void SServerInfo::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
 const int SServerInfo::kUniqueidFieldNumber;
-const int SServerInfo::kNameFieldNumber;
 const int SServerInfo::kPackageFieldNumber;
-const int SServerInfo::kVersionFieldNumber;
-const int SServerInfo::kHostFieldNumber;
-const int SServerInfo::kPortFieldNumber;
-const int SServerInfo::kMaxplayersFieldNumber;
+const int SServerInfo::kLoadingsceneFieldNumber;
+const int SServerInfo::kFilesFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 SServerInfo::SServerInfo()
@@ -147,43 +547,28 @@ SServerInfo::SServerInfo()
 SServerInfo::SServerInfo(const SServerInfo& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      files_(from.files_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
   uniqueid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.uniqueid().size() > 0) {
     uniqueid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.uniqueid_);
   }
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.name().size() > 0) {
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
-  }
   package_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   if (from.package().size() > 0) {
     package_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.package_);
   }
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.version().size() > 0) {
-    version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
+  loadingscene_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  if (from.loadingscene().size() > 0) {
+    loadingscene_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.loadingscene_);
   }
-  host_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.host().size() > 0) {
-    host_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.host_);
-  }
-  ::memcpy(&port_, &from.port_,
-    static_cast<size_t>(reinterpret_cast<char*>(&maxplayers_) -
-    reinterpret_cast<char*>(&port_)) + sizeof(maxplayers_));
   // @@protoc_insertion_point(copy_constructor:tdrp.packet.SServerInfo)
 }
 
 void SServerInfo::SharedCtor() {
   uniqueid_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   package_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  host_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&port_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&maxplayers_) -
-      reinterpret_cast<char*>(&port_)) + sizeof(maxplayers_));
+  loadingscene_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _cached_size_ = 0;
 }
 
@@ -194,10 +579,8 @@ SServerInfo::~SServerInfo() {
 
 void SServerInfo::SharedDtor() {
   uniqueid_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   package_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  host_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  loadingscene_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void SServerInfo::SetCachedSize(int size) const {
@@ -229,14 +612,10 @@ void SServerInfo::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
+  files_.Clear();
   uniqueid_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   package_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  version_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  host_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  ::memset(&port_, 0, static_cast<size_t>(
-      reinterpret_cast<char*>(&maxplayers_) -
-      reinterpret_cast<char*>(&port_)) + sizeof(maxplayers_));
+  loadingscene_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _internal_metadata_.Clear();
 }
 
@@ -266,26 +645,10 @@ bool SServerInfo::MergePartialFromCodedStream(
         break;
       }
 
-      // string name = 2;
+      // string package = 2;
       case 2: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(18u /* 18 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_name()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->name().data(), static_cast<int>(this->name().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tdrp.packet.SServerInfo.name"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // string package = 3;
-      case 3: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
                 input, this->mutable_package()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
@@ -298,60 +661,27 @@ bool SServerInfo::MergePartialFromCodedStream(
         break;
       }
 
-      // string version = 4;
+      // string loadingscene = 3;
+      case 3: {
+        if (static_cast< ::google::protobuf::uint8>(tag) ==
+            static_cast< ::google::protobuf::uint8>(26u /* 26 & 0xFF */)) {
+          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
+                input, this->mutable_loadingscene()));
+          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
+            this->loadingscene().data(), static_cast<int>(this->loadingscene().length()),
+            ::google::protobuf::internal::WireFormatLite::PARSE,
+            "tdrp.packet.SServerInfo.loadingscene"));
+        } else {
+          goto handle_unusual;
+        }
+        break;
+      }
+
+      // repeated .tdrp.packet.SServerInfo.File files = 4;
       case 4: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(34u /* 34 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_version()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->version().data(), static_cast<int>(this->version().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tdrp.packet.SServerInfo.version"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // string host = 5;
-      case 5: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(42u /* 42 & 0xFF */)) {
-          DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_host()));
-          DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->host().data(), static_cast<int>(this->host().length()),
-            ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tdrp.packet.SServerInfo.host"));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // uint32 port = 6;
-      case 6: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(48u /* 48 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &port_)));
-        } else {
-          goto handle_unusual;
-        }
-        break;
-      }
-
-      // uint32 maxplayers = 7;
-      case 7: {
-        if (static_cast< ::google::protobuf::uint8>(tag) ==
-            static_cast< ::google::protobuf::uint8>(56u /* 56 & 0xFF */)) {
-
-          DO_((::google::protobuf::internal::WireFormatLite::ReadPrimitive<
-                   ::google::protobuf::uint32, ::google::protobuf::internal::WireFormatLite::TYPE_UINT32>(
-                 input, &maxplayers_)));
+          DO_(::google::protobuf::internal::WireFormatLite::ReadMessage(input, add_files()));
         } else {
           goto handle_unusual;
         }
@@ -394,54 +724,31 @@ void SServerInfo::SerializeWithCachedSizes(
       1, this->uniqueid(), output);
   }
 
-  // string name = 2;
-  if (this->name().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.name");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      2, this->name(), output);
-  }
-
-  // string package = 3;
+  // string package = 2;
   if (this->package().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->package().data(), static_cast<int>(this->package().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
       "tdrp.packet.SServerInfo.package");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      3, this->package(), output);
+      2, this->package(), output);
   }
 
-  // string version = 4;
-  if (this->version().size() > 0) {
+  // string loadingscene = 3;
+  if (this->loadingscene().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->version().data(), static_cast<int>(this->version().length()),
+      this->loadingscene().data(), static_cast<int>(this->loadingscene().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.version");
+      "tdrp.packet.SServerInfo.loadingscene");
     ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      4, this->version(), output);
+      3, this->loadingscene(), output);
   }
 
-  // string host = 5;
-  if (this->host().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->host().data(), static_cast<int>(this->host().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.host");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      5, this->host(), output);
-  }
-
-  // uint32 port = 6;
-  if (this->port() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(6, this->port(), output);
-  }
-
-  // uint32 maxplayers = 7;
-  if (this->maxplayers() != 0) {
-    ::google::protobuf::internal::WireFormatLite::WriteUInt32(7, this->maxplayers(), output);
+  // repeated .tdrp.packet.SServerInfo.File files = 4;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->files_size()); i < n; i++) {
+    ::google::protobuf::internal::WireFormatLite::WriteMessageMaybeToArray(
+      4, this->files(static_cast<int>(i)), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -469,18 +776,7 @@ void SServerInfo::SerializeWithCachedSizes(
         1, this->uniqueid(), target);
   }
 
-  // string name = 2;
-  if (this->name().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.name");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        2, this->name(), target);
-  }
-
-  // string package = 3;
+  // string package = 2;
   if (this->package().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
       this->package().data(), static_cast<int>(this->package().length()),
@@ -488,39 +784,26 @@ void SServerInfo::SerializeWithCachedSizes(
       "tdrp.packet.SServerInfo.package");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        3, this->package(), target);
+        2, this->package(), target);
   }
 
-  // string version = 4;
-  if (this->version().size() > 0) {
+  // string loadingscene = 3;
+  if (this->loadingscene().size() > 0) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->version().data(), static_cast<int>(this->version().length()),
+      this->loadingscene().data(), static_cast<int>(this->loadingscene().length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.version");
+      "tdrp.packet.SServerInfo.loadingscene");
     target =
       ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        4, this->version(), target);
+        3, this->loadingscene(), target);
   }
 
-  // string host = 5;
-  if (this->host().size() > 0) {
-    ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->host().data(), static_cast<int>(this->host().length()),
-      ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.SServerInfo.host");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        5, this->host(), target);
-  }
-
-  // uint32 port = 6;
-  if (this->port() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(6, this->port(), target);
-  }
-
-  // uint32 maxplayers = 7;
-  if (this->maxplayers() != 0) {
-    target = ::google::protobuf::internal::WireFormatLite::WriteUInt32ToArray(7, this->maxplayers(), target);
+  // repeated .tdrp.packet.SServerInfo.File files = 4;
+  for (unsigned int i = 0,
+      n = static_cast<unsigned int>(this->files_size()); i < n; i++) {
+    target = ::google::protobuf::internal::WireFormatLite::
+      InternalWriteMessageToArray(
+        4, this->files(static_cast<int>(i)), deterministic, target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -540,6 +823,17 @@ size_t SServerInfo::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
+  // repeated .tdrp.packet.SServerInfo.File files = 4;
+  {
+    unsigned int count = static_cast<unsigned int>(this->files_size());
+    total_size += 1UL * count;
+    for (unsigned int i = 0; i < count; i++) {
+      total_size +=
+        ::google::protobuf::internal::WireFormatLite::MessageSize(
+          this->files(static_cast<int>(i)));
+    }
+  }
+
   // string uniqueid = 1;
   if (this->uniqueid().size() > 0) {
     total_size += 1 +
@@ -547,46 +841,18 @@ size_t SServerInfo::ByteSizeLong() const {
         this->uniqueid());
   }
 
-  // string name = 2;
-  if (this->name().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->name());
-  }
-
-  // string package = 3;
+  // string package = 2;
   if (this->package().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
         this->package());
   }
 
-  // string version = 4;
-  if (this->version().size() > 0) {
+  // string loadingscene = 3;
+  if (this->loadingscene().size() > 0) {
     total_size += 1 +
       ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->version());
-  }
-
-  // string host = 5;
-  if (this->host().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->host());
-  }
-
-  // uint32 port = 6;
-  if (this->port() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->port());
-  }
-
-  // uint32 maxplayers = 7;
-  if (this->maxplayers() != 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::UInt32Size(
-        this->maxplayers());
+        this->loadingscene());
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -618,31 +884,18 @@ void SServerInfo::MergeFrom(const SServerInfo& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
+  files_.MergeFrom(from.files_);
   if (from.uniqueid().size() > 0) {
 
     uniqueid_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.uniqueid_);
-  }
-  if (from.name().size() > 0) {
-
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
   }
   if (from.package().size() > 0) {
 
     package_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.package_);
   }
-  if (from.version().size() > 0) {
+  if (from.loadingscene().size() > 0) {
 
-    version_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.version_);
-  }
-  if (from.host().size() > 0) {
-
-    host_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.host_);
-  }
-  if (from.port() != 0) {
-    set_port(from.port());
-  }
-  if (from.maxplayers() != 0) {
-    set_maxplayers(from.maxplayers());
+    loadingscene_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.loadingscene_);
   }
 }
 
@@ -670,13 +923,10 @@ void SServerInfo::Swap(SServerInfo* other) {
 }
 void SServerInfo::InternalSwap(SServerInfo* other) {
   using std::swap;
+  files_.InternalSwap(&other->files_);
   uniqueid_.Swap(&other->uniqueid_);
-  name_.Swap(&other->name_);
   package_.Swap(&other->package_);
-  version_.Swap(&other->version_);
-  host_.Swap(&other->host_);
-  swap(port_, other->port_);
-  swap(maxplayers_, other->maxplayers_);
+  loadingscene_.Swap(&other->loadingscene_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }

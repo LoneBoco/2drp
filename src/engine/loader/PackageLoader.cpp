@@ -37,6 +37,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			auto node_tileset = node_package.child("tileset");
 			auto node_clientscript = node_package.child("clientscript");
 			auto node_startingscene = node_package.child("startingscene");
+			auto node_loadingscene = node_package.child("loadingscene");
 
 			package->m_name = name;
 			package->m_version = version;
@@ -52,6 +53,8 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 				client_script_file = node_clientscript.attribute("file").as_string();
 			if (!node_startingscene.empty())
 				package->m_starting_scene = node_startingscene.text().get();
+			if (!node_loadingscene.empty())
+				package->m_loading_scene = node_loadingscene.text().get();
 		}
 	}
 

@@ -14,7 +14,6 @@ namespace tdrp::handlers
 void handle(Game& game, const packet::SError& packet);
 void handle(Game& game, const packet::SLoginStatus& packet);
 void handle(Game& game, const packet::SServerInfo& packet);
-void handle(Game& game, const packet::SPackageFiles& packet);
 void handle(Game& game, const packet::STransferFile& packet);
 void handle(Game& game, const packet::SClientScript& packet);
 void handle(Game& game, const packet::SClientScriptDelete& packet);
@@ -40,9 +39,6 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::SERVERINFO:
 			handle(game, construct<packet::SServerInfo>(packet_data, packet_length));
-			break;
-		case ServerPackets::PACKAGEFILES:
-			handle(game, construct<packet::SPackageFiles>(packet_data, packet_length));
 			break;
 		case ServerPackets::TRANSFERFILE:
 			handle(game, construct<packet::STransferFile>(packet_data, packet_length));
@@ -96,19 +92,14 @@ void handle(Game& game, const packet::SLoginStatus& packet)
 void handle(Game& game, const packet::SServerInfo& packet)
 {
 	const auto& uniqueid = packet.uniqueid();
-	const auto& name = packet.name();
 	const auto& package = packet.package();
-	const auto& version = packet.version();
-	const auto& host = packet.host();
-	const auto& port = packet.port();
-	const auto& maxplayers = packet.maxplayers();
+	const auto& loadingscene = packet.loadingscene();
 
 	game.Filesystem = std::make_unique<fs::FileSystem>();
 	game.Filesystem->Bind(filesystem::path("downloads") / uniqueid);
-}
 
-void handle(Game& game, const packet::SPackageFiles& packet)
-{
+	/*
+	BabyDI::Injected<tdrp::DownloadManager> downloader;
 	for (size_t i = 0; i < packet.files_size(); ++i)
 	{
 		const auto& file_entry = packet.files(i);
@@ -117,7 +108,27 @@ void handle(Game& game, const packet::SPackageFiles& packet)
 		const auto& size = file_entry.size();
 		const auto& date = file_entry.date();
 		const auto& crc32 = file_entry.crc32();
+
+		// Check to see if we have this file.
+		if (game.Filesystem)
+		{
+			bool request_file = true;
+			if (game.Filesystem->HasFile(name))
+			{
+				auto& data = game.Filesystem->GetFileData(name);
+				if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
+					request_file = false;
+			}
+
+			if (request_file)
+			{
+				downloader->AddToQueue(name);
+			}
+		}
 	}
+	*/
+
+	// Show loading scene.
 }
 
 void handle(Game& game, const packet::STransferFile& packet)

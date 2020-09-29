@@ -4,4 +4,5 @@
 	<objectclass file="classes.xml" />
 	<clientscript file="client.js" />
 	<startingscene>startlevel</startingscene>
+	<loadingscene>loading</loadingscene>
 </package>
