@@ -15,6 +15,7 @@ void handle(Game& game, const packet::SError& packet);
 void handle(Game& game, const packet::SLoginStatus& packet);
 void handle(Game& game, const packet::SServerInfo& packet);
 void handle(Game& game, const packet::STransferFile& packet);
+void handle(Game& game, const packet::SSwitchScene& packet);
 void handle(Game& game, const packet::SClientScript& packet);
 void handle(Game& game, const packet::SClientScriptDelete& packet);
 void handle(Game& game, const packet::SClass& packet);
@@ -42,6 +43,9 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::TRANSFERFILE:
 			handle(game, construct<packet::STransferFile>(packet_data, packet_length));
+			break;
+		case ServerPackets::SWITCHSCENE:
+			handle(game, construct<packet::SSwitchScene>(packet_data, packet_length));
 			break;
 		case ServerPackets::CLIENTSCRIPT:
 			handle(game, construct<packet::SClientScript>(packet_data, packet_length));
@@ -136,6 +140,11 @@ void handle(Game& game, const packet::STransferFile& packet)
 	const auto& name = packet.name();
 	const auto& date = packet.date();
 	const auto& file = packet.file();
+}
+
+void handle(Game& game, const packet::SSwitchScene& packet)
+{
+	const auto& scene = packet.scene();
 }
 
 void handle(Game& game, const packet::SClientScript& packet)

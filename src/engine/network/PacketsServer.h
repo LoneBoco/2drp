@@ -15,6 +15,7 @@
 #include "engine/network/packets/SSceneObjectNew.pb.h"
 #include "engine/network/packets/SSendEvent.pb.h"
 #include "engine/network/packets/SServerInfo.pb.h"
+#include "engine/network/packets/SSwitchScene.pb.h"
 #include "engine/network/packets/STransferFile.pb.h"
 
 #pragma warning (pop)
