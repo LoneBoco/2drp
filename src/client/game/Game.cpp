@@ -8,6 +8,7 @@
 #include "engine/loader/LevelLoader.h"
 #include "engine/loader/PackageLoader.h"
 
+
 namespace tdrp
 {
 
@@ -18,7 +19,7 @@ Game::Game()
 	using namespace std::placeholders;
 	Server.Network.SetReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 
-	if (!Server.Initialize("login", server::ServerType::AUTHORITATIVE, static_cast<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
+	if (!Server.Initialize("login", server::ServerType::AUTHORITATIVE, FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
 		throw std::runtime_error("Unable to start the server.");
 }
 

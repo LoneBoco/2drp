@@ -143,7 +143,7 @@ inline const uint32_t Server::GetNextSceneObjectID()
 
 inline const bool Server::IsSinglePlayer() const
 {
-	return m_server_flags & static_cast<uint16_t>(ServerFlags::SINGLEPLAYER_ONLY);
+	return HASFLAG(m_server_flags, ServerFlags::SINGLEPLAYER_ONLY);
 }
 
 inline const bool Server::IsHost() const

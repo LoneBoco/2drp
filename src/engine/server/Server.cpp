@@ -57,7 +57,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	m_package = package;
 
 	// Load everything from the package into the server.
-	if (m_server_flags & static_cast<uint16_t>(ServerFlags::PRELOAD_EVERYTHING))
+	if (HASFLAG(m_server_flags, ServerFlags::PRELOAD_EVERYTHING))
 	{
 		std::cout << ":: Loading everything." << std::endl;
 

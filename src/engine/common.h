@@ -16,6 +16,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "engine/helper/math.h"
+#include "engine/helper/flags.h"
 
 #include "BabyDI.hpp"
 
