@@ -68,6 +68,14 @@ public:
 		bind(directory);
 	}
 
+	//! Checks if the file exists in the filesystem.
+	//! \return Successful if the file exists.
+	bool HasFile(const filesystem::path& file) const;
+
+	//! Returns information about the file.
+	//! \return Information about the file.
+	FileData GetFileData(const filesystem::path& file) const;
+
 	//! Gets a file by name.
 	//! \return A shared pointer to the file.
 	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
@@ -81,6 +89,12 @@ public:
 
 	//! Gets an iterator for the directory we are watching.  Does not honor exclusion list.
 	std::list<filesystem::directory_iterator> GetDirectoryIterators() const;
+
+	//! Returns true if we are searching the filesystem.
+	bool IsSearchingForFiles() const
+	{
+		return m_searching_files;
+	}
 
 	//! Checks for changes to the underlying OS filesystem.  Call this every so often.
 	void Update();
@@ -113,6 +127,7 @@ private:
 
 private:
 	watch::FileWatch m_watcher;
+	std::atomic<bool> m_searching_files;
 	std::map<filesystem::path, FileEntryPtr> m_files;
 	std::map<filesystem::path, FileEntryPtr> m_archives;
 	std::list<filesystem::path> m_directory_include;

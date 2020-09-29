@@ -12,6 +12,7 @@
 #include <list>
 #include <functional>
 #include <algorithm>
+#include <atomic>
 
 #include <boost/algorithm/string.hpp>
 

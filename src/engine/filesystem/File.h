@@ -14,9 +14,17 @@ class File
 {
 public:
 	File() = delete;
-	File(const filesystem::path& file) : m_file(file) {};
 	File(const filesystem::path& file, std::unique_ptr<std::ifstream>&& stream) : m_file(file), m_stream(std::move(stream)) {};
-	virtual ~File() {}
+
+	File(const filesystem::path& file) : m_file(file)
+	{
+		Open();
+	};
+
+	virtual ~File()
+	{
+		Close();
+	}
 
 	File(const File& other) = delete;
 	File& operator=(const File& other) = delete;
@@ -47,6 +55,13 @@ public:
 	{
 		return Opened();
 	}
+
+	//! Opens the file.
+	//! \return If the file was successfully opened.
+	virtual bool Open() const;
+
+	//! Closes the file.
+	virtual void Close() const;
 
 	//! Reads the full file.
 	//! \return The file contents.
@@ -79,49 +94,33 @@ public:
 
 	//! Tells us if the file is opened.
 	//! \return If the file is opened or not.
-	virtual bool Opened() const
-	{
-		return true;
-	}
+	virtual bool Opened() const;
 
 	//! Tells us if we finished reading the file.
 	//! \return If we finished reading the file or not.
-	virtual bool Finished() const
+	virtual bool Finished() const;
+
+	//! Gets the file size.
+	//! \return The file size.
+	virtual uintmax_t Size() const
 	{
-		return m_stream->eof();
+		return filesystem::file_size(m_file);
 	}
+
+	//! Gets the file modified time.
+	//! \return The file modified time.
+	virtual intmax_t ModifiedTime() const
+	{
+		return filesystem::last_write_time(m_file).time_since_epoch().count();
+	}
+
+	//! Gets the CRC32 of the file.
+	//! \return The CRC32 of the file.
+	virtual uint32_t Crc32() const;
 
 protected:
 	filesystem::path m_file;
 	mutable std::unique_ptr<std::istream> m_stream;
-};
-
-
-class FileDisk : public File
-{
-public:
-	FileDisk() = delete;
-	FileDisk(const filesystem::path& file)
-		: File(file)
-	{
-		openStream();
-	}
-
-	~FileDisk() override
-	{
-		dynamic_cast<std::ifstream&>(*m_stream).close();
-	}
-
-	//! Tells us if the file is opened.
-	//! \return If the file is opened or not.
-	bool Opened() const override;
-
-	//! Tells us if we finished reading the file.
-	//! \return If we finished reading the file or not.
-	bool Finished() const override;
-
-protected:
-	void openStream();
 };
 
 
@@ -131,7 +130,6 @@ public:
 	FileZip() = delete;
 	FileZip(const filesystem::path& file, ZipArchive::Ptr& archive);
 	FileZip(const filesystem::path& file, ZipArchiveEntry::Ptr& zipfile);
-	virtual ~FileZip();
 
 	FileZip(const FileZip& other) = delete;
 	FileZip& operator=(const FileZip& other) = delete;
@@ -145,8 +143,38 @@ public:
 		return *this;
 	}
 
+	//! Opens the file.
+	//! \return If the file was successfully opened.
+	bool Open() const override;
+
+	//! Closes the file.
+	void Close() const override;
+
+	//! Gets the file size.
+	//! \return The file size.
+	uintmax_t Size() const override
+	{
+		return m_zipfile->GetSize();
+	}
+
+	//! Gets the file modified time.
+	//! \return The file modified time.
+	intmax_t ModifiedTime() const override
+	{
+		auto t = std::chrono::system_clock::from_time_t(m_zipfile->GetLastWriteTime());
+		return t.time_since_epoch().count();
+	}
+
+	uint32_t Crc32() const override
+	{
+		return m_zipfile->GetCrc32();
+	}
+
 protected:
 	mutable ZipArchiveEntry::Ptr m_zipfile;
 };
+
+uint32_t calculateCRC32(std::istream& stream);
+uint32_t calculateCRC32(const filesystem::path& file);
 
 } // end namespace tdrp::fs

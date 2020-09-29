@@ -1,8 +1,6 @@
 #include <future>
 #include <fstream>
 
-#include <boost/crc.hpp>
-
 #include "engine/filesystem/FileSystem.h"
 #include "engine/filesystem/File.h"
 
@@ -12,28 +10,6 @@ namespace tdrp::fs
 bool isArchive(const filesystem::path& file)
 {
 	return (file.extension() == "zip" || file.extension() == "pak");
-}
-
-uint32_t calculateCRC32(const filesystem::path& file)
-{
-	// Calculate CRC32 if we can.
-	boost::crc_32_type crc32;
-	std::ifstream ifs{ file, std::ios::binary };
-	if (ifs)
-	{
-		do
-		{
-			constexpr size_t READBUFFER_SIZE = 1024 * 8;
-
-			char buffer[READBUFFER_SIZE];
-			ifs.read(buffer, READBUFFER_SIZE);
-
-			crc32.process_bytes(buffer, ifs.gcount());
-		} while (ifs);
-	}
-	else return 0;
-
-	return crc32.checksum();
 }
 
 using ArchiveEntriesFuture = std::tuple<ZipArchive::Ptr, std::vector<filesystem::path>, uint32_t>;
@@ -64,6 +40,9 @@ std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path f
 void FileSystem::bind(const filesystem::path& directory)
 {
 	std::map<filesystem::path, std::future<ArchiveEntriesFuture>> processingArchives;
+
+	// We are starting our file search.
+	m_searching_files = true;
 
 	// Fill our filesystem with file information.
 	for (const auto& file : filesystem::recursive_directory_iterator(directory))
@@ -109,6 +88,9 @@ void FileSystem::bind(const filesystem::path& directory)
 	{
 		pair.second.wait();
 	});
+
+	// We are done searching our file system.
+	m_searching_files = false;
 
 	// Merge all archive maps.
 	std::map<filesystem::path, FileEntryPtr> finalFiles;
@@ -305,6 +287,43 @@ void FileSystem::bind(const filesystem::path& directory)
 			}
 		}
 	});
+}
+
+bool FileSystem::HasFile(const filesystem::path& file) const
+{
+	if (filesystem::exists(file))
+		return true;
+
+	// Check if our file is saved in the file system list.
+	{
+		std::lock_guard<std::mutex> guard(m_file_mutex);
+
+		/*
+		if (std::any_of(m_directory_include.begin(), m_directory_include.end(), [&file](const filesystem::path& p) -> bool { return filesystem::exists(p / file); }))
+			return true;
+		*/
+
+		auto iter = m_files.find(file);
+		if (iter != m_files.end())
+			return true;
+	}
+
+	return false;
+}
+
+FileData FileSystem::GetFileData(const filesystem::path& file) const
+{
+	FileData data;
+
+	auto& f = GetFile(file);
+	if (f)
+	{
+		data.CRC32 = f->Crc32();
+		data.FileSize = f->Size();
+		data.TimeSinceEpoch = f->ModifiedTime();
+	}
+
+	return data;
 }
 
 std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const

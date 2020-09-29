@@ -1,11 +1,26 @@
-#include "engine/filesystem/File.h"
-
 #include <sstream>
+
+#include <boost/crc.hpp>
+
+#include "engine/filesystem/File.h"
 
 namespace tdrp::fs
 {
 
 /////////////////////////////
+
+bool File::Open() const
+{
+	if (m_stream)
+		dynamic_cast<std::ifstream&>(*m_stream).close();
+
+	m_stream = std::make_unique<std::ifstream>(m_file, std::ios::binary);
+}
+
+void File::Close() const
+{
+	dynamic_cast<std::ifstream&>(*m_stream).close();
+}
 
 std::vector<char> File::Read() const
 {
@@ -76,26 +91,22 @@ void File::SetReadPosition(const std::streampos& position)
 		m_stream->seekg(position);
 }
 
-/////////////////////////////
-
-bool FileDisk::Opened() const
+bool File::Opened() const
 {
 	return dynamic_cast<std::ifstream&>(*m_stream).is_open();
 }
 
-bool FileDisk::Finished() const
+bool File::Finished() const
 {
 	if (m_stream == nullptr || !Opened())
 		return true;
 	return m_stream->eof();
 }
 
-void FileDisk::openStream()
+uint32_t File::Crc32() const
 {
-	if (m_stream)
-		dynamic_cast<std::ifstream&>(*m_stream).close();
-
-	m_stream = std::make_unique<std::ifstream>(m_file, std::ios::binary);
+	std::ifstream stream{ m_file, std::ios::binary };
+	return calculateCRC32(stream);
 }
 
 /////////////////////////////
@@ -104,19 +115,61 @@ FileZip::FileZip(const filesystem::path& file, ZipArchive::Ptr& archive)
 	: File(file)
 {
 	m_zipfile = archive->GetEntry(file.string());
-	m_stream = std::unique_ptr<std::istream>(m_zipfile->GetDecompressionStream());
+	Open();
 }
 
 FileZip::FileZip(const filesystem::path& file, ZipArchiveEntry::Ptr& zipfile)
 	: File(file), m_zipfile(zipfile)
 {
-	m_stream = std::unique_ptr<std::istream>(m_zipfile->GetDecompressionStream());
+	Open();
 }
 
-FileZip::~FileZip()
+bool FileZip::Open() const
 {
-	m_stream.release();
-	m_zipfile->CloseDecompressionStream();
+	if (m_zipfile)
+	{
+		m_stream = std::unique_ptr<std::istream>(m_zipfile->GetDecompressionStream());
+		return true;
+	}
+	return false;
+}
+
+void FileZip::Close() const
+{
+	if (m_stream)
+		m_stream.release();
+
+	if (m_zipfile)
+		m_zipfile->CloseDecompressionStream();
+}
+
+/////////////////////////////
+
+uint32_t calculateCRC32(std::istream& stream)
+{
+	// Calculate CRC32 if we can.
+	boost::crc_32_type crc32;
+	if (stream)
+	{
+		do
+		{
+			constexpr size_t READBUFFER_SIZE = 1024 * 8;
+
+			char buffer[READBUFFER_SIZE];
+			stream.read(buffer, READBUFFER_SIZE);
+
+			crc32.process_bytes(buffer, stream.gcount());
+		} while (stream);
+	}
+	else return 0;
+
+	return crc32.checksum();
+}
+
+uint32_t calculateCRC32(const filesystem::path& file)
+{
+	std::ifstream ifs{ file, std::ios::binary };
+	return calculateCRC32(ifs);
 }
 
 } // end namespace tdrp::fs
