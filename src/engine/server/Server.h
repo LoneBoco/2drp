@@ -25,8 +25,8 @@ enum class ServerFlags : uint16_t
 	//! Loads all resources at the start instead of on-demand.
 	PRELOAD_EVERYTHING = 0b0000'0001,
 
-	//! Only single player mode, don't start up the network.
-	SINGLEPLAYER_ONLY = 0b0000'0010,
+	//! Single player mode.
+	SINGLEPLAYER = 0b0000'0010,
 };
 
 class Server
@@ -47,6 +47,7 @@ public:
 	bool Initialize(const std::string& package_name, const ServerType type, const uint16_t flags);
 	bool Host(const uint16_t port, const size_t peers = 32);
 	bool Connect(const std::string& hostname, const uint16_t port);
+	bool SinglePlayer();
 
 public:
 	void Update();
@@ -143,7 +144,7 @@ inline const uint32_t Server::GetNextSceneObjectID()
 
 inline const bool Server::IsSinglePlayer() const
 {
-	return HASFLAG(m_server_flags, ServerFlags::SINGLEPLAYER_ONLY);
+	return HASFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 }
 
 inline const bool Server::IsHost() const

@@ -39,13 +39,14 @@ Server::Server()
 
 Server::~Server()
 {
-	if (!IsSinglePlayer())
-		Network.Shutdown();
+	Network.Shutdown();
 }
 
 bool Server::Initialize(const std::string& package_name, const ServerType type, const uint16_t flags)
 {
 	Network.Shutdown();
+	if (!network::Network::Startup())
+		return false;
 
 	m_server_type = type;
 	m_server_flags = flags;
@@ -88,14 +89,8 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 
 bool Server::Host(const uint16_t port, const size_t peers)
 {
-	if (IsSinglePlayer())
-		return false;
-
-	if (!IsHost())
-		return false;
-
-	if (!network::Network::Startup())
-		return false;
+	m_server_type = ServerType::AUTHORITATIVE;
+	UNSETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 
 	std::cout << ":: Hosting on port " << port << " for " << peers << " peers." << std::endl;
 
@@ -108,14 +103,24 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 	m_server_type = ServerType::SUBORDINATE;
 	m_server_flags = 0;
 
-	if (!network::Network::Startup())
-		return false;
-
 	std::cout << ":: Connecting to " << hostname << " on port " << port << "." << std::endl;
 
 	Network.Initialize();
 	m_connecting = true;
 	m_connecting_future = Network.Connect(hostname, port);
+	return true;
+}
+
+bool Server::SinglePlayer()
+{
+	SETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
+
+	std::cout << ":: Starting as single player server." << std::endl;
+
+	Network.Initialize();
+
+	packet::CLogin packet;
+	Network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
 	return true;
 }
 
