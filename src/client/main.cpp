@@ -12,6 +12,7 @@
 
 #include "client/game/Game.h"
 #include "client/render/Window.h"
+#include "client/network/DownloadManager.h"
 
 
 int main(int argc, char* argv[])
@@ -22,8 +23,9 @@ int main(int argc, char* argv[])
 	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
 	settings->LoadFromCommandLine(argc, argv);
 
-	// Inject the resource managers.
+	// Inject various managers.
 	BabyDI::Injected<tdrp::ResourceManager> resources;
+	BabyDI::Injected<tdrp::DownloadManager> downloader;
 
 	// Initialize the Game.
 	BabyDI::Injected<tdrp::Game> game;

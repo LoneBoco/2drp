@@ -2,6 +2,7 @@
 
 #include <list>
 #include <mutex>
+#include <condition_variable>
 
 #include <ZipFile.h>
 
@@ -96,6 +97,16 @@ public:
 		return m_searching_files;
 	}
 
+	//! Blocks the thread until files have been fully searched.
+	void WaitUntilFilesSearched()
+	{
+		if (!m_searching_files)
+			return;
+
+		std::unique_lock guard(m_file_mutex);
+		m_searching_files_condition.wait(guard);
+	}
+
 	//! Checks for changes to the underlying OS filesystem.  Call this every so often.
 	void Update();
 
@@ -128,6 +139,7 @@ private:
 private:
 	watch::FileWatch m_watcher;
 	std::atomic<bool> m_searching_files;
+	std::condition_variable m_searching_files_condition;
 	std::map<filesystem::path, FileEntryPtr> m_files;
 	std::map<filesystem::path, FileEntryPtr> m_archives;
 	std::list<filesystem::path> m_directory_include;

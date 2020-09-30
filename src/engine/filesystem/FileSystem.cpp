@@ -40,6 +40,7 @@ std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path f
 void FileSystem::bind(const filesystem::path& directory)
 {
 	std::map<filesystem::path, std::future<ArchiveEntriesFuture>> processingArchives;
+	std::scoped_lock guard(m_file_mutex);
 
 	// We are starting our file search.
 	m_searching_files = true;
@@ -91,6 +92,7 @@ void FileSystem::bind(const filesystem::path& directory)
 
 	// We are done searching our file system.
 	m_searching_files = false;
+	m_searching_files_condition.notify_all();
 
 	// Merge all archive maps.
 	std::map<filesystem::path, FileEntryPtr> finalFiles;

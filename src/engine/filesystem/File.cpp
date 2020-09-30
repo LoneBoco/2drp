@@ -15,6 +15,7 @@ bool File::Open() const
 		dynamic_cast<std::ifstream&>(*m_stream).close();
 
 	m_stream = std::make_unique<std::ifstream>(m_file, std::ios::binary);
+	return true;
 }
 
 void File::Close() const

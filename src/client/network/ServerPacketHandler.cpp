@@ -1,9 +1,13 @@
+#include <fstream>
+
 #include "client/network/ServerPacketHandler.h"
 
 #include "client/game/Game.h"
+#include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsServer.h"
+#include "engine/filesystem/common.h"
 
 using tdrp::network::ServerPackets;
 using tdrp::network::construct;
@@ -102,37 +106,49 @@ void handle(Game& game, const packet::SServerInfo& packet)
 	game.Filesystem = std::make_unique<fs::FileSystem>();
 	game.Filesystem->Bind(filesystem::path("downloads") / uniqueid);
 
-	/*
 	BabyDI::Injected<tdrp::DownloadManager> downloader;
-	for (size_t i = 0; i < packet.files_size(); ++i)
+	downloader->FilesInQueue = true;
+
+	std::thread process_missing_files([packet]()
 	{
-		const auto& file_entry = packet.files(i);
+		BabyDI::Injected<tdrp::DownloadManager> downloader;
+		BabyDI::Injected<tdrp::Game> game;
 
-		const auto& name = file_entry.name();
-		const auto& size = file_entry.size();
-		const auto& date = file_entry.date();
-		const auto& crc32 = file_entry.crc32();
+		// Blocks thread.
+		game->Filesystem->WaitUntilFilesSearched();
 
-		// Check to see if we have this file.
-		if (game.Filesystem)
+		std::list<std::string> download_list;
+		for (size_t i = 0; i < packet.files_size(); ++i)
 		{
-			bool request_file = true;
-			if (game.Filesystem->HasFile(name))
-			{
-				auto& data = game.Filesystem->GetFileData(name);
-				if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
-					request_file = false;
-			}
+			const auto& file_entry = packet.files(i);
 
-			if (request_file)
+			const auto& name = file_entry.name();
+			const auto& size = file_entry.size();
+			const auto& date = file_entry.date();
+			const auto& crc32 = file_entry.crc32();
+
+			// Check to see if we have this file.
+			if (game->Filesystem)
 			{
-				downloader->AddToQueue(name);
+				bool request_file = true;
+				if (game->Filesystem->HasFile(name))
+				{
+					auto& data = game->Filesystem->GetFileData(name);
+					if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
+						request_file = false;
+				}
+
+				if (request_file)
+					download_list.push_back(name);
 			}
 		}
-	}
-	*/
-
+		if (!download_list.empty())
+			downloader->AddToQueue(std::move(download_list));
+		else downloader->TryClearProcessingFlag();
+	});
+	
 	// Show loading scene.
+	game.State = GameState::LOADING;
 }
 
 void handle(Game& game, const packet::STransferFile& packet)
@@ -140,6 +156,19 @@ void handle(Game& game, const packet::STransferFile& packet)
 	const auto& name = packet.name();
 	const auto& date = packet.date();
 	const auto& file = packet.file();
+
+	// Write the file.
+	filesystem::path file_location = game.Filesystem->GetFirstDirectoryIterator()->path() / name;
+	std::ofstream new_file(file_location.string(), std::ios::binary | std::ios::trunc);
+	new_file.write(file.c_str(), file.size());
+	new_file.close();
+
+	// Set the last write time.
+	// TODO: Improve portability with C++20.
+	filesystem::last_write_time(file_location, filesystem::file_time_type(filesystem::file_time_type::duration(date)));
+
+	BabyDI::Injected<tdrp::DownloadManager> downloader;
+	downloader->InformComplete(name);
 }
 
 void handle(Game& game, const packet::SSwitchScene& packet)

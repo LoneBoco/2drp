@@ -58,7 +58,7 @@ const ::google::protobuf::uint32 TableStruct::offsets[] GOOGLE_PROTOBUF_ATTRIBUT
   ~0u,  // no _extensions_
   ~0u,  // no _oneof_case_
   ~0u,  // no _weak_field_map_
-  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::CRequestFile, name_),
+  GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(::tdrp::packet::CRequestFile, file_),
 };
 static const ::google::protobuf::internal::MigrationSchema schemas[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
   { 0, -1, sizeof(::tdrp::packet::CRequestFile)},
@@ -91,7 +91,7 @@ void AddDescriptorsImpl() {
   InitDefaults();
   static const char descriptor[] GOOGLE_PROTOBUF_ATTRIBUTE_SECTION_VARIABLE(protodesc_cold) = {
       "\n\022CRequestFile.proto\022\013tdrp.packet\"\034\n\014CRe"
-      "questFile\022\014\n\004name\030\001 \001(\tb\006proto3"
+      "questFile\022\014\n\004file\030\001 \003(\tb\006proto3"
   };
   ::google::protobuf::DescriptorPool::InternalAddGeneratedFile(
       descriptor, 71);
@@ -118,7 +118,7 @@ namespace packet {
 void CRequestFile::InitAsDefaultInstance() {
 }
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
-const int CRequestFile::kNameFieldNumber;
+const int CRequestFile::kFileFieldNumber;
 #endif  // !defined(_MSC_VER) || _MSC_VER >= 1900
 
 CRequestFile::CRequestFile()
@@ -132,17 +132,13 @@ CRequestFile::CRequestFile()
 CRequestFile::CRequestFile(const CRequestFile& from)
   : ::google::protobuf::Message(),
       _internal_metadata_(NULL),
+      file_(from.file_),
       _cached_size_(0) {
   _internal_metadata_.MergeFrom(from._internal_metadata_);
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
-  if (from.name().size() > 0) {
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
-  }
   // @@protoc_insertion_point(copy_constructor:tdrp.packet.CRequestFile)
 }
 
 void CRequestFile::SharedCtor() {
-  name_.UnsafeSetDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
   _cached_size_ = 0;
 }
 
@@ -152,7 +148,6 @@ CRequestFile::~CRequestFile() {
 }
 
 void CRequestFile::SharedDtor() {
-  name_.DestroyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
 }
 
 void CRequestFile::SetCachedSize(int size) const {
@@ -184,7 +179,7 @@ void CRequestFile::Clear() {
   // Prevent compiler warnings about cached_has_bits being unused
   (void) cached_has_bits;
 
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+  file_.Clear();
   _internal_metadata_.Clear();
 }
 
@@ -198,16 +193,17 @@ bool CRequestFile::MergePartialFromCodedStream(
     tag = p.first;
     if (!p.second) goto handle_unusual;
     switch (::google::protobuf::internal::WireFormatLite::GetTagFieldNumber(tag)) {
-      // string name = 1;
+      // repeated string file = 1;
       case 1: {
         if (static_cast< ::google::protobuf::uint8>(tag) ==
             static_cast< ::google::protobuf::uint8>(10u /* 10 & 0xFF */)) {
           DO_(::google::protobuf::internal::WireFormatLite::ReadString(
-                input, this->mutable_name()));
+                input, this->add_file()));
           DO_(::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-            this->name().data(), static_cast<int>(this->name().length()),
+            this->file(this->file_size() - 1).data(),
+            static_cast<int>(this->file(this->file_size() - 1).length()),
             ::google::protobuf::internal::WireFormatLite::PARSE,
-            "tdrp.packet.CRequestFile.name"));
+            "tdrp.packet.CRequestFile.file"));
         } else {
           goto handle_unusual;
         }
@@ -240,14 +236,14 @@ void CRequestFile::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
-  if (this->name().size() > 0) {
+  // repeated string file = 1;
+  for (int i = 0, n = this->file_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
+      this->file(i).data(), static_cast<int>(this->file(i).length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.CRequestFile.name");
-    ::google::protobuf::internal::WireFormatLite::WriteStringMaybeAliased(
-      1, this->name(), output);
+      "tdrp.packet.CRequestFile.file");
+    ::google::protobuf::internal::WireFormatLite::WriteString(
+      1, this->file(i), output);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -264,15 +260,14 @@ void CRequestFile::SerializeWithCachedSizes(
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  // string name = 1;
-  if (this->name().size() > 0) {
+  // repeated string file = 1;
+  for (int i = 0, n = this->file_size(); i < n; i++) {
     ::google::protobuf::internal::WireFormatLite::VerifyUtf8String(
-      this->name().data(), static_cast<int>(this->name().length()),
+      this->file(i).data(), static_cast<int>(this->file(i).length()),
       ::google::protobuf::internal::WireFormatLite::SERIALIZE,
-      "tdrp.packet.CRequestFile.name");
-    target =
-      ::google::protobuf::internal::WireFormatLite::WriteStringToArray(
-        1, this->name(), target);
+      "tdrp.packet.CRequestFile.file");
+    target = ::google::protobuf::internal::WireFormatLite::
+      WriteStringToArray(1, this->file(i), target);
   }
 
   if ((_internal_metadata_.have_unknown_fields() &&  ::google::protobuf::internal::GetProto3PreserveUnknownsDefault())) {
@@ -292,11 +287,12 @@ size_t CRequestFile::ByteSizeLong() const {
       ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
         (::google::protobuf::internal::GetProto3PreserveUnknownsDefault()   ? _internal_metadata_.unknown_fields()   : _internal_metadata_.default_instance()));
   }
-  // string name = 1;
-  if (this->name().size() > 0) {
-    total_size += 1 +
-      ::google::protobuf::internal::WireFormatLite::StringSize(
-        this->name());
+  // repeated string file = 1;
+  total_size += 1 *
+      ::google::protobuf::internal::FromIntSize(this->file_size());
+  for (int i = 0, n = this->file_size(); i < n; i++) {
+    total_size += ::google::protobuf::internal::WireFormatLite::StringSize(
+      this->file(i));
   }
 
   int cached_size = ::google::protobuf::internal::ToCachedSize(total_size);
@@ -328,10 +324,7 @@ void CRequestFile::MergeFrom(const CRequestFile& from) {
   ::google::protobuf::uint32 cached_has_bits = 0;
   (void) cached_has_bits;
 
-  if (from.name().size() > 0) {
-
-    name_.AssignWithDefault(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), from.name_);
-  }
+  file_.MergeFrom(from.file_);
 }
 
 void CRequestFile::CopyFrom(const ::google::protobuf::Message& from) {
@@ -358,7 +351,7 @@ void CRequestFile::Swap(CRequestFile* other) {
 }
 void CRequestFile::InternalSwap(CRequestFile* other) {
   using std::swap;
-  name_.Swap(&other->name_);
+  file_.InternalSwap(&other->file_);
   _internal_metadata_.Swap(&other->_internal_metadata_);
   swap(_cached_size_, other->_cached_size_);
 }

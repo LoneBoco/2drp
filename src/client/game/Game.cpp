@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "client/game/Game.h"
+#include "client/network/DownloadManager.h"
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
 
@@ -61,7 +62,8 @@ void Game::Update()
 
 	if (State == GameState::LOADING)
 	{
-		if (!Filesystem->IsSearchingForFiles() && (Server.GetPackage() && !Server.GetPackage()->GetFileSystem()->IsSearchingForFiles()))
+		BabyDI::Injected<tdrp::DownloadManager> downloader;
+		if (!downloader->FilesInQueue && !Filesystem->IsSearchingForFiles() && (Server.GetPackage() && !Server.GetPackage()->GetFileSystem()->IsSearchingForFiles()))
 		{
 			State = GameState::PLAYING;
 			

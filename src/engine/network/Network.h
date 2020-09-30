@@ -37,6 +37,7 @@ enum class Channel
 {
 	UNRELIABLE = 0,
 	RELIABLE,
+	FILE,
 
 	COUNT
 };

@@ -17,6 +17,7 @@ constexpr uint32_t _determine_flags(const Channel channel)
 	switch (channel)
 	{
 		case Channel::RELIABLE:
+		case Channel::FILE:
 			flags = ENET_PACKET_FLAG_RELIABLE;
 			break;
 		case Channel::UNRELIABLE:

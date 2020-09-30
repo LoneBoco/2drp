@@ -3,5 +3,5 @@ syntax = "proto3";
 package tdrp.packet;
 
 message CRequestFile {
-	string name = 1;
+	repeated string file = 1;
 }

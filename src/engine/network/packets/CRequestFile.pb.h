@@ -142,25 +142,33 @@ class CRequestFile : public ::google::protobuf::Message /* @@protoc_insertion_po
 
   // accessors -------------------------------------------------------
 
-  // string name = 1;
-  void clear_name();
-  static const int kNameFieldNumber = 1;
-  const ::std::string& name() const;
-  void set_name(const ::std::string& value);
+  // repeated string file = 1;
+  int file_size() const;
+  void clear_file();
+  static const int kFileFieldNumber = 1;
+  const ::std::string& file(int index) const;
+  ::std::string* mutable_file(int index);
+  void set_file(int index, const ::std::string& value);
   #if LANG_CXX11
-  void set_name(::std::string&& value);
+  void set_file(int index, ::std::string&& value);
   #endif
-  void set_name(const char* value);
-  void set_name(const char* value, size_t size);
-  ::std::string* mutable_name();
-  ::std::string* release_name();
-  void set_allocated_name(::std::string* name);
+  void set_file(int index, const char* value);
+  void set_file(int index, const char* value, size_t size);
+  ::std::string* add_file();
+  void add_file(const ::std::string& value);
+  #if LANG_CXX11
+  void add_file(::std::string&& value);
+  #endif
+  void add_file(const char* value);
+  void add_file(const char* value, size_t size);
+  const ::google::protobuf::RepeatedPtrField< ::std::string>& file() const;
+  ::google::protobuf::RepeatedPtrField< ::std::string>* mutable_file();
 
   // @@protoc_insertion_point(class_scope:tdrp.packet.CRequestFile)
  private:
 
   ::google::protobuf::internal::InternalMetadataWithArena _internal_metadata_;
-  ::google::protobuf::internal::ArenaStringPtr name_;
+  ::google::protobuf::RepeatedPtrField< ::std::string> file_;
   mutable int _cached_size_;
   friend struct ::protobuf_CRequestFile_2eproto::TableStruct;
   friend void ::protobuf_CRequestFile_2eproto::InitDefaultsCRequestFileImpl();
@@ -176,57 +184,73 @@ class CRequestFile : public ::google::protobuf::Message /* @@protoc_insertion_po
 #endif  // __GNUC__
 // CRequestFile
 
-// string name = 1;
-inline void CRequestFile::clear_name() {
-  name_.ClearToEmptyNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+// repeated string file = 1;
+inline int CRequestFile::file_size() const {
+  return file_.size();
 }
-inline const ::std::string& CRequestFile::name() const {
-  // @@protoc_insertion_point(field_get:tdrp.packet.CRequestFile.name)
-  return name_.GetNoArena();
+inline void CRequestFile::clear_file() {
+  file_.Clear();
 }
-inline void CRequestFile::set_name(const ::std::string& value) {
-  
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), value);
-  // @@protoc_insertion_point(field_set:tdrp.packet.CRequestFile.name)
+inline const ::std::string& CRequestFile::file(int index) const {
+  // @@protoc_insertion_point(field_get:tdrp.packet.CRequestFile.file)
+  return file_.Get(index);
+}
+inline ::std::string* CRequestFile::mutable_file(int index) {
+  // @@protoc_insertion_point(field_mutable:tdrp.packet.CRequestFile.file)
+  return file_.Mutable(index);
+}
+inline void CRequestFile::set_file(int index, const ::std::string& value) {
+  // @@protoc_insertion_point(field_set:tdrp.packet.CRequestFile.file)
+  file_.Mutable(index)->assign(value);
 }
 #if LANG_CXX11
-inline void CRequestFile::set_name(::std::string&& value) {
-  
-  name_.SetNoArena(
-    &::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::move(value));
-  // @@protoc_insertion_point(field_set_rvalue:tdrp.packet.CRequestFile.name)
+inline void CRequestFile::set_file(int index, ::std::string&& value) {
+  // @@protoc_insertion_point(field_set:tdrp.packet.CRequestFile.file)
+  file_.Mutable(index)->assign(std::move(value));
 }
 #endif
-inline void CRequestFile::set_name(const char* value) {
+inline void CRequestFile::set_file(int index, const char* value) {
   GOOGLE_DCHECK(value != NULL);
-  
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), ::std::string(value));
-  // @@protoc_insertion_point(field_set_char:tdrp.packet.CRequestFile.name)
+  file_.Mutable(index)->assign(value);
+  // @@protoc_insertion_point(field_set_char:tdrp.packet.CRequestFile.file)
 }
-inline void CRequestFile::set_name(const char* value, size_t size) {
-  
-  name_.SetNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(),
-      ::std::string(reinterpret_cast<const char*>(value), size));
-  // @@protoc_insertion_point(field_set_pointer:tdrp.packet.CRequestFile.name)
+inline void CRequestFile::set_file(int index, const char* value, size_t size) {
+  file_.Mutable(index)->assign(
+    reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_set_pointer:tdrp.packet.CRequestFile.file)
 }
-inline ::std::string* CRequestFile::mutable_name() {
-  
-  // @@protoc_insertion_point(field_mutable:tdrp.packet.CRequestFile.name)
-  return name_.MutableNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline ::std::string* CRequestFile::add_file() {
+  // @@protoc_insertion_point(field_add_mutable:tdrp.packet.CRequestFile.file)
+  return file_.Add();
 }
-inline ::std::string* CRequestFile::release_name() {
-  // @@protoc_insertion_point(field_release:tdrp.packet.CRequestFile.name)
-  
-  return name_.ReleaseNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited());
+inline void CRequestFile::add_file(const ::std::string& value) {
+  file_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add:tdrp.packet.CRequestFile.file)
 }
-inline void CRequestFile::set_allocated_name(::std::string* name) {
-  if (name != NULL) {
-    
-  } else {
-    
-  }
-  name_.SetAllocatedNoArena(&::google::protobuf::internal::GetEmptyStringAlreadyInited(), name);
-  // @@protoc_insertion_point(field_set_allocated:tdrp.packet.CRequestFile.name)
+#if LANG_CXX11
+inline void CRequestFile::add_file(::std::string&& value) {
+  file_.Add(std::move(value));
+  // @@protoc_insertion_point(field_add:tdrp.packet.CRequestFile.file)
+}
+#endif
+inline void CRequestFile::add_file(const char* value) {
+  GOOGLE_DCHECK(value != NULL);
+  file_.Add()->assign(value);
+  // @@protoc_insertion_point(field_add_char:tdrp.packet.CRequestFile.file)
+}
+inline void CRequestFile::add_file(const char* value, size_t size) {
+  file_.Add()->assign(reinterpret_cast<const char*>(value), size);
+  // @@protoc_insertion_point(field_add_pointer:tdrp.packet.CRequestFile.file)
+}
+inline const ::google::protobuf::RepeatedPtrField< ::std::string>&
+CRequestFile::file() const {
+  // @@protoc_insertion_point(field_list:tdrp.packet.CRequestFile.file)
+  return file_;
+}
+inline ::google::protobuf::RepeatedPtrField< ::std::string>*
+CRequestFile::mutable_file() {
+  // @@protoc_insertion_point(field_mutable_list:tdrp.packet.CRequestFile.file)
+  return &file_;
 }
 
 #ifdef __GNUC__

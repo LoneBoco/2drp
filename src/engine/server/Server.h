@@ -59,6 +59,7 @@ public:
 	const std::string& GetUniqueId();
 	const std::string& GetServerName();
 	const uint32_t GetMaxPlayers();
+	std::shared_ptr<package::Package> GetPackage();
 
 public:
 	void AddClientScript(const std::string& name, const std::string& script);
@@ -135,6 +136,11 @@ inline const std::string& Server::GetServerName()
 inline const uint32_t Server::GetMaxPlayers()
 {
 	return m_max_players;
+}
+
+inline std::shared_ptr<package::Package> Server::GetPackage()
+{
+	return m_package;
 }
 
 inline const uint32_t Server::GetNextSceneObjectID()
