@@ -27,6 +27,21 @@ constexpr uint32_t _determine_flags(const Channel channel)
 	return flags;
 }
 
+std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& message)
+{
+	size_t message_size = message.ByteSizeLong();
+
+	std::vector<uint8_t> result(message_size);
+	message.SerializeToArray(result.data(), message_size);
+
+	return result;
+}
+
+inline bool _isSinglePlayer(const std::unique_ptr<_ENetHost, enet_host_deleter>& m_host)
+{
+	return !m_host;
+}
+
 /////////////////////////////
 
 inline void enet_host_deleter::operator()(_ENetHost* host) const
@@ -231,6 +246,13 @@ void Network::Update(bool isServer)
 
 void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel)
 {
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		m_receive_cb(0, packet_id, nullptr, 0);
+		return;
+	}
+
 	if (m_peers.find(peer_id) == m_peers.end()) return;
 
 	ENetPacket* packet = construct_packet(channel, packet_id);
@@ -241,6 +263,14 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 
 void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		auto data = _serializeMessageToVector(message);
+		m_receive_cb(0, packet_id, data.data(), data.size());
+		return;
+	}
+
 	if (m_peers.find(peer_id) == m_peers.end()) return;
 
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
@@ -251,7 +281,12 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 {
-	if (m_host == nullptr) return;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		m_receive_cb(0, packet_id, nullptr, 0);
+		return;
+	}
 
 	ENetPacket* packet = construct_packet(channel, packet_id);
 	if (packet == nullptr) return;
@@ -261,7 +296,13 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
-	if (m_host == nullptr) return;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		auto data = _serializeMessageToVector(message);
+		m_receive_cb(0, packet_id, data.data(), data.size());
+		return;
+	}
 
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
@@ -271,25 +312,51 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 
 int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel)
 {
-	if (m_host == nullptr) return 0;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		m_receive_cb(0, packet_id, nullptr, 0);
+		return 1;
+	}
+
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id));
 }
 
 int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
-	if (m_host == nullptr) return 0;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		auto data = _serializeMessageToVector(message);
+		m_receive_cb(0, packet_id, data.data(), data.size());
+		return 1;
+	}
+
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message));
 }
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel)
 {
-	if (m_host == nullptr) return 0;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		m_receive_cb(0, packet_id, nullptr, 0);
+		return 1;
+	}
+
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id));
 }
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
-	if (m_host == nullptr) return 0;
+	// If single player, bypass networking and send directly to the client portion of the engine.
+	if (_isSinglePlayer(m_host))
+	{
+		auto data = _serializeMessageToVector(message);
+		m_receive_cb(0, packet_id, data.data(), data.size());
+		return 1;
+	}
+
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message));
 }
 

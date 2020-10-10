@@ -11,6 +11,7 @@
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsClient.h"
 #include "engine/network/PacketsServer.h"
+#include "engine/network/ClientPacketHandler.h"
 
 using tdrp::network::PACKETID;
 using tdrp::network::ClientPackets;
@@ -18,6 +19,18 @@ using tdrp::network::ServerPackets;
 
 namespace tdrp::server
 {
+
+std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& message)
+{
+	size_t message_size = message.ByteSizeLong();
+
+	std::vector<uint8_t> result(message_size);
+	message.SerializeToArray(result.data(), message_size);
+
+	return result;
+}
+
+/////////////////////////////
 
 Server::Server()
 	: m_connecting(false), m_server_type(ServerType::AUTHORITATIVE), m_server_flags(0), m_sceneobject_counter(0), m_server_name("PEER"), m_max_players(8)
@@ -30,21 +43,21 @@ Server::Server()
 
 	// Bind the network connect/disconnect callbacks.
 	using namespace std::placeholders;
-	Network.SetConnectCallback(std::bind(&Server::network_connect, this, _1));
-	Network.SetDisconnectCallback(std::bind(&Server::network_disconnect, this, _1));
-	Network.SetLoginCallback(std::bind(&Server::network_login, this, _1, _2, _3, _4));
+	m_network.SetConnectCallback(std::bind(&Server::network_connect, this, _1));
+	m_network.SetDisconnectCallback(std::bind(&Server::network_disconnect, this, _1));
+	m_network.SetLoginCallback(std::bind(&Server::network_login, this, _1, _2, _3, _4));
 
-	Network.BindServer(this);
+	m_network.BindServer(this);
 }
 
 Server::~Server()
 {
-	Network.Shutdown();
+	network::Network::Shutdown();
 }
 
 bool Server::Initialize(const std::string& package_name, const ServerType type, const uint16_t flags)
 {
-	Network.Shutdown();
+	network::Network::Shutdown();
 	if (!network::Network::Startup())
 		return false;
 
@@ -94,7 +107,7 @@ bool Server::Host(const uint16_t port, const size_t peers)
 
 	std::cout << ":: Hosting on port " << port << " for " << peers << " peers." << std::endl;
 
-	Network.Initialize(peers, port);
+	m_network.Initialize(peers, port);
 	return true;
 }
 
@@ -105,9 +118,9 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 
 	std::cout << ":: Connecting to " << hostname << " on port " << port << "." << std::endl;
 
-	Network.Initialize();
+	m_network.Initialize();
 	m_connecting = true;
-	m_connecting_future = Network.Connect(hostname, port);
+	m_connecting_future = m_network.Connect(hostname, port);
 	return true;
 }
 
@@ -117,10 +130,10 @@ bool Server::SinglePlayer()
 
 	std::cout << ":: Starting as single player server." << std::endl;
 
-	Network.Initialize();
+	// Network.Initialize();
 
 	packet::CLogin packet;
-	Network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
+	m_network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
 	return true;
 }
 
@@ -183,12 +196,12 @@ void Server::Update()
 				packet.set_type(0);
 				packet.set_version("first");
 
-				Network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
+				m_network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
 			}
 			else
 			{
 				std::cout << "!! Connection failed." << std::endl;
-				Network.Disconnect();
+				m_network.Disconnect();
 			}
 		}
 	}
@@ -213,7 +226,7 @@ void Server::Update()
 					if (IsHost())
 					{
 						auto location = object->GetPosition();
-						Network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
+						m_network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
 					}
 				}
 			}
@@ -221,7 +234,7 @@ void Server::Update()
 	}
 
 	if (!IsSinglePlayer())
-		Network.Update(IsHost());
+		m_network.Update(IsHost());
 
 	if (m_package != nullptr)
 		m_package->GetFileSystem()->Update();
@@ -240,7 +253,7 @@ void Server::AddClientScript(const std::string& name, const std::string& script)
 		packet.set_name(name);
 		packet.set_script(script);
 
-		Network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
+		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
 	}
 }
 
@@ -302,7 +315,7 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 		packet::SClassDelete packet;
 		packet.set_name(name);
 
-		Network.Broadcast(PACKETID(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
+		m_network.Broadcast(PACKETID(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
 	}
 
 	return c;
@@ -322,10 +335,88 @@ bool Server::DeleteClientScript(const std::string& name)
 		packet::SClientScriptDelete packet;
 		packet.set_name(name);
 
-		Network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
 	}
 
 	return true;
+}
+
+/////////////////////////////
+
+void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel)
+{
+	if (IsSinglePlayer())
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+	else m_network.Send(peer_id, packet_id, channel);
+}
+
+void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
+{
+	if (IsSinglePlayer())
+	{
+		auto data = _serializeMessageToVector(message);
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+	}
+	else m_network.Send(peer_id, packet_id, channel);
+}
+
+void Server::Broadcast(const uint16_t packet_id, const network::Channel channel)
+{
+	if (IsSinglePlayer())
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+	else m_network.Broadcast(packet_id, channel);
+}
+
+void Server::Broadcast(const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
+{
+	if (IsSinglePlayer())
+	{
+		auto data = _serializeMessageToVector(message);
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+	}
+	else m_network.Broadcast(packet_id, channel);
+}
+
+int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel)
+{
+	if (IsSinglePlayer())
+	{
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		return 1;
+	}
+	else return m_network.SendToScene(scene, location, packet_id, channel);
+}
+
+int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
+{
+	if (IsSinglePlayer())
+	{
+		auto data = _serializeMessageToVector(message);
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		return 1;
+	}
+	else return m_network.SendToScene(scene, location, packet_id, channel);
+}
+
+int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel)
+{
+	if (IsSinglePlayer())
+	{
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		return 1;
+	}
+	else return m_network.BroadcastToScene(scene, packet_id, channel);
+}
+
+int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
+{
+	if (IsSinglePlayer())
+	{
+		auto data = _serializeMessageToVector(message);
+		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		return 1;
+	}
+	else return m_network.BroadcastToScene(scene, packet_id, channel);
 }
 
 /////////////////////////////
@@ -360,7 +451,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 
 	// Bind the account.
 	auto account = std::make_unique<server::Account>();
-	Network.BindAccountToPeer(id, std::move(account));
+	m_network.BindAccountToPeer(id, std::move(account));
 
 	packet::SLoginStatus login_status;
 
@@ -368,7 +459,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	if (IsSinglePlayer())
 	{
 		login_status.set_success(true);
-		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		std::cout << "-> Sending login status - Singleplayer." << std::endl;
 		return;
 	}
@@ -379,7 +470,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	if (true)
 	{
 		login_status.set_success(true);
-		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		std::cout << "-> Sending login status - success." << std::endl;
 	}
 	// Login failure.
@@ -387,10 +478,10 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	{
 		login_status.set_success(false);
 		login_status.set_message("Invalid username or password.");
-		Network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		std::cout << "-> Sending login status - failure." << std::endl;
 
-		Network.DisconnectPeer(id);
+		m_network.DisconnectPeer(id);
 		return;
 	}
 
@@ -411,7 +502,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 			file->set_date(detail.TimeSinceEpoch);
 		}
 	}
-	Network.Send(id, PACKETID(ServerPackets::SERVERINFO), network::Channel::RELIABLE, server_info);
+	m_network.Send(id, PACKETID(ServerPackets::SERVERINFO), network::Channel::RELIABLE, server_info);
 }
 
 } // end namespace tdrp::server

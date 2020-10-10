@@ -67,7 +67,7 @@ void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, cons
 			message.set_date(static_cast<google::protobuf::int64>(file->ModifiedTime()));
 			message.set_file(file->ReadAsString());
 
-			server->Network.Send(player->GetPlayerId(), network::PACKETID(ServerPackets::TRANSFERFILE), network::Channel::FILE, message);
+			server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::TRANSFERFILE), network::Channel::FILE, message);
 		}
 	}
 }
@@ -102,7 +102,7 @@ void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, cons
 		message.set_y(y);
 		message.set_radius(radius);
 
-		server->Network.SendToScene(scene, { x, y }, PACKETID(ServerPackets::SENDEVENT), tdrp::network::Channel::RELIABLE, message);
+		server->GetNetwork().SendToScene(scene, { x, y }, PACKETID(ServerPackets::SENDEVENT), tdrp::network::Channel::RELIABLE, message);
 	}
 }
 

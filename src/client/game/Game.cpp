@@ -18,7 +18,7 @@ namespace tdrp
 Game::Game()
 {
 	using namespace std::placeholders;
-	Server.Network.SetReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
+	Server.SetClientNetworkReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 
 	if (!Server.Initialize("login", server::ServerType::AUTHORITATIVE, FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
 		throw std::runtime_error("Unable to start the server.");
@@ -49,7 +49,6 @@ void Game::Initialize()
 
 Game::~Game()
 {
-	network::Network::Shutdown();
 }
 
 void Game::Update()

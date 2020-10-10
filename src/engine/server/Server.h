@@ -80,7 +80,19 @@ public:
 	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
 	std::weak_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
 
-	network::Network Network;
+public:
+	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);
+	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+	void Broadcast(const uint16_t packet_id, const network::Channel channel);
+	void Broadcast(const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel);
+	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel);
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+
+public:
+	void SetClientNetworkReceiveCallback(network::enet_receive_cb callback);
+	network::Network& GetNetwork();
 
 protected:
 	void network_connect(const uint16_t id);
@@ -88,6 +100,8 @@ protected:
 	void network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length);
 
 protected:
+	network::Network m_network;
+
 	bool m_connecting;
 	std::future<bool> m_connecting_future;
 
@@ -161,6 +175,16 @@ inline const bool Server::IsHost() const
 inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
 {
 	return m_player_list[id];
+}
+
+inline void Server::SetClientNetworkReceiveCallback(network::enet_receive_cb callback)
+{
+	m_network.SetReceiveCallback(callback);
+}
+
+inline network::Network& Server::GetNetwork()
+{
+	return m_network;
 }
 
 } // end namespace tdrp::server
