@@ -26,6 +26,8 @@ public:
 	std::weak_ptr<scene::Scene> GetCurrentScene();
 	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject();
 
+	uint16_t GetPlayerId() const;
+
 protected:
 	uint16_t m_player_id;
 	std::weak_ptr<scene::Scene> m_current_scene;
@@ -42,6 +44,11 @@ inline std::weak_ptr<scene::Scene> Player::GetCurrentScene()
 inline std::weak_ptr<SceneObject> Player::GetCurrentControlledSceneObject()
 {
 	return m_current_sceneobject;
+}
+
+inline uint16_t Player::GetPlayerId() const
+{
+	return m_player_id;
 }
 
 } // end namespace tdrp::server

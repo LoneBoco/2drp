@@ -7,6 +7,8 @@
 #include "engine/network/PacketsClient.h"
 #include "engine/network/PacketsServer.h"
 
+#include "engine/filesystem/File.h"
+
 using tdrp::server::Server;
 using tdrp::server::Player;
 using tdrp::network::ClientPackets;
@@ -17,6 +19,7 @@ namespace tdrp::network::handlers
 {
 
 void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet);
+void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CRequestFile& packet);
 void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSendEvent& packet);
 
 /////////////////////////////
@@ -45,6 +48,28 @@ bool network_receive(std::shared_ptr<Server> server, const uint16_t id, const ui
 
 void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
 {
+}
+
+void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CRequestFile& packet)
+{
+	for (size_t i = 0; i < packet.file_size(); ++i)
+	{
+		filesystem::path file_path = packet.file(i);
+
+		// TODO: Better file sending with a class to send data in proper chunks.
+
+		auto file = server->GetPackage()->GetFileSystem()->GetFile(file_path.filename());
+		if (file != nullptr)
+		{
+			tdrp::packet::STransferFile message;
+			message.set_type(tdrp::packet::STransferFile_Type_PACKAGE);
+			message.set_name(file_path.filename().string());
+			message.set_date(static_cast<google::protobuf::int64>(file->ModifiedTime()));
+			message.set_file(file->ReadAsString());
+
+			server->Network.Send(player->GetPlayerId(), network::PACKETID(ServerPackets::TRANSFERFILE), network::Channel::FILE, message);
+		}
+	}
 }
 
 void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSendEvent& packet)
