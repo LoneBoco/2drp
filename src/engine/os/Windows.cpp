@@ -5,7 +5,7 @@
 namespace tdrp::os
 {
 
-const std::string& CalculateComputerName()
+std::string CalculateComputerName()
 {
 	TCHAR nameBuffer[MAX_COMPUTERNAME_LENGTH];
 	DWORD nameSize = MAX_COMPUTERNAME_LENGTH;

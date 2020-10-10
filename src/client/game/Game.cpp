@@ -26,7 +26,9 @@ Game::Game()
 
 void Game::Initialize()
 {
-	/*
+	// Bind game script classes.
+	bind_game(Script.GetLuaState());
+
 	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
 	if (settings->Exists("game.starthosting"))
 	{
@@ -39,13 +41,10 @@ void Game::Initialize()
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
 		Server.Connect(host, port);
 	}
-	*/
-
-	// Bind game script classes.
-	bind_game(Script.GetLuaState());
-
-	// Set the server as single player.
-	Server.SinglePlayer();
+	else
+	{
+		Server.SinglePlayer();
+	}
 }
 
 Game::~Game()

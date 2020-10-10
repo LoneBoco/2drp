@@ -5,6 +5,6 @@
 namespace tdrp::os
 {
 
-const std::string& CalculateComputerName();
+std::string CalculateComputerName();
 
 } // end namespace tdrp::os
