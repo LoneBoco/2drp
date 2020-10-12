@@ -249,7 +249,7 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		m_receive_cb(0, packet_id, nullptr, 0);
+		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
 		return;
 	}
 
@@ -267,7 +267,10 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	if (_isSinglePlayer(m_host))
 	{
 		auto data = _serializeMessageToVector(message);
-		m_receive_cb(0, packet_id, data.data(), data.size());
+		if (packet_id == PACKETID(ClientPackets::LOGIN) && m_login_cb)
+			m_login_cb(0, packet_id, data.data(), data.size());
+		else if (m_receive_cb)
+			m_receive_cb(0, packet_id, data.data(), data.size());
 		return;
 	}
 
@@ -284,7 +287,7 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		m_receive_cb(0, packet_id, nullptr, 0);
+		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
 		return;
 	}
 
@@ -299,8 +302,11 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		auto data = _serializeMessageToVector(message);
-		m_receive_cb(0, packet_id, data.data(), data.size());
+		if (m_receive_cb)
+		{
+			auto data = _serializeMessageToVector(message);
+			m_receive_cb(0, packet_id, data.data(), data.size());
+		}
 		return;
 	}
 
@@ -315,7 +321,7 @@ int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const 
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		m_receive_cb(0, packet_id, nullptr, 0);
+		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
 		return 1;
 	}
 
@@ -327,8 +333,11 @@ int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const 
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		auto data = _serializeMessageToVector(message);
-		m_receive_cb(0, packet_id, data.data(), data.size());
+		if (m_receive_cb)
+		{
+			auto data = _serializeMessageToVector(message);
+			m_receive_cb(0, packet_id, data.data(), data.size());
+		}
 		return 1;
 	}
 
@@ -340,7 +349,7 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		m_receive_cb(0, packet_id, nullptr, 0);
+		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
 		return 1;
 	}
 
@@ -352,8 +361,11 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
-		auto data = _serializeMessageToVector(message);
-		m_receive_cb(0, packet_id, data.data(), data.size());
+		if (m_receive_cb)
+		{
+			auto data = _serializeMessageToVector(message);
+			m_receive_cb(0, packet_id, data.data(), data.size());
+		}
 		return 1;
 	}
 
