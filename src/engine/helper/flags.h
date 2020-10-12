@@ -22,15 +22,15 @@ constexpr bool HASFLAG(const T& source, const Flag& check)
 }
 
 template<typename T, typename Flag>
-constexpr T SETFLAG(const T& source, const Flag& flag)
+constexpr void SETFLAG(T& source, const Flag& flag)
 {
-	return source | static_cast<T>(flag);
+	source |= static_cast<T>(flag);
 }
 
 template<typename T, typename Flag>
-constexpr T UNSETFLAG(const T& source, const Flag& flag)
+constexpr void UNSETFLAG(T& source, const Flag& flag)
 {
-	return source & ~static_cast<T>(flag);
+	source &= ~static_cast<T>(flag);
 }
 
 } // end namespace tdrp
