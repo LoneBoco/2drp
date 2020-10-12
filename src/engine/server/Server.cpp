@@ -345,14 +345,14 @@ bool Server::DeleteClientScript(const std::string& name)
 
 void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
 	else m_network.Send(peer_id, packet_id, channel);
 }
 
 void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
@@ -362,14 +362,14 @@ void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const networ
 
 void Server::Broadcast(const uint16_t packet_id, const network::Channel channel)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
 	else m_network.Broadcast(packet_id, channel);
 }
 
 void Server::Broadcast(const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
@@ -379,7 +379,7 @@ void Server::Broadcast(const uint16_t packet_id, const network::Channel channel,
 
 int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
 		return 1;
@@ -389,7 +389,7 @@ int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const V
 
 int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
@@ -400,7 +400,7 @@ int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const V
 
 int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
 		return 1;
@@ -410,7 +410,7 @@ int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, co
 
 int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message)
 {
-	if (IsSinglePlayer())
+	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
 		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
