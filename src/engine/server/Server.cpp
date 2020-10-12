@@ -236,8 +236,7 @@ void Server::Update()
 	if (!IsSinglePlayer())
 		m_network.Update(IsHost());
 
-	if (m_package != nullptr)
-		m_package->GetFileSystem()->Update();
+	FileSystem.Update();
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -492,7 +491,7 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	server_info.set_loadingscene(m_package->GetLoadingScene());
 	if (m_package != nullptr)
 	{
-		auto& file_details = m_package->GetFileSystem()->GetArchiveInfo();
+		auto& file_details = FileSystem.GetArchiveInfo(m_package->GetBasePath());
 		for (auto& detail : file_details)
 		{
 			auto* file = server_info.add_files();

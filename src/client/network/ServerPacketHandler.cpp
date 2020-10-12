@@ -103,8 +103,7 @@ void handle(Game& game, const packet::SServerInfo& packet)
 	const auto& package = packet.package();
 	const auto& loadingscene = packet.loadingscene();
 
-	game.Filesystem = std::make_unique<fs::FileSystem>();
-	game.Filesystem->Bind(filesystem::path("downloads") / uniqueid);
+	game.Server.FileSystem.Bind(filesystem::path("downloads") / uniqueid);
 
 	BabyDI::Injected<tdrp::DownloadManager> downloader;
 	downloader->FilesInQueue = true;
@@ -115,7 +114,7 @@ void handle(Game& game, const packet::SServerInfo& packet)
 		BabyDI::Injected<tdrp::Game> game;
 
 		// Blocks thread.
-		game->Filesystem->WaitUntilFilesSearched();
+		game->Server.FileSystem.WaitUntilFilesSearched();
 
 		std::list<std::string> download_list;
 		for (size_t i = 0; i < packet.files_size(); ++i)
@@ -128,19 +127,16 @@ void handle(Game& game, const packet::SServerInfo& packet)
 			const auto& crc32 = file_entry.crc32();
 
 			// Check to see if we have this file.
-			if (game->Filesystem)
+			bool request_file = true;
+			if (game->Server.FileSystem.HasFile(name))
 			{
-				bool request_file = true;
-				if (game->Filesystem->HasFile(name))
-				{
-					auto& data = game->Filesystem->GetFileData(name);
-					if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
-						request_file = false;
-				}
-
-				if (request_file)
-					download_list.push_back(name);
+				auto& data = game->Server.FileSystem.GetFileData(name);
+				if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
+					request_file = false;
 			}
+
+			if (request_file)
+				download_list.push_back(name);
 		}
 		if (!download_list.empty())
 			downloader->AddToQueue(std::move(download_list));
@@ -157,8 +153,14 @@ void handle(Game& game, const packet::STransferFile& packet)
 	const auto& date = packet.date();
 	const auto& file = packet.file();
 
+	if (game.Server.DefaultDownloadPath.empty())
+	{
+		std::cout << "[ERROR] Received STransferFile but no default download path set." << std::endl;
+		return;
+	}
+
 	// Write the file.
-	filesystem::path file_location = game.Filesystem->GetFirstDirectoryIterator()->path() / name;
+	filesystem::path file_location = game.Server.DefaultDownloadPath / name;
 	std::ofstream new_file(file_location.string(), std::ios::binary | std::ios::trunc);
 	new_file.write(file.c_str(), file.size());
 	new_file.close();

@@ -94,6 +94,10 @@ public:
 	void SetClientNetworkReceiveCallback(network::enet_receive_cb callback);
 	network::Network& GetNetwork();
 
+public:
+	tdrp::fs::FileSystem FileSystem;
+	filesystem::path DefaultDownloadPath;
+
 protected:
 	void network_connect(const uint16_t id);
 	void network_disconnect(const uint16_t id);

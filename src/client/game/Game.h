@@ -39,8 +39,6 @@ public:
 	server::Server Server;
 	script::Script Script;
 
-	std::unique_ptr<fs::FileSystem> Filesystem;
-
 	std::shared_ptr<server::Player> Player;
 };
 

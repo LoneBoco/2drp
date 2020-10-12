@@ -58,7 +58,7 @@ void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, cons
 
 		// TODO: Better file sending with a class to send data in proper chunks.
 
-		auto file = server->GetPackage()->GetFileSystem()->GetFile(file_path.filename());
+		auto file = server->FileSystem.GetFile(file_path.filename());
 		if (file != nullptr)
 		{
 			tdrp::packet::STransferFile message;

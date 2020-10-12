@@ -9,9 +9,15 @@ namespace tdrp::loader
 
 std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer(server::Server& server, const std::string& name)
 {
+	filesystem::path root_dir = filesystem::path("packages") / name;
+
 	// Make sure our package directory exists.
-	if (!filesystem::exists(filesystem::path("packages") / name))
+	if (!filesystem::exists(root_dir))
 		return std::make_pair(false, nullptr);
+
+	// Bind the package directory to our server filesystem.
+	server.FileSystem.Bind(root_dir, "levels");
+	server.FileSystem.WaitUntilFilesSearched();
 
 	auto package = std::make_shared<package::Package>(name);
 	std::string object_class_file{ "classes.xml" };
@@ -19,9 +25,9 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	std::string client_script_file{ "client.js" };
 
 	// Load our package metadata.
-	if (filesystem::exists(package->GetBasePath() / "package.xml"))
+	if (filesystem::exists(root_dir / "package.xml"))
 	{
-		fs::File packagefile{ package->GetBasePath() / "package.xml" };
+		fs::File packagefile{ root_dir / "package.xml" };
 		pugi::xml_document doc;
 		doc.load(packagefile);
 
@@ -59,14 +65,14 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	}
 
 	// Load our client script.
-	auto client_script = package->GetFileSystem()->GetFile(client_script_file);
+	auto client_script = server.FileSystem.GetFile(root_dir, client_script_file);
 	if (client_script != nullptr)
 	{
 		server.m_client_scripts.insert(std::make_pair("default", client_script->ReadAsString()));
 	}
 
 	// Load our classes.
-	auto classes = package->GetFileSystem()->GetFile(object_class_file);
+	auto classes = server.FileSystem.GetFile(root_dir, object_class_file);
 	if (classes != nullptr)
 	{
 		pugi::xml_document doc;
@@ -93,7 +99,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 						if (!file.empty())
 						{
 							// Load script from file.
-							auto scriptfile = package->GetFileSystem()->GetFile(file);
+							auto scriptfile = server.FileSystem.GetFile(root_dir, file);
 							*script = scriptfile->ReadAsString();
 						}
 						else
@@ -119,7 +125,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	}
 
 	// Load our tilesets.
-	auto tilesets = package->GetFileSystem()->GetFile(tileset_file);
+	auto tilesets = server.FileSystem.GetFile(root_dir, tileset_file);
 	if (tilesets != nullptr)
 	{
 		pugi::xml_document doc;

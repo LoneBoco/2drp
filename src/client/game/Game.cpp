@@ -55,13 +55,10 @@ void Game::Update()
 {
 	Server.Update();
 
-	if (Filesystem != nullptr)
-		Filesystem->Update();
-
 	if (State == GameState::LOADING)
 	{
 		BabyDI::Injected<tdrp::DownloadManager> downloader;
-		if (!downloader->FilesInQueue && !Filesystem->IsSearchingForFiles() && (Server.GetPackage() && !Server.GetPackage()->GetFileSystem()->IsSearchingForFiles()))
+		if (!downloader->FilesInQueue && !Server.FileSystem.IsSearchingForFiles() && Server.GetPackage())
 		{
 			State = GameState::PLAYING;
 			

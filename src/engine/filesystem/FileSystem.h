@@ -50,6 +50,14 @@ private:
 
 	using FileEntryPtr = std::unique_ptr<FileEntry, std::default_delete<FileEntry>>;
 
+	struct DirectoryGroup
+	{
+		filesystem::path Directory;
+		std::list<filesystem::path> ExcludedDirectories;
+		std::map<const filesystem::path, FileEntryPtr> Files;
+		std::map<const filesystem::path, FileEntryPtr> Archives;
+	};
+
 public:
 	FileSystem() = default;
 	~FileSystem() = default;
@@ -65,31 +73,59 @@ public:
 	template <typename... Args>
 	void Bind(const filesystem::path& directory, Args... exclude_dirs)
 	{
-		buildExclusionList(exclude_dirs...);
-		bind(directory);
+		std::list<filesystem::path> exclude_list;
+		buildExclusionList(exclude_list, exclude_dirs...);
+		bind(directory, std::move(exclude_list));
+	}
+
+	//! Binds to a directory.
+	//! \param directory The directory to bind to.
+	//! \param exclude_dirs A list of directories to exclude.  Will be pattern matched like *exclude_dir*
+	template <typename... Args>
+	void BindFront(const filesystem::path& directory, Args... exclude_dirs)
+	{
+		std::list<filesystem::path> exclude_list;
+		buildExclusionList(exclude_list, exclude_dirs...);
+		bind(directory, std::move(exclude_list), true);
 	}
 
 	//! Checks if the file exists in the filesystem.
 	//! \return Successful if the file exists.
 	bool HasFile(const filesystem::path& file) const;
 
+	//! Checks if the file exists in the filesystem.
+	//! \return Successful if the file exists.
+	bool HasFile(const filesystem::path& root_dir, const filesystem::path& file) const;
+
 	//! Returns information about the file.
 	//! \return Information about the file.
 	FileData GetFileData(const filesystem::path& file) const;
+
+	//! Returns information about the file.
+	//! \return Information about the file.
+	FileData GetFileData(const filesystem::path& root_dir, const filesystem::path& file) const;
 
 	//! Gets a file by name.
 	//! \return A shared pointer to the file.
 	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
 
+	//! Gets a file by name.
+	//! \return A shared pointer to the file.
+	std::shared_ptr<File> GetFile(const filesystem::path& root_dir, const filesystem::path& file) const;
+
 	//! Gets all the archive CRC32s.
 	//! \return A map of the archive CRC32s.
 	std::vector<FileData> GetArchiveInfo() const;
 
+	//! Gets all the archive CRC32s.
+	//! \return A map of the archive CRC32s.
+	std::vector<FileData> GetArchiveInfo(const filesystem::path& root_dir) const;
+
 	//! Gets the first iterator for the directory we are watching.  Does not honor exclusion list.
-	filesystem::directory_iterator GetFirstDirectoryIterator() const;
+	// filesystem::directory_iterator GetFirstDirectoryIterator() const;
 
 	//! Gets an iterator for the directory we are watching.  Does not honor exclusion list.
-	std::list<filesystem::directory_iterator> GetDirectoryIterators() const;
+	// std::list<filesystem::directory_iterator> GetDirectoryIterators() const;
 
 	//! Returns true if we are searching the filesystem.
 	bool IsSearchingForFiles() const
@@ -111,39 +147,27 @@ public:
 	void Update();
 
 private:
-	void bind(const filesystem::path& directory);
-	inline bool isExcluded(const filesystem::path& directory)
-	{
-		// Check if this directory has been excluded.
-		auto exclude = std::find_if(m_directory_exclude.begin(), m_directory_exclude.end(), [&](const auto& excluded) -> bool
-		{
-			if (directory.parent_path().string().find(excluded.string()) != std::string::npos)
-				return true;
-			return false;
-		});
-		if (exclude == m_directory_exclude.end())
-			return false;
-		return true;
-	}
+	void bind(const filesystem::path& directory, std::list<filesystem::path>&& exclude_list, bool at_front = false);
+	bool isExcluded(const std::list<filesystem::path>& exclude_list, const filesystem::path& directory);
 
 private:
-	void buildExclusionList() {}
+	void buildExclusionList(std::list<filesystem::path>& exclude_list) {}
 
 	template <typename T, typename... Args>
-	void buildExclusionList(T dir, Args... args)
+	void buildExclusionList(std::list<filesystem::path>& exclude_list, T dir, Args... args)
 	{
-		m_directory_exclude.push_back(dir);
-		buildExclusionList(args...);
+		exclude_list.push_back(dir);
+		buildExclusionList(exclude_list, args...);
 	}
 
 private:
 	watch::FileWatch m_watcher;
 	std::atomic<bool> m_searching_files;
 	std::condition_variable m_searching_files_condition;
-	std::map<filesystem::path, FileEntryPtr> m_files;
-	std::map<filesystem::path, FileEntryPtr> m_archives;
-	std::list<filesystem::path> m_directory_include;
-	std::list<filesystem::path> m_directory_exclude;
+
+	// Using list instead of vector as some compilers don't noexcept certain STL container member functions and can, down the line, cause issues with unique_ptr.
+	std::list<DirectoryGroup> m_directories;
+
 	mutable std::mutex m_file_mutex;
 };
 
