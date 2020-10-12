@@ -17,15 +17,12 @@
 
 int main(int argc, char* argv[])
 {
+	// Configure our various managers.
 	ConfigureBabyDI();
 
 	// Inject command line arguments into the settings.
 	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
 	settings->LoadFromCommandLine(argc, argv);
-
-	// Inject various managers.
-	BabyDI::Injected<tdrp::ResourceManager> resources;
-	BabyDI::Injected<tdrp::DownloadManager> downloader;
 
 	// Initialize the Game.
 	BabyDI::Injected<tdrp::Game> game;
