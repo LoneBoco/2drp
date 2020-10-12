@@ -103,45 +103,56 @@ void handle(Game& game, const packet::SServerInfo& packet)
 	const auto& package = packet.package();
 	const auto& loadingscene = packet.loadingscene();
 
-	game.Server.FileSystem.Bind(filesystem::path("downloads") / uniqueid);
+	// Try to bind the package directory, if it exists.
+	game.Server.FileSystem.Bind(filesystem::path("packages") / package);
 
-	BabyDI::Injected<tdrp::DownloadManager> downloader;
-	downloader->FilesInQueue = true;
-
-	std::thread process_missing_files([packet]()
+	if (!game.Server.IsSinglePlayer())
 	{
-		BabyDI::Injected<tdrp::DownloadManager> downloader;
-		BabyDI::Injected<tdrp::Game> game;
-
-		// Blocks thread.
-		game->Server.FileSystem.WaitUntilFilesSearched();
-
-		std::list<std::string> download_list;
-		for (size_t i = 0; i < packet.files_size(); ++i)
+		// If we are a client, bind our downloads directory.
+		if (!game.Server.IsHost())
 		{
-			const auto& file_entry = packet.files(i);
-
-			const auto& name = file_entry.name();
-			const auto& size = file_entry.size();
-			const auto& date = file_entry.date();
-			const auto& crc32 = file_entry.crc32();
-
-			// Check to see if we have this file.
-			bool request_file = true;
-			if (game->Server.FileSystem.HasFile(name))
-			{
-				auto& data = game->Server.FileSystem.GetFileData(name);
-				if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
-					request_file = false;
-			}
-
-			if (request_file)
-				download_list.push_back(name);
+			game.Server.DefaultDownloadPath = filesystem::path("downloads") / uniqueid;
+			game.Server.FileSystem.Bind(game.Server.DefaultDownloadPath);
 		}
-		if (!download_list.empty())
-			downloader->AddToQueue(std::move(download_list));
-		else downloader->TryClearProcessingFlag();
-	});
+
+		BabyDI::Injected<tdrp::DownloadManager> downloader;
+		downloader->FilesInQueue = true;
+
+		std::thread process_missing_files([packet]()
+		{
+			BabyDI::Injected<tdrp::DownloadManager> downloader;
+			BabyDI::Injected<tdrp::Game> game;
+
+			// Blocks thread.
+			game->Server.FileSystem.WaitUntilFilesSearched();
+
+			std::list<std::string> download_list;
+			for (size_t i = 0; i < packet.files_size(); ++i)
+			{
+				const auto& file_entry = packet.files(i);
+
+				const auto& name = file_entry.name();
+				const auto& size = file_entry.size();
+				const auto& date = file_entry.date();
+				const auto& crc32 = file_entry.crc32();
+
+				// Check to see if we have this file.
+				bool request_file = true;
+				if (game->Server.FileSystem.HasFile(name))
+				{
+					auto& data = game->Server.FileSystem.GetFileData(name);
+					if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
+						request_file = false;
+				}
+
+				if (request_file)
+					download_list.push_back(name);
+			}
+			if (!download_list.empty())
+				downloader->AddToQueue(std::move(download_list));
+			else downloader->TryClearProcessingFlag();
+		});
+	}
 	
 	// Show loading scene.
 	game.State = GameState::LOADING;
