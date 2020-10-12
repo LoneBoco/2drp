@@ -460,28 +460,30 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		login_status.set_success(true);
 		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		std::cout << "-> Sending login status - Singleplayer." << std::endl;
-		return;
 	}
-
-	// TODO: Properly handle account verification for servers that use it.
-
-	// Login successful.
-	if (true)
-	{
-		login_status.set_success(true);
-		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-		std::cout << "-> Sending login status - success." << std::endl;
-	}
-	// Login failure.
 	else
 	{
-		login_status.set_success(false);
-		login_status.set_message("Invalid username or password.");
-		m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-		std::cout << "-> Sending login status - failure." << std::endl;
 
-		m_network.DisconnectPeer(id);
-		return;
+		// TODO: Properly handle account verification for servers that use it.
+
+		// Login successful.
+		if (true)
+		{
+			login_status.set_success(true);
+			m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+			std::cout << "-> Sending login status - success." << std::endl;
+		}
+		// Login failure.
+		else
+		{
+			login_status.set_success(false);
+			login_status.set_message("Invalid username or password.");
+			m_network.Send(id, PACKETID(ServerPackets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+			std::cout << "-> Sending login status - failure." << std::endl;
+
+			m_network.DisconnectPeer(id);
+			return;
+		}
 	}
 
 	// Send server info.
