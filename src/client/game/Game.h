@@ -9,6 +9,11 @@
 #include "engine/server/Player.h"
 #include "engine/script/Script.h"
 
+namespace sf
+{
+	class RenderWindow;
+}
+
 namespace tdrp
 {
 
@@ -33,6 +38,7 @@ public:
 	void Initialize();
 
 	void Update();
+	void Render(sf::RenderWindow* window);
 
 	GameState State = GameState::INITIALIZING;
 

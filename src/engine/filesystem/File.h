@@ -50,6 +50,12 @@ public:
 		return *(m_stream.get());
 	}
 
+	//! Converts directly into a shared pointer to the istream.
+	virtual operator std::istream* () const
+	{
+		return m_stream.get();
+	}
+
 	//! Returns if this is a valid file.
 	virtual operator bool() const
 	{

@@ -3,6 +3,7 @@
 #include "client/network/ServerPacketHandler.h"
 
 #include "client/game/Game.h"
+#include "client/render/component/RenderComponent.h"
 #include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
@@ -255,6 +256,102 @@ void handle(Game& game, const packet::SClassDelete& packet)
 
 void handle(Game& game, const packet::SSceneObjectNew& packet)
 {
+	const auto& pid = packet.id();
+	const auto& ptype = packet.type();
+	const auto& pclass = packet.class_();
+	const auto& pscript = packet.script();
+
+	auto class_ = game.Server.GetObjectClass(pclass);
+	auto type = static_cast<SceneObjectType>(ptype);
+
+	std::shared_ptr<SceneObject> so;
+
+	if (game.Server.IsHost())
+	{
+		so = game.Server.GetSceneObjectById(pid);
+	}
+	else
+	{
+		// Create our new scene object.
+		switch (type)
+		{
+			case SceneObjectType::STATIC:
+				so = std::make_shared<StaticSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::ANIMATED:
+				so = std::make_shared<AnimatedSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::TILED:
+				so = std::make_shared<TiledSceneObject>(class_, pid);
+				break;
+			default:
+				so = std::make_shared<SceneObject>(class_, pid);
+				break;
+		}
+
+		// Add props and attributes.
+		for (size_t i = 0; i < packet.attributes_size(); ++i)
+		{
+			const auto& attribute = packet.attributes(i);
+			switch (attribute.value_case())
+			{
+				case packet::SSceneObjectNew_Attribute::kAsInt:
+					so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
+					break;
+				case packet::SSceneObjectNew_Attribute::kAsUint:
+					so->Attributes.AddAttribute(attribute.name(), attribute.as_uint(), attribute.id());
+					break;
+				case packet::SSceneObjectNew_Attribute::kAsFloat:
+					so->Attributes.AddAttribute(attribute.name(), attribute.as_float(), attribute.id());
+					break;
+				case packet::SSceneObjectNew_Attribute::kAsDouble:
+					so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
+					break;
+				case packet::SSceneObjectNew_Attribute::kAsString:
+					so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
+					break;
+			}
+		}
+
+		for (size_t i = 0; i < packet.properties_size(); ++i)
+		{
+			const auto& prop = packet.properties(i);
+			auto soprop = so->Properties.Get(prop.name());
+			if (soprop)
+			{
+				switch (prop.value_case())
+				{
+					case packet::SSceneObjectNew_Attribute::kAsInt:
+						soprop->Set(prop.as_int());
+						break;
+					case packet::SSceneObjectNew_Attribute::kAsUint:
+						soprop->Set(prop.as_uint());
+						break;
+					case packet::SSceneObjectNew_Attribute::kAsFloat:
+						soprop->Set(prop.as_float());
+						break;
+					case packet::SSceneObjectNew_Attribute::kAsDouble:
+						soprop->Set(prop.as_double());
+						break;
+					case packet::SSceneObjectNew_Attribute::kAsString:
+						soprop->Set(prop.as_string());
+						break;
+				}
+			}
+		}
+
+		// Add it to the current scene.
+		if (auto scene = game.Player->GetCurrentScene().lock())
+		{
+			scene->AddObject(so);
+		}
+	}
+
+	// Add the render component.
+	if (so)
+	{
+		auto render = so->AddComponent<render::component::RenderComponent>();
+	}
 }
 
 void handle(Game& game, const packet::SSceneObjectChange& packet)

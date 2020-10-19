@@ -1,6 +1,10 @@
 #include <iostream>
 
+#include <SFML/Graphics.hpp>
+
 #include "client/game/Game.h"
+
+#include "client/render/component/RenderComponent.h"
 #include "client/network/DownloadManager.h"
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
@@ -73,6 +77,46 @@ void Game::Update()
 	else if (State == GameState::PLAYING)
 	{
 		// TODO: Run the client frame tick script.
+	}
+}
+
+void Game::Render(sf::RenderWindow* window)
+{
+	if (Player)
+	{
+		if (auto scene = Player->GetCurrentScene().lock())
+		{
+			// TODO: Proper camera handling.
+			auto within_camera = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, 10000.0f);
+
+			// Sort by Z, then by Y, then by X.
+			std::stable_sort(std::begin(within_camera), std::end(within_camera), [](const decltype(within_camera)::value_type& a, const decltype(within_camera)::value_type& b) -> bool
+			{
+				if (a->GetDepth() < b->GetDepth()) return true;
+				if (b->GetDepth() < a->GetDepth()) return false;
+
+				auto a_pos = a->GetPosition();
+				auto b_pos = b->GetPosition();
+
+				if (a_pos.y < b_pos.y) return true;
+				if (b_pos.y < a_pos.y) return false;
+
+				if (a_pos.x < b_pos.x) return true;
+				if (b_pos.x < a_pos.x) return false;
+
+				return false;
+			});
+
+			// Render!
+			for (const auto& so : within_camera)
+			{
+				auto comp = so->GetComponent<render::component::RenderComponent>();
+				if (auto render = comp.lock())
+				{
+					render->Render(*window);
+				}
+			}
+		}
 	}
 }
 

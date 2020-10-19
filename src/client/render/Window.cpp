@@ -45,6 +45,7 @@ void Window::EventLoop()
 		m_window->clear(sf::Color::Black);
 
 		Game->Update();
+		Game->Render(m_window.get());
 
 		m_window->display();
 	}
