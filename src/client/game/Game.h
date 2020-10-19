@@ -1,5 +1,7 @@
 #pragma once
 
+#include "client/game/Camera.h"
+
 #include "engine/common.h"
 
 #include "engine/filesystem/FileSystem.h"
@@ -40,12 +42,23 @@ public:
 	void Update();
 	void Render(sf::RenderWindow* window);
 
+	chrono::clock::duration GetTick() const;
+
 	GameState State = GameState::INITIALIZING;
 
 	server::Server Server;
 	script::Script Script;
-
+	camera::Camera Camera;
 	std::shared_ptr<server::Player> Player;
+
+private:
+	chrono::clock::time_point m_tick_previous;
+	chrono::clock::time_point m_tick_current;
 };
+
+inline chrono::clock::duration Game::GetTick() const
+{
+	return m_tick_current - m_tick_previous;
+}
 
 } // end namespace tdrp

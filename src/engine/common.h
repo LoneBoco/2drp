@@ -13,6 +13,7 @@
 #include <functional>
 #include <algorithm>
 #include <atomic>
+#include <chrono>
 
 #include <boost/algorithm/string.hpp>
 
@@ -20,6 +21,11 @@
 #include "engine/helper/flags.h"
 
 #include "BabyDI.hpp"
+
+namespace chrono
+{
+	using clock = std::chrono::steady_clock;
+}
 
 /*
 namespace tdrp

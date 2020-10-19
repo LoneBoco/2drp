@@ -22,6 +22,8 @@ namespace tdrp
 
 Game::Game()
 {
+	m_tick_current = chrono::clock::now();
+
 	using namespace std::placeholders;
 	Server.SetClientNetworkReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 
@@ -58,6 +60,10 @@ Game::~Game()
 
 void Game::Update()
 {
+	// Time tick.
+	m_tick_previous = m_tick_current;
+	m_tick_current = chrono::clock::now();
+
 	Server.Update();
 
 	if (State == GameState::LOADING)
@@ -78,6 +84,8 @@ void Game::Update()
 	{
 		// TODO: Run the client frame tick script.
 	}
+
+	Camera.Update(GetTick());
 }
 
 void Game::Render(sf::RenderWindow* window)
@@ -86,8 +94,8 @@ void Game::Render(sf::RenderWindow* window)
 	{
 		if (auto scene = Player->GetCurrentScene().lock())
 		{
-			// TODO: Proper camera handling.
-			auto within_camera = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, 10000.0f);
+			auto window_size = std::max(Camera.GetViewWindow().size.x, Camera.GetViewWindow().size.y) * 2.0f;
+			auto within_camera = scene->FindObjectsInRangeOf(Vector2df{ Camera.GetViewWindow().pos }, window_size);
 
 			// Sort by Z, then by Y, then by X.
 			std::stable_sort(std::begin(within_camera), std::end(within_camera), [](const decltype(within_camera)::value_type& a, const decltype(within_camera)::value_type& b) -> bool
