@@ -132,6 +132,8 @@ bool Server::SinglePlayer()
 
 	// Network.Initialize();
 
+	network_connect(0);
+
 	packet::CLogin packet;
 	m_network.Send(0, PACKETID(ClientPackets::LOGIN), network::Channel::RELIABLE, packet);
 	return true;
@@ -286,15 +288,15 @@ std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
 	return iter->second;
 }
 
-std::weak_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
+std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
 {
 	for (auto& [key, scene] : m_scenes)
 	{
-		if (auto so = scene->FindObject(id); !so.expired())
+		if (auto so = scene->FindObject(id))
 			return so;
 	}
 
-	return std::weak_ptr<tdrp::SceneObject>{};
+	return std::shared_ptr<tdrp::SceneObject>{};
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -345,7 +347,7 @@ bool Server::DeleteClientScript(const std::string& name)
 void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel)
 {
 	if (IsSinglePlayer() || IsHost())
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		tdrp::network::handlers::network_receive(this, 0, packet_id, nullptr, 0);
 	else m_network.Send(peer_id, packet_id, channel);
 }
 
@@ -354,15 +356,15 @@ void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const networ
 	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		tdrp::network::handlers::network_receive(this, 0, packet_id, data.data(), data.size());
 	}
-	else m_network.Send(peer_id, packet_id, channel);
+	else m_network.Send(peer_id, packet_id, channel, message);
 }
 
 void Server::Broadcast(const uint16_t packet_id, const network::Channel channel)
 {
 	if (IsSinglePlayer() || IsHost())
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		tdrp::network::handlers::network_receive(this, 0, packet_id, nullptr, 0);
 	else m_network.Broadcast(packet_id, channel);
 }
 
@@ -371,16 +373,16 @@ void Server::Broadcast(const uint16_t packet_id, const network::Channel channel,
 	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		tdrp::network::handlers::network_receive(this, 0, packet_id, data.data(), data.size());
 	}
-	else m_network.Broadcast(packet_id, channel);
+	else m_network.Broadcast(packet_id, channel, message);
 }
 
 int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel)
 {
 	if (IsSinglePlayer() || IsHost())
 	{
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		tdrp::network::handlers::network_receive(this, 0, packet_id, nullptr, 0);
 		return 1;
 	}
 	else return m_network.SendToScene(scene, location, packet_id, channel);
@@ -391,17 +393,17 @@ int Server::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const V
 	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		tdrp::network::handlers::network_receive(this, 0, packet_id, data.data(), data.size());
 		return 1;
 	}
-	else return m_network.SendToScene(scene, location, packet_id, channel);
+	else return m_network.SendToScene(scene, location, packet_id, channel, message);
 }
 
 int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel)
 {
 	if (IsSinglePlayer() || IsHost())
 	{
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, nullptr, 0);
+		tdrp::network::handlers::network_receive(this, 0, packet_id, nullptr, 0);
 		return 1;
 	}
 	else return m_network.BroadcastToScene(scene, packet_id, channel);
@@ -412,21 +414,16 @@ int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, co
 	if (IsSinglePlayer() || IsHost())
 	{
 		auto data = _serializeMessageToVector(message);
-		tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(this), 0, packet_id, data.data(), data.size());
+		tdrp::network::handlers::network_receive(this, 0, packet_id, data.data(), data.size());
 		return 1;
 	}
-	else return m_network.BroadcastToScene(scene, packet_id, channel);
+	else return m_network.BroadcastToScene(scene, packet_id, channel, message);
 }
 
 /////////////////////////////
 
 void Server::network_connect(const uint16_t id)
 {
-	// This shouldn't happen in a single player server.
-	// TODO: Disconnect?
-	if (IsSinglePlayer())
-		return;
-
 	std::cout << "<- Connection from " << id << "." << std::endl;
 	m_player_list[id] = std::make_shared<Player>(id);
 }

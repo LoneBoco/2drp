@@ -18,14 +18,17 @@ using tdrp::network::construct;
 namespace tdrp::network::handlers
 {
 
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet);
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CRequestFile& packet);
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSendEvent& packet);
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet);
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet);
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendEvent& packet);
 
 /////////////////////////////
 
-bool network_receive(std::shared_ptr<Server> server, const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
+bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
 {
+	if (!server)
+		return false;
+
 	// Get our player.
 	std::shared_ptr<Player> player = server->GetPlayerById(id);
 
@@ -46,11 +49,11 @@ bool network_receive(std::shared_ptr<Server> server, const uint16_t id, const ui
 
 /////////////////////////////
 
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
 {
 }
 
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CRequestFile& packet)
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet)
 {
 	for (size_t i = 0; i < packet.file_size(); ++i)
 	{
@@ -72,7 +75,7 @@ void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, cons
 	}
 }
 
-void handle(std::shared_ptr<Server> server, std::shared_ptr<Player> player, const packet::CSendEvent& packet)
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendEvent& packet)
 {
 	if (server == nullptr)
 		return;

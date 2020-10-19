@@ -78,7 +78,7 @@ public:
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
 	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
-	std::weak_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
+	std::shared_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);

@@ -228,7 +228,7 @@ void Network::Update(bool isServer)
 
 						// If we are a server, handle incoming client packets.
 						if (isServer)
-							handled = tdrp::network::handlers::network_receive(std::shared_ptr<server::Server>(m_server), id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+							handled = tdrp::network::handlers::network_receive(m_server, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 						
 						// If we have a receive callback and we haven't handled our packet yet, do the callback.
 						if (!handled && m_receive_cb)
