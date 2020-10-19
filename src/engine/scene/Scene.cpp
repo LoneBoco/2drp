@@ -22,34 +22,47 @@ bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
 	return true;
 }
 
-std::weak_ptr<SceneObject> Scene::FindObject(uint32_t id) const
+std::shared_ptr<SceneObject> Scene::FindObject(uint32_t id) const
 {
 	auto p = m_graph.find(id);
 	if (p == m_graph.end())
-		return std::weak_ptr<SceneObject>();
+		return std::shared_ptr<SceneObject>();
 
-	return std::weak_ptr<SceneObject>(p->second);
+	return p->second;
 }
 
-std::weak_ptr<SceneObject> Scene::FindObject(const std::string& name) const
+std::shared_ptr<SceneObject> Scene::FindObject(const std::string& name) const
 {
 	for (auto p : m_graph)
 	{
 		if (p.second->Name == name)
-			return std::weak_ptr<SceneObject>(p.second);
+			return p.second;
 	}
 
-	return std::weak_ptr<SceneObject>();
+	return std::shared_ptr<SceneObject>();
 }
 
-std::list<std::weak_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vector2df position, float radius)
+std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vector2df& position, float radius)
 {
-	std::list<std::weak_ptr<SceneObject>> result;
+	std::vector<std::shared_ptr<SceneObject>> result;
 
 	for (auto p : m_graph)
 	{
 		if (Vector2df::DistanceSquared(p.second->GetPosition(), position) <= radius)
-			result.push_back(std::weak_ptr<SceneObject>(p.second));
+			result.push_back(p.second);
+	}
+
+	return result;
+}
+
+std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Recti& rectangle)
+{
+	std::vector<std::shared_ptr<SceneObject>> result;
+
+	for (auto p : m_graph)
+	{
+		if (math::contains(p.second->GetPosition(), rectangle))
+			result.push_back(p.second);
 	}
 
 	return result;

@@ -206,6 +206,14 @@ public:
 	//! \param position The new position to set.
 	virtual void SetPosition(const Vector2df& position);
 
+	//! Gets the depth of the scene object (Z).
+	//! \return The depth.
+	virtual int64_t GetDepth() const;
+
+	//! Sets the depth of the scene object (Z).
+	//! \param z The depth.
+	virtual void SetDepth(int64_t z);
+
 	//! Returns the rotation of the scene object.
 	virtual float GetRotation() const;
 
@@ -322,19 +330,19 @@ public:
 	}
 
 	//! Returns the scene object type.
-	virtual SceneObjectType GetType() const override
+	SceneObjectType GetType() const override
 	{
 		return SceneObjectType::STATIC;
 	}
 
 	//! Returns the image.
-	virtual std::string GetImage() override
+	std::string GetImage() override
 	{
 		return Properties.Get(Property::IMAGE)->GetString();
 	}
 
 	//! Sets the image of the scene node.
-	virtual void SetImage(const std::string& image) override
+	void SetImage(const std::string& image) override
 	{
 		std::string old_image = Properties.Get(Property::IMAGE)->GetString();
 

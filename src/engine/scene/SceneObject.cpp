@@ -127,7 +127,6 @@ SceneObject::~SceneObject()
 	*/
 }
 
-//! Returns the position of the scene object.
 Vector2df SceneObject::GetPosition() const
 {
 	return Vector2df{
@@ -136,13 +135,21 @@ Vector2df SceneObject::GetPosition() const
 	};
 }
 
-//! Sets the position of the scene object.
-//! \param position The new position to set.
 void SceneObject::SetPosition(const Vector2df& position)
 {
 	// if (!Physics.Owner) return;
 	Properties[Property::X] = position.x;
 	Properties[Property::Y] = position.y;
+}
+
+int64_t SceneObject::GetDepth() const
+{
+	return Properties[Property::Z].GetSigned();
+}
+
+void SceneObject::SetDepth(int64_t z)
+{
+	Properties[Property::Z] = z;
 }
 
 float SceneObject::GetRotation() const

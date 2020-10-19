@@ -41,10 +41,11 @@ public:
 	// uint32_t AddZone();
 	// bool RemoveZone();
 
-	std::weak_ptr<SceneObject> FindObject(uint32_t id) const;
-	std::weak_ptr<SceneObject> FindObject(const std::string& name) const;
+	std::shared_ptr<SceneObject> FindObject(uint32_t id) const;
+	std::shared_ptr<SceneObject> FindObject(const std::string& name) const;
 
-	std::list<std::weak_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df position, float radius);
+	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
+	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRectangle(const Recti& rectangle);
 
 	const float GetTransmissionDistance() const;
 

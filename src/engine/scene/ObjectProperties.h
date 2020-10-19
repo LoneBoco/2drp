@@ -55,6 +55,12 @@ public:
 	std::shared_ptr<Attribute> Get(const Property prop);
 	std::shared_ptr<Attribute> Get(const std::string& prop);
 
+public:
+	ObjectAttributes::attribute_map::iterator begin() { return m_properties.begin(); }
+	ObjectAttributes::attribute_map::iterator end() { return m_properties.end(); }
+	ObjectAttributes::attribute_map::const_iterator begin() const { return m_properties.begin(); }
+	ObjectAttributes::attribute_map::const_iterator end() const { return m_properties.end(); }
+
 private:
 	void create();
 	void clone(const ObjectProperties& properties);

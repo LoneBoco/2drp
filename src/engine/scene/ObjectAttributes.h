@@ -83,6 +83,9 @@ protected:
 
 class ObjectAttributes
 {
+	friend class ObjectProperties;
+	using attribute_map = std::map<uint16_t, std::shared_ptr<Attribute>>;
+
 public:
 
 	class IteratorDirty
@@ -95,7 +98,7 @@ public:
 		using reference = Attribute & ;
 
 	public:
-		IteratorDirty(ObjectAttributes& attributes, std::map<uint16_t, std::shared_ptr<Attribute>>::iterator iterator)
+		IteratorDirty(ObjectAttributes& attributes, attribute_map::iterator iterator)
 		{
 			m_begin = attributes.m_attributes.begin();
 			m_end = attributes.m_attributes.end();
@@ -154,9 +157,9 @@ public:
 		}
 
 	protected:
-		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_begin;
-		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_iter;
-		std::map<uint16_t, std::shared_ptr<Attribute>>::iterator m_end;
+		attribute_map::iterator m_begin;
+		attribute_map::iterator m_iter;
+		attribute_map::iterator m_end;
 	};
 
 public:
@@ -217,6 +220,12 @@ public:
 			return v.second->GetIsDirty();
 		});
 	}
+
+public:
+	attribute_map::iterator begin() { return m_attributes.begin(); };
+	attribute_map::iterator end() { return m_attributes.end(); }
+	attribute_map::const_iterator begin() const { return m_attributes.begin(); }
+	attribute_map::const_iterator end() const { return m_attributes.end(); }
 
 private:
 	//! Assigns an id to the attribute.
