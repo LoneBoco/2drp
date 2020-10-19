@@ -186,7 +186,13 @@ void handle(Game& game, const packet::STransferFile& packet)
 
 void handle(Game& game, const packet::SSwitchScene& packet)
 {
-	const auto& scene = packet.scene();
+	const auto& scene_name = packet.scene();
+
+	if (game.Player)
+	{
+		auto scene = game.Server.GetScene(scene_name);
+		game.Player->SwitchScene(scene);
+	}
 }
 
 void handle(Game& game, const packet::SClientScript& packet)
