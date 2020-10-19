@@ -135,8 +135,41 @@ public:
 		m_components[component->GetComponentMeta().componentID] = component;
 
 		component->Initialize(*this);
+		component->OnAttached(*this);
 
 		return component;
+	}
+
+	/**
+	 * Removes a component.
+	 * 
+	 * @return True if the component was removed, false if not.
+	 */
+	template <typename T>
+	bool RemoveComponent()
+	{
+		auto component = GetComponent<T>();
+		if (component)
+		{
+			return RemoveComponent(component.lock());
+		}
+		return false;
+	}
+
+	/**
+	 * Removes a component.
+	 *
+	 * @return True if the component was removed, false if not.
+	 */
+	bool RemoveComponent(const std::shared_ptr<Component>& component)
+	{
+		if (component)
+		{
+			component->OnDetached(*this);
+			m_components.erase(component->GetComponentID());
+			return true;
+		}
+		return false;
 	}
 
 	/**
