@@ -27,6 +27,7 @@ enum class ClientPackets
 {
 	NOTHING = 0,
 	LOGIN,
+	READY,	// Blank
 	REQUESTFILE,
 	SCENEOBJECTCHANGE,
 	SENDEVENT,

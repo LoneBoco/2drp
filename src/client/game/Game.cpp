@@ -8,6 +8,7 @@
 #include "engine/filesystem/ProgramSettings.h"
 #include "engine/loader/LevelLoader.h"
 #include "engine/loader/PackageLoader.h"
+#include "engine/network/Packet.h"
 
 
 namespace tdrp
@@ -62,7 +63,11 @@ void Game::Update()
 		{
 			State = GameState::PLAYING;
 			
+			// Set our player.
+			Player = Server.GetPlayerById(0);
+
 			// Send the finished loading packet.
+			Server.Send(0, network::PACKETID(network::ClientPackets::READY), network::Channel::RELIABLE);
 		}
 	}
 	else if (State == GameState::PLAYING)

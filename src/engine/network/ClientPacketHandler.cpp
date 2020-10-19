@@ -18,6 +18,7 @@ using tdrp::network::construct;
 namespace tdrp::network::handlers
 {
 
+void handle_ready(Server* server, std::shared_ptr<Player> player);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendEvent& packet);
@@ -36,6 +37,9 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 	ClientPackets packet = static_cast<ClientPackets>(packet_id);
 	switch (packet)
 	{
+	case ClientPackets::READY:
+		handle_ready(server, player);
+		return true;
 	case ClientPackets::SCENEOBJECTCHANGE:
 		handle(server, player, construct<packet::CSceneObjectChange>(packet_data, packet_length));
 		return true;
@@ -48,6 +52,72 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 }
 
 /////////////////////////////
+
+void handle_ready(Server* server, std::shared_ptr<Player> player)
+{
+	auto add_attribute = [](packet::SSceneObjectNew& packet, const std::pair<uint16_t, std::shared_ptr<Attribute>>& attribute)
+	{
+		if (attribute.second->GetType() == AttributeType::INVALID)
+			return;
+
+		auto n = packet.add_properties();
+		n->set_id(attribute.first);
+		n->set_name(attribute.second->GetName());
+
+		switch (attribute.second->GetType())
+		{
+			case AttributeType::SIGNED:
+				n->set_as_int(attribute.second->GetSigned());
+				break;
+			case AttributeType::UNSIGNED:
+				n->set_as_uint(attribute.second->GetUnsigned());
+				break;
+			case AttributeType::FLOAT:
+				n->set_as_float(attribute.second->GetFloat());
+				break;
+			case AttributeType::DOUBLE:
+				n->set_as_double(attribute.second->GetDouble());
+				break;
+			case AttributeType::STRING:
+				n->set_as_string(attribute.second->GetString());
+				break;
+			default:
+				n->set_as_string("Unknown Attribute Error");
+				break;
+		}
+	};
+
+	// Tell the player which scene they are on.
+	packet::SSwitchScene switchscene;
+	switchscene.set_scene(server->GetPackage()->GetStartingScene());
+	server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SWITCHSCENE), network::Channel::RELIABLE, switchscene);
+
+	// Send scene objects to the player.
+	// TODO: Maintain a list in memory of their known scene objects.
+	// TODO: Use the actual starting position of the player.
+	auto scene = server->GetScene(server->GetPackage()->GetStartingScene());
+	auto sceneobjects = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, scene->GetTransmissionDistance());
+	for (const auto& sceneobject : sceneobjects)
+	{
+		packet::SSceneObjectNew object;
+		object.set_id(sceneobject->ID);
+		object.set_type(static_cast<google::protobuf::uint32>(sceneobject->GetType()));
+		object.set_class_(sceneobject->GetClass()->GetName());
+		//object.set_script()
+
+		for (const auto& prop : sceneobject->Properties)
+		{
+			add_attribute(object, prop);
+		}
+
+		for (const auto& attr : sceneobject->Attributes)
+		{
+			add_attribute(object, attr);
+		}
+
+		server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
+	}
+}
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
 {
