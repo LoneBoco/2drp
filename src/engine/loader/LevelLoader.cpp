@@ -17,7 +17,7 @@ namespace tdrp::loader
 
 std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& server, const filesystem::path& level)
 {
-	auto scene = std::make_shared<Scene>(level.parent_path().filename().string());
+	auto scene = std::make_shared<Scene>(level.filename().string());
 	int32_t version = 1;
 
 	// Get our _info.xml file.
