@@ -1,4 +1,4 @@
-#include "engine/script/modules/SceneObject.h"
+#include "engine/script/modules/bind.h"
 
 #include "engine/scene/SceneObject.h"
 
@@ -12,9 +12,9 @@ void bind_sceneobject(sol::state& lua)
 		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
 		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
 
-		"OnCreated", sol::writeonly_property(&SceneObject::SetLuaOnCreated),
-		"OnUpdate", sol::writeonly_property(&SceneObject::SetLuaOnUpdate),
-		"OnEvent", sol::writeonly_property(&SceneObject::SetLuaOnEvent)
+		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
+		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
+		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent)
 	);
 }
 

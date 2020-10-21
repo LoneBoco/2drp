@@ -26,6 +26,9 @@ public:
 	std::weak_ptr<scene::Scene> GetCurrentScene();
 	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject();
 
+	std::shared_ptr<scene::Scene> LuaGetCurrentScene();
+	std::shared_ptr<SceneObject> LuaGetCurrentControlledSceneObject();
+
 	uint16_t GetPlayerId() const;
 
 protected:
@@ -44,6 +47,16 @@ inline std::weak_ptr<scene::Scene> Player::GetCurrentScene()
 inline std::weak_ptr<SceneObject> Player::GetCurrentControlledSceneObject()
 {
 	return m_current_sceneobject;
+}
+
+inline std::shared_ptr<scene::Scene> Player::LuaGetCurrentScene()
+{
+	return m_current_scene.lock();
+}
+
+inline std::shared_ptr<SceneObject> Player::LuaGetCurrentControlledSceneObject()
+{
+	return m_current_sceneobject.lock();
 }
 
 inline uint16_t Player::GetPlayerId() const

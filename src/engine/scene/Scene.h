@@ -35,6 +35,9 @@ public:
 	Scene& operator=(Scene&& other) = delete;
 	bool operator==(const Scene& other) { return m_name == other.m_name; }
 
+public:
+	const std::string& GetName() const;
+
 	uint32_t AddObject(std::shared_ptr<SceneObject> so);
 	bool RemoveObject(std::shared_ptr<SceneObject> so);
 
@@ -56,6 +59,11 @@ protected:
 	std::map<uint32_t, std::shared_ptr<SceneObject>> m_graph;
 	uint32_t m_transmission_distance = 2000;
 };
+
+inline const std::string& Scene::GetName() const
+{
+	return m_name;
+}
 
 inline const float Scene::GetTransmissionDistance() const
 {

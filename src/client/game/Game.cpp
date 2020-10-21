@@ -64,7 +64,7 @@ void Game::Update()
 	m_tick_previous = m_tick_current;
 	m_tick_current = chrono::clock::now();
 
-	Server.Update();
+	Server.Update(GetTick());
 
 	if (State == GameState::LOADING)
 	{

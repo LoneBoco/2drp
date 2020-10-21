@@ -97,6 +97,17 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 			m_scenes.insert(std::make_pair(package->GetStartingScene(), scene));
 	}
 
+	// Load server script.
+	{
+		std::cout << ":: Loading server script." << std::endl;
+		auto file = FileSystem.GetFile("server.lua");
+		if (file)
+		{
+			auto script = file->ReadAsString();
+			Script.RunScript("server", script, *this);
+		}
+	}
+
 	return true;
 }
 
@@ -179,7 +190,7 @@ T getPropsPacket(ObjectAttributes& attributes)
 	return packet;
 }
 
-void Server::Update()
+void Server::Update(chrono::clock::duration tick)
 {
 	if (m_connecting)
 	{
@@ -207,6 +218,9 @@ void Server::Update()
 			}
 		}
 	}
+
+	// Run server update script.
+	OnServerTick.RunAll(std::chrono::duration_cast<std::chrono::milliseconds>(tick).count());
 
 	// Find any dirty attributes and update them.
 	for (auto&[name, scene] : m_scenes)
@@ -430,6 +444,10 @@ void Server::network_connect(const uint16_t id)
 
 void Server::network_disconnect(const uint16_t id)
 {
+	// Call the OnPlayerLeave script function.
+	auto player = GetPlayerById(id);
+	OnPlayerLeave.RunAll(player);
+
 	// TODO: Send disconnection packet to peers.
 	std::cout << "<- Disconnection from " << id << "." << std::endl;
 	m_player_list.erase(id);

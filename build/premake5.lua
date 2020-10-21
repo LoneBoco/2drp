@@ -60,8 +60,8 @@ workspace "2drp"
 		defines { "TDRP_MACOSX" }
 
 project "2drp"
-	-- kind "ConsoleApp"
-	kind "WindowedApp"
+	kind "ConsoleApp"
+	-- kind "WindowedApp"
 	language "C++"
 	location "projects"
 	targetdir "../bin"

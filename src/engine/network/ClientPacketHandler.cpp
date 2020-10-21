@@ -117,6 +117,9 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 
 		server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
 	}
+
+	// Call the OnPlayerJoin script function.
+	server->OnPlayerJoin.RunAll(player);
 }
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)

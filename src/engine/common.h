@@ -9,7 +9,6 @@
 #include <string>
 #include <vector>
 #include <map>
-#include <list>
 #include <functional>
 #include <algorithm>
 #include <atomic>

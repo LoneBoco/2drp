@@ -368,25 +368,4 @@ void SceneObject::update_physics()
 }
 */
 
-void SceneObject::SetLuaOnCreated(sol::this_state s, sol::protected_function func)
-{
-	sol::state_view lua{ s };
-	std::string name = lua["MODULENAME"];
-	m_lua_created[name] = func;
-}
-
-void SceneObject::SetLuaOnUpdate(sol::this_state s, sol::protected_function func)
-{
-	sol::state_view lua{ s };
-	std::string name = lua["MODULENAME"];
-	m_lua_update[name] = func;
-}
-
-void SceneObject::SetLuaOnEvent(sol::this_state s, sol::protected_function func)
-{
-	sol::state_view lua{ s };
-	std::string name = lua["MODULENAME"];
-	m_lua_event[name] = func;
-}
-
 } // end namespace tdrp

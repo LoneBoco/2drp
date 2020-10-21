@@ -4,7 +4,6 @@
 #include <set>
 
 #include <Box2D/Box2D.h>
-#include <sol/sol.hpp>
 
 #include "engine/common.h"
 
@@ -13,6 +12,8 @@
 #include "engine/scene/ObjectAttributes.h"
 #include "engine/scene/ObjectProperties.h"
 #include "engine/scene/Tileset.h"
+
+#include "engine/script/Script.h"
 
 #include "engine/component/Component.h"
 
@@ -166,6 +167,10 @@ namespace physics
 
 class SceneObject : public ComponentEntity
 {
+	SCRIPT_FUNCTION(OnCreated)
+	SCRIPT_FUNCTION(OnUpdate)
+	SCRIPT_FUNCTION(OnEvent)
+
 public:
 	//! Constructor.
 	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
@@ -297,16 +302,6 @@ public:
 
 	//! Set to true if it was visible during the render state.
 	bool RenderVisible;
-
-public:
-	void SetLuaOnCreated(sol::this_state s, sol::protected_function func);
-	void SetLuaOnUpdate(sol::this_state s, sol::protected_function func);
-	void SetLuaOnEvent(sol::this_state s, sol::protected_function func);
-
-protected:
-	std::map<std::string, sol::protected_function> m_lua_created;
-	std::map<std::string, sol::protected_function> m_lua_update;
-	std::map<std::string, sol::protected_function> m_lua_event;
 
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;

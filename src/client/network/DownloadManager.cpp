@@ -41,7 +41,7 @@ void DownloadManager::AddToQueue(std::list<std::string>&& batch)
 void DownloadManager::InformComplete(const std::string& file)
 {
 	std::scoped_lock guard(m_queue_mutex);
-	std::remove_if(std::begin(m_download_list), std::end(m_download_list), [&file](const auto& entry) { return entry == file; });
+	(void)std::remove_if(std::begin(m_download_list), std::end(m_download_list), [&file](const auto& entry) { return entry == file; });
 
 	if (m_download_list.empty())
 		FilesInQueue = false;

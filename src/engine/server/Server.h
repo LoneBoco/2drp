@@ -10,6 +10,7 @@
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
 #include "engine/server/Player.h"
+#include "engine/script/Script.h"
 
 namespace tdrp::server
 {
@@ -34,6 +35,10 @@ class Server
 	friend class loader::PackageLoader;
 	friend class network::Network;
 
+	SCRIPT_FUNCTION(OnPlayerJoin)
+	SCRIPT_FUNCTION(OnPlayerLeave)
+	SCRIPT_FUNCTION(OnServerTick)
+
 public:
 	Server();
 	~Server();
@@ -50,7 +55,7 @@ public:
 	bool SinglePlayer();
 
 public:
-	void Update();
+	void Update(chrono::clock::duration tick);
 
 public:
 	void SetUniqueId(const std::string& id);
@@ -97,6 +102,9 @@ public:
 public:
 	tdrp::fs::FileSystem FileSystem;
 	filesystem::path DefaultDownloadPath;
+
+public:
+	script::Script Script;
 
 protected:
 	void network_connect(const uint16_t id);
