@@ -170,7 +170,9 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendE
 		auto& hits = scene->FindObjectsInRangeOf({ x, y }, radius);
 		for (auto p : hits)
 		{
-			// TODO: Handle the event script.
+			// Handle the event script.
+			auto so = server->GetSceneObjectById(sender);
+			p->OnEvent.RunAll(so, name, data);
 		}
 
 		tdrp::packet::SSendEvent message;

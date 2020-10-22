@@ -192,6 +192,8 @@ T getPropsPacket(ObjectAttributes& attributes)
 
 void Server::Update(chrono::clock::duration tick)
 {
+	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(tick).count();
+
 	if (m_connecting)
 	{
 		if (m_connecting_future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
@@ -220,16 +222,15 @@ void Server::Update(chrono::clock::duration tick)
 	}
 
 	// Run server update script.
-	OnServerTick.RunAll(std::chrono::duration_cast<std::chrono::milliseconds>(tick).count());
+	OnServerTick.RunAll(tick_in_ms);
 
-	// Find any dirty attributes and update them.
+	// Iterate through all the scenes and update all the scene objects in them.
 	for (auto&[name, scene] : m_scenes)
 	{
-		// Loop through all scene objects.
 		for (auto&[id, object] : scene->m_graph)
 		{
-			// TODO: Run the server tick script on the object.
-
+			// Run the server tick script on the object.
+			object->OnUpdate.RunAll(tick_in_ms);
 
 			// Check if we have dirty attributes.
 			if (object->Attributes.HasDirty())
