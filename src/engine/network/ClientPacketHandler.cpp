@@ -43,6 +43,9 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 	case ClientPackets::SCENEOBJECTCHANGE:
 		handle(server, player, construct<packet::CSceneObjectChange>(packet_data, packet_length));
 		return true;
+	case ClientPackets::REQUESTFILE:
+		handle(server, player, construct<packet::CRequestFile>(packet_data, packet_length));
+		return true;
 	case ClientPackets::SENDEVENT:
 		handle(server, player, construct<packet::CSendEvent>(packet_data, packet_length));
 		return true;
