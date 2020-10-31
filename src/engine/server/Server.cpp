@@ -222,15 +222,15 @@ void Server::Update(chrono::clock::duration tick)
 	}
 
 	// Run server update script.
-	OnServerTick.RunAll(tick_in_ms);
+	OnServerTick.RunAll(*this, tick_in_ms);
 
 	// Iterate through all the scenes and update all the scene objects in them.
-	for (auto&[name, scene] : m_scenes)
+	for (auto& [name, scene] : m_scenes)
 	{
-		for (auto&[id, object] : scene->m_graph)
+		for (auto& [id, object] : scene->m_graph)
 		{
 			// Run the server tick script on the object.
-			object->OnUpdate.RunAll(tick_in_ms);
+			object->OnUpdate.RunAll(*this, tick_in_ms);
 
 			// Check if we have dirty attributes.
 			if (object->Attributes.HasDirty())
@@ -447,7 +447,7 @@ void Server::network_disconnect(const uint16_t id)
 {
 	// Call the OnPlayerLeave script function.
 	auto player = GetPlayerById(id);
-	OnPlayerLeave.RunAll(player);
+	OnPlayerLeave.RunAll(*this, player);
 
 	// TODO: Send disconnection packet to peers.
 	std::cout << "<- Disconnection from " << id << "." << std::endl;

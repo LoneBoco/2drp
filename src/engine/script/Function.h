@@ -21,24 +21,36 @@ public:
 	bool operator==(const Function& other) = delete;
 
 public:
-	template <typename ...Args>
-	void Run(const std::string& module_name, Args&&... args)
+	template <typename T, typename ...Args>
+	void Run(T& me, const std::string& module_name, Args&&... args)
 	{
 		auto entry = m_function.find(module_name);
 		if (entry != std::end(m_function))
 		{
+			sol::state_view s{ entry->second.lua_state() };
+			s["MODULENAME"] = module_name;
+			s["Me"] = &me;
+
 			auto result = entry->second.call(std::forward<Args>(args)...);
 			script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+
+			s["Me"] = nullptr;
 		}
 	}
 
-	template <typename ...Args>
-	void RunAll(Args&&... args) const
+	template <typename T, typename ...Args>
+	void RunAll(T& me, Args&&... args) const
 	{
 		for (const auto& entry : m_function)
 		{
+			sol::state_view s{ entry.second.lua_state() };
+			s["MODULENAME"] = entry.first;
+			s["Me"] = &me;
+
 			auto result = entry.second.call(std::forward<Args>(args)...);
 			script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+
+			s["Me"] = nullptr;
 		}
 	}
 

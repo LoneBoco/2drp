@@ -122,7 +122,7 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 	}
 
 	// Call the OnPlayerJoin script function.
-	server->OnPlayerJoin.RunAll(player);
+	server->OnPlayerJoin.RunAll(*server, player);
 }
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
@@ -172,7 +172,7 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendE
 		{
 			// Handle the event script.
 			auto so = server->GetSceneObjectById(sender);
-			p->OnEvent.RunAll(so, name, data);
+			p->OnEvent.RunAll(*p, so, name, data);
 		}
 
 		tdrp::packet::SSendEvent message;
