@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message CSceneObjectUnfollow {
+	repeated fixed32 id = 1;
+}

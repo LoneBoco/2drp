@@ -1,5 +1,7 @@
 #pragma once
 
+#include <set>
+
 #include "engine/common.h"
 
 #include "engine/scene/Scene.h"
@@ -30,6 +32,9 @@ public:
 	std::shared_ptr<SceneObject> LuaGetCurrentControlledSceneObject();
 
 	uint16_t GetPlayerId() const;
+
+public:
+	std::set<uint32_t> FollowedSceneObjects;
 
 protected:
 	uint16_t m_player_id;

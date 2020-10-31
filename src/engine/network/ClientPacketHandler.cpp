@@ -20,6 +20,7 @@ namespace tdrp::network::handlers
 
 void handle_ready(Server* server, std::shared_ptr<Player> player);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet);
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectUnfollow& packet);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet);
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendEvent& packet);
 
@@ -42,6 +43,9 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 		return true;
 	case ClientPackets::SCENEOBJECTCHANGE:
 		handle(server, player, construct<packet::CSceneObjectChange>(packet_data, packet_length));
+		return true;
+	case ClientPackets::SCENEOBJECTUNFOLLOW:
+		handle(server, player, construct<packet::CSceneObjectUnfollow>(packet_data, packet_length));
 		return true;
 	case ClientPackets::REQUESTFILE:
 		handle(server, player, construct<packet::CRequestFile>(packet_data, packet_length));
@@ -96,12 +100,13 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 	server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SWITCHSCENE), network::Channel::RELIABLE, switchscene);
 
 	// Send scene objects to the player.
-	// TODO: Maintain a list in memory of their known scene objects.
 	// TODO: Use the actual starting position of the player.
 	auto scene = server->GetScene(server->GetPackage()->GetStartingScene());
 	auto sceneobjects = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, scene->GetTransmissionDistance());
 	for (const auto& sceneobject : sceneobjects)
 	{
+		player->FollowedSceneObjects.insert(sceneobject->ID);
+
 		packet::SSceneObjectNew object;
 		object.set_id(sceneobject->ID);
 		object.set_type(static_cast<google::protobuf::uint32>(sceneobject->GetType()));
@@ -127,6 +132,17 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
 {
+}
+
+void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectUnfollow& packet)
+{
+	for (size_t i = 0; i < packet.id_size(); ++i)
+	{
+		const auto& id = packet.id(i);
+		player->FollowedSceneObjects.erase(id);
+
+		std::cout << "Removing scene object " << id << " from player " << player->GetPlayerId() << "." << std::endl;
+	}
 }
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet)
