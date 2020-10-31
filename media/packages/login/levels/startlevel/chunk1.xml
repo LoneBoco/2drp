@@ -3,7 +3,7 @@
 	<object type="tiled" class="level">
 		<property name="x" type="float" value="0.0" />
 		<property name="y" type="float" value="0.0" />
-		<property name="z" type="float" value="5000.0" />
+		<property name="z" type="float" value="0.0" />
 		<tileset file="pics1.png" />
 		<tiledata width="64" height="64" format="graalnw">
 			DADBALAMANAOAAABAYAZAaAbAcAdAeAff/BIBJBKBLBMBNBOBJBKBLBMBNBOBPf/AAABAoApAqArAsAtAuAvf/f/+4+5f/f/f/AAABf/B4B5B6DQAZAaAbAcAdAeAZAa
