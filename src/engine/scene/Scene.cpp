@@ -48,7 +48,7 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vect
 
 	for (auto p : m_graph)
 	{
-		if (Vector2df::DistanceSquared(p.second->GetPosition(), position) <= radius)
+		if (Vector2df::Distance(p.second->GetPosition(), position) <= radius)
 			result.push_back(p.second);
 	}
 

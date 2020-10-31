@@ -246,7 +246,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 					if (existing_entry->second->Type == FileEntryType::ARCHIVEFILE)
 					{
 						auto& existing_archive = existing_entry->second->Archive;
-						auto& existing_archive_name = std::find_if(directoryGroup->Archives.begin(), directoryGroup->Archives.end(), [&existing_archive](decltype(directoryGroup->Archives)::value_type const& pair) { return pair.second->Archive == existing_archive; });
+						auto& existing_archive_name = std::find_if(std::begin(directoryGroup->Archives), std::end(directoryGroup->Archives), [&existing_archive](const decltype(directoryGroup->Archives)::value_type& pair) { return pair.second->Archive == existing_archive; });
 
 						if (existing_archive_name == std::end(directoryGroup->Archives) || file > existing_archive_name->first)
 						{
