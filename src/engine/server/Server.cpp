@@ -279,6 +279,9 @@ std::shared_ptr<ObjectClass> Server::GetObjectClass(const std::string& name)
 {
 	auto iter = m_object_classes.find(name);
 	if (iter == m_object_classes.end())
+		iter = m_object_classes.find("blank");
+
+	if (iter == m_object_classes.end())
 	{
 		auto c = std::make_shared<ObjectClass>(name);
 		m_object_classes.insert(std::make_pair(name, c));
