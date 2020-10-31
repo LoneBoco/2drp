@@ -303,15 +303,41 @@ std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
 	return iter->second;
 }
 
-std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
+///////////////////////////////////////////////////////////////////////////////
+
+void Server::AddClientScript(const std::string& name, const std::string& script)
 {
-	for (auto& [key, scene] : m_scenes)
+	m_client_scripts[name] = script;
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
 	{
-		if (auto so = scene->FindObject(id))
-			return so;
+		packet::SClientScript packet;
+		packet.set_name(name);
+		packet.set_script(script);
+
+		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
+	}
+}
+
+bool Server::DeleteClientScript(const std::string& name)
+{
+	auto iter = m_client_scripts.find(name);
+	if (iter == m_client_scripts.end())
+		return false;
+
+	m_client_scripts.erase(iter);
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
+	{
+		packet::SClientScriptDelete packet;
+		packet.set_name(name);
+
+		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
 	}
 
-	return std::shared_ptr<tdrp::SceneObject>{};
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -337,24 +363,17 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 	return c;
 }
 
-bool Server::DeleteClientScript(const std::string& name)
+///////////////////////////////////////////////////////////////////////////////
+
+std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
 {
-	auto iter = m_client_scripts.find(name);
-	if (iter == m_client_scripts.end())
-		return false;
-
-	m_client_scripts.erase(iter);
-
-	// Broadcast to players if we are the host.
-	if (IsHost())
+	for (auto& [key, scene] : m_scenes)
 	{
-		packet::SClientScriptDelete packet;
-		packet.set_name(name);
-
-		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+		if (auto so = scene->FindObject(id))
+			return so;
 	}
 
-	return true;
+	return std::shared_ptr<tdrp::SceneObject>{};
 }
 
 /////////////////////////////

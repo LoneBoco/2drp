@@ -67,16 +67,17 @@ public:
 	std::shared_ptr<package::Package> GetPackage();
 
 public:
-	void AddClientScript(const std::string& name, const std::string& script);
-
-public:
 	std::shared_ptr<ObjectClass> GetObjectClass(const std::string& name);
 	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name);
 	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
 
 public:
-	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
+	void AddClientScript(const std::string& name, const std::string& script);
 	bool DeleteClientScript(const std::string& name);
+
+public:
+	// AddObjectClass
+	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
 
 public:
 	const uint32_t GetNextSceneObjectID();
