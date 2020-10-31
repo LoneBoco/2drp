@@ -6,6 +6,7 @@
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsClient.h"
 #include "engine/network/PacketsServer.h"
+#include "engine/network/construct/SceneObject.h"
 
 #include "engine/filesystem/File.h"
 
@@ -62,38 +63,6 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 
 void handle_ready(Server* server, std::shared_ptr<Player> player)
 {
-	auto add_attribute = [](packet::SSceneObjectNew& packet, const std::pair<uint16_t, std::shared_ptr<Attribute>>& attribute)
-	{
-		if (attribute.second->GetType() == AttributeType::INVALID)
-			return;
-
-		auto n = packet.add_properties();
-		n->set_id(attribute.first);
-		n->set_name(attribute.second->GetName());
-
-		switch (attribute.second->GetType())
-		{
-			case AttributeType::SIGNED:
-				n->set_as_int(attribute.second->GetSigned());
-				break;
-			case AttributeType::UNSIGNED:
-				n->set_as_uint(attribute.second->GetUnsigned());
-				break;
-			case AttributeType::FLOAT:
-				n->set_as_float(attribute.second->GetFloat());
-				break;
-			case AttributeType::DOUBLE:
-				n->set_as_double(attribute.second->GetDouble());
-				break;
-			case AttributeType::STRING:
-				n->set_as_string(attribute.second->GetString());
-				break;
-			default:
-				n->set_as_string("Unknown Attribute Error");
-				break;
-		}
-	};
-
 	// Tell the player which scene they are on.
 	packet::SSwitchScene switchscene;
 	switchscene.set_scene(server->GetPackage()->GetStartingScene());
@@ -107,22 +76,7 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 	{
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 
-		packet::SSceneObjectNew object;
-		object.set_id(sceneobject->ID);
-		object.set_type(static_cast<google::protobuf::uint32>(sceneobject->GetType()));
-		object.set_class_(sceneobject->GetClass()->GetName());
-		//object.set_script()
-
-		for (const auto& prop : sceneobject->Properties)
-		{
-			add_attribute(object, prop);
-		}
-
-		for (const auto& attr : sceneobject->Attributes)
-		{
-			add_attribute(object, attr);
-		}
-
+		auto object = network::constructSceneObjectPacket(sceneobject);
 		server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
 	}
 

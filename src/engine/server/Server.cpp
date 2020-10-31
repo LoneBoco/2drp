@@ -12,6 +12,7 @@
 #include "engine/network/PacketsClient.h"
 #include "engine/network/PacketsServer.h"
 #include "engine/network/ClientPacketHandler.h"
+#include "engine/network/construct/SceneObject.h"
 
 using tdrp::network::PACKETID;
 using tdrp::network::ClientPackets;
@@ -238,9 +239,9 @@ void Server::Update(chrono::clock::duration tick)
 				// Create a packet that contains our updated attributes.
 				auto packet = getPropsPacket<packet::SSceneObjectChange>(object->Attributes);
 
-				if (!IsSinglePlayer())
+				//if (!IsSinglePlayer())
 				{
-					if (IsHost())
+					//if (IsHost())
 					{
 						auto location = object->GetPosition();
 						m_network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
@@ -250,27 +251,40 @@ void Server::Update(chrono::clock::duration tick)
 		}
 	}
 
+	// Iterate through all the players and determine if any new scene objects should be sent.
+	for (auto& [id, player] : m_player_list)
+	{
+		auto pso = player->GetCurrentControlledSceneObject().lock();
+		auto scene = player->GetCurrentScene().lock();
+		if (pso && scene)
+		{
+			// Get all scene objects nearby.
+			auto nearby = scene->FindObjectsInRangeOf(pso->GetPosition(), scene->GetTransmissionDistance() * 1.5f);
+
+			std::set<uint32_t> new_objects;
+
+			// Find every one not known about.
+			//for (auto& so : nearby | std::views)
+			auto& p = player;
+			std::for_each(std::begin(nearby), std::end(nearby), [&](const decltype(nearby)::value_type& item)
+			{
+				if (p->FollowedSceneObjects.contains(item->ID))
+					return;
+
+				new_objects.insert(item->ID);
+
+				auto packet = network::constructSceneObjectPacket(item);
+				m_network.Send(player->GetPlayerId(), PACKETID(ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
+			});
+
+			player->FollowedSceneObjects.insert(std::begin(new_objects), std::end(new_objects));
+		}
+	}
+
 	if (!IsSinglePlayer())
 		m_network.Update(IsHost());
 
 	FileSystem.Update();
-}
-
-///////////////////////////////////////////////////////////////////////////////
-
-void Server::AddClientScript(const std::string& name, const std::string& script)
-{
-	m_client_scripts[name] = script;
-
-	// Broadcast to players if we are the host.
-	if (IsHost())
-	{
-		packet::SClientScript packet;
-		packet.set_name(name);
-		packet.set_script(script);
-
-		m_network.Broadcast(PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, packet);
-	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
