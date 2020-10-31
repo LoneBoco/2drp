@@ -17,6 +17,8 @@ struct enet_host_deleter;
 namespace tdrp::server
 {
 	class Server;
+	class Player;
+	using PlayerPtr = std::shared_ptr<Player>;
 }
 
 namespace tdrp::network
@@ -72,13 +74,13 @@ public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const Channel channel);
 	void Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
-	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel);
-	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel);
 	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
 
 protected:
-	int SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
 	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
 
 public:

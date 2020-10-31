@@ -37,6 +37,8 @@ protected:
 	std::weak_ptr<SceneObject> m_current_sceneobject;
 };
 
+using PlayerPtr = std::shared_ptr<Player>;
+
 /////////////////////////////
 
 inline std::weak_ptr<scene::Scene> Player::GetCurrentScene()

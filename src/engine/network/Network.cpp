@@ -316,19 +316,19 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
 }
 
-int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel)
 {
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
 	{
 		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
-		return 1;
+		return {};
 	}
 
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id));
 }
 
-int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
 {
 	// If single player, bypass networking and send directly to the client portion of the engine.
 	if (_isSinglePlayer(m_host))
@@ -338,7 +338,7 @@ int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const 
 			auto data = _serializeMessageToVector(message);
 			m_receive_cb(0, packet_id, data.data(), data.size());
 		}
-		return 1;
+		return {};
 	}
 
 	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message));
@@ -374,23 +374,25 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 
 /////////////////////////////
 
-int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
 {
-	if (packet == nullptr) return 0;
+	std::vector<server::PlayerPtr> result;
+	
+	if (packet == nullptr)
+		return result;
 
-	int count = 0;
-	for (auto[player_id, player] : m_server->m_player_list)
+	for (auto& [player_id, player] : m_server->m_player_list)
 	{
-		if (auto player_scene = player->GetCurrentScene().lock())
+		if (const auto player_scene = player->GetCurrentScene().lock())
 		{
-			if (*player_scene == *scene)
+			if (player_scene.get() == scene.get())
 			{
 				if (auto player_object = player->GetCurrentControlledSceneObject().lock())
 				{
 					auto distance = Vector2df::DistanceSquared(location, player_object->GetPosition());
 					if (distance <= scene->GetTransmissionDistance())
 					{
-						++count;
+						result.push_back(player);
 						enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
 					}
 				}
@@ -398,7 +400,7 @@ int Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const 
 		}
 	}
 
-	return count;
+	return result;
 }
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
@@ -410,7 +412,7 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 	{
 		if (auto player_scene = player->GetCurrentScene().lock())
 		{
-			if (*player_scene == *scene)
+			if (player_scene.get() == scene.get())
 			{
 				++count;
 				enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
