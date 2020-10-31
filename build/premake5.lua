@@ -10,8 +10,8 @@ workspace "2drp"
 	targetdir ( "Build/%{_ACTION}/bin/%{cfg.buildcfg}" )
 	libdirs { "Build/%{_ACTION}/bin/%{cfg.buildcfg}" }
 
-	-- C++17 support
-	cppdialect "C++17"
+	-- C++20 support
+	cppdialect "C++20"
 
 	linkgroups "On"
 
@@ -218,7 +218,6 @@ project "2drp_server"
 project "SFML"
 	kind "StaticLib"
 	language "C++"
-	cppdialect "C++14"
 	location "projects"
 	dependson { "flac", "ogg", "vorbis" }
 	includedirs {
