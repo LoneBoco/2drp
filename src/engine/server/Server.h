@@ -76,6 +76,10 @@ public:
 	bool DeleteClientScript(const std::string& name);
 
 public:
+	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
+	bool DeleteSceneObject(uint32_t id);
+
+public:
 	// AddObjectClass
 	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
 

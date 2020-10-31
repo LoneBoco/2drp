@@ -10,7 +10,10 @@ void bind_server(sol::state& lua)
 	lua.new_usertype<server::Server>("Server", sol::no_constructor,
 		"OnPlayerJoin", sol::writeonly_property(&server::Server::SetOnPlayerJoin),
 		"OnPlayerLeave", sol::writeonly_property(&server::Server::SetOnPlayerLeave),
-		"OnServerTick", sol::writeonly_property(&server::Server::SetOnServerTick)
+		"OnServerTick", sol::writeonly_property(&server::Server::SetOnServerTick),
+
+		"CreateSceneObject", &server::Server::CreateSceneObject,
+		"DeleteSceneObject", &server::Server::DeleteSceneObject
 	);
 }
 

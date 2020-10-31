@@ -345,6 +345,59 @@ bool Server::DeleteClientScript(const std::string& name)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene)
+{
+	// Get our object class.
+	auto oc = GetObjectClass(object_class);
+	if (oc == nullptr)
+		return nullptr;
+
+	// Create the scene object.
+	auto id = GetNextSceneObjectID();
+	std::shared_ptr<tdrp::SceneObject> so = nullptr;
+	switch (type)
+	{
+		case SceneObjectType::DEFAULT:
+			so = std::make_shared<tdrp::SceneObject>(oc, id);
+			break;
+		case SceneObjectType::STATIC:
+			so = std::make_shared<tdrp::StaticSceneObject>(oc, id);
+			break;
+		case SceneObjectType::TILED:
+			so = std::make_shared<tdrp::TiledSceneObject>(oc, id);
+			break;
+		case SceneObjectType::ANIMATED:
+			so = std::make_shared<tdrp::AnimatedSceneObject>(oc, id);
+			break;
+	}
+
+	// Add to the scene.
+	scene->AddObject(so);
+
+	// The scene object will be sent to players when the server determines it is in range.
+
+	return so;
+}
+
+bool Server::DeleteSceneObject(uint32_t id)
+{
+	for (auto& [key, scene] : m_scenes)
+	{
+		if (auto so = scene->FindObject(id))
+		{
+			if (!so->IsGlobal())
+				return false;
+
+			m_scenes.erase(key);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 {
 	auto iter = m_object_classes.find(name);
