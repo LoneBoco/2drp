@@ -162,8 +162,7 @@ namespace physics
 } // end namespace physics
 */
 
-//! Callback function used for updating a scene object.
-// typedef void (*FSceneObjectUpdate)(SceneObject*);
+constexpr uint32_t GlobalSceneObjectIDFlag = 0x80'00'00'00;
 
 class SceneObject : public ComponentEntity
 {
@@ -279,7 +278,7 @@ public:
 	//! Returns if the object is global or not.
 	bool IsGlobal()
 	{
-		return (ID & 0x80'00'00'00) != 0;
+		return (ID & GlobalSceneObjectIDFlag) != 0;
 	}
 
 	//! ID

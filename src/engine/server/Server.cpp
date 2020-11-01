@@ -366,8 +366,11 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 	if (oc == nullptr)
 		return nullptr;
 
+	// Retrieve the new ID for our scene object.
+	// Set the global flag.
+	auto id = GetNextSceneObjectID() | GlobalSceneObjectIDFlag;
+
 	// Create the scene object.
-	auto id = GetNextSceneObjectID();
 	std::shared_ptr<tdrp::SceneObject> so = nullptr;
 	switch (type)
 	{
