@@ -78,6 +78,7 @@ public:
 public:
 	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
 	bool DeleteSceneObject(uint32_t id);
+	bool DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject);
 
 public:
 	// AddObjectClass
@@ -126,6 +127,7 @@ protected:
 	uint16_t m_server_flags;
 
 	uint32_t m_sceneobject_counter;
+
 	std::shared_ptr<package::Package> m_package;
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;

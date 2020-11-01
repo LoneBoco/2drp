@@ -413,6 +413,23 @@ bool Server::DeleteSceneObject(uint32_t id)
 	return false;
 }
 
+bool Server::DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject)
+{
+	for (auto& [key, scene] : m_scenes)
+	{
+		if (auto so = scene->FindObject(sceneobject->ID))
+		{
+			if (!so->IsGlobal())
+				return false;
+
+			m_scenes.erase(key);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
