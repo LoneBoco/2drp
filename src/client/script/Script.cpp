@@ -161,7 +161,7 @@ int send_event(std::shared_ptr<SceneObject> sender, const char* name, const char
     packet.set_y(origin.y);
     packet.set_radius(radius);
 
-    BabyDI::Injected<tdrp::Game> game;
+    auto game = BabyDI::Get<tdrp::Game>();
     game->Server.Send(0, PACKETID(ClientPackets::SENDEVENT), tdrp::network::Channel::RELIABLE, packet);
 
     return 0;

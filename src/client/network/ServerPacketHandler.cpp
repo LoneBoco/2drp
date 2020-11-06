@@ -116,13 +116,13 @@ void handle(Game& game, const packet::SServerInfo& packet)
 			game.Server.FileSystem.Bind(game.Server.DefaultDownloadPath);
 		}
 
-		BabyDI::Injected<tdrp::DownloadManager> downloader;
+		auto downloader = BabyDI::Get<tdrp::DownloadManager>();
 		downloader->FilesInQueue = true;
 
 		std::thread process_missing_files([packet]()
 		{
-			BabyDI::Injected<tdrp::DownloadManager> downloader;
-			BabyDI::Injected<tdrp::Game> game;
+			auto downloader = BabyDI::Get<tdrp::DownloadManager>();
+			auto game = BabyDI::Get<tdrp::Game>();
 
 			// Blocks thread.
 			game->Server.FileSystem.WaitUntilFilesSearched();
@@ -181,7 +181,7 @@ void handle(Game& game, const packet::STransferFile& packet)
 	// TODO: Improve portability with C++20.
 	filesystem::last_write_time(file_location, filesystem::file_time_type(filesystem::file_time_type::duration(date)));
 
-	BabyDI::Injected<tdrp::DownloadManager> downloader;
+	auto downloader = BabyDI::Get<tdrp::DownloadManager>();
 	downloader->InformComplete(name);
 }
 

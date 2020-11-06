@@ -17,7 +17,7 @@ void DownloadManager::AddToQueue(const std::string& file)
 	m_download_list.push_back(file);
 	FilesInQueue = true;
 
-	BabyDI::Injected<tdrp::Game> game;
+	auto game = BabyDI::Get<tdrp::Game>();
 	game->Server.Send(0, network::PACKETID(network::ClientPackets::REQUESTFILE), network::Channel::RELIABLE, request);
 }
 
@@ -34,7 +34,7 @@ void DownloadManager::AddToQueue(std::list<std::string>&& batch)
 	m_download_list.splice(std::end(m_download_list), batch);
 	FilesInQueue = true;
 
-	BabyDI::Injected<tdrp::Game> game;
+	auto game = BabyDI::Get<tdrp::Game>();
 	game->Server.Send(0, network::PACKETID(network::ClientPackets::REQUESTFILE), network::Channel::RELIABLE, request);
 }
 

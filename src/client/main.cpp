@@ -21,15 +21,15 @@ int main(int argc, char* argv[])
 	ConfigureBabyDI();
 
 	// Inject command line arguments into the settings.
-	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
+	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	settings->LoadFromCommandLine(argc, argv);
 
 	// Initialize the Game.
-	BabyDI::Injected<tdrp::Game> game;
+	auto game = BabyDI::Get<tdrp::Game>();
 	game->Initialize();
 
 	// Pull out the injected window and start the event loop.
-	BabyDI::Injected<tdrp::render::Window> window;
+	auto window = BabyDI::Get<tdrp::render::Window>();
 	window->EventLoop();
 
 	return 0;

@@ -13,14 +13,14 @@ void RenderComponent::Initialize(ComponentEntity& owner)
 	if (auto p_so = dynamic_cast<SceneObject*>(&owner))
 	{
 		// Re-acquire our scene object from the server so it is properly reference counted by shared_ptr.
-		BabyDI::Injected<tdrp::Game> game;
+		auto game = BabyDI::Get<tdrp::Game>();
 		m_owner = game->Server.GetSceneObjectById(p_so->ID);
 	}
 }
 
 void RenderComponent::OnAttached(ComponentEntity& owner)
 {
-	BabyDI::Injected<tdrp::ResourceManager> resources;
+	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
 	m_textures.clear();
 	m_sounds.clear();
@@ -43,7 +43,7 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 			auto id = resources->FindId<sf::Texture>(image);
 			if (id == 0)
 			{
-				BabyDI::Injected<tdrp::Game> game;
+				auto game = BabyDI::Get<tdrp::Game>();
 
 				auto file = game->Server.FileSystem.GetFile(image);
 				if (file && file->Opened())

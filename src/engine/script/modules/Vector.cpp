@@ -9,19 +9,19 @@ void bind_vector(sol::state& lua)
 {
 	lua.new_usertype<Vector2df>("Vector2df", sol::constructors<Vector2df(), Vector2df(const Vector2df), Vector2df(float, float)>(),
 		sol::meta_function::addition, sol::resolve<Vector2df(const Vector2df&, const Vector2df&)>(mathfu::operator+),
-		sol::meta_function::addition, sol::resolve<Vector2df(const float&, const Vector2df&)>(mathfu::operator+),
-		sol::meta_function::addition, sol::resolve<Vector2df(const Vector2df&, const float&)>(mathfu::operator+),
+		sol::meta_function::addition, sol::resolve<Vector2df(float, const Vector2df&)>(mathfu::operator+),
+		sol::meta_function::addition, sol::resolve<Vector2df(const Vector2df&, float)>(mathfu::operator+),
 
 		sol::meta_function::subtraction, sol::resolve<Vector2df(const Vector2df&, const Vector2df&)>(mathfu::operator-),
-		sol::meta_function::subtraction, sol::resolve<Vector2df(const float&, const Vector2df&)>(mathfu::operator-),
-		sol::meta_function::subtraction, sol::resolve<Vector2df(const Vector2df&, const float&)>(mathfu::operator-),
+		sol::meta_function::subtraction, sol::resolve<Vector2df(float, const Vector2df&)>(mathfu::operator-),
+		sol::meta_function::subtraction, sol::resolve<Vector2df(const Vector2df&, float)>(mathfu::operator-),
 
 		sol::meta_function::multiplication, sol::resolve<Vector2df(const Vector2df&, const Vector2df&)>(mathfu::operator*),
-		sol::meta_function::multiplication, sol::resolve<Vector2df(const float&, const Vector2df&)>(mathfu::operator*),
-		sol::meta_function::multiplication, sol::resolve<Vector2df(const Vector2df&, const float&)>(mathfu::operator*),
+		sol::meta_function::multiplication, sol::resolve<Vector2df(float, const Vector2df&)>(mathfu::operator*),
+		sol::meta_function::multiplication, sol::resolve<Vector2df(const Vector2df&, float)>(mathfu::operator*),
 
 		sol::meta_function::division, sol::resolve<Vector2df(const Vector2df&, const Vector2df&)>(mathfu::operator/),
-		sol::meta_function::division, sol::resolve<Vector2df(const Vector2df&, const float&)>(mathfu::operator/),
+		sol::meta_function::division, sol::resolve<Vector2df(const Vector2df&, float)>(mathfu::operator/),
 
 		sol::meta_function::equal_to, sol::resolve<bool(const Vector2df&, const Vector2df&)>(mathfu::operator==),
 

@@ -40,9 +40,11 @@ workspace "2drp"
 	-- Toolset specific
 	filter "toolset:msc*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }
+		disablewarnings { "5105" }
 		buildoptions {
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
+			"/Zc:preprocessor",	-- Use alternative preprocessor (like GCC/clang, required for BabyDI)
 		}
 
 	-- Windows defines.

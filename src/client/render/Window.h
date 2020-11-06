@@ -36,8 +36,8 @@ public:
 	void EventLoop();
 
 private:
-	BabyDI::Injected<::tdrp::Game> Game;
-	BabyDI::Injected<tdrp::settings::ProgramSettings> Settings;
+	INJECT(::tdrp::Game, Game);
+	INJECT(tdrp::settings::ProgramSettings, Settings);
 
 	std::unique_ptr<sf::RenderWindow> m_window;
 };

@@ -166,9 +166,9 @@ constexpr uint32_t GlobalSceneObjectIDFlag = 0x80'00'00'00;
 
 class SceneObject : public ComponentEntity
 {
-	SCRIPT_FUNCTION(OnCreated)
-	SCRIPT_FUNCTION(OnUpdate)
-	SCRIPT_FUNCTION(OnEvent)
+	SCRIPT_FUNCTION(OnCreated);
+	SCRIPT_FUNCTION(OnUpdate);
+	SCRIPT_FUNCTION(OnEvent);
 
 public:
 	//! Constructor.

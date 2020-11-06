@@ -35,9 +35,9 @@ class Server
 	friend class loader::PackageLoader;
 	friend class network::Network;
 
-	SCRIPT_FUNCTION(OnPlayerJoin)
-	SCRIPT_FUNCTION(OnPlayerLeave)
-	SCRIPT_FUNCTION(OnServerTick)
+	SCRIPT_FUNCTION(OnPlayerJoin);
+	SCRIPT_FUNCTION(OnPlayerLeave);
+	SCRIPT_FUNCTION(OnServerTick);
 
 public:
 	Server();

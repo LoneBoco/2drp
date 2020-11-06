@@ -36,7 +36,7 @@ void Game::Initialize()
 	// Bind game script classes.
 	bind_game(Script.GetLuaState());
 
-	BabyDI::Injected<tdrp::settings::ProgramSettings> settings;
+	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	if (settings->Exists("game.starthosting"))
 	{
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
@@ -68,7 +68,7 @@ void Game::Update()
 
 	if (State == GameState::LOADING)
 	{
-		BabyDI::Injected<tdrp::DownloadManager> downloader;
+		auto downloader = BabyDI::Get<tdrp::DownloadManager>();
 		if (!downloader->FilesInQueue && !Server.FileSystem.IsSearchingForFiles() && Server.GetPackage())
 		{
 			State = GameState::PLAYING;

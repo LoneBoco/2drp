@@ -10,22 +10,12 @@
 
 static void ConfigureBabyDI()
 {
-	BabyDI::Container container;
-	container.Activate();
-
-	auto game = new tdrp::Game();
-	container.Bind<tdrp::Game>(game);
-
-	auto settings = new tdrp::settings::ProgramSettings();
+	PROVIDE(tdrp::settings::ProgramSettings, new tdrp::settings::ProgramSettings());
+	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	settings->LoadFromFile("settings.ini");
-	container.Bind<tdrp::settings::ProgramSettings>(settings);
 
-	auto resources = new tdrp::ResourceManager();
-	container.Bind<tdrp::ResourceManager>(resources);
-
-	auto downloader = new tdrp::DownloadManager();
-	container.Bind<tdrp::DownloadManager>(downloader);
-
-	auto window = new tdrp::render::Window("tdrp");
-	container.Bind<tdrp::render::Window>(window);
+	PROVIDE(tdrp::Game, new tdrp::Game());
+	PROVIDE(tdrp::ResourceManager, new tdrp::ResourceManager());
+	PROVIDE(tdrp::DownloadManager, new tdrp::DownloadManager());
+	PROVIDE(tdrp::render::Window, new tdrp::render::Window("tdrp"));
 };
