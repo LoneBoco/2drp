@@ -41,3 +41,6 @@
 [submodule "dependencies/sol2"]
 	path = dependencies/sol2
 	url = https://github.com/ThePhD/sol2.git
+[submodule "dependencies/SpriterPlusPlus"]
+	path = dependencies/SpriterPlusPlus
+	url = https://github.com/LoneBoco/SpriterPlusPlus.git
