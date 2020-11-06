@@ -91,7 +91,7 @@ project "2drp"
 		"../dependencies/ziplib/Source/ZipLib/",
 	}
 
-	dependson { "SFML", "box2d", "bzip2", "zlib", "enet" }
+	dependson { "SFML", "box2d", "bzip2", "zlib", "enet", "SpriterPlusPlus" }
 
 	-- Libraries.
 	links {
@@ -257,9 +257,9 @@ project "SFML"
 		"SFML_STATIC",
 	}
 	filter { "system:windows", "platforms:x32" }
-		libdirs { "../dependencies/freetype2/win32/", "../dependencies/OpenAL/lib/win32/" }
+		libdirs { "../dependencies/freetype2/release dll/win32/", "../dependencies/OpenAL/lib/win32/" }
 	filter { "system:windows", "platforms:x64" }
-		libdirs { "../dependencies/freetype2/win64/", "../dependencies/OpenAL/lib/win64/" }
+		libdirs { "../dependencies/freetype2/release dll/win64/", "../dependencies/OpenAL/lib/win64/" }
 	filter "system:windows"
 		files {
 			"../dependencies/SFML/src/SFML/Main/MainWin32.cpp",
@@ -279,9 +279,9 @@ project "SFML"
 
 	-- Post-build commands
 	filter { "system:windows", "platforms:x32" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype2/win32/freetype.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype2/release dll/win32/freetype.dll\" %{cfg.targetdir}" }
 	filter { "system:windows", "platforms:x64" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype2/win64/freetype.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype2/release dll/win64/freetype.dll\" %{cfg.targetdir}" }
 
 project "flac"
 	kind "StaticLib"
@@ -618,3 +618,22 @@ project "ziplib"
 		links { "pthread" }
 	filter "toolset:msc*"
 		disablewarnings { "4996" }
+
+project "SpriterPlusPlus"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	includedirs {
+		"../dependencies/SpriterPlusPlus/spriterengine",
+		"../dependencies/SFML/include/",
+		"../dependencies/pugixml/src/",
+	}
+	files {
+		"../dependencies/SpriterPlusPlus/spriterengine/**",
+		"../dependencies/SpriterPlusPlus/example/override/sfml*",
+		"../dependencies/SpriterPlusPlus/example/override/pugixml*",
+	}
+	links { "pugixml", "SFML" }
+	dependson { "pugixml", "SFML" }
+	filter "toolset:msc*"
+		disablewarnings { "26812" }
