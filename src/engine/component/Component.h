@@ -218,7 +218,25 @@ public:
 		auto itr = m_components.find(T::GetMeta().componentID);
 		return std::weak_ptr(std::static_pointer_cast<T>(itr->second));
 	}
-		
+
+	/**
+	 * Gets a component by template parameter, if this ComponentEntity has it.  Attempts a dynamic_cast.
+	 * 
+	 * @return a weak_ptr to the component, or an empty weak_ptr
+	 */
+	template <typename Base>
+	std::weak_ptr<Base> GetComponentDerivedFrom() const
+	{
+		for (auto& component : m_components)
+		{
+			Base* test = dynamic_cast<Base*>(component.second.get());
+			if (test != nullptr)
+				return std::weak_ptr(std::dynamic_pointer_cast<Base>(component.second));
+		}
+
+		return std::weak_ptr<Base>();
+	}
+
 	/**
 	 * Gets a component by id, if this ComponentEntity has it.
 	 *

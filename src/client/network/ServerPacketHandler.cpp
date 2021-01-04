@@ -4,6 +4,7 @@
 
 #include "client/game/Game.h"
 #include "client/render/component/RenderComponent.h"
+#include "client/render/component/TiledRenderComponent.h"
 #include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
@@ -350,7 +351,18 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 	// Add the render component.
 	if (so)
 	{
-		auto render = so->AddComponent<render::component::RenderComponent>();
+		switch (so->GetType())
+		{
+			default:
+			case SceneObjectType::STATIC:
+				so->AddComponent<render::component::RenderComponent>();
+				break;
+			case SceneObjectType::TILED:
+				so->AddComponent<render::component::TiledRenderComponent>();
+				break;
+			case SceneObjectType::ANIMATED:
+				throw "Animated not implemented";
+		}
 	}
 }
 

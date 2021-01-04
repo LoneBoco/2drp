@@ -118,7 +118,7 @@ void Game::Render(sf::RenderWindow* window)
 			// Render!
 			for (const auto& so : within_camera)
 			{
-				auto comp = so->GetComponent<render::component::RenderComponent>();
+				auto comp = so->GetComponentDerivedFrom<render::component::IRenderableComponent>();
 				if (auto render = comp.lock())
 				{
 					render->Render(*window);

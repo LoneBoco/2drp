@@ -13,19 +13,19 @@
 namespace tdrp::render::component
 {
 
-class RenderComponent : public IRenderableComponent, public Component
+class TiledRenderComponent : public IRenderableComponent, public Component
 {
-	COMPONENT_ENABLE(RenderComponent)
+	COMPONENT_ENABLE(TiledRenderComponent)
 
 public:
-	RenderComponent() = default;
-	~RenderComponent() = default;
+	TiledRenderComponent() = default;
+	~TiledRenderComponent() = default;
 
-	RenderComponent(const RenderComponent& other) = delete;
-	RenderComponent(RenderComponent&& other) = delete;
-	RenderComponent& operator=(const RenderComponent& other) = delete;
-	RenderComponent& operator=(RenderComponent&& other) = delete;
-	bool operator==(const RenderComponent& other) = delete;
+	TiledRenderComponent(const TiledRenderComponent& other) = delete;
+	TiledRenderComponent(TiledRenderComponent&& other) = delete;
+	TiledRenderComponent& operator=(const TiledRenderComponent& other) = delete;
+	TiledRenderComponent& operator=(TiledRenderComponent&& other) = delete;
+	bool operator==(const TiledRenderComponent& other) = delete;
 
 public:
 	virtual void Initialize(ComponentEntity& owner) override;
@@ -40,7 +40,8 @@ protected:
 	std::weak_ptr<SceneObject> m_owner;
 	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
 	std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
-	sf::Sprite m_sprite;
+	sf::VertexArray m_vertices;
+	sf::Shader m_shader;
 };
 
 } // end namespace tdrp::render::component
