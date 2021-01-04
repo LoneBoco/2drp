@@ -41,6 +41,9 @@
 [submodule "dependencies/SpriterPlusPlus"]
 	path = dependencies/SpriterPlusPlus
 	url = https://github.com/LoneBoco/SpriterPlusPlus.git
+[submodule "dependencies/tmxlite"]
+	path = dependencies/tmxlite
+	url = https://github.com/fallahn/tmxlite.git
 [submodule "dependencies/PlayRho"]
 	path = dependencies/PlayRho
 	url = git@github.com:louis-langholtz/PlayRho.git
