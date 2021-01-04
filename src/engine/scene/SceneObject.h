@@ -13,7 +13,7 @@
 #include "engine/scene/ObjectProperties.h"
 #include "engine/scene/Tileset.h"
 
-#include "engine/script/Script.h"
+#include "engine/script/Function.h"
 
 #include "engine/component/Component.h"
 
@@ -234,16 +234,10 @@ public:
 	virtual void SetScale(const Vector2df& scale);
 
 	//! Returns the image.
-	virtual std::string GetImage()
-	{
-		return std::string();
-	}
+	virtual std::string GetImage() const;
 
 	//! Sets the image of the scene node.
-	virtual void SetImage(const std::string& image)
-	{
-		// TODO: Log an error if this happens.
-	}
+	virtual void SetImage(const std::string& image);
 
 /*
 	//! Sets the callback function used when update() is called.
@@ -328,21 +322,6 @@ public:
 	{
 		return SceneObjectType::STATIC;
 	}
-
-	//! Returns the image.
-	std::string GetImage() override
-	{
-		return Properties.Get(Property::IMAGE)->GetString();
-	}
-
-	//! Sets the image of the scene node.
-	void SetImage(const std::string& image) override
-	{
-		std::string old_image = Properties.Get(Property::IMAGE)->GetString();
-
-		if (old_image != image)
-			Properties[Property::IMAGE] = image;
-	}
 };
 
 class AnimatedSceneObject : public SceneObject
@@ -363,21 +342,6 @@ public:
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::ANIMATED;
-	}
-
-	//! Returns the image.
-	virtual std::string GetImage() override
-	{
-		return Properties.Get(Property::IMAGE)->GetString();
-	}
-
-	//! Sets the image of the scene node.
-	virtual void SetImage(const std::string& image) override
-	{
-		std::string old_image = Properties.Get(Property::IMAGE)->GetString();
-
-		if (old_image != image)
-			Properties[Property::IMAGE] = image;
 	}
 };
 

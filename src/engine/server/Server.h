@@ -10,6 +10,7 @@
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
 #include "engine/server/Player.h"
+#include "engine/script/Function.h"
 #include "engine/script/Script.h"
 
 namespace tdrp::server

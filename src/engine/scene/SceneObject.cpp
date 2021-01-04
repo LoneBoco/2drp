@@ -275,6 +275,16 @@ void SceneObject::SetScale(const Vector2df& scale)
 */
 }
 
+std::string SceneObject::GetImage() const
+{
+	return Properties.Get(Property::IMAGE)->GetString();
+}
+
+void SceneObject::SetImage(const std::string& image)
+{
+	Properties[Property::IMAGE] = image;
+}
+
 void SceneObject::Update()
 {
 	/*

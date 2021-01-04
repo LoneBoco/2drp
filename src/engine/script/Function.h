@@ -4,6 +4,17 @@
 #include <sol/sol.hpp>
 
 #include "engine/common.h"
+#include "engine/script/Script.h"
+
+
+#define SCRIPT_FUNCTION(name) \
+public: void Set##name(sol::this_state s, sol::protected_function func) { \
+	sol::state_view lua{ s }; \
+	std::string mod = lua["MODULENAME"]; \
+	name.Set(mod, func); \
+} \
+tdrp::script::Function name;
+
 
 namespace tdrp::script
 {
