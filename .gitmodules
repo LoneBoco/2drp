@@ -10,9 +10,6 @@
 [submodule "dependencies/enet"]
 	path = dependencies/enet
 	url = git@github.com:lsalzman/enet.git
-[submodule "dependencies/box2d"]
-	path = dependencies/box2d
-	url = git@github.com:erincatto/Box2D.git
 [submodule "dependencies/pugixml"]
 	path = dependencies/pugixml
 	url = git@github.com:zeux/pugixml.git
@@ -44,3 +41,6 @@
 [submodule "dependencies/SpriterPlusPlus"]
 	path = dependencies/SpriterPlusPlus
 	url = https://github.com/LoneBoco/SpriterPlusPlus.git
+[submodule "dependencies/PlayRho"]
+	path = dependencies/PlayRho
+	url = git@github.com:louis-langholtz/PlayRho.git

@@ -79,7 +79,7 @@ project "2drp"
 	-- Library includes.
 	includedirs {
 		"../dependencies/SFML/include/",
-		"../dependencies/box2d/Box2D/",
+		"../dependencies/PlayRho/",
 		"../dependencies/bzip2/",
 		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
@@ -93,12 +93,12 @@ project "2drp"
 		"../dependencies/ziplib/Source/ZipLib/",
 	}
 
-	dependson { "SFML", "box2d", "bzip2", "zlib", "enet", "SpriterPlusPlus" }
+	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus" }
 
 	-- Libraries.
 	links {
 		"SFML",
-		"Box2D",
+		"PlayRho",
 		"bzip2",
 		"zlib",
 		"enet",
@@ -108,7 +108,7 @@ project "2drp"
 		"ziplib",
 	}
 
-	defines { "SFML_STATIC" }
+	defines { "SFML_STATIC", "NOMINMAX" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -120,22 +120,14 @@ project "2drp"
 		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
 
 	-- Pre-link LuaJIT building.
-	libdirs { "../dependencies/luajit-2.0/src/" }
+	filter {}
+		libdirs { "../dependencies/luajit-2.0/src/" }
 	filter { "system:windows", "platforms:x32" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
 	filter { "system:windows", "platforms:x64" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
 	filter { "system:windows" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
-
-	-- Awesomium
-	-- includedirs { os.getenv("AWE_DIR") .. "include" }
-	-- libdirs { os.getenv("AWE_DIR") .. "build/lib" }
-	-- links { "awesomium" }
-	-- filter { "system:windows" }
-	-- 	postbuildcommands { "copy \"" .. os.getenv("AWE_DIR") .. "build\\bin\\*\" \"" .. getAbsoluteFromSolution(stargetdir) .. "\\\"" }
-	-- filter { "system:not windows" }
-	-- 	postbuildcommands { "cp \"" .. os.getenv("AWE_DIR") .. "build/bin/*\" \"" .. getAbsoluteFromSolution(stargetdir) .. "/\"" }
 
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
@@ -144,18 +136,6 @@ project "2drp"
 	filter { "system:linux" }
 		links { "X11", "GL" }
 
-	-- Library directories.
-	-- filter { "system:windows", "platforms:native" }
-	-- 	libdirs { "../dependencies/openal/lib/win32" }
-	-- 	libdirs { "../dependencies/freetype2/lib/win32" }
-	-- filter { "system:windows", "platforms:x32" }
-	-- 	libdirs { "../dependencies/openal/lib/win32" }
-	-- 	libdirs { "../dependencies/freetype2/lib/win32" }
-	-- if not _OPTIONS["no-64bit"] then
-	-- filter { "system:windows", "platforms:x64" }
-	-- 	libdirs { "../dependencies/openal/lib/win64" }
-	-- 	libdirs { "../dependencies/freetype2/lib/win64" }
-	-- end
 
 project "2drp_server"
 	kind "ConsoleApp"
@@ -172,7 +152,7 @@ project "2drp_server"
 
 	-- Libraries.
 	links {
-		"Box2D",
+		"PlayRho",
 		"bzip2",
 		"zlib",
 		"enet",
@@ -184,7 +164,7 @@ project "2drp_server"
 
 	-- Library includes.
 	includedirs {
-		"../dependencies/box2d/Box2D/",
+		"../dependencies/PlayRho/",
 		"../dependencies/bzip2/",
 		"../dependencies/zlib/",
 		"../dependencies/enet/include/",
@@ -197,7 +177,7 @@ project "2drp_server"
 		"../dependencies/ziplib/Source/ZipLib/",
 	}
 
-	dependson { "box2d", "bzip2", "zlib", "enet" }
+	dependson { "PlayRho", "bzip2", "zlib", "enet" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -366,12 +346,12 @@ project "ogg"
 	files { "../dependencies/ogg/src/*.c" }
 	defines { "INCLUDE_STDINT_H" }
 
-project "box2d"
+project "PlayRho"
 	kind "StaticLib"
 	language "C++"
 	location "projects"
-	files { "../dependencies/box2d/Box2D/Box2D/**.h", "../dependencies/box2d/Box2D/Box2D/**.cpp" }
-	includedirs { "../dependencies/box2d/Box2D/" }
+	files { "../dependencies/PlayRho/PlayRho/**.h", "../dependencies/PlayRho/PlayRho/**.cpp" }
+	includedirs { "../dependencies/PlayRho/" }
 
 project "bzip2"
 	kind "StaticLib"
