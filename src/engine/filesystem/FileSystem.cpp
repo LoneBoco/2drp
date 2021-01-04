@@ -119,13 +119,13 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 	std::map<const filesystem::path, FileEntryPtr> finalFiles;
 	std::for_each(processingArchives.begin(), processingArchives.end(), [this, &directoryGroup, &finalFiles](decltype(processingArchives)::value_type& pair)
 	{
-		auto& data = pair.second.get();
+		auto data = pair.second.get();
 		auto& archive = std::get<0>(data);
 		auto& files = std::get<1>(data);
 		auto& crc32 = std::get<2>(data);
 
 		// Update file entry with CRC32.
-		auto& archive_name_iter = std::find_if(directoryGroup->Archives.begin(), directoryGroup->Archives.end(), [&archive](decltype(directoryGroup->Archives)::value_type const& pair2) { return pair2.second->Archive == archive; });
+		auto archive_name_iter = std::find_if(directoryGroup->Archives.begin(), directoryGroup->Archives.end(), [&archive](decltype(directoryGroup->Archives)::value_type const& pair2) { return pair2.second->Archive == archive; });
 		if (archive_name_iter != std::end(directoryGroup->Archives))
 		{
 			archive_name_iter->second->CRC32 = crc32;
@@ -190,7 +190,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 				// Loop through all the files looking for ones that aren't in the file system (because they got removed).
 				for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 				{
-					auto& entry = archive->GetEntry(i);
+					auto entry = archive->GetEntry(i);
 					auto& entry_file_name = entry->GetName();
 					auto& entry_full_path = entry->GetFullName();
 
@@ -224,9 +224,9 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 			directoryGroup->Archives.insert(std::make_pair(file, std::move(archive_entry)));
 
 			// Collecting entries from our new version of this archive.
-			for (auto i = 0; i < archive->GetEntriesCount(); ++i)
+			for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 			{
-				auto& entry = archive->GetEntry(i);
+				auto entry = archive->GetEntry(i);
 				auto& filename = entry->GetName();
 				auto& fullpath = entry->GetFullName();
 
@@ -246,7 +246,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 					if (existing_entry->second->Type == FileEntryType::ARCHIVEFILE)
 					{
 						auto& existing_archive = existing_entry->second->Archive;
-						auto& existing_archive_name = std::find_if(std::begin(directoryGroup->Archives), std::end(directoryGroup->Archives), [&existing_archive](const decltype(directoryGroup->Archives)::value_type& pair) { return pair.second->Archive == existing_archive; });
+						auto existing_archive_name = std::find_if(std::begin(directoryGroup->Archives), std::end(directoryGroup->Archives), [&existing_archive](const decltype(directoryGroup->Archives)::value_type& pair) { return pair.second->Archive == existing_archive; });
 
 						if (existing_archive_name == std::end(directoryGroup->Archives) || file > existing_archive_name->first)
 						{
@@ -376,7 +376,7 @@ FileData FileSystem::GetFileData(const filesystem::path& file) const
 {
 	FileData data;
 
-	auto& f = GetFile(file);
+	auto f = GetFile(file);
 	if (f)
 	{
 		data.CRC32 = f->Crc32();
@@ -391,7 +391,7 @@ FileData FileSystem::GetFileData(const filesystem::path& root_dir, const filesys
 {
 	FileData data;
 
-	auto& f = GetFile(root_dir, file);
+	auto f = GetFile(root_dir, file);
 	if (f)
 	{
 		data.CRC32 = f->Crc32();

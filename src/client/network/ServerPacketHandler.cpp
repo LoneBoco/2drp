@@ -129,7 +129,7 @@ void handle(Game& game, const packet::SServerInfo& packet)
 			game->Server.FileSystem.WaitUntilFilesSearched();
 
 			std::list<std::string> download_list;
-			for (size_t i = 0; i < packet.files_size(); ++i)
+			for (int i = 0; i < packet.files_size(); ++i)
 			{
 				const auto& file_entry = packet.files(i);
 
@@ -142,7 +142,7 @@ void handle(Game& game, const packet::SServerInfo& packet)
 				bool request_file = true;
 				if (game->Server.FileSystem.HasFile(name))
 				{
-					auto& data = game->Server.FileSystem.GetFileData(name);
+					auto data = game->Server.FileSystem.GetFileData(name);
 					if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
 						request_file = false;
 				}
@@ -291,7 +291,7 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 		}
 
 		// Add props and attributes.
-		for (size_t i = 0; i < packet.attributes_size(); ++i)
+		for (int i = 0; i < packet.attributes_size(); ++i)
 		{
 			const auto& attribute = packet.attributes(i);
 			switch (attribute.value_case())
@@ -314,7 +314,7 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 			}
 		}
 
-		for (size_t i = 0; i < packet.properties_size(); ++i)
+		for (int i = 0; i < packet.properties_size(); ++i)
 		{
 			const auto& prop = packet.properties(i);
 			auto soprop = so->Properties.Get(prop.name());

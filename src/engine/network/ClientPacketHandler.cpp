@@ -71,7 +71,7 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 	// Send scene objects to the player.
 	// TODO: Use the actual starting position of the player.
 	auto scene = server->GetScene(server->GetPackage()->GetStartingScene());
-	auto sceneobjects = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, scene->GetTransmissionDistance());
+	auto sceneobjects = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, static_cast<float>(scene->GetTransmissionDistance()));
 	for (const auto& sceneobject : sceneobjects)
 	{
 		player->FollowedSceneObjects.insert(sceneobject->ID);
@@ -90,7 +90,7 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CScene
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectUnfollow& packet)
 {
-	for (size_t i = 0; i < packet.id_size(); ++i)
+	for (int i = 0; i < packet.id_size(); ++i)
 	{
 		const auto& id = packet.id(i);
 		player->FollowedSceneObjects.erase(id);
@@ -101,7 +101,7 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CScene
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CRequestFile& packet)
 {
-	for (size_t i = 0; i < packet.file_size(); ++i)
+	for (int i = 0; i < packet.file_size(); ++i)
 	{
 		filesystem::path file_path = packet.file(i);
 
@@ -137,7 +137,7 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendE
 		const auto& radius = packet.radius();
 
 		// Determine objects within the event and handle script.
-		auto& hits = scene->FindObjectsInRangeOf({ x, y }, radius);
+		auto hits = scene->FindObjectsInRangeOf({ x, y }, radius);
 		for (auto p : hits)
 		{
 			// Handle the event script.

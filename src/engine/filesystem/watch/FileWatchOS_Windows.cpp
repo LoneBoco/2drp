@@ -5,7 +5,10 @@
 #include <atomic>
 
 //#define _WIN32_WINNT 0x0550
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+
 
 #if defined(_MSC_VER)
 #pragma comment(lib, "comctl32.lib")
@@ -88,8 +91,8 @@ void CALLBACK WatchCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, 
 
 #			if defined(UNICODE)
 			{
-				lstrcpynW(szFile, pNotify->FileName,
-					min(MAX_PATH, pNotify->FileNameLength / sizeof(WCHAR) + 1)
+				(void)lstrcpynW(szFile, pNotify->FileName,
+					std::min(static_cast<DWORD>(MAX_PATH), pNotify->FileNameLength / sizeof(WCHAR) + 1)
 				);
 			}
 #			else

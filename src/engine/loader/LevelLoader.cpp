@@ -38,7 +38,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 		// Packet transmission.
 		auto n_transmission = infodoc.child("transmission");
 		if (n_transmission)
-			scene->m_transmission_distance = n_transmission.attribute("distance").as_float(2000);
+			scene->m_transmission_distance = n_transmission.attribute("distance").as_uint(2000);
 	}
 
 	// Load our chunks.

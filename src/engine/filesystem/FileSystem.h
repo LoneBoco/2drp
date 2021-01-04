@@ -4,12 +4,12 @@
 #include <mutex>
 #include <condition_variable>
 
-#include <ZipFile.h>
-
 #include "engine/common.h"
 #include "engine/filesystem/common.h"
 
 #include "engine/filesystem/watch/FileWatch.h"
+
+#include <ZipFile.h>
 
 namespace tdrp::fs
 {

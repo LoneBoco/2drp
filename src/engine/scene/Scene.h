@@ -50,7 +50,7 @@ public:
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRectangle(const Recti& rectangle);
 
-	const float GetTransmissionDistance() const;
+	const uint32_t GetTransmissionDistance() const;
 
 	std::atomic_bool IsLoading;
 
@@ -65,7 +65,7 @@ inline const std::string& Scene::GetName() const
 	return m_name;
 }
 
-inline const float Scene::GetTransmissionDistance() const
+inline const uint32_t Scene::GetTransmissionDistance() const
 {
 	return m_transmission_distance;
 }

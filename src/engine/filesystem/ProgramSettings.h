@@ -54,6 +54,7 @@ T ProgramSettings::GetAs(const std::string& setting, const T def) const
 }
 
 template <>
+inline
 bool ProgramSettings::GetAs<bool>(const std::string& setting, const bool def) const
 {
 	std::string lower{ setting };
