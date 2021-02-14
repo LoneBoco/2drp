@@ -4,10 +4,15 @@
 
 #include <atomic>
 
-//#define _WIN32_WINNT 0x0550
-#define NOMINMAX
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
-#include <windows.h>
+#endif
+
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+
+#include <Windows.h>
 
 
 #if defined(_MSC_VER)
