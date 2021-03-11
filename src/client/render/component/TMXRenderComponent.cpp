@@ -250,15 +250,25 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		const auto tilesize = m_tmx->getTileSize();
 		const auto& tilesets = m_tmx->getTilesets();
-		Vector2di pixel_size{ chunk.size.x * static_cast<int>(tilesize.x), chunk.size.y * static_cast<int>(tilesize.y) };
+		Vector2di size_in_pixels{ chunk.size.x * static_cast<int>(tilesize.x), chunk.size.y * static_cast<int>(tilesize.y) };
+
+		// Check if this chunk pushes our bounds out.
+		if (chunk.position.x < so->Bounds.pos.x)
+			so->Bounds.pos.x = chunk.position.x;
+		if (chunk.position.y < so->Bounds.pos.y)
+			so->Bounds.pos.y = chunk.position.y;
+		if (chunk.position.x + size_in_pixels.x > so->Bounds.pos.x + so->Bounds.size.x)
+			so->Bounds.size.x = chunk.position.x + size_in_pixels.x - so->Bounds.pos.x;
+		if (chunk.position.y + size_in_pixels.y > so->Bounds.pos.y + so->Bounds.size.y)
+			so->Bounds.size.y = chunk.position.y + size_in_pixels.y - so->Bounds.pos.y;
 
 		// Set our render state.
 		sf::RenderStates state;
 
 		// Create our texture.
 		auto texture = std::make_shared<sf::RenderTexture>();
-		texture->create(pixel_size.x, pixel_size.y);
-		texture->clear();
+		texture->create(size_in_pixels.x, size_in_pixels.y);
+		texture->clear(sf::Color::Transparent);
 
 		for (const auto& tileset : tilesets)
 		{
@@ -278,6 +288,10 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 					quad[1].texCoords = { 0.0f, 0.0f };
 					quad[2].texCoords = { 0.0f, 0.0f };
 					quad[3].texCoords = { 0.0f, 0.0f };
+					quad[0].color = sf::Color::Transparent;
+					quad[1].color = sf::Color::Transparent;
+					quad[2].color = sf::Color::Transparent;
+					quad[3].color = sf::Color::Transparent;
 					continue;
 				}
 
@@ -294,6 +308,12 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 				quad[1].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv) };
 				quad[2].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv + sizey) };
 				quad[3].texCoords = { static_cast<float>(tu), static_cast<float>(tv + sizey) };
+
+				// Set color.
+				quad[0].color = sf::Color::White;
+				quad[1].color = sf::Color::White;
+				quad[2].color = sf::Color::White;
+				quad[3].color = sf::Color::White;
 			}
 
 			// Now render this tileset to our final texture.
@@ -306,6 +326,7 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 					if (auto t = m_textures[id].lock())
 					{
 						state.texture = t.get();
+						state.blendMode = sf::BlendNone;
 						texture->draw(m_chunk_vertices, state);
 					}
 				}
