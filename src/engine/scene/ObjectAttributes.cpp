@@ -481,7 +481,7 @@ std::shared_ptr<const Attribute> ObjectAttributes::Get(const uint16_t id) const
 
 void ObjectAttributes::assignId(const uint16_t id, Attribute& prop)
 {
-	if (id != -1)
+	if (id != 0xFFFF)
 		prop.SetId(id);
 	else
 	{

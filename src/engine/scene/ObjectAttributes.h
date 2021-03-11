@@ -19,6 +19,8 @@ enum class AttributeType
 	COUNT
 };
 
+constexpr uint16_t INVALID_ATTRIBUTE = 0xFFFF;
+
 class Attribute
 {
 public:
@@ -91,7 +93,7 @@ public:
 	class IteratorDirty
 	{
 	public:
-		using iterator_category = std::bidirectional_iterator_tag;
+		using iterator_category = std::forward_iterator_tag;
 		using value_type = Attribute;
 		using difference_type = int;
 		using pointer = Attribute * ;
@@ -114,44 +116,31 @@ public:
 
 		IteratorDirty operator++()
 		{
-			IteratorDirty i = *this;
+			IteratorDirty i{ *this };
+			if (m_iter == m_end)
+				return i;
+
+			++m_iter;
 			while (m_iter != m_end)
 			{
-				++m_iter;
-				if (m_iter == m_end || m_iter->second->GetIsDirty())
-					break;
-			}
-			return i;
-		}
-		IteratorDirty operator--()
-		{
-			IteratorDirty i = *this;
-			while (m_iter != m_begin)
-			{
-				--m_iter;
 				if (m_iter->second->GetIsDirty())
 					break;
+				++m_iter;
 			}
 			return i;
 		}
 
 		IteratorDirty operator++(int)
 		{
+			if (m_iter == m_end)
+				return *this;
+
+			++m_iter;
 			while (m_iter != m_end)
 			{
-				++m_iter;
-				if (m_iter == m_end || m_iter->second->GetIsDirty())
-					break;
-			}
-			return *this;
-		}
-		IteratorDirty operator--(int)
-		{
-			while (m_iter != m_begin)
-			{
-				--m_iter;
 				if (m_iter->second->GetIsDirty())
 					break;
+				++m_iter;
 			}
 			return *this;
 		}
@@ -176,13 +165,13 @@ public:
 	//! \param value The value of the attribute.
 	//! \param id The id number of the attribute.
 	//! \return New attribute, or nullptr on failure.
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, int64_t value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, uint64_t value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, float value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, double value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const std::string& value, uint16_t id = -1);
-	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const AttributeType type, const std::string& value, uint16_t id = -1);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, int64_t value, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, uint64_t value, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, float value, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, double value, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const std::string& value, uint16_t id = INVALID_ATTRIBUTE);
+	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const AttributeType type, const std::string& value, uint16_t id = INVALID_ATTRIBUTE);
 
 	//! Returns an attribute.
 	//! \param name The name of the attribute to get.
@@ -241,12 +230,12 @@ public:
 	class Dirty
 	{
 	public:
-		Dirty(ObjectAttributes& attributes) { m_attributes = std::shared_ptr<ObjectAttributes>(&attributes); }
+		Dirty(ObjectAttributes& attributes) { m_attributes = &attributes; }
 		IteratorDirty begin() { return m_attributes->GetDirtyBegin(); }
 		IteratorDirty end() { return m_attributes->GetDirtyEnd(); }
 
 	protected:
-		std::shared_ptr<ObjectAttributes> m_attributes;
+		ObjectAttributes* m_attributes;
 	};
 };
 

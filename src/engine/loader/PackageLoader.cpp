@@ -119,7 +119,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 					std::string attrname = node_attribute.attribute("name").as_string();
 					std::string attrtype = node_attribute.attribute("type").as_string();
 					std::string attrvalue = node_attribute.attribute("value").as_string();
-					pc->Attributes.AddAttribute(name, Attribute::TypeFromString(attrtype), attrvalue);
+					pc->Attributes.AddAttribute(attrname, Attribute::TypeFromString(attrtype), attrvalue);
 				}
 
 				server.m_object_classes.insert(std::make_pair(classname, pc));
