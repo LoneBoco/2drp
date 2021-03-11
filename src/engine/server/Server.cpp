@@ -71,6 +71,10 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	auto[load_success, package] = loader::PackageLoader::LoadIntoServer(*this, package_name);
 	m_package = package;
 
+	// Sanity check for starting scene.
+	if (package->GetStartingScene().empty())
+		throw std::runtime_error("!! No starting scene for package!");
+
 	// Load everything from the package into the server.
 	if (HASFLAG(m_server_flags, ServerFlags::PRELOAD_EVERYTHING))
 	{

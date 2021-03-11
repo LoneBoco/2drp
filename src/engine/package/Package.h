@@ -65,7 +65,7 @@ public:
 	//! Gets the base path for this package.
 	const filesystem::path GetBasePath() const
 	{
-		return filesystem::path("packages") / m_name;
+		return m_basepath;
 	}
 
 private:
@@ -75,6 +75,7 @@ private:
 	std::string m_description;
 	std::string m_starting_scene;
 	std::string m_loading_scene;
+	filesystem::path m_basepath;
 };
 
 } // end namespace tdrp::package

@@ -17,12 +17,22 @@
 
 int main(int argc, char* argv[])
 {
-	// Configure our various managers.
-	ConfigureBabyDI();
-
-	// Inject command line arguments into the settings.
+	// Load all settings first.
+	PROVIDE(tdrp::settings::ProgramSettings, new tdrp::settings::ProgramSettings());
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
+	settings->LoadFromFile("settings.ini");
 	settings->LoadFromCommandLine(argc, argv);
+
+	// Configure our various managers.
+	try
+	{
+		ConfigureBabyDI();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << std::endl;
+		return 1;
+	}
 
 	// Initialize the Game.
 	auto game = BabyDI::Get<tdrp::Game>();

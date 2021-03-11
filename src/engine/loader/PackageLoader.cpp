@@ -19,7 +19,10 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 	server.FileSystem.Bind(root_dir, "levels");
 	server.FileSystem.WaitUntilFilesSearched();
 
+	// Create the package and save the directory it is under.
 	auto package = std::make_shared<package::Package>(name);
+	package->m_basepath = root_dir;
+
 	std::string object_class_file{ "classes.xml" };
 	std::string tileset_file{ "tilesets.xml" };
 	std::string client_script_file{ "client.js" };

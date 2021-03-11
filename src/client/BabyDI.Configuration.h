@@ -10,10 +10,7 @@
 
 static void ConfigureBabyDI()
 {
-	PROVIDE(tdrp::settings::ProgramSettings, new tdrp::settings::ProgramSettings());
-	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
-	settings->LoadFromFile("settings.ini");
-
+	// PROVIDE(tdrp::settings::ProgramSettings, new tdrp::settings::ProgramSettings());
 	PROVIDE(tdrp::Game, new tdrp::Game());
 	PROVIDE(tdrp::ResourceManager, new tdrp::ResourceManager());
 	PROVIDE(tdrp::DownloadManager, new tdrp::DownloadManager());

@@ -63,6 +63,7 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 	namespace po = boost::program_options;
 	po::options_description desc;
 	desc.add_options()
+		("package", po::value<std::string>()->implicit_value("login"), "game package")
 		("host", po::value<uint16_t>()->implicit_value(13131), "host on port")
 		("connect", po::value<std::vector<std::string>>()->multitoken(), "connect to server on port")
 		;
@@ -70,6 +71,11 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 	po::variables_map vm;
 	po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), vm);
 	po::notify(vm);
+
+	if (vm.count("package"))
+	{
+		Set("game.package", vm["package"].as<std::string>());
+	}
 
 	if (vm.count("host"))
 	{

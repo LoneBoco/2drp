@@ -27,7 +27,10 @@ Game::Game()
 	using namespace std::placeholders;
 	Server.SetClientNetworkReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 
-	if (!Server.Initialize("login", server::ServerType::AUTHORITATIVE, FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
+	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
+	std::string package{ settings->Get("game.package", "login") };
+
+	if (!Server.Initialize(package, server::ServerType::AUTHORITATIVE, FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
 		throw std::runtime_error("Unable to start the server.");
 }
 
