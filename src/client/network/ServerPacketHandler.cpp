@@ -266,6 +266,8 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 	auto class_ = game.Server.GetObjectClass(pclass);
 	auto type = static_cast<SceneObjectType>(ptype);
 
+	std::cout << ":: Adding scene object " << pid << std::endl;
+
 	std::shared_ptr<SceneObject> so;
 
 	if (game.Server.IsHost())

@@ -127,6 +127,16 @@ SceneObject::~SceneObject()
 	*/
 }
 
+SceneObject& SceneObject::operator=(const SceneObject& other)
+{
+	Name = other.Name + std::to_string(reinterpret_cast<short>(this));
+	Attributes = other.Attributes;
+	Properties = other.Properties;
+	Visible = other.Visible;
+	RenderVisible = other.RenderVisible;
+	return *this;
+}
+
 Vector2df SceneObject::GetPosition() const
 {
 	return Vector2df{
@@ -285,6 +295,11 @@ void SceneObject::SetImage(const std::string& image)
 	Properties[Property::IMAGE] = image;
 }
 
+Rectf SceneObject::GetBounds() const
+{
+	return Rectf();
+}
+
 void SceneObject::Update()
 {
 	/*
@@ -377,5 +392,31 @@ void SceneObject::update_physics()
 		(*PhysicsUpdateCallback)(this);
 }
 */
+
+Rectf StaticSceneObject::GetBounds() const
+{
+	// TODO: Image dimensions somehow.
+	return Rectf(GetPosition(), Vector2df());
+}
+
+TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
+{
+	Name = other.Name + std::to_string(reinterpret_cast<uint16_t>(this));
+	Attributes = other.Attributes;
+	Properties = other.Properties;
+	Visible = other.Visible;
+	RenderVisible = other.RenderVisible;
+	TmxMap = other.TmxMap;
+	Layer = other.Layer;
+	return *this;
+}
+
+Rectf TMXSceneObject::GetBounds() const
+{
+	if (TmxMap == nullptr)
+		return Rectf(GetPosition(), Vector2df());
+
+	return Rectf(GetPosition() + Bounds.pos, Bounds.size);
+}
 
 } // end namespace tdrp

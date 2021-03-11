@@ -179,10 +179,12 @@ public:
 	//! Destructor.
 	virtual ~SceneObject();
 
+	//! Copy assignment.
+	SceneObject& operator=(const SceneObject& other);
+
 	SceneObject() = delete;
 	SceneObject(const SceneObject& other) = delete;
 	SceneObject(SceneObject&& other) = delete;
-	SceneObject& operator=(const SceneObject& other) = delete;
 	SceneObject& operator=(SceneObject&& other) = delete;
 
 	//! Gets the class of the object.
@@ -240,6 +242,9 @@ public:
 
 	//! Sets the image of the scene node.
 	virtual void SetImage(const std::string& image);
+
+	//! Gets the scene object's bounds.
+	virtual Rectf GetBounds() const;
 
 /*
 	//! Sets the callback function used when update() is called.
@@ -324,6 +329,9 @@ public:
 	{
 		return SceneObjectType::STATIC;
 	}
+
+	//! Gets the scene object's bounds.
+	virtual Rectf GetBounds() const override;
 };
 
 class AnimatedSceneObject : public SceneObject
@@ -367,6 +375,14 @@ public:
 		return SceneObjectType::TILEMAP;
 	}
 
+	//! Gets the scene object's bounds.
+	virtual Rectf GetBounds() const override
+	{
+		if (Tileset == nullptr)
+			return Rectf();
+		return Rectf(GetPosition(), Vector2df(Dimension.x, Dimension.y) * Vector2df(Tileset->TileDimensions.x, Tileset->TileDimensions.y));
+	}
+
 	Vector2di Dimension;
 	std::vector<char> TileData;
 	std::shared_ptr<scene::Tileset> Tileset;
@@ -386,14 +402,21 @@ public:
 	{
 	}
 
+	//! Copy assignment.
+	TMXSceneObject& operator=(const TMXSceneObject& other);
+
 	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::TMX;
 	}
 
+	//! Gets the scene object's bounds.
+	virtual Rectf GetBounds() const override;
+
 	std::shared_ptr<tmx::Map> TmxMap;
 	uint8_t Layer = 0;
+	Rectf Bounds;
 };
 
 } // end namespace tdrp

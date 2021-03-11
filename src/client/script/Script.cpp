@@ -126,10 +126,24 @@ void bind_game(sol::state& lua)
         , { "Pause", sf::Keyboard::Pause }
     });
 
-    auto game = lua["Game"].get_or_create<sol::table>();
-    game.set_function("keydown", &keydown);
-    game.set_function("keyup", &keyup);
-    game.set_function("log", &log);
+    lua.new_usertype<Game>("Game", sol::no_constructor,
+        "log", &log,
+        "keydown", &keydown,
+        "keyup", &keyup,
+
+        "Camera", sol::readonly(&Game::Camera),
+
+        "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame)
+    );
+
+    lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,
+        "Position", sol::property(&camera::Camera::GetPosition, &camera::Camera::LookAt),
+        // "LerpTo", &camera_lerp_to,
+        "Size", sol::property(&camera::Camera::GetSize, &camera::Camera::SetSize),
+        "SizeToWindow", &camera::Camera::SizeToWindow,
+        "ViewRect", sol::readonly_property(&camera::Camera::GetViewRect),
+        "IsSizedToWindow", &camera::Camera::IsSizedToWindow
+    );
 }
 
 ///////////////////////////////////////////////////////////////////////////////

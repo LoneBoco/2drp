@@ -28,6 +28,8 @@ enum class GameState
 
 class Game
 {
+	SCRIPT_FUNCTION(OnClientFrame);
+
 public:
 	Game();
 	~Game();

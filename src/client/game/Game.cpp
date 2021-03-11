@@ -9,6 +9,7 @@
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
 
+#include "engine/filesystem/File.h"
 #include "engine/filesystem/ProgramSettings.h"
 #include "engine/loader/LevelLoader.h"
 #include "engine/loader/PackageLoader.h"
@@ -81,11 +82,23 @@ void Game::Update()
 
 			// Send the finished loading packet.
 			Server.Send(0, network::PACKETID(network::ClientPackets::READY), network::Channel::RELIABLE);
+
+			// Bind our client script.
+			{
+				std::cout << ":: Loading client script." << std::endl;
+				auto file = Server.FileSystem.GetFile("client.lua");
+				if (file)
+				{
+					auto script = file->ReadAsString();
+					Script.RunScript("client", script, *this);
+				}
+			}
 		}
 	}
 	else if (State == GameState::PLAYING)
 	{
-		// TODO: Run the client frame tick script.
+		// Run the client frame tick script.
+		OnClientFrame.RunAll(*this, std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()).count());
 	}
 
 	Camera.Update(GetTick());
