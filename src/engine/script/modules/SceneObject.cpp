@@ -11,7 +11,8 @@ void bind_sceneobject(sol::state& lua)
 		"DEFAULT", SceneObjectType::DEFAULT,
 		"STATIC", SceneObjectType::STATIC,
 		"ANIMATED", SceneObjectType::ANIMATED,
-		"TILED", SceneObjectType::TILED
+		"TILEMAP", SceneObjectType::TILEMAP,
+		"TMX", SceneObjectType::TMX
 	);
 
 	lua.new_usertype<SceneObject>("SceneObject", sol::no_constructor,

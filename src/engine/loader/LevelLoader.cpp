@@ -73,8 +73,10 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						sotype = SceneObjectType::STATIC;
 					else if (boost::iequals(type, "animated"))
 						sotype = SceneObjectType::ANIMATED;
-					else if (boost::iequals(type, "tiled"))
-						sotype = SceneObjectType::TILED;
+					else if (boost::iequals(type, "tiled") || boost::iequals(type, "tilemap"))
+						sotype = SceneObjectType::TILEMAP;
+					else if (boost::iequals(type, "tmx"))
+						sotype = SceneObjectType::TMX;
 
 					// Create our scene object.
 					std::shared_ptr<SceneObject> so = nullptr;
@@ -82,7 +84,8 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 					{
 						case SceneObjectType::STATIC: so = std::make_shared<StaticSceneObject>(c, id); break;
 						case SceneObjectType::ANIMATED: so = std::make_shared<AnimatedSceneObject>(c, id); break;
-						case SceneObjectType::TILED: so = std::make_shared<TiledSceneObject>(c, id); break;
+						case SceneObjectType::TILEMAP: so = std::make_shared<TiledSceneObject>(c, id); break;
+						case SceneObjectType::TMX: so = std::make_shared<TMXSceneObject>(c, id); break;
 						default: so = std::make_shared<SceneObject>(c, id); break;
 					}
 
@@ -104,11 +107,10 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						(void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
 					}
 
-					// Load custom features.
-					if (sotype == SceneObjectType::TILED)
+					// Load tilemap features.
+					if (sotype == SceneObjectType::TILEMAP)
 					{
-						auto sop = so.get();
-						TiledSceneObject* tiled_so = dynamic_cast<TiledSceneObject*>(sop);
+						auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so);
 						const auto& tileset = object.child("tileset");
 						const auto& tiledata = object.child("tiledata");
 
@@ -168,6 +170,26 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 									}
 								}
 							}
+						}
+					}
+
+					// Load tmx features.
+					if (sotype == SceneObjectType::TMX)
+					{
+						auto tmx_so = std::dynamic_pointer_cast<TMXSceneObject>(so);
+						const auto& tmx = object.child("tmx");
+
+						// TODO: Throw error.
+						if (tmx.empty())
+							continue;
+
+						// Map
+						{
+							std::string file = tmx.attribute("file").as_string();
+
+							// TODO: Log error if failed.
+							tmx_so->TmxMap = std::make_shared<tmx::Map>();
+							tmx_so->TmxMap->load((level / file).string());
 						}
 					}
 

@@ -4,6 +4,7 @@
 #include <set>
 
 //#include <Box2D/Box2D.h>
+#include <tmxlite/Map.hpp>
 
 #include "engine/common.h"
 
@@ -26,7 +27,8 @@ enum class SceneObjectType
 	DEFAULT = 0,
 	STATIC,
 	ANIMATED,
-	TILED,
+	TILEMAP,
+	TMX,
 
 	COUNT
 };
@@ -362,12 +364,36 @@ public:
 	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const override
 	{
-		return SceneObjectType::TILED;
+		return SceneObjectType::TILEMAP;
 	}
 
 	Vector2di Dimension;
 	std::vector<char> TileData;
 	std::shared_ptr<scene::Tileset> Tileset;
+};
+
+class TMXSceneObject : public SceneObject
+{
+public:
+	//! Constructor.
+	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
+		: SceneObject(c, id)
+	{
+	}
+
+	//! Destructor.
+	virtual ~TMXSceneObject()
+	{
+	}
+
+	//! Returns the scene object type.
+	virtual SceneObjectType GetType() const override
+	{
+		return SceneObjectType::TMX;
+	}
+
+	std::shared_ptr<tmx::Map> TmxMap;
+	uint8_t Layer = 0;
 };
 
 } // end namespace tdrp

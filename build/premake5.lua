@@ -91,9 +91,10 @@ project "2drp"
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
 		"../dependencies/ziplib/Source/ZipLib/",
+		"../dependencies/tmxlite/tmxlite/include/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus" }
+	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite" }
 
 	-- Libraries.
 	links {
@@ -106,6 +107,7 @@ project "2drp"
 		"protobuf",
 		"lua51",
 		"ziplib",
+		"tmxlite",
 	}
 
 	defines { "SFML_STATIC", "NOMINMAX" }
@@ -619,3 +621,16 @@ project "SpriterPlusPlus"
 	dependson { "pugixml", "SFML" }
 	filter "toolset:msc*"
 		disablewarnings { "26812" }
+
+project "tmxlite"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	includedirs {
+		"../dependencies/tmxlite/tmxlite/include"
+	}
+	files {
+		"../dependencies/tmxlite/tmxlite/include/**",
+		"../dependencies/tmxlite/tmxlite/src/**"
+	}
+	defines { "TMXLITE_STATIC" }

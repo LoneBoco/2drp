@@ -5,6 +5,7 @@
 #include "client/game/Game.h"
 #include "client/render/component/RenderComponent.h"
 #include "client/render/component/TileMapRenderComponent.h"
+#include "client/render/component/TMXRenderComponent.h"
 #include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
@@ -282,8 +283,11 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 			case SceneObjectType::ANIMATED:
 				so = std::make_shared<AnimatedSceneObject>(class_, pid);
 				break;
-			case SceneObjectType::TILED:
+			case SceneObjectType::TILEMAP:
 				so = std::make_shared<TiledSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::TMX:
+				so = std::make_shared<TMXSceneObject>(class_, pid);
 				break;
 			default:
 				so = std::make_shared<SceneObject>(class_, pid);
@@ -357,8 +361,11 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 			case SceneObjectType::STATIC:
 				so->AddComponent<render::component::RenderComponent>();
 				break;
-			case SceneObjectType::TILED:
+			case SceneObjectType::TILEMAP:
 				so->AddComponent<render::component::TileMapRenderComponent>();
+				break;
+			case SceneObjectType::TMX:
+				so->AddComponent<render::component::TMXRenderComponent>();
 				break;
 			case SceneObjectType::ANIMATED:
 				throw "Animated not implemented";

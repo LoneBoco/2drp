@@ -384,11 +384,14 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 		case SceneObjectType::STATIC:
 			so = std::make_shared<tdrp::StaticSceneObject>(oc, id);
 			break;
-		case SceneObjectType::TILED:
-			so = std::make_shared<tdrp::TiledSceneObject>(oc, id);
-			break;
 		case SceneObjectType::ANIMATED:
 			so = std::make_shared<tdrp::AnimatedSceneObject>(oc, id);
+			break;
+		case SceneObjectType::TILEMAP:
+			so = std::make_shared<tdrp::TiledSceneObject>(oc, id);
+			break;
+		case SceneObjectType::TMX:
+			so = std::make_shared<tdrp::TMXSceneObject>(oc, id);
 			break;
 	}
 
