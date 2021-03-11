@@ -13,19 +13,19 @@
 namespace tdrp::render::component
 {
 
-class TiledRenderComponent : public IRenderableComponent, public Component
+class TileMapRenderComponent : public IRenderableComponent, public Component
 {
-	COMPONENT_ENABLE(TiledRenderComponent)
+	COMPONENT_ENABLE(TileMapRenderComponent)
 
 public:
-	TiledRenderComponent() = default;
-	~TiledRenderComponent() = default;
+	TileMapRenderComponent() = default;
+	~TileMapRenderComponent() = default;
 
-	TiledRenderComponent(const TiledRenderComponent& other) = delete;
-	TiledRenderComponent(TiledRenderComponent&& other) = delete;
-	TiledRenderComponent& operator=(const TiledRenderComponent& other) = delete;
-	TiledRenderComponent& operator=(TiledRenderComponent&& other) = delete;
-	bool operator==(const TiledRenderComponent& other) = delete;
+	TileMapRenderComponent(const TileMapRenderComponent& other) = delete;
+	TileMapRenderComponent(TileMapRenderComponent&& other) = delete;
+	TileMapRenderComponent& operator=(const TileMapRenderComponent& other) = delete;
+	TileMapRenderComponent& operator=(TileMapRenderComponent&& other) = delete;
+	bool operator==(const TileMapRenderComponent& other) = delete;
 
 public:
 	virtual void Initialize(ComponentEntity& owner) override;
@@ -40,8 +40,10 @@ protected:
 	std::weak_ptr<SceneObject> m_owner;
 	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
 	std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
-	sf::VertexArray m_vertices;
-	sf::Shader m_shader;
+	std::vector<std::shared_ptr<sf::RenderTexture>> m_render_textures;
+	std::vector<sf::Sprite> m_sprites;
+	//sf::VertexArray m_vertices;
+	//sf::Shader m_shader;
 };
 
 } // end namespace tdrp::render::component

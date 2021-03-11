@@ -4,7 +4,7 @@
 
 #include "client/game/Game.h"
 #include "client/render/component/RenderComponent.h"
-#include "client/render/component/TiledRenderComponent.h"
+#include "client/render/component/TileMapRenderComponent.h"
 #include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
@@ -358,7 +358,7 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 				so->AddComponent<render::component::RenderComponent>();
 				break;
 			case SceneObjectType::TILED:
-				so->AddComponent<render::component::TiledRenderComponent>();
+				so->AddComponent<render::component::TileMapRenderComponent>();
 				break;
 			case SceneObjectType::ANIMATED:
 				throw "Animated not implemented";

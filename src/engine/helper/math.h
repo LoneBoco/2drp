@@ -19,6 +19,32 @@ typedef mathfu::Rect<int32_t> Recti;
 namespace tdrp::math
 {
 
+inline uint32_t next_power_of_two(uint32_t value)
+{
+	if (value == 0) return 2;
+
+	--value;
+	value |= value >> 1;
+	value |= value >> 2;
+	value |= value >> 4;
+	value |= value >> 8;
+	value |= value >> 16;
+	return ++value;
+}
+
+inline int32_t next_power_of_two(int32_t value)
+{
+	if (value == 0) return 2;
+
+	--value;
+	value |= value >> 1;
+	value |= value >> 2;
+	value |= value >> 4;
+	value |= value >> 8;
+	value |= value >> 16;
+	return ++value;
+}
+
 template <typename T>
 inline bool contains(const mathfu::Rect<T>& check, const mathfu::Rect<T>& against)
 {

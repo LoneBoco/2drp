@@ -1,38 +1,15 @@
 #include "client/game/Game.h"
-#include "client/render/component/TiledRenderComponent.h"
+#include "client/render/component/TileMapRenderComponent.h"
 #include "client/render/resource/SFMListream.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/scene/SceneObject.h"
 
 
-const char tilemapVS[] =
-"#version 330 core\n"
-
-"precision mediump float;\n"
-
-"in vec2 position;\n"
-"in vec2 texture;\n"
-
-"out vec2 pixelCoord;\n"
-"out vec2 texCoord;\n"
-
-"uniform vec2 viewOffset;\n"
-"uniform vec2 viewportSize;\n"
-"uniform vec2 inverseTileTextureSize;\n"
-"uniform vec2 inverseTileSize;\n"
-
-"void main(void) {\n"
-"	pixelCoord = (texture * viewportSize) + viewOffset;\n"
-"	texCoord = pixelCoord * inverseTileTextureSize * inverseTileSize;\n"
-"	gl_Position = vec4(position, 0.0, 0.1);\n"
-"}"
-;
-
 namespace tdrp::render::component
 {
 
-void TiledRenderComponent::Initialize(ComponentEntity& owner)
+void TileMapRenderComponent::Initialize(ComponentEntity& owner)
 {
 	if (auto p_so = dynamic_cast<SceneObject*>(&owner))
 	{
@@ -42,7 +19,7 @@ void TiledRenderComponent::Initialize(ComponentEntity& owner)
 	}
 }
 
-void TiledRenderComponent::OnAttached(ComponentEntity& owner)
+void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 {
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
@@ -51,7 +28,7 @@ void TiledRenderComponent::OnAttached(ComponentEntity& owner)
 
 	if (auto so = m_owner.lock())
 	{
-		auto tiled_so = dynamic_cast<TiledSceneObject*>(so.get());
+		auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so);
 		if (!tiled_so)
 			return;
 
@@ -68,10 +45,6 @@ void TiledRenderComponent::OnAttached(ComponentEntity& owner)
 				if (file && file->Opened())
 				{
 					auto texture = std::make_shared<sf::Texture>();
-					if (so->GetType() == SceneObjectType::TILED)
-					{
-						texture->setRepeated(true);
-					}
 
 					tdrp::render::SFMListream stream(*file);
 					texture->loadFromStream(stream);
@@ -89,18 +62,19 @@ void TiledRenderComponent::OnAttached(ComponentEntity& owner)
 			}
 		}
 
+		sf::VertexArray vertices;
+		auto tileset = m_textures.begin()->second.lock();
+		if (tileset == nullptr)
+			return;
+
 		// Create vertex array.
 		{
 			auto tile_size = tiled_so->Tileset->TileDimensions;
 			auto tile_count = tiled_so->Dimension;
-			auto texture = m_textures.begin()->second.lock();
-			if (texture == nullptr)
-				return;
 
-			m_vertices.setPrimitiveType(sf::Quads);
-			m_vertices.resize(tile_count.x * tile_count.y * 4);
+			vertices.setPrimitiveType(sf::Quads);
+			vertices.resize(tile_count.x * tile_count.y * 4);
 
-			auto texture_size = texture->getSize();
 			for (size_t i = 0; i < tiled_so->TileData.size(); i += 2)
 			{
 				auto tile_number = i / 2;
@@ -109,7 +83,7 @@ void TiledRenderComponent::OnAttached(ComponentEntity& owner)
 				auto tu = tiled_so->TileData[i];
 				auto tv = tiled_so->TileData[i + 1];
 
-				auto* quad = &m_vertices[tile_number * 4];
+				auto* quad = &vertices[tile_number * 4];
 				quad[0].position = { static_cast<float>(x * tile_size.x), static_cast<float>(y * tile_size.y) };
 				quad[1].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>(y * tile_size.y) };
 				quad[2].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
@@ -121,23 +95,58 @@ void TiledRenderComponent::OnAttached(ComponentEntity& owner)
 				quad[3].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
 			}
 		}
+
+		// Render the sprites.
+		{
+			int sprite_pixels_x = tiled_so->Dimension.x * tiled_so->Tileset->TileDimensions.x;
+			int sprite_pixels_y = tiled_so->Dimension.y * tiled_so->Tileset->TileDimensions.y;
+			int sprite_count_x = 1 + sprite_pixels_x / sf::Texture::getMaximumSize();
+			int sprite_count_y = 1 + sprite_pixels_y / sf::Texture::getMaximumSize();
+			int sprites = sprite_count_x * sprite_count_y;
+
+			for (auto i = 0; i < sprites; ++i)
+			{
+				int x = i % sprite_count_x;
+				int y = i / sprite_count_x;
+				int width = std::min(sf::Texture::getMaximumSize(), sprite_pixels_x - (sf::Texture::getMaximumSize() * x));
+				int height = std::min(sf::Texture::getMaximumSize(), sprite_pixels_y - (sf::Texture::getMaximumSize() * y));
+				width = tdrp::math::next_power_of_two(width);
+				height = tdrp::math::next_power_of_two(height);
+
+				sf::RenderStates state;
+				state.transform.translate({ static_cast<float>(-x * sf::Texture::getMaximumSize()), static_cast<float>(-y * sf::Texture::getMaximumSize()) });
+				state.texture = tileset.get();
+
+				auto texture = std::make_shared<sf::RenderTexture>();
+				texture->create(width, height);
+				texture->clear();
+				texture->draw(vertices, state);
+				texture->display();
+
+				sf::Sprite sprite{ texture->getTexture() };
+				sprite.setPosition({ static_cast<float>(x * sf::Texture::getMaximumSize()), static_cast<float>(y * sf::Texture::getMaximumSize()) });
+				m_sprites.push_back(std::move(sprite));
+
+				m_render_textures.push_back(texture);
+			}
+		}
 	}
 }
 
-void TiledRenderComponent::OnDetached(ComponentEntity& owner)
+void TileMapRenderComponent::OnDetached(ComponentEntity& owner)
 {
 
 }
 
 /////////////////////////////
 
-Rectf TiledRenderComponent::GetBoundingBox() const
+Rectf TileMapRenderComponent::GetBoundingBox() const
 {
 	if (auto so = m_owner.lock())
 	{
 		auto pos = so->GetPosition();
 
-		if (auto tiled_so = dynamic_cast<TiledSceneObject*>(so.get()))
+		if (auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so))
 		{
 			auto tile_size = tiled_so->Tileset->TileDimensions;
 			auto tile_count = tiled_so->Dimension;
@@ -147,11 +156,11 @@ Rectf TiledRenderComponent::GetBoundingBox() const
 		}
 		return Rectf{ pos.x, pos.y, 0.0f, 0.0f };
 	}
-	
+
 	return Rectf{};
 }
 
-void TiledRenderComponent::Render(sf::RenderTarget& window)
+void TileMapRenderComponent::Render(sf::RenderTarget& window)
 {
 	if (auto so = m_owner.lock())
 	{
@@ -168,13 +177,10 @@ void TiledRenderComponent::Render(sf::RenderTarget& window)
 			.rotate(rotate)
 			.scale({ scale.x, scale.y });
 
-		auto texture = m_textures.begin()->second.lock();
-		if (texture == nullptr)
-			return;
-
-		state.texture = texture.get();
-
-		window.draw(m_vertices, state);
+		for (auto& sprite : m_sprites)
+		{
+			window.draw(sprite);
+		}
 	}
 }
 
