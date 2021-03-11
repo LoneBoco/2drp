@@ -24,6 +24,17 @@ ObjectProperties::~ObjectProperties()
 {
 }
 
+ObjectProperties::ObjectProperties(ObjectProperties&& other) noexcept
+{
+	m_properties = std::move(other.m_properties);
+}
+
+ObjectProperties& ObjectProperties::operator=(ObjectProperties&& other) noexcept
+{
+	m_properties = std::move(other.m_properties);
+	return *this;
+}
+
 ObjectProperties& ObjectProperties::operator=(const ObjectProperties& other)
 {
 	clone(other);
@@ -32,14 +43,12 @@ ObjectProperties& ObjectProperties::operator=(const ObjectProperties& other)
 
 const Attribute& ObjectProperties::operator[](const Property prop) const
 {
-	auto a = Get(prop);
-	return *a;
+	return *Get(prop);
 }
 
 Attribute& ObjectProperties::operator[](const Property prop)
 {
-	auto a = Get(prop);
-	return *a;
+	return *Get(prop);
 }
 
 std::shared_ptr<const Attribute> ObjectProperties::Get(const Property prop) const

@@ -25,11 +25,11 @@ public:
 	Attribute(const AttributeType t = AttributeType::INVALID) : m_id(0), m_type(t), m_isDirty(false), m_value_float(0.0f), m_value_double(0.0) { m_value_int.s = 0; }
 	Attribute(const uint16_t i, const AttributeType t) : m_id(i), m_type(t), m_isDirty(false), m_value_float(0.0f), m_value_double(0.0) { m_value_int.s = 0; }
 	Attribute(const Attribute& a) : m_id(a.m_id), m_type(a.m_type), m_isDirty(false), m_value_int(a.m_value_int), m_value_float(a.m_value_float), m_value_double(a.m_value_double), m_value_string(a.m_value_string) {}
-	Attribute(Attribute&& o) noexcept : m_id(o.m_id), m_type(o.m_type), m_isDirty(false), m_value_int(o.m_value_int), m_value_float(o.m_value_float), m_value_double(o.m_value_double), m_value_string(std::move(o.m_value_string)) {}
+	Attribute(Attribute&& o) noexcept;
 	~Attribute() {}
 
-	Attribute& operator=(const Attribute& other) = delete;
-	Attribute& operator=(Attribute&& other) = delete;
+	Attribute& operator=(const Attribute& other);
+	Attribute& operator=(Attribute&& other) noexcept;
 
 	Attribute& Set(const int64_t value);
 	Attribute& Set(const uint64_t value);
@@ -118,7 +118,7 @@ public:
 			while (m_iter != m_end)
 			{
 				++m_iter;
-				if (m_iter->second->GetIsDirty())
+				if (m_iter == m_end || m_iter->second->GetIsDirty())
 					break;
 			}
 			return i;
@@ -140,7 +140,7 @@ public:
 			while (m_iter != m_end)
 			{
 				++m_iter;
-				if (m_iter->second->GetIsDirty())
+				if (m_iter == m_end || m_iter->second->GetIsDirty())
 					break;
 			}
 			return *this;
@@ -167,9 +167,9 @@ public:
 	~ObjectAttributes();
 
 	ObjectAttributes(const ObjectAttributes& other);
-	ObjectAttributes(ObjectAttributes&& other) = delete;
+	ObjectAttributes(ObjectAttributes&& other) noexcept;
 	ObjectAttributes& operator=(const ObjectAttributes& other);
-	ObjectAttributes& operator=(ObjectAttributes&& other) = delete;
+	ObjectAttributes& operator=(ObjectAttributes&& other) noexcept;
 
 	//! Adds an attribute or changes the type of an existing one.
 	//! \param name The name of the attribute.

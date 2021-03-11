@@ -36,8 +36,8 @@ public:
 	ObjectProperties(const ObjectProperties& other);
 	~ObjectProperties();
 
-	ObjectProperties(ObjectProperties&& other) = delete;
-	ObjectProperties& operator=(ObjectProperties&& other) = delete;
+	ObjectProperties(ObjectProperties&& other) noexcept;
+	ObjectProperties& operator=(ObjectProperties&& other) noexcept;
 
 	ObjectProperties& operator=(const ObjectProperties& other);
 	const Attribute& operator[](const Property prop) const;

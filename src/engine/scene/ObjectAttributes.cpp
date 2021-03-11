@@ -5,6 +5,48 @@
 namespace tdrp
 {
 
+Attribute::Attribute(Attribute&& o) noexcept
+	: m_id(o.m_id), m_type(o.m_type), m_isDirty(false), m_value_int(o.m_value_int), m_value_float(o.m_value_float), m_value_double(o.m_value_double), m_value_string(std::move(o.m_value_string))
+{
+	o.m_id = 0;
+	o.m_type = AttributeType::INVALID;
+	o.m_isDirty = false;
+	o.m_value_int.u = 0;
+	o.m_value_float = 0.0f;
+	o.m_value_double = 0.0;
+}
+
+Attribute& Attribute::operator=(const Attribute& other)
+{
+	m_id = other.m_id;
+	m_type = other.m_type;
+	m_isDirty = other.m_isDirty;
+	m_value_int.u = other.m_value_int.u;
+	m_value_float = other.m_value_float;
+	m_value_double = other.m_value_double;
+	m_value_string = other.m_value_string;
+	return *this;
+}
+
+Attribute& Attribute::operator=(Attribute&& other) noexcept
+{
+	m_id = other.m_id;
+	m_type = other.m_type;
+	m_isDirty = other.m_isDirty;
+	m_value_int.u = other.m_value_int.u;
+	m_value_float = other.m_value_float;
+	m_value_double = other.m_value_double;
+	m_value_string = std::move(other.m_value_string);
+
+	other.m_id = 0;
+	other.m_type = AttributeType::INVALID;
+	other.m_isDirty = false;
+	other.m_value_int.u = 0;
+	other.m_value_float = 0.0f;
+	other.m_value_double = 0.0;
+	return *this;
+}
+
 Attribute& Attribute::Set(const int64_t value)
 {
 	if (m_type != AttributeType::SIGNED || m_value_int.s != value)
@@ -256,6 +298,8 @@ AttributeType Attribute::TypeFromString(const std::string& type)
 	return AttributeType::INVALID;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 ObjectAttributes::ObjectAttributes(const ObjectAttributes& other)
 : m_cid(0)
 {
@@ -294,6 +338,24 @@ ObjectAttributes::~ObjectAttributes()
 	m_attributes.clear();
 }
 
+ObjectAttributes::ObjectAttributes(ObjectAttributes&& other) noexcept
+{
+	m_cid = other.m_cid;
+	m_attributes = std::move(other.m_attributes);
+
+	other.m_cid = 0;
+	other.m_attributes.clear();
+}
+
+ObjectAttributes& ObjectAttributes::operator=(ObjectAttributes&& other) noexcept
+{
+	m_cid = other.m_cid;
+	m_attributes = std::move(other.m_attributes);
+
+	other.m_cid = 0;
+	other.m_attributes.clear();
+	return *this;
+}
 
 ObjectAttributes& ObjectAttributes::operator=(const ObjectAttributes& other)
 {

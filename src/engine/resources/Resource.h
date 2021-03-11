@@ -19,7 +19,7 @@ public:
 		: m_name(other.m_name), m_underlying(other.m_underlying)
 	{}
 
-	Resource(const Resource&& other)
+	Resource(const Resource&& other) noexcept
 		: m_name(std::move(other.m_name)), m_underlying(std::move(other.m_underlying))
 	{}
 
