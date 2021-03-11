@@ -20,7 +20,8 @@ Window::Window(const char* title)
 	sf::VideoMode vm{ width, height };
 
 	m_window = std::make_unique<sf::RenderWindow>(vm, title);
-	m_window->setFramerateLimit(60);
+	//m_window->setFramerateLimit(60);
+	m_window->setVerticalSyncEnabled(true);
 
 	sf::FloatRect visibleArea(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
 	m_window->setView(sf::View(visibleArea));
