@@ -100,7 +100,7 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 		}
 
 		// Render initial chunks.
-		auto chunks = getVisibleChunks(game->Camera.GetViewWindow());
+		auto chunks = getVisibleChunks(game->Camera.GetViewRect());
 		for (const auto& chunk : chunks)
 		{
 			renderChunkToTexture(chunk);
@@ -146,7 +146,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window)
 			.scale({ scale.x, scale.y });
 
 		auto game = BabyDI::Get<tdrp::Game>();
-		auto chunks = getVisibleChunks(game->Camera.GetViewWindow());
+		auto chunks = getVisibleChunks(game->Camera.GetViewRect());
 
 		for (const auto& chunk : chunks)
 		{
@@ -158,7 +158,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window)
 	}
 }
 
-std::vector<size_t> TMXRenderComponent::getVisibleChunks(const Recti& view) const
+std::vector<size_t> TMXRenderComponent::getVisibleChunks(const Rectf& view) const
 {
 	std::vector<size_t> result;
 
@@ -178,8 +178,8 @@ std::vector<size_t> TMXRenderComponent::getVisibleChunks(const Recti& view) cons
 		{
 			const auto& chunk = tilelayer.getChunks().at(i);
 
-			Recti rect{ static_cast<int>(pos.x) + chunk.position.x * static_cast<int>(tilesize.x), static_cast<int>(pos.y) + chunk.position.y * static_cast<int>(tilesize.y)
-				, chunk.size.x * static_cast<int>(tilesize.x), chunk.size.y * static_cast<int>(tilesize.y) };
+			Rectf rect{ pos.x + static_cast<float>(chunk.position.x) * tilesize.x, pos.y + chunk.position.y * tilesize.y
+				, chunk.size.x * static_cast<float>(tilesize.x), chunk.size.y * static_cast<float>(tilesize.y) };
 			if (math::containsOrIntersects(rect, view))
 				result.push_back(i);
 		}

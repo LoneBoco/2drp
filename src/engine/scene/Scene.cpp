@@ -68,4 +68,17 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Re
 	return result;
 }
 
+std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRectangle(const Rectf& rectangle)
+{
+	std::vector<std::shared_ptr<SceneObject>> result;
+
+	for (auto p : m_graph)
+	{
+		if (math::containsOrIntersects(p.second->GetBounds(), rectangle))
+			result.push_back(p.second);
+	}
+
+	return result;
+}
+
 } // end namespace tdrp::scene

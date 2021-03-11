@@ -57,7 +57,7 @@ void Window::EventLoop()
 		}
 		
 		// Set render camera position.
-		const auto& camera = Game->Camera.GetViewWindow();
+		const auto& camera = Game->Camera.GetCamera();
 		sf::View view{
 			{static_cast<float>(camera.pos.x), static_cast<float>(camera.pos.y)},
 			{static_cast<float>(camera.size.x), static_cast<float>(camera.size.y)}

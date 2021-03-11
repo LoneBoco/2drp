@@ -97,8 +97,9 @@ void Game::Render(sf::RenderWindow* window)
 	{
 		if (auto scene = Player->GetCurrentScene().lock())
 		{
-			auto window_size = std::max(Camera.GetViewWindow().size.x, Camera.GetViewWindow().size.y) * 2.0f;
-			auto within_camera = scene->FindObjectsInRangeOf(Vector2df{ Camera.GetViewWindow().pos }, window_size);
+			// auto window_size = std::max(Camera.GetViewWindow().size.x, Camera.GetViewWindow().size.y) * 2.0f;
+			// auto within_camera = scene->FindObjectsInRangeOf(Vector2df{ Camera.GetViewWindow().pos }, window_size);
+			auto within_camera = scene->FindObjectsBoundInRectangle(Camera.GetViewRect());
 
 			// Sort by Z, then by Y, then by X.
 			std::stable_sort(std::begin(within_camera), std::end(within_camera), [](const decltype(within_camera)::value_type& a, const decltype(within_camera)::value_type& b) -> bool

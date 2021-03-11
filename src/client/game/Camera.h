@@ -24,11 +24,16 @@ public:
 public:
 	void LookAt(const Vector2di& position);
 	void LerpTo(const Vector2di& position, const chrono::clock::duration duration);
+
+public:
 	void SetSize(const Vector2di& size);
+	Vector2di GetSize() const;
 	void SizeToWindow();
 
 public:
-	const Recti& GetViewWindow() const;
+	Vector2di GetPosition() const;
+	const Recti& GetCamera() const;
+	const Rectf GetViewRect() const;
 	bool IsSizedToWindow() const;
 
 private:
@@ -40,9 +45,26 @@ private:
 	chrono::clock::duration m_interpolate_time;
 };
 
-inline const Recti& Camera::GetViewWindow() const
+inline Vector2di Camera::GetSize() const
+{
+	return m_camera.size;
+}
+
+inline Vector2di Camera::GetPosition() const
+{
+	return m_camera.pos;
+}
+
+inline const Recti& Camera::GetCamera() const
 {
 	return m_camera;
+}
+
+inline const Rectf Camera::GetViewRect() const
+{
+	auto topleft = m_camera.pos - m_camera.size / 2;
+	return Rectf({ static_cast<float>(topleft.x), static_cast<float>(topleft.y) }
+		, { static_cast<float>(m_camera.size.x), static_cast<float>(m_camera.size.y) });
 }
 
 inline void Camera::SizeToWindow()

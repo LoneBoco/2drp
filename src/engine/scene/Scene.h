@@ -49,6 +49,7 @@ public:
 
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRectangle(const Recti& rectangle);
+	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRectangle(const Rectf& rectangle);
 
 	const uint32_t GetTransmissionDistance() const;
 

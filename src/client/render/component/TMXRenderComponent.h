@@ -42,7 +42,7 @@ public:
 	void Render(sf::RenderTarget& window) override;
 
 protected:
-	std::vector<size_t> getVisibleChunks(const Recti& view) const;
+	std::vector<size_t> getVisibleChunks(const Rectf& view) const;
 	// const tmx::Tileset::Tile* getTileFromTilesets(uint32_t ID) const;
 	Vector2di getTilePosition(const tmx::Vector2i& chunk_size, uint32_t index) const;
 	void renderChunkToTexture(size_t chunk);
