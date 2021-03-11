@@ -191,6 +191,23 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 							tmx_so->TmxMap = std::make_shared<tmx::Map>();
 							tmx_so->TmxMap->load((level / file).string());
 						}
+
+						// Make scene objects for every layer.
+						for (size_t i = 1; i < tmx_so->TmxMap->getLayers().size(); ++i)
+						{
+							auto layer_id = server.GetNextSceneObjectID();
+							auto layer_so = std::make_shared<TMXSceneObject>(c, layer_id);
+
+							// Copy the scene object.
+							*layer_so = *tmx_so;
+
+							// Set the new properties of it.
+							layer_so->Layer = i;
+							layer_so->Properties[Property::Z] = static_cast<int64_t>(i);
+
+							// Add it to the scene.
+							scene->AddObject(layer_so);
+						}
 					}
 
 					// Add the object to the scene.
