@@ -45,6 +45,7 @@ workspace "2drp"
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
 			"/Zc:preprocessor",	-- Use alternative preprocessor (like GCC/clang, required for BabyDI)
+			"/MP",	-- Multi-core compiling
 		}
 
 	-- Windows defines.
@@ -115,6 +116,10 @@ project "2drp"
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
+
+	-- Debug name.
+	filter "configurations:Debug"
+		targetname "2drp_d"
 
 	-- Post-build commands.
 	filter {}
