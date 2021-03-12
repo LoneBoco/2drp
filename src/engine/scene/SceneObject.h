@@ -171,6 +171,8 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnCreated);
 	SCRIPT_FUNCTION(OnUpdate);
 	SCRIPT_FUNCTION(OnEvent);
+	SCRIPT_FUNCTION(OnPlayerFollowed);
+	SCRIPT_LOCALDATA;
 
 public:
 	//! Constructor.
@@ -380,7 +382,7 @@ public:
 	{
 		if (Tileset == nullptr)
 			return Rectf();
-		return Rectf(GetPosition(), Vector2df(Dimension.x, Dimension.y) * Vector2df(Tileset->TileDimensions.x, Tileset->TileDimensions.y));
+		return Rectf(GetPosition(), VectorConvert<Vector2df>(Dimension) * VectorConvert<Vector2df>(Tileset->TileDimensions));
 	}
 
 	Vector2di Dimension;

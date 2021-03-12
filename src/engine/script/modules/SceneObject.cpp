@@ -16,6 +16,8 @@ void bind_sceneobject(sol::state& lua)
 	);
 
 	lua.new_usertype<SceneObject>("SceneObject", sol::no_constructor,
+		"ID", &SceneObject::ID,
+
 		"Position", sol::property(&SceneObject::GetPosition, &SceneObject::SetPosition),
 		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
 		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
@@ -24,7 +26,10 @@ void bind_sceneobject(sol::state& lua)
 
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
-		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent)
+		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent),
+		"OnPlayerFollowed", sol::writeonly_property(&SceneObject::SetOnPlayerFollowed),
+
+		"vars", &SceneObject::LocalData
 	);
 }
 

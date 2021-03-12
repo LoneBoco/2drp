@@ -14,7 +14,9 @@ void bind_server(sol::state& lua)
 
 		"CreateSceneObject", &server::Server::CreateSceneObject,
 		"DeleteSceneObject", sol::resolve<bool(uint32_t)>(&server::Server::DeleteSceneObject),
-		"DeleteSceneObject", sol::resolve<bool(std::shared_ptr<SceneObject>)>(&server::Server::DeleteSceneObject)
+		"DeleteSceneObject", sol::resolve<bool(std::shared_ptr<SceneObject>)>(&server::Server::DeleteSceneObject),
+
+		"vars", &server::Server::LocalData
 	);
 }
 

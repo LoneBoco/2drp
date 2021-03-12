@@ -40,6 +40,17 @@ void Game::Initialize()
 	// Bind game script classes.
 	bind_game(Script.GetLuaState());
 
+	// Bind our client script.
+	{
+		std::cout << ":: Loading client script." << std::endl;
+		auto file = Server.FileSystem.GetFile("client.lua");
+		if (file)
+		{
+			auto script = file->ReadAsString();
+			Script.RunScript("client", script, *this);
+		}
+	}
+
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	if (settings->Exists("game.starthosting"))
 	{
@@ -83,16 +94,8 @@ void Game::Update()
 			// Send the finished loading packet.
 			Server.Send(0, network::PACKETID(network::ClientPackets::READY), network::Channel::RELIABLE);
 
-			// Bind our client script.
-			{
-				std::cout << ":: Loading client script." << std::endl;
-				auto file = Server.FileSystem.GetFile("client.lua");
-				if (file)
-				{
-					auto script = file->ReadAsString();
-					Script.RunScript("client", script, *this);
-				}
-			}
+			// Run our OnConnected callback.
+			OnConnected.RunAll(*this);
 		}
 	}
 	else if (State == GameState::PLAYING)

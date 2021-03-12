@@ -7,11 +7,15 @@
 #include "engine/scene/Scene.h"
 #include "engine/scene/SceneObject.h"
 
+#include "engine/script/Function.h"
+
 namespace tdrp::server
 {
 
 class Player
 {
+	SCRIPT_LOCALDATA;
+
 public:
 	Player() = delete;
 	Player(uint16_t id) : m_player_id(id) {}

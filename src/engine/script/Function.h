@@ -15,6 +15,9 @@ public: void Set##name(sol::this_state s, sol::protected_function func) { \
 } \
 tdrp::script::Function name;
 
+#define SCRIPT_LOCALDATA \
+public: sol::table LocalData;
+
 
 namespace tdrp::script
 {

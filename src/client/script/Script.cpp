@@ -133,7 +133,11 @@ void bind_game(sol::state& lua)
 
         "Camera", sol::readonly(&Game::Camera),
 
-        "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame)
+        "OnConnected", sol::writeonly_property(&Game::SetOnConnected),
+        "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),
+        "OnControlledActorChange", sol::writeonly_property(&Game::SetOnControlledActorChange),
+
+        "vars", &Game::LocalData
     );
 
     lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,

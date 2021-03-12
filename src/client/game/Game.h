@@ -28,7 +28,10 @@ enum class GameState
 
 class Game
 {
+	SCRIPT_FUNCTION(OnConnected);
 	SCRIPT_FUNCTION(OnClientFrame);
+	SCRIPT_FUNCTION(OnControlledActorChange);
+	SCRIPT_LOCALDATA;
 
 public:
 	Game();
