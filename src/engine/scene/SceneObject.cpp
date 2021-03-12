@@ -396,7 +396,7 @@ void SceneObject::update_physics()
 Rectf StaticSceneObject::GetBounds() const
 {
 	// TODO: Image dimensions somehow.
-	return Rectf(GetPosition(), Vector2df());
+	return Rectf(GetPosition(), Vector2df(0.0f));
 }
 
 TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
@@ -414,7 +414,7 @@ TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 Rectf TMXSceneObject::GetBounds() const
 {
 	if (TmxMap == nullptr)
-		return Rectf(GetPosition(), Vector2df());
+		return Rectf(GetPosition(), Vector2df(0.0f));
 
 	return Rectf(GetPosition() + Bounds.pos, Bounds.size);
 }

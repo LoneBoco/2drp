@@ -56,7 +56,14 @@ void Window::EventLoop()
 			Game->Camera.SetSize({ static_cast<int32_t>(view.x), static_cast<int32_t>(view.y) });
 		}
 		
+		// Render start.
+		m_window->clear(sf::Color::Black);
+
+		// Update the game / server.
+		Game->Update();
+
 		// Set render camera position.
+		// This will have been changed via script.
 		const auto& camera = Game->Camera.GetCamera();
 		sf::View view{
 			{static_cast<float>(camera.pos.x), static_cast<float>(camera.pos.y)},
@@ -64,12 +71,10 @@ void Window::EventLoop()
 		};
 		m_window->setView(view);
 
-		// Render start.
-		m_window->clear(sf::Color::Black);
-
-		Game->Update();
+		// Render the game.
 		Game->Render(m_window.get());
 
+		// Draw to the window.
 		m_window->display();
 	}
 }

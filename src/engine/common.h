@@ -32,6 +32,7 @@ namespace chrono
 {
 	using clock = std::chrono::steady_clock;
 }
+using namespace std::chrono_literals;
 
 /*
 namespace tdrp

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "engine/common.h"
+#include "engine/scene/SceneObject.h"
 #include "engine/helper/math.h"
 
 namespace tdrp::camera
@@ -24,6 +25,7 @@ public:
 public:
 	void LookAt(const Vector2di& position);
 	void LerpTo(const Vector2di& position, const chrono::clock::duration duration);
+	void FollowSceneObject(std::shared_ptr<SceneObject>& sceneobject, const chrono::clock::duration lerp_duration = 0s);
 
 public:
 	void SetSize(const Vector2di& size);
@@ -43,6 +45,7 @@ private:
 	Vector2di m_interpolate_end;
 	chrono::clock::duration m_interpolate_duration;
 	chrono::clock::duration m_interpolate_time;
+	std::weak_ptr<SceneObject> m_follow_object;
 };
 
 inline Vector2di Camera::GetSize() const
@@ -63,8 +66,7 @@ inline const Recti& Camera::GetCamera() const
 inline const Rectf Camera::GetViewRect() const
 {
 	auto topleft = m_camera.pos - m_camera.size / 2;
-	return Rectf({ static_cast<float>(topleft.x), static_cast<float>(topleft.y) }
-		, { static_cast<float>(m_camera.size.x), static_cast<float>(m_camera.size.y) });
+	return Rectf(VectorConvert<Vector2df>(topleft), VectorConvert<Vector2df>(m_camera.size));
 }
 
 inline void Camera::SizeToWindow()

@@ -143,7 +143,11 @@ void bind_game(sol::state& lua)
 
     lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,
         "Position", sol::property(&camera::Camera::GetPosition, &camera::Camera::LookAt),
-        // "LerpTo", &camera_lerp_to,
+        "LerpTo", [&](camera::Camera& camera, const Vector2di& position, uint32_t ms) { camera.LerpTo(position, std::chrono::milliseconds(ms)); },
+        "FollowSceneObject", sol::overload(
+            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject) { camera.FollowSceneObject(sceneobject); },
+            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject, uint32_t ms) { camera.FollowSceneObject(sceneobject, std::chrono::milliseconds(ms)); }
+        ),
         "Size", sol::property(&camera::Camera::GetSize, &camera::Camera::SetSize),
         "SizeToWindow", &camera::Camera::SizeToWindow,
         "ViewRect", sol::readonly_property(&camera::Camera::GetViewRect),
