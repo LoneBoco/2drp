@@ -63,22 +63,9 @@ bool network_receive(Server* server, const uint16_t id, const uint16_t packet_id
 
 void handle_ready(Server* server, std::shared_ptr<Player> player)
 {
-	// Tell the player which scene they are on.
-	packet::SSwitchScene switchscene;
-	switchscene.set_scene(server->GetPackage()->GetStartingScene());
-	server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SWITCHSCENE), network::Channel::RELIABLE, switchscene);
-
-	// Send scene objects to the player.
-	// TODO: Use the actual starting position of the player.
+	// Switch to the starting scene.
 	auto scene = server->GetScene(server->GetPackage()->GetStartingScene());
-	auto sceneobjects = scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, static_cast<float>(scene->GetTransmissionDistance()));
-	for (const auto& sceneobject : sceneobjects)
-	{
-		player->FollowedSceneObjects.insert(sceneobject->ID);
-
-		auto object = network::constructSceneObjectPacket(sceneobject);
-		server->GetNetwork().Send(player->GetPlayerId(), network::PACKETID(ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
-	}
+	player->SwitchScene(scene);
 
 	// Call the OnPlayerJoin script function.
 	server->OnPlayerJoin.RunAll(*server, player);

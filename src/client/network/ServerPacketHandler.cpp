@@ -30,6 +30,7 @@ void handle(Game& game, const packet::SClassDelete& packet);
 void handle(Game& game, const packet::SSceneObjectNew& packet);
 void handle(Game& game, const packet::SSceneObjectChange& packet);
 void handle(Game& game, const packet::SSceneObjectDelete& packet);
+void handle(Game& game, const packet::SSceneObjectControl& packet);
 
 /////////////////////////////
 
@@ -74,6 +75,9 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::SCENEOBJECTDELETE:
 			handle(game, construct<packet::SSceneObjectDelete>(packet_data, packet_length));
+			break;
+		case ServerPackets::SCENEOBJECTCONTROL:
+			handle(game, construct<packet::SSceneObjectControl>(packet_data, packet_length));
 			break;
 	}
 }
@@ -382,6 +386,18 @@ void handle(Game& game, const packet::SSceneObjectChange& packet)
 void handle(Game& game, const packet::SSceneObjectDelete& packet)
 {
 	const auto& id = packet.id();
+}
+
+void handle(Game& game, const packet::SSceneObjectControl& packet)
+{
+	const auto& old_id = packet.old_id();
+	const auto& new_id = packet.new_id();
+
+	auto old_so = game.Server.GetSceneObjectById(old_id);
+	auto new_so = game.Server.GetSceneObjectById(new_id);
+
+	game.OnControlledActorChange.RunAll(game, old_so, new_so);
+	new_so->OnPlayerFollowed.RunAll(*new_so, game.Player);
 }
 
 } // end namespace tdrp::handlers

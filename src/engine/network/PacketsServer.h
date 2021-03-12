@@ -11,6 +11,7 @@
 #include "engine/network/packets/SError.pb.h"
 #include "engine/network/packets/SLoginStatus.pb.h"
 #include "engine/network/packets/SSceneObjectChange.pb.h"
+#include "engine/network/packets/SSceneObjectControl.pb.h"
 #include "engine/network/packets/SSceneObjectDelete.pb.h"
 #include "engine/network/packets/SSceneObjectNew.pb.h"
 #include "engine/network/packets/SSendEvent.pb.h"

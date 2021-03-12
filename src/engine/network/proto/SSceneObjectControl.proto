@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SSceneObjectControl {
+	fixed32 old_id = 1;
+	fixed32 new_id = 2;
+}

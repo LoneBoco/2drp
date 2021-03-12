@@ -87,6 +87,10 @@ public:
 	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
 
 public:
+	bool SwitchPlayerScene(std::shared_ptr<server::Player>& player, std::shared_ptr<scene::Scene>& new_scene);
+	bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
+
+public:
 	const uint32_t GetNextSceneObjectID();
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;

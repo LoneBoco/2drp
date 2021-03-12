@@ -12,6 +12,8 @@
 namespace tdrp::server
 {
 
+class Server;
+
 class Player
 {
 	SCRIPT_LOCALDATA;
@@ -26,8 +28,10 @@ public:
 	Player& operator=(const Player& other) = delete;
 	Player& operator=(Player&& other) = delete;
 
-	bool SwitchScene(std::shared_ptr<scene::Scene> new_scene);
-	bool SwitchControlledSceneObject(std::shared_ptr<SceneObject> new_scene_object);
+	void BindServer(server::Server* server);
+
+	std::weak_ptr<scene::Scene> SwitchScene(std::shared_ptr<scene::Scene>& new_scene);
+	std::weak_ptr<SceneObject> SwitchControlledSceneObject(std::shared_ptr<SceneObject>& new_scene_object);
 
 	std::weak_ptr<scene::Scene> GetCurrentScene();
 	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject();
@@ -41,6 +45,7 @@ public:
 	std::set<uint32_t> FollowedSceneObjects;
 
 protected:
+	server::Server* m_server = nullptr;
 	uint16_t m_player_id;
 	std::weak_ptr<scene::Scene> m_current_scene;
 	std::weak_ptr<SceneObject> m_current_sceneobject;

@@ -55,6 +55,7 @@ enum class ServerPackets
 	SCENEOBJECTCHANGE,
 	SCENEOBJECTDELETE,
 	SENDEVENT,
+	SCENEOBJECTCONTROL,
 
 	SERVERTYPE,				// [type]
 	CLASSADD,				// [name]

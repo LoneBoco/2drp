@@ -132,6 +132,7 @@ void bind_game(sol::state& lua)
         "keyup", &keyup,
 
         "Camera", sol::readonly(&Game::Camera),
+        "Player", sol::readonly(&Game::Player),
 
         "OnConnected", sol::writeonly_property(&Game::SetOnConnected),
         "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),

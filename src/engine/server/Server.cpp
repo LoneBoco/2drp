@@ -326,6 +326,61 @@ std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+bool Server::SwitchPlayerScene(std::shared_ptr<server::Player>& player, std::shared_ptr<scene::Scene>& new_scene)
+{
+	if (player == nullptr || new_scene == nullptr)
+		return false;
+
+	auto old_scene = player->SwitchScene(new_scene);
+
+	// Tell the player which scene they are on.
+	packet::SSwitchScene switchscene;
+	switchscene.set_scene(new_scene->GetName());
+	m_network.Send(player->GetPlayerId(), network::PACKETID(network::ServerPackets::SWITCHSCENE), network::Channel::RELIABLE, switchscene);
+
+	// Send scene objects to the player.
+	// TODO: Use the actual starting position of the player.
+	auto sceneobjects = new_scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, static_cast<float>(new_scene->GetTransmissionDistance()));
+	for (const auto& sceneobject : sceneobjects)
+	{
+		player->FollowedSceneObjects.insert(sceneobject->ID);
+
+		auto object = network::constructSceneObjectPacket(sceneobject);
+		m_network.Send(player->GetPlayerId(), network::PACKETID(network::ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
+	}
+
+	return true;
+}
+
+bool Server::SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object)
+{
+	if (player == nullptr || new_scene_object == nullptr)
+		return false;
+
+	auto old_so = player->SwitchControlledSceneObject(new_scene_object);
+
+	auto old_id = 0;
+	if (auto so = old_so.lock())
+		old_id = so->ID;
+
+	// If we aren't following this scene object we now have control over, send it over now.
+	if (!player->FollowedSceneObjects.contains(new_scene_object->ID))
+	{
+		player->FollowedSceneObjects.insert(new_scene_object->ID);
+		auto packet_newso = network::constructSceneObjectPacket(new_scene_object);
+		m_network.Send(player->GetPlayerId(), PACKETID(network::ServerPackets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet_newso);
+	}
+
+	packet::SSceneObjectControl packet;
+	packet.set_old_id(old_id);
+	packet.set_new_id(new_scene_object->ID);
+	m_network.Send(player->GetPlayerId(), network::PACKETID(network::ServerPackets::SCENEOBJECTCONTROL), network::Channel::RELIABLE, packet);
+
+	return true;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void Server::AddClientScript(const std::string& name, const std::string& script)
 {
 	m_client_scripts[name] = script;
@@ -556,7 +611,9 @@ int Server::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, co
 void Server::network_connect(const uint16_t id)
 {
 	std::cout << "<- Connection from " << id << "." << std::endl;
-	m_player_list[id] = std::make_shared<Player>(id);
+	auto player = std::make_shared<Player>(id);
+	player->BindServer(this);
+	m_player_list[id] = player;
 }
 
 void Server::network_disconnect(const uint16_t id)
