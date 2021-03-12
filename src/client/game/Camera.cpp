@@ -18,7 +18,7 @@ void Camera::Update(chrono::clock::duration tick)
 		// If we are following a scene object, we need to adjust the end point.
 		if (auto so = m_follow_object.lock())
 		{
-			m_interpolate_end = VectorConvert<Vector2di>(so->GetPosition());
+			m_interpolate_end = math::convert<int32_t>(so->GetPosition());
 		}
 
 		m_camera.pos.x = static_cast<int32_t>(one_minus_percent * m_interpolate_start.x) + static_cast<int32_t>(percent * m_interpolate_end.x);
@@ -32,7 +32,7 @@ void Camera::Update(chrono::clock::duration tick)
 	{
 		if (auto so = m_follow_object.lock())
 		{
-			m_camera.pos = VectorConvert<Vector2di>(so->GetPosition());
+			m_camera.pos = math::convert<int32_t>(so->GetPosition());
 		}
 	}
 }

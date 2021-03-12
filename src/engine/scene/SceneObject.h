@@ -383,7 +383,7 @@ public:
 	{
 		if (Tileset == nullptr)
 			return Rectf();
-		return Rectf(GetPosition(), VectorConvert<Vector2df>(Dimension) * VectorConvert<Vector2df>(Tileset->TileDimensions));
+		return Rectf(GetPosition(), math::convert<float>(Dimension) * math::convert<float>(Tileset->TileDimensions));
 	}
 
 	Vector2di Dimension;

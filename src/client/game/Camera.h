@@ -66,7 +66,7 @@ inline const Recti& Camera::GetCamera() const
 inline const Rectf Camera::GetViewRect() const
 {
 	auto topleft = m_camera.pos - m_camera.size / 2;
-	return Rectf(VectorConvert<Vector2df>(topleft), VectorConvert<Vector2df>(m_camera.size));
+	return Rectf(math::convert<float>(topleft), math::convert<float>(m_camera.size));
 }
 
 inline void Camera::SizeToWindow()
