@@ -27,7 +27,8 @@ void bind_sceneobject(sol::state& lua)
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
 		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent),
-		"OnPlayerFollowed", sol::writeonly_property(&SceneObject::SetOnPlayerFollowed),
+		"OnPlayerGainedControl", sol::writeonly_property(&SceneObject::SetOnPlayerGainedControl),
+		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision),
 
 		"vars", &SceneObject::LocalData
 	);

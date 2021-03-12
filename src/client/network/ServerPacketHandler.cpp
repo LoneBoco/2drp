@@ -199,6 +199,7 @@ void handle(Game& game, const packet::SSwitchScene& packet)
 	{
 		auto scene = game.Server.GetScene(scene_name);
 		game.Player->SwitchScene(scene);
+		game.OnSceneSwitch.RunAll(game, scene);
 	}
 }
 
@@ -397,7 +398,7 @@ void handle(Game& game, const packet::SSceneObjectControl& packet)
 	auto new_so = game.Server.GetSceneObjectById(new_id);
 
 	game.OnControlledActorChange.RunAll(game, old_so, new_so);
-	new_so->OnPlayerFollowed.RunAll(*new_so, game.Player);
+	new_so->OnPlayerGainedControl.RunAll(*new_so, game.Player);
 }
 
 } // end namespace tdrp::handlers

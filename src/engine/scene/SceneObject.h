@@ -171,7 +171,8 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnCreated);
 	SCRIPT_FUNCTION(OnUpdate);
 	SCRIPT_FUNCTION(OnEvent);
-	SCRIPT_FUNCTION(OnPlayerFollowed);
+	SCRIPT_FUNCTION(OnPlayerGainedControl);
+	SCRIPT_FUNCTION(OnCollision);
 	SCRIPT_LOCALDATA;
 
 public:
