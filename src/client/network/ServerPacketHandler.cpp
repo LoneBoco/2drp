@@ -397,11 +397,73 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 
 void handle(Game& game, const packet::SSceneObjectChange& packet)
 {
+	const auto id = packet.id();
+
+	auto so = game.Server.GetSceneObjectById(id);
+	if (!so)
+		return;
+
+	for (int i = 0; i < packet.attributes_size(); ++i)
+	{
+		const auto& attribute = packet.attributes(i);
+		const auto attribute_id = static_cast<uint16_t>(attribute.id());
+		auto soattrib = so->Attributes.Get(attribute_id);
+		if (!soattrib)
+			continue;
+
+		switch (attribute.value_case())
+		{
+			case packet::SSceneObjectNew_Attribute::kAsInt:
+				soattrib->Set(attribute.as_int());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsUint:
+				soattrib->Set(attribute.as_uint());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsFloat:
+				soattrib->Set(attribute.as_float());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsDouble:
+				soattrib->Set(attribute.as_double());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsString:
+				soattrib->Set(attribute.as_string());
+				break;
+		}
+	}
+
+	for (int i = 0; i < packet.properties_size(); ++i)
+	{
+		const auto& prop = packet.properties(i);
+		const auto prop_id = static_cast<uint16_t>(prop.id());
+		auto soprop = so->Properties.Get(PropertyById(prop_id));
+		if (!soprop)
+			continue;
+
+		switch (prop.value_case())
+		{
+			case packet::SSceneObjectNew_Attribute::kAsInt:
+				soprop->Set(prop.as_int());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsUint:
+				soprop->Set(prop.as_uint());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsFloat:
+				soprop->Set(prop.as_float());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsDouble:
+				soprop->Set(prop.as_double());
+				break;
+			case packet::SSceneObjectNew_Attribute::kAsString:
+				soprop->Set(prop.as_string());
+				break;
+		}
+	}
 }
 
 void handle(Game& game, const packet::SSceneObjectDelete& packet)
 {
 	const auto id = packet.id();
+	game.Server.DeleteSceneObject(id);
 }
 
 void handle(Game& game, const packet::SSceneObjectControl& packet)
