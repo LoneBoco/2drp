@@ -113,6 +113,16 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 		}
 	}
 
+	// Load the client scripts.
+	{
+		std::cout << ":: Loading client script." << std::endl;
+		auto file = FileSystem.GetFile("client.lua");
+		if (file)
+		{
+			m_client_scripts["client"] = file->ReadAsString();
+		}
+	}
+
 	return true;
 }
 
@@ -227,7 +237,7 @@ void Server::Update(chrono::clock::duration tick)
 	}
 
 	// Run server update script.
-	OnServerTick.RunAll(*this, tick_in_ms);
+	OnServerTick.RunAll<Server>(tick_in_ms);
 
 	// Iterate through all the scenes and update all the scene objects in them.
 	for (auto& [name, scene] : m_scenes)
@@ -235,7 +245,7 @@ void Server::Update(chrono::clock::duration tick)
 		for (auto& [id, object] : scene->m_graph)
 		{
 			// Run the server tick script on the object.
-			object->OnUpdate.RunAll(*this, tick_in_ms);
+			object->OnUpdate.RunAll<SceneObject>(tick_in_ms);
 
 			// Check if we have dirty attributes.
 			if (object->Attributes.HasDirty())
@@ -386,7 +396,7 @@ void Server::AddClientScript(const std::string& name, const std::string& script)
 	m_client_scripts[name] = script;
 
 	// Broadcast to players if we are the host.
-	if (IsHost())
+	if (IsHost() && !IsSinglePlayer())
 	{
 		packet::SClientScript packet;
 		packet.set_name(name);
@@ -405,7 +415,7 @@ bool Server::DeleteClientScript(const std::string& name)
 	m_client_scripts.erase(iter);
 
 	// Broadcast to players if we are the host.
-	if (IsHost())
+	if (IsHost() && !IsSinglePlayer())
 	{
 		packet::SClientScriptDelete packet;
 		packet.set_name(name);
@@ -452,6 +462,12 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 
 	// Add to the scene.
 	scene->AddObject(so);
+
+	// Handle the script.
+	if (IsHost() && so && oc)
+	{
+		Script.RunScript("sceneobject_" + std::to_string(id) + "_class_" + oc->GetName(), oc->ScriptServer, so);
+	}
 
 	// The scene object will be sent to players when the server determines it is in range.
 
@@ -511,6 +527,8 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 
 		m_network.Broadcast(PACKETID(ServerPackets::CLASSDELETE), network::Channel::RELIABLE, packet);
 	}
+
+	// TODO: Wipe out all script functions bound to this module.
 
 	return c;
 }
@@ -620,7 +638,7 @@ void Server::network_disconnect(const uint16_t id)
 {
 	// Call the OnPlayerLeave script function.
 	auto player = GetPlayerById(id);
-	OnPlayerLeave.RunAll(*this, player);
+	OnPlayerLeave.RunAll<Server>(player);
 
 	// TODO: Send disconnection packet to peers.
 	std::cout << "<- Disconnection from " << id << "." << std::endl;
@@ -675,7 +693,17 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		}
 	}
 
+	// Send client control script.
+	for (const auto& [name, script] : m_client_scripts)
+	{
+		packet::SClientScript client_script;
+		client_script.set_name(name);
+		client_script.set_script(script);
+		m_network.Send(id, PACKETID(ServerPackets::CLIENTSCRIPT), network::Channel::RELIABLE, client_script);
+	}
+
 	// Send server info.
+	// Keep this last.  The client will start the load after this packet.
 	packet::SServerInfo server_info;
 	server_info.set_uniqueid(m_unique_id);
 	server_info.set_package(m_package->GetName());

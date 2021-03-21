@@ -28,6 +28,15 @@ enum class Property
 	COUNT
 };
 
+template <typename T> requires std::integral<T>
+Property PropertyById(T id)
+{
+	if (id >= static_cast<T>(Property::COUNT))
+		return Property::INVALID;
+	return static_cast<Property>(id);
+}
+
+
 class SceneObject;
 class ObjectProperties
 {

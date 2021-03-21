@@ -87,11 +87,12 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 void handle(Game& game, const packet::SError& packet)
 {
 	const auto& msg = packet.message();
+	std::cout << "[ERROR] " << msg << std::endl;
 }
 
 void handle(Game& game, const packet::SLoginStatus& packet)
 {
-	const auto& success = packet.success();
+	const auto success = packet.success();
 	const auto& msg = packet.message();
 
 	if (success)
@@ -199,7 +200,7 @@ void handle(Game& game, const packet::SSwitchScene& packet)
 	{
 		auto scene = game.Server.GetScene(scene_name);
 		game.Player->SwitchScene(scene);
-		game.OnSceneSwitch.RunAll(game, scene);
+		game.OnSceneSwitch.RunAll<Game>(scene);
 	}
 }
 
@@ -209,6 +210,8 @@ void handle(Game& game, const packet::SClientScript& packet)
 	const auto& script = packet.script();
 
 	game.Server.AddClientScript(name, script);
+	game.Script.RunScript(name, script, game);
+	game.OnCreated.Run<Game>(name);
 }
 
 void handle(Game& game, const packet::SClientScriptDelete& packet)
@@ -263,8 +266,8 @@ void handle(Game& game, const packet::SClassDelete& packet)
 
 void handle(Game& game, const packet::SSceneObjectNew& packet)
 {
-	const auto& pid = packet.id();
-	const auto& ptype = packet.type();
+	const auto pid = packet.id();
+	const auto ptype = packet.type();
 	const auto& pclass = packet.class_();
 	const auto& pscript = packet.script();
 
@@ -378,6 +381,18 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 				throw "Animated not implemented";
 		}
 	}
+
+	// Handle the script.
+	if (so)
+	{
+		if (class_)
+		{
+			game.Server.Script.RunScript("sceneobject_" + std::to_string(pid) + "_class_" + pclass, class_->ScriptClient, so);
+		}
+
+		so->ClientScript = pscript;
+		game.Server.Script.RunScript("sceneobject" + std::to_string(pid), so->ClientScript, so);
+	}
 }
 
 void handle(Game& game, const packet::SSceneObjectChange& packet)
@@ -386,19 +401,19 @@ void handle(Game& game, const packet::SSceneObjectChange& packet)
 
 void handle(Game& game, const packet::SSceneObjectDelete& packet)
 {
-	const auto& id = packet.id();
+	const auto id = packet.id();
 }
 
 void handle(Game& game, const packet::SSceneObjectControl& packet)
 {
-	const auto& old_id = packet.old_id();
-	const auto& new_id = packet.new_id();
+	const auto old_id = packet.old_id();
+	const auto new_id = packet.new_id();
 
 	auto old_so = game.Server.GetSceneObjectById(old_id);
 	auto new_so = game.Server.GetSceneObjectById(new_id);
 
-	game.OnControlledActorChange.RunAll(game, old_so, new_so);
-	new_so->OnPlayerGainedControl.RunAll(*new_so, game.Player);
+	game.OnControlledActorChange.RunAll<Game>(old_so, new_so);
+	new_so->OnPlayerGainedControl.RunAll<SceneObject>(game.Player);
 }
 
 } // end namespace tdrp::handlers

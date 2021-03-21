@@ -28,11 +28,12 @@ enum class GameState
 
 class Game
 {
+	SCRIPT_FUNCTION(OnCreated);
 	SCRIPT_FUNCTION(OnConnected);
 	SCRIPT_FUNCTION(OnClientFrame);
 	SCRIPT_FUNCTION(OnControlledActorChange);
 	SCRIPT_FUNCTION(OnSceneSwitch);
-	SCRIPT_LOCALDATA;
+	SCRIPT_ENVIRONMENT;
 
 public:
 	Game();

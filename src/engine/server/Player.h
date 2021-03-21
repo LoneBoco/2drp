@@ -16,8 +16,6 @@ class Server;
 
 class Player
 {
-	SCRIPT_LOCALDATA;
-
 public:
 	Player() = delete;
 	Player(uint16_t id) : m_player_id(id) {}

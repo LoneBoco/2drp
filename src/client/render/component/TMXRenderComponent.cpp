@@ -87,7 +87,7 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			m_chunk_vertices.setPrimitiveType(sf::Quads);
 			m_chunk_vertices.resize(chunk_size.x * chunk_size.y * 4);
 
-			for (size_t i = 0; i < tile_count; ++i)
+			for (size_t i = 0; i < static_cast<size_t>(tile_count); ++i)
 			{
 				Vector2di pos{ getTilePosition(chunk_size, i) };
 
@@ -254,9 +254,9 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		// Check if this chunk pushes our bounds out.
 		if (chunk.position.x < so->Bounds.pos.x)
-			so->Bounds.pos.x = chunk.position.x;
+			so->Bounds.pos.x = static_cast<float>(chunk.position.x);
 		if (chunk.position.y < so->Bounds.pos.y)
-			so->Bounds.pos.y = chunk.position.y;
+			so->Bounds.pos.y = static_cast<float>(chunk.position.y);
 		if (chunk.position.x + size_in_pixels.x > so->Bounds.pos.x + so->Bounds.size.x)
 			so->Bounds.size.x = chunk.position.x + size_in_pixels.x - so->Bounds.pos.x;
 		if (chunk.position.y + size_in_pixels.y > so->Bounds.pos.y + so->Bounds.size.y)
@@ -338,7 +338,7 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		// Create the sprite for this chunk and position it.
 		sf::Sprite sprite{ texture->getTexture() };
-		sprite.setPosition(chunk.position.x, chunk.position.y);
+		sprite.setPosition(static_cast<float>(chunk.position.x), static_cast<float>(chunk.position.y));
 
 		// Save our sprite and texture via the chunk index.
 		m_sprites.insert({ index, std::move(sprite) });

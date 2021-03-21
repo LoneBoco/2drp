@@ -39,7 +39,7 @@ class Server
 	SCRIPT_FUNCTION(OnPlayerJoin);
 	SCRIPT_FUNCTION(OnPlayerLeave);
 	SCRIPT_FUNCTION(OnServerTick);
-	SCRIPT_LOCALDATA;
+	SCRIPT_ENVIRONMENT;
 
 public:
 	Server();

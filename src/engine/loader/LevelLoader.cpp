@@ -107,6 +107,36 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						(void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
 					}
 
+					// Load scripts.
+					if (auto script = object.child("script"); !script.empty())
+					{
+						if (auto node = script.child("client"); !node.empty())
+						{
+							if (auto nodefile = node.attribute("file"); !nodefile.empty())
+							{
+								auto file = server.FileSystem.GetFile(nodefile.as_string());
+								so->ClientScript.append(file->ReadAsString());
+							}
+							if (auto nodetext = node.text(); !nodetext.empty())
+							{
+								so->ClientScript.append(nodetext.as_string());
+							}
+						}
+
+						if (auto node = script.child("server"); !node.empty())
+						{
+							if (auto nodefile = node.attribute("file"); !nodefile.empty())
+							{
+								auto file = server.FileSystem.GetFile(nodefile.as_string());
+								so->ServerScript.append(file->ReadAsString());
+							}
+							if (auto nodetext = node.text(); !nodetext.empty())
+							{
+								so->ServerScript.append(nodetext.as_string());
+							}
+						}
+					}
+
 					// Load tilemap features.
 					if (sotype == SceneObjectType::TILEMAP)
 					{
@@ -209,6 +239,10 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 							scene->AddObject(layer_so);
 						}
 					}
+
+					// Handle the script.
+					server.Script.RunScript("sceneobject_" + std::to_string(id) + "_class_" + c->GetName(), c->ScriptServer, so);
+					server.Script.RunScript("sceneobject" + std::to_string(id), so->ServerScript, so);
 
 					// Add the object to the scene.
 					scene->AddObject(so);

@@ -11,6 +11,12 @@
 namespace tdrp::script
 {
 
+template <typename T>
+concept ScriptWithEnvironment =
+	requires (T& t) {
+		t.LuaEnvironment;
+};
+
 class Script
 {
 public:
@@ -59,23 +65,55 @@ protected:
 template <typename T>
 inline void Script::RunScript(const std::string& module_name, const std::string_view& script, T& me)
 {
-	lua["MODULENAME"] = module_name;
+	if (script.empty())
+		return;
 
-	lua["Me"] = &me;
-	lua.safe_script(script, Script::ErrorHandler);
+	if constexpr (ScriptWithEnvironment<T>)
+	{
+		me.LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
+		me.LuaEnvironment["MODULENAME"] = module_name;
+		me.LuaEnvironment["Me"] = &me;
 
-	lua["Me"] = nullptr;
+		lua.safe_script(script, me.LuaEnvironment, Script::ErrorHandler);
+
+		// me.LuaEnvironment["Me"] = nullptr;
+	}
+	else
+	{
+		lua["MODULENAME"] = module_name;
+		lua["Me"] = &me;
+
+		lua.safe_script(script, Script::ErrorHandler);
+
+		lua["Me"] = nullptr;
+	}
 }
 
 template <typename T>
 inline void Script::RunScript(const std::string& module_name, const std::string_view& script, std::shared_ptr<T>& me)
 {
-	lua["MODULENAME"] = module_name;
+	if (script.empty())
+		return;
 
-	lua["Me"] = std::shared_ptr<T>(me);
-	lua.safe_script(script, Script::ErrorHandler);
-	
-	lua["Me"] = nullptr;
+	if constexpr (ScriptWithEnvironment<T>)
+	{
+		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
+		me->LuaEnvironment["MODULENAME"] = module_name;
+		me->LuaEnvironment["Me"] = std::shared_ptr<T>(me);
+
+		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+
+		// me->LuaEnvironment["Me"] = nullptr;
+	}
+	else
+	{
+		lua["MODULENAME"] = module_name;
+		lua["Me"] = std::shared_ptr<T>(me);
+
+		lua.safe_script(script, Script::ErrorHandler);
+
+		lua["Me"] = nullptr;
+	}
 }
 
 } // end namespace tdrp::script

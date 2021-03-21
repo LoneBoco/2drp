@@ -68,7 +68,7 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 	player->SwitchScene(scene);
 
 	// Call the OnPlayerJoin script function.
-	server->OnPlayerJoin.RunAll(*server, player);
+	server->OnPlayerJoin.RunAll<Server>(player);
 }
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)

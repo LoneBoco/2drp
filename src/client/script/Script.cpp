@@ -134,12 +134,11 @@ void bind_game(sol::state& lua)
         "Camera", sol::readonly(&Game::Camera),
         "Player", sol::readonly(&Game::Player),
 
+        "OnCreated", sol::writeonly_property(&Game::SetOnCreated),
         "OnConnected", sol::writeonly_property(&Game::SetOnConnected),
         "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),
         "OnControlledActorChange", sol::writeonly_property(&Game::SetOnControlledActorChange),
-        "OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch),
-
-        "vars", &Game::LocalData
+        "OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
     );
 
     lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,
@@ -172,7 +171,7 @@ bool keyup(int key)
 
 void log(const char* message)
 {
-    std::cout << message << std::endl;
+    std::cout << ":: [SCRIPT] " << message << std::endl;
 }
 
 int send_event(std::shared_ptr<SceneObject> sender, const char* name, const char* data, Vector2df origin, float radius)

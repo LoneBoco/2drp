@@ -173,7 +173,7 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnEvent);
 	SCRIPT_FUNCTION(OnPlayerGainedControl);
 	SCRIPT_FUNCTION(OnCollision);
-	SCRIPT_LOCALDATA;
+	SCRIPT_ENVIRONMENT;
 
 public:
 	//! Constructor.
@@ -290,6 +290,12 @@ public:
 
 	//! Name.
 	std::string Name;
+
+	//! Client script.
+	std::string ClientScript;
+
+	//! Server script.
+	std::string ServerScript;
 
 	//! Attributes.
 	ObjectAttributes Attributes;
