@@ -92,6 +92,7 @@ project "2drp"
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
 		"../dependencies/ziplib/Source/ZipLib/",
+		"../dependencies/SpriterPlusPlus/",
 		"../dependencies/tmxlite/tmxlite/include/",
 	}
 
@@ -109,6 +110,7 @@ project "2drp"
 		"lua51",
 		"ziplib",
 		"tmxlite",
+		"SpriterPlusPlus",
 	}
 
 	defines { "SFML_STATIC", "NOMINMAX" }
@@ -121,10 +123,20 @@ project "2drp"
 	filter "configurations:Debug"
 		targetname "2drp_d"
 
+	-- Disable MSVC warnings because 3rd party libraries never update.
+	filter "toolset:msc*"
+		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING" }
+
 	-- Post-build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
 		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
+
+	-- SFML post-build.
+	filter { "system:windows", "platforms:x32" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x86/openal32.dll %{cfg.targetdir}" }
+	filter { "system:windows", "platforms:x64" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x64/openal32.dll %{cfg.targetdir}" }
 
 	-- Pre-link LuaJIT building.
 	filter {}
@@ -614,16 +626,10 @@ project "SpriterPlusPlus"
 	location "projects"
 	includedirs {
 		"../dependencies/SpriterPlusPlus/spriterengine",
-		"../dependencies/SFML/include/",
-		"../dependencies/pugixml/src/",
 	}
 	files {
 		"../dependencies/SpriterPlusPlus/spriterengine/**",
-		"../dependencies/SpriterPlusPlus/example/override/sfml*",
-		"../dependencies/SpriterPlusPlus/example/override/pugixml*",
 	}
-	links { "pugixml", "SFML" }
-	dependson { "pugixml", "SFML" }
 	filter "toolset:msc*"
 		disablewarnings { "26812" }
 
