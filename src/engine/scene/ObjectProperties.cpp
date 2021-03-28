@@ -91,6 +91,8 @@ void ObjectProperties::create()
 	//_PROP(Property::ROTATION_VELOCITY, 0.0f);
 	_PROP(Property::DIRECTION, (uint64_t)0);
 	_PROP(Property::IMAGE, "");
+	_PROP(Property::ENTITY, "");
+	_PROP(Property::ANIMATION, "");
 
 #undef _PROP
 }

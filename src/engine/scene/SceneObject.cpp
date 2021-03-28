@@ -1,6 +1,7 @@
 // #include <Box2D.h>
 #include <deque>
 #include <set>
+#include <sstream>
 
 #include "engine/common.h"
 #include "engine/server/Player.h"
@@ -406,6 +407,100 @@ void SceneObject::update_physics()
 		(*PhysicsUpdateCallback)(this);
 }
 */
+
+///////////////////////////////////////////////////////////////////////////////
+
+///////////////////////////////////////////////////////////////////////////////
+
+AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& other)
+{
+	Name = other.Name + std::to_string(static_cast<uint16_t>(reinterpret_cast<uintptr_t>(this) & 0x0000'0000'FFFF'FFFF));
+	ClientScript = other.ClientScript;
+	ServerScript = other.ServerScript;
+	Attributes = other.Attributes;
+	Properties = other.Properties;
+	Visible = other.Visible;
+	Animation = other.Animation;
+	return *this;
+}
+
+void AnimatedSceneObject::SetImage(const std::string& image)
+{
+}
+
+void AnimatedSceneObject::SetModel(const std::string& model)
+{
+	Properties[Property::IMAGE] = model;
+	Properties[Property::ENTITY] = static_cast<uint64_t>(0);
+}
+
+void AnimatedSceneObject::SetModel(const std::string& model, const std::string& entity)
+{
+	Properties[Property::IMAGE] = model;
+	Properties[Property::ENTITY] = entity;
+}
+
+void AnimatedSceneObject::SetAnimation(const std::string& animation)
+{
+	Properties[Property::ANIMATION] = animation;
+}
+
+std::string AnimatedSceneObject::GetFullAnimation() const
+{
+	std::ostringstream result{ Properties.Get(Property::IMAGE)->GetString() };
+
+	/*
+	if (Animation != nullptr)
+	{
+		result << "," << Animation->currentEntityName() << "," << Animation->currentAnimationName();
+	}
+	*/
+
+	auto entity = Properties.Get(Property::ENTITY);
+	if (entity->GetType() == AttributeType::STRING)
+		result << "," << entity->GetString();
+	else
+	{
+		// We really don't have a link back to the Scml file to get the entity name.
+		// We just hope the current entity name is accurate.
+		// And if we don't even have that, just return the number.
+		if (Animation)
+			result << "," << Animation->currentEntityName();
+		else
+		{
+			auto index = entity->GetUnsigned();
+			result << "," << index;
+		}
+	}
+
+	result << "," << Properties.Get(Property::ANIMATION)->GetString();
+
+	return result.str();
+}
+
+std::string AnimatedSceneObject::GetAnimationModel() const
+{
+	return Properties.Get(Property::IMAGE)->GetString();
+}
+
+std::string AnimatedSceneObject::GetAnimationEntity() const
+{
+	auto entity = Properties.Get(Property::ENTITY);
+	if (entity->GetType() == AttributeType::STRING)
+		return entity->GetString();
+
+	if (Animation)
+		return Animation->currentEntityName();
+
+	return entity->GetString();
+}
+
+std::string AnimatedSceneObject::GetAnimation() const
+{
+	return Properties.Get(Property::ANIMATION)->GetString();
+}
+
+///////////////////////////////////////////////////////////////////////////////
 
 TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 {

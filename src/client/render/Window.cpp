@@ -26,6 +26,8 @@ Window::Window(const char* title)
 	sf::FloatRect visibleArea(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
 	m_window->setView(sf::View(visibleArea));
 	Game->Camera.SetSize({ static_cast<int32_t>(width), static_cast<int32_t>(height) });
+	
+	Game->SetRenderWindow(m_window.get());
 }
 
 Window::~Window()

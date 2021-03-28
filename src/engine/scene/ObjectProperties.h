@@ -24,6 +24,8 @@ enum class Property
 	ROTATION,
 	DIRECTION,
 	IMAGE,
+	ENTITY,
+	ANIMATION,
 
 	COUNT
 };

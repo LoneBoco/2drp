@@ -6,6 +6,7 @@
 #include "client/render/component/RenderComponent.h"
 #include "client/render/component/TileMapRenderComponent.h"
 #include "client/render/component/TMXRenderComponent.h"
+#include "client/render/component/SpriterRenderComponent.h"
 #include "client/network/DownloadManager.h"
 
 #include "engine/network/Packet.h"
@@ -382,7 +383,9 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 				so->AddComponent<render::component::TMXRenderComponent>();
 				break;
 			case SceneObjectType::ANIMATED:
-				throw "Animated not implemented";
+				// TODO: Extend when other types of animations are implemented.
+				so->AddComponent<render::component::SpriterRenderComponent>();
+				break;
 		}
 	}
 

@@ -5,6 +5,7 @@
 
 //#include <Box2D/Box2D.h>
 #include <tmxlite/Map.hpp>
+#include <spriterengine/spriterengine.h>
 
 #include "engine/common.h"
 
@@ -381,6 +382,27 @@ public:
 	{
 		return SceneObjectType::ANIMATED;
 	}
+
+	//! Copy assignment.
+	AnimatedSceneObject& operator=(const AnimatedSceneObject& other);
+
+	// Override of set image to not do anything.
+	void SetImage(const std::string& image) override;
+
+	// Sets the model file and entity.
+	void SetModel(const std::string& model);
+	void SetModel(const std::string& model, const std::string& entity);
+
+	// Sets the animation.
+	void SetAnimation(const std::string& animation);
+
+	// Get the parts of our animation.
+	std::string GetFullAnimation() const;
+	std::string GetAnimationModel() const;
+	std::string GetAnimationEntity() const;
+	std::string GetAnimation() const;
+
+	std::shared_ptr<SpriterEngine::EntityInstance> Animation;
 };
 
 class TiledSceneObject : public SceneObject
@@ -446,5 +468,78 @@ public:
 	uint8_t Layer = 0;
 	Rectf Bounds;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+
+template <typename T>
+T getPropsPacket(SceneObject& so)
+{
+	T packet;
+
+	// Loop through all dirty attributes and add them to the packet.
+	for (auto& attribute : ObjectAttributes::Dirty(so.Attributes))
+	{
+		attribute.SetIsDirty(false);
+		attribute.UpdateDispatch.Post(attribute.GetId());
+		so.Attributes.DirtyUpdateDispatch.Post(attribute.GetId());
+
+		auto attr = packet.add_attributes();
+		attr->set_id(attribute.GetId());
+
+		switch (attribute.GetType())
+		{
+		case AttributeType::SIGNED:
+			attr->set_as_int(attribute.GetSigned());
+			break;
+		case AttributeType::UNSIGNED:
+			attr->set_as_uint(attribute.GetUnsigned());
+			break;
+		case AttributeType::FLOAT:
+			attr->set_as_float(attribute.GetFloat());
+			break;
+		case AttributeType::DOUBLE:
+			attr->set_as_double(attribute.GetDouble());
+			break;
+		default:
+		case AttributeType::STRING:
+			attr->set_as_string(attribute.GetString());
+			break;
+		}
+	}
+
+	for (auto& [id, property] : so.Properties)
+	{
+		if (!property->GetIsDirty())
+			continue;
+
+		property->SetIsDirty(false);
+		property->UpdateDispatch.Post(id);
+
+		auto prop = packet.add_properties();
+		prop->set_id(id);
+
+		switch (property->GetType())
+		{
+		case AttributeType::SIGNED:
+			prop->set_as_int(property->GetSigned());
+			break;
+		case AttributeType::UNSIGNED:
+			prop->set_as_uint(property->GetUnsigned());
+			break;
+		case AttributeType::FLOAT:
+			prop->set_as_float(property->GetFloat());
+			break;
+		case AttributeType::DOUBLE:
+			prop->set_as_double(property->GetDouble());
+			break;
+		default:
+		case AttributeType::STRING:
+			prop->set_as_string(property->GetString());
+			break;
+		}
+	}
+
+	return packet;
+}
 
 } // end namespace tdrp

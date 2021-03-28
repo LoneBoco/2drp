@@ -14,6 +14,7 @@
 namespace sf
 {
 	class RenderWindow;
+	class RenderTarget;
 }
 
 namespace tdrp
@@ -54,6 +55,9 @@ public:
 
 	chrono::clock::duration GetTick() const;
 
+	void SetRenderWindow(sf::RenderWindow* render_window);
+	sf::RenderWindow* GetRenderWindow() const;
+
 	GameState State = GameState::INITIALIZING;
 
 	server::Server Server;
@@ -65,11 +69,23 @@ private:
 	chrono::clock::time_point m_tick_previous;
 	chrono::clock::time_point m_tick_current;
 	std::chrono::milliseconds m_prop_update_timer = std::chrono::milliseconds::zero();
+
+	sf::RenderWindow* m_render_window = nullptr;
 };
 
 inline chrono::clock::duration Game::GetTick() const
 {
 	return m_tick_current - m_tick_previous;
+}
+
+inline void Game::SetRenderWindow(sf::RenderWindow* render_window)
+{
+	m_render_window = render_window;
+}
+
+inline sf::RenderWindow* Game::GetRenderWindow() const
+{
+	return m_render_window;
 }
 
 } // end namespace tdrp
