@@ -413,19 +413,19 @@ void handle(Game& game, const packet::SSceneObjectChange& packet)
 
 		switch (attribute.value_case())
 		{
-			case packet::SSceneObjectNew_Attribute::kAsInt:
+			case packet::SSceneObjectChange_Attribute::kAsInt:
 				soattrib->Set(attribute.as_int());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsUint:
+			case packet::SSceneObjectChange_Attribute::kAsUint:
 				soattrib->Set(attribute.as_uint());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsFloat:
+			case packet::SSceneObjectChange_Attribute::kAsFloat:
 				soattrib->Set(attribute.as_float());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsDouble:
+			case packet::SSceneObjectChange_Attribute::kAsDouble:
 				soattrib->Set(attribute.as_double());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsString:
+			case packet::SSceneObjectChange_Attribute::kAsString:
 				soattrib->Set(attribute.as_string());
 				break;
 		}
@@ -441,19 +441,19 @@ void handle(Game& game, const packet::SSceneObjectChange& packet)
 
 		switch (prop.value_case())
 		{
-			case packet::SSceneObjectNew_Attribute::kAsInt:
+			case packet::SSceneObjectChange_Attribute::kAsInt:
 				soprop->Set(prop.as_int());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsUint:
+			case packet::SSceneObjectChange_Attribute::kAsUint:
 				soprop->Set(prop.as_uint());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsFloat:
+			case packet::SSceneObjectChange_Attribute::kAsFloat:
 				soprop->Set(prop.as_float());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsDouble:
+			case packet::SSceneObjectChange_Attribute::kAsDouble:
 				soprop->Set(prop.as_double());
 				break;
-			case packet::SSceneObjectNew_Attribute::kAsString:
+			case packet::SSceneObjectChange_Attribute::kAsString:
 				soprop->Set(prop.as_string());
 				break;
 		}
