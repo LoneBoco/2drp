@@ -47,3 +47,6 @@
 [submodule "dependencies/PlayRho"]
 	path = dependencies/PlayRho
 	url = git@github.com:louis-langholtz/PlayRho.git
+[submodule "dependencies/protobuf"]
+	path = dependencies/protobuf
+	url = git@github.com:protocolbuffers/protobuf.git
