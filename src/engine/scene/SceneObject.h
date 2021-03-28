@@ -20,6 +20,12 @@
 
 #include "engine/component/Component.h"
 
+
+namespace tdrp::server
+{
+	class Player;
+}
+
 namespace tdrp
 {
 
@@ -251,6 +257,22 @@ public:
 	//! Gets the scene object's bounds.
 	virtual Rectf GetBounds() const;
 
+	/// <summary>
+	/// Gets the controlling player of the scene object.
+	/// </summary>
+	/// <returns>A weak pointer to the player.</returns>
+	std::weak_ptr<server::Player> GetControllingPlayer() const
+	{
+		return m_controlling_player;
+	}
+
+	/// <summary>
+	/// Sets the controlling player of the scene object.
+	/// Calls the OnPlayerGainedControl script callback.
+	/// </summary>
+	/// <param name="player">The player who is controlling this scene object.</param>
+	void SetControllingPlayer(std::shared_ptr<server::Player> player);
+
 /*
 	//! Sets the callback function used when update() is called.
 	//! \param callback The callback function to call.
@@ -268,7 +290,7 @@ public:
 */
 
 	//! Updates the object and clears the list of changed attributes and properties.
-	void Update();
+	// void Update();
 
 	//! Updates the object after the physics system modifies it.
 	// void update_physics();
@@ -311,11 +333,9 @@ public:
 	//! Sets visibility.
 	bool Visible;
 
-	//! Set to true if it was visible during the render state.
-	bool RenderVisible;
-
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;
+	std::weak_ptr<server::Player> m_controlling_player;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;
 	// b2Vec2 PreviousPhysicsPosition;

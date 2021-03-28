@@ -475,7 +475,7 @@ void handle(Game& game, const packet::SSceneObjectControl& packet)
 	auto new_so = game.Server.GetSceneObjectById(new_id);
 
 	game.OnControlledActorChange.RunAll<Game>(old_so, new_so);
-	new_so->OnPlayerGainedControl.RunAll<SceneObject>(game.Player);
+	new_so->SetControllingPlayer(game.Player);
 }
 
 } // end namespace tdrp::handlers

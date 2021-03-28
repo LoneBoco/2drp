@@ -3,6 +3,7 @@
 #include <set>
 
 #include "engine/common.h"
+#include "engine/server/Player.h"
 
 #include "SceneObject.h"
 
@@ -102,7 +103,7 @@ void Physics::add_collision_edge(const core::vector2df& v1, const core::vector2d
 
 SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 : ID(id),
-Visible(true), RenderVisible(false), // SceneGraph(),
+Visible(true), // SceneGraph(),
 m_object_class(c) /*UpdateCallback(nullptr), PhysicsUpdateCallback(nullptr),*/
 {
 	if (c)
@@ -135,7 +136,6 @@ SceneObject& SceneObject::operator=(const SceneObject& other)
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
-	RenderVisible = other.RenderVisible;
 	return *this;
 }
 
@@ -308,8 +308,14 @@ Rectf SceneObject::GetBounds() const
 	return Rectf(GetPosition(), Vector2df(0.0f));
 }
 
-void SceneObject::Update()
+void SceneObject::SetControllingPlayer(std::shared_ptr<server::Player> player)
 {
+	m_controlling_player = player;
+	OnPlayerGainedControl.RunAll<SceneObject>(player);
+}
+
+//void SceneObject::Update()
+//{
 	/*
 	// Update our physics engine if we own this object.
 	if (Physics.Owner)
@@ -375,7 +381,7 @@ void SceneObject::Update()
 	if (UpdateCallback != nullptr)
 		(*UpdateCallback)(this);
 	*/
-}
+//}
 
 /*
 void SceneObject::update_physics()
@@ -409,7 +415,6 @@ TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
-	RenderVisible = other.RenderVisible;
 	TmxMap = other.TmxMap;
 	Layer = other.Layer;
 	return *this;
