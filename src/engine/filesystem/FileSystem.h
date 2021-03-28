@@ -113,6 +113,14 @@ public:
 	//! \return A shared pointer to the file.
 	std::shared_ptr<File> GetFile(const filesystem::path& root_dir, const filesystem::path& file) const;
 
+	//! Gets the full path to a file by name.
+	//! \return The full path to a file.
+	filesystem::path GetFilePath(const filesystem::path& file) const;
+
+	//! Gets the full path to a file by name.
+	//! \return The full path to a file.
+	filesystem::path GetFilePath(const filesystem::path& root_dir, const filesystem::path& file) const;
+
 	//! Gets all the archive CRC32s.
 	//! \return A map of the archive CRC32s.
 	std::vector<FileData> GetArchiveInfo() const;

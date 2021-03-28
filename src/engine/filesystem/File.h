@@ -113,6 +113,15 @@ public:
 		return filesystem::file_size(m_file);
 	}
 
+	/// <summary>
+	/// Gets the path to the file.
+	/// </summary>
+	/// <returns>The path to the file.</returns>
+	filesystem::path FilePath() const
+	{
+		return m_file;
+	}
+
 	//! Gets the file modified time.
 	//! \return The file modified time.
 	virtual intmax_t ModifiedTime() const

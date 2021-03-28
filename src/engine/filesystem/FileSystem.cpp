@@ -421,20 +421,20 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 			{
 				switch (iter->second->Type)
 				{
-				case FileEntryType::SYSTEM:
-					return std::make_shared<File>(iter->second->File);
+					case FileEntryType::SYSTEM:
+						return std::make_shared<File>(iter->second->File);
 
-				case FileEntryType::ARCHIVE:
-					auto& archive = iter->second->Archive;
-					for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
-					{
-						auto entry = archive->GetEntry(i);
-						if (entry->GetName() == file)
+					case FileEntryType::ARCHIVE:
+						auto& archive = iter->second->Archive;
+						for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 						{
-							return std::make_shared<FileZip>(entry->GetFullName(), entry);
+							auto entry = archive->GetEntry(i);
+							if (entry->GetName() == file)
+							{
+								return std::make_shared<FileZip>(entry->GetFullName(), entry);
+							}
 						}
-					}
-					break;
+						break;
 				}
 			}
 		}
@@ -465,25 +465,83 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& root_dir, cons
 		{
 			switch (iter->second->Type)
 			{
-			case FileEntryType::SYSTEM:
-				return std::make_shared<File>(iter->second->File);
+				case FileEntryType::SYSTEM:
+					return std::make_shared<File>(iter->second->File);
 
-			case FileEntryType::ARCHIVE:
-				auto& archive = iter->second->Archive;
-				for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
-				{
-					auto entry = archive->GetEntry(i);
-					if (entry->GetName() == file)
+				case FileEntryType::ARCHIVE:
+					auto& archive = iter->second->Archive;
+					for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 					{
-						return std::make_shared<FileZip>(entry->GetFullName(), entry);
+						auto entry = archive->GetEntry(i);
+						if (entry->GetName() == file)
+						{
+							return std::make_shared<FileZip>(entry->GetFullName(), entry);
+						}
 					}
-				}
-				break;
+					break;
 			}
 		}
 	}
 
 	return nullptr;
+}
+
+filesystem::path FileSystem::GetFilePath(const filesystem::path& file) const
+{
+	if (filesystem::exists(file))
+		return file;
+
+	// Check if the file exists in the native file system and file is a filename we want to find.
+	{
+		std::scoped_lock guard(m_file_mutex);
+		for (const auto& group : m_directories)
+		{
+			auto iter = group.Files.find(file);
+			if (iter != group.Files.end())
+			{
+				switch (iter->second->Type)
+				{
+					case FileEntryType::SYSTEM:
+						return iter->second->File;
+
+					case FileEntryType::ARCHIVE:
+						return {};
+				}
+			}
+		}
+	}
+	
+	return {};
+}
+
+filesystem::path FileSystem::GetFilePath(const filesystem::path& root_dir, const filesystem::path& file) const
+{
+	if (filesystem::exists(root_dir / file))
+		return root_dir / file;
+
+	// Check if the file exists in the native file system and file is a filename we want to find.
+	{
+		std::scoped_lock guard(m_file_mutex);
+
+		auto group = std::find_if(std::begin(m_directories), std::end(m_directories), [&](decltype(m_directories)::value_type const& entry) { return entry.Directory == root_dir; });
+		if (group == std::end(m_directories))
+			return {};
+
+		auto iter = group->Files.find(file);
+		if (iter != group->Files.end())
+		{
+			switch (iter->second->Type)
+			{
+				case FileEntryType::SYSTEM:
+					return iter->second->File;
+
+				case FileEntryType::ARCHIVE:
+					return {};
+			}
+		}
+	}
+
+	return {};
 }
 
 std::vector<FileData> FileSystem::GetArchiveInfo() const
