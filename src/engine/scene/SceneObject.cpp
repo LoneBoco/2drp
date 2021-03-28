@@ -129,7 +129,9 @@ SceneObject::~SceneObject()
 
 SceneObject& SceneObject::operator=(const SceneObject& other)
 {
-	Name = other.Name + std::to_string(reinterpret_cast<short>(this));
+	Name = other.Name + std::to_string(static_cast<uint16_t>(reinterpret_cast<uintptr_t>(this) & 0x0000'0000'FFFF'FFFF));
+	ClientScript = other.ClientScript;
+	ServerScript = other.ServerScript;
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
@@ -401,7 +403,9 @@ void SceneObject::update_physics()
 
 TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 {
-	Name = other.Name + std::to_string(reinterpret_cast<uint16_t>(this));
+	Name = other.Name + std::to_string(static_cast<uint16_t>(reinterpret_cast<uintptr_t>(this) & 0x0000'0000'FFFF'FFFF));
+	ClientScript = other.ClientScript;
+	ServerScript = other.ServerScript;
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
