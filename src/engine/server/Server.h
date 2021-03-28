@@ -57,7 +57,9 @@ public:
 	bool SinglePlayer();
 
 public:
+	void PreUpdate();
 	void Update(chrono::clock::duration tick);
+	void PostUpdate();
 
 public:
 	void SetUniqueId(const std::string& id);

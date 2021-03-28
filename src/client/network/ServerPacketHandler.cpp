@@ -360,6 +360,10 @@ void handle(Game& game, const packet::SSceneObjectNew& packet)
 		{
 			scene->AddObject(so);
 		}
+
+		// Clear the dirty flag.
+		so->Attributes.ClearDirty();
+		so->Properties.ClearDirty();
 	}
 
 	// Add the render component.
@@ -458,6 +462,9 @@ void handle(Game& game, const packet::SSceneObjectChange& packet)
 				break;
 		}
 	}
+
+	so->Attributes.ClearDirty();
+	so->Properties.ClearDirty();
 }
 
 void handle(Game& game, const packet::SSceneObjectDelete& packet)

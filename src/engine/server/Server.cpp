@@ -167,48 +167,13 @@ bool Server::SinglePlayer()
 
 /////////////////////////////
 
-template <class T>
-T getPropsPacket(ObjectAttributes& attributes)
+void Server::PreUpdate()
 {
-	// Create a packet that contains our updated attributes.
-	T packet;
+	// Collect incoming data.
+	if (!IsSinglePlayer())
+		m_network.Update(IsHost());
 
-	// Loop through all dirty attributes and add them to the packet.
-	for (auto& attribute : ObjectAttributes::Dirty(attributes))
-	{
-		attribute.SetIsDirty(false);
-
-		auto attr = packet.add_attributes();
-		attr->set_id(attribute.GetId());
-
-		switch (attribute.GetType())
-		{
-		case AttributeType::SIGNED:
-			attr->set_as_int(attribute.GetSigned());
-			break;
-		case AttributeType::UNSIGNED:
-			attr->set_as_uint(attribute.GetUnsigned());
-			break;
-		case AttributeType::FLOAT:
-			attr->set_as_float(attribute.GetFloat());
-			break;
-		case AttributeType::DOUBLE:
-			attr->set_as_double(attribute.GetDouble());
-			break;
-		default:
-		case AttributeType::STRING:
-			attr->set_as_string(attribute.GetString());
-			break;
-		}
-	}
-
-	return packet;
-}
-
-void Server::Update(chrono::clock::duration tick)
-{
-	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(tick).count();
-
+	// Check for connection status.
 	if (m_connecting)
 	{
 		if (m_connecting_future.wait_for(std::chrono::seconds(0)) == std::future_status::ready)
@@ -235,35 +200,14 @@ void Server::Update(chrono::clock::duration tick)
 			}
 		}
 	}
+}
+
+void Server::Update(chrono::clock::duration tick)
+{
+	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(tick).count();
 
 	// Run server update script.
 	OnServerTick.RunAll<Server>(tick_in_ms);
-
-	// Iterate through all the scenes and update all the scene objects in them.
-	for (auto& [name, scene] : m_scenes)
-	{
-		for (auto& [id, object] : scene->m_graph)
-		{
-			// Run the server tick script on the object.
-			object->OnUpdate.RunAll<SceneObject>(tick_in_ms);
-
-			// Check if we have dirty attributes.
-			if (object->Attributes.HasDirty())
-			{
-				// Create a packet that contains our updated attributes.
-				auto packet = getPropsPacket<packet::SSceneObjectChange>(object->Attributes);
-
-				//if (!IsSinglePlayer())
-				{
-					//if (IsHost())
-					{
-						auto location = object->GetPosition();
-						m_network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
-					}
-				}
-			}
-		}
-	}
 
 	// Iterate through all the players and determine if any new scene objects should be sent.
 	for (auto& [id, player] : m_player_list)
@@ -292,6 +236,37 @@ void Server::Update(chrono::clock::duration tick)
 			});
 
 			player->FollowedSceneObjects.insert(std::begin(new_objects), std::end(new_objects));
+		}
+	}
+
+	// Iterate through all the scenes and update all the scene objects in them.
+	for (auto& [name, scene] : m_scenes)
+	{
+		for (auto& [id, object] : scene->m_graph)
+		{
+			// Run the server tick script on the object.
+			object->OnUpdate.RunAll<SceneObject>(tick_in_ms);
+
+			// If we aren't controlling this scene object, don't check dirty props.
+			if (!object->GetControllingPlayer().expired())
+				continue;
+
+			// Check if we have dirty attributes.
+			if (object->Properties.HasDirty() || object->Attributes.HasDirty())
+			{
+				// Create a packet that contains our updated attributes.
+				auto packet = getPropsPacket<packet::SSceneObjectChange>(*object);
+				packet.set_id(id);
+
+				//if (!IsSinglePlayer())
+				{
+					//if (IsHost())
+					{
+						auto location = object->GetPosition();
+						m_network.SendToScene(scene, location.xy(), PACKETID(ServerPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet);
+					}
+				}
+			}
 		}
 	}
 

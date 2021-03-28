@@ -15,6 +15,9 @@
 #include "engine/loader/PackageLoader.h"
 #include "engine/network/Packet.h"
 
+#include "engine/network/PacketsClient.h"
+#include "engine/network/packets/CSceneObjectChange.pb.h"
+
 
 namespace tdrp
 {
@@ -70,6 +73,8 @@ void Game::Update()
 
 	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(GetTick());
 
+	Server.PreUpdate();
+
 	if (State == GameState::LOADING)
 	{
 		auto downloader = BabyDI::Get<tdrp::DownloadManager>();
@@ -91,7 +96,30 @@ void Game::Update()
 	{
 		// Run the client frame tick script.
 		OnClientFrame.RunAll<Game>(tick_in_ms);
+
+		// Send prop updates for NPCs we control.
+		if (Player)
+		{
+			if (auto so = Player->GetCurrentControlledSceneObject().lock())
+			{
+				m_prop_update_timer += tick_in_ms;
+				if (m_prop_update_timer > PROP_UPDATE_TIMER)
+				{
+					m_prop_update_timer = std::chrono::milliseconds::zero();
+
+					if (so->Properties.HasDirty() || so->Attributes.HasDirty())
+					{
+						auto packet = getPropsPacket<packet::CSceneObjectChange>(*so);
+						packet.set_id(so->ID);
+						Server.Send(0, network::PACKETID(network::ClientPackets::SCENEOBJECTCHANGE), network::Channel::RELIABLE);
+					}
+				}
+			}
+		}
 	}
+
+	// Update the server last so attributes are sent after all scripts are done.
+	Server.Update(GetTick());
 
 	Camera.Update(GetTick());
 }

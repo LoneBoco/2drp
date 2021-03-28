@@ -19,6 +19,9 @@ namespace sf
 namespace tdrp
 {
 
+constexpr std::chrono::milliseconds PROP_UPDATE_TIMER = 30ms;
+
+
 enum class GameState
 {
 	INITIALIZING,
@@ -61,6 +64,7 @@ public:
 private:
 	chrono::clock::time_point m_tick_previous;
 	chrono::clock::time_point m_tick_current;
+	std::chrono::milliseconds m_prop_update_timer = std::chrono::milliseconds::zero();
 };
 
 inline chrono::clock::duration Game::GetTick() const

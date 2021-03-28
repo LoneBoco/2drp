@@ -73,6 +73,79 @@ void handle_ready(Server* server, std::shared_ptr<Player> player)
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectChange& packet)
 {
+	const auto id = packet.id();
+
+	auto so = server->GetSceneObjectById(id);
+	if (!so)
+		return;
+
+	// Check if we control this scene object before allowing updates.
+	if (player->GetCurrentControlledSceneObject().lock() != so)
+		return;
+
+	// Load the changed attributes.
+	for (int i = 0; i < packet.attributes_size(); ++i)
+	{
+		const auto& attribute = packet.attributes(i);
+		const auto attribute_id = static_cast<uint16_t>(attribute.id());
+		auto soattrib = so->Attributes.Get(attribute_id);
+		if (!soattrib)
+			continue;
+
+		switch (attribute.value_case())
+		{
+			case packet::CSceneObjectChange_Attribute::kAsInt:
+				soattrib->Set(attribute.as_int());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsUint:
+				soattrib->Set(attribute.as_uint());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsFloat:
+				soattrib->Set(attribute.as_float());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsDouble:
+				soattrib->Set(attribute.as_double());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsString:
+				soattrib->Set(attribute.as_string());
+				break;
+			}
+	}
+
+	// Load the changed properties.
+	for (int i = 0; i < packet.properties_size(); ++i)
+	{
+		const auto& prop = packet.properties(i);
+		const auto prop_id = static_cast<uint16_t>(prop.id());
+		auto soprop = so->Properties.Get(PropertyById(prop_id));
+		if (!soprop)
+			continue;
+
+		switch (prop.value_case())
+		{
+			case packet::CSceneObjectChange_Attribute::kAsInt:
+				soprop->Set(prop.as_int());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsUint:
+				soprop->Set(prop.as_uint());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsFloat:
+				soprop->Set(prop.as_float());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsDouble:
+				soprop->Set(prop.as_double());
+				break;
+			case packet::CSceneObjectChange_Attribute::kAsString:
+				soprop->Set(prop.as_string());
+				break;
+		}
+	}
+
+	if (!server->IsHost())
+	{
+		so->Attributes.ClearDirty();
+		so->Properties.ClearDirty();
+	}
 }
 
 void handle(Server* server, std::shared_ptr<Player> player, const packet::CSceneObjectUnfollow& packet)
