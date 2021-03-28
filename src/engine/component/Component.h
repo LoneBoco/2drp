@@ -5,6 +5,7 @@
 #include <functional>
 #include <vector>
 #include <type_traits>
+#include <any>
 
 namespace tdrp
 {
@@ -270,8 +271,35 @@ public:
 		IfMatchComponentsImpl(std::function(func));
 	}
 
+	/// <summary>
+	/// Registers a provider of a value.
+	/// </summary>
+	/// <param name="key">The name of the value being provided.</param>
+	/// <param name="provider">The function returning the provided value.</param>
+	void RegisterProvider(const std::string& key, std::function<std::any(void)> provider)
+	{
+		m_providers[std::hash<std::string>{}(key)] = provider;
+	}
+
+	/// <summary>
+	/// Retrieves a value from a provider.
+	/// </summary>
+	/// <param name="key">The name of the value to retrieve.</param>
+	/// <returns>A value contained in std::any.</returns>
+	std::any RetrieveFromProvider(const std::string& key) const
+	{		
+		auto iter = m_providers.find(std::hash<std::string>{}(key));
+		if (iter != m_providers.end())
+		{
+			return iter->second();
+		}
+
+		return std::any{};
+	}
+
 private:
 	std::unordered_map<ComponentID, std::shared_ptr<Component>> m_components;
+	std::unordered_map<size_t, std::function<std::any(void)>> m_providers;
 };
 
 /**

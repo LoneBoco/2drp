@@ -297,7 +297,13 @@ void SceneObject::SetImage(const std::string& image)
 
 Rectf SceneObject::GetBounds() const
 {
-	return Rectf();
+	auto size = this->RetrieveFromProvider("Size");
+	if (size.has_value() && size.type() == typeid(Vector2df))
+	{
+		auto s = std::any_cast<Vector2df>(size);
+		return Rectf(GetPosition(), s);
+	}
+	return Rectf(GetPosition(), Vector2df(0.0f));
 }
 
 void SceneObject::Update()
@@ -392,12 +398,6 @@ void SceneObject::update_physics()
 		(*PhysicsUpdateCallback)(this);
 }
 */
-
-Rectf StaticSceneObject::GetBounds() const
-{
-	// TODO: Image dimensions somehow.
-	return Rectf(GetPosition(), Vector2df(0.0f));
-}
 
 TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 {

@@ -8,6 +8,8 @@
 
 #include "engine/common.h"
 
+#include "engine/events/Events.h"
+
 // #include "Managers/CPhysicsManager.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/ObjectAttributes.h"
@@ -338,9 +340,6 @@ public:
 	{
 		return SceneObjectType::STATIC;
 	}
-
-	//! Gets the scene object's bounds.
-	virtual Rectf GetBounds() const override;
 };
 
 class AnimatedSceneObject : public SceneObject
