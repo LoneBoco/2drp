@@ -68,7 +68,7 @@ void Game::Update()
 	m_tick_previous = m_tick_current;
 	m_tick_current = chrono::clock::now();
 
-	Server.Update(GetTick());
+	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(GetTick());
 
 	if (State == GameState::LOADING)
 	{
@@ -90,7 +90,7 @@ void Game::Update()
 	else if (State == GameState::PLAYING)
 	{
 		// Run the client frame tick script.
-		OnClientFrame.RunAll<Game>(std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()).count());
+		OnClientFrame.RunAll<Game>(tick_in_ms);
 	}
 
 	Camera.Update(GetTick());
@@ -130,7 +130,7 @@ void Game::Render(sf::RenderWindow* window)
 				auto comp = so->GetComponentDerivedFrom<render::component::IRenderableComponent>();
 				if (auto render = comp.lock())
 				{
-					render->Render(*window);
+					render->Render(*window, std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()));
 				}
 			}
 		}

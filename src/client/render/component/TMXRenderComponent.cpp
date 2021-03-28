@@ -128,7 +128,7 @@ Rectf TMXRenderComponent::GetBoundingBox() const
 	return Rectf{};
 }
 
-void TMXRenderComponent::Render(sf::RenderTarget& window)
+void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed)
 {
 	if (auto so = m_owner.lock())
 	{

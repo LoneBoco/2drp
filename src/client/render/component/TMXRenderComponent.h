@@ -39,7 +39,7 @@ public:
 
 public:
 	Rectf GetBoundingBox() const override;
-	void Render(sf::RenderTarget& window) override;
+	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
 
 protected:
 	std::vector<size_t> getVisibleChunks(const Rectf& view) const;

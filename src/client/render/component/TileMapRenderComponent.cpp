@@ -160,7 +160,7 @@ Rectf TileMapRenderComponent::GetBoundingBox() const
 	return Rectf{};
 }
 
-void TileMapRenderComponent::Render(sf::RenderTarget& window)
+void TileMapRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed)
 {
 	if (auto so = m_owner.lock())
 	{
