@@ -33,33 +33,10 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 	{
 		if (so->GetType() == SceneObjectType::STATIC)
 		{
-			std::string image = so->GetImage();
-
-			auto id = resources->FindId<sf::Texture>(image);
-			if (id == 0)
-			{
-				auto game = BabyDI::Get<tdrp::Game>();
-
-				auto file = game->Server.FileSystem.GetFile(image);
-				if (file && file->Opened())
-				{
-					auto texture = std::make_shared<sf::Texture>();
-
-					tdrp::render::SFMListream stream(*file);
-					texture->loadFromStream(stream);
-
-					id = resources->Add(image, std::move(texture));
-
-					auto handle = resources->Get<sf::Texture>(id);
-					m_textures.insert(std::make_pair(id, handle));
-				}
-			}
-			else
-			{
-				auto handle = resources->Get<sf::Texture>(id);
-				m_textures.insert(std::make_pair(id, handle));
-			}
+			load_image(so->GetImage());
 		}
+
+		m_handle_image_change = so->Properties.Get(Property::IMAGE)->UpdateDispatch.Subscribe(std::bind(&RenderComponent::image_property_update, this, std::placeholders::_1));
 	}
 }
 
@@ -137,6 +114,51 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 }
 
 ///////////////////////////////////////////////////////////////////////////////
+
+void RenderComponent::load_image(const std::string& image)
+{
+	m_textures.clear();
+
+	auto resources = BabyDI::Get<tdrp::ResourceManager>();
+	auto id = resources->FindId<sf::Texture>(image);
+	if (id == 0)
+	{
+		auto game = BabyDI::Get<tdrp::Game>();
+
+		auto file = game->Server.FileSystem.GetFile(image);
+		if (file && file->Opened())
+		{
+			auto texture = std::make_shared<sf::Texture>();
+
+			tdrp::render::SFMListream stream(*file);
+			texture->loadFromStream(stream);
+
+			id = resources->Add(image, std::move(texture));
+
+			auto handle = resources->Get<sf::Texture>(id);
+			m_textures.insert(std::make_pair(id, handle));
+		}
+	}
+	else
+	{
+		auto handle = resources->Get<sf::Texture>(id);
+		m_textures.insert(std::make_pair(id, handle));
+	}
+}
+
+void RenderComponent::image_property_update(uint16_t attribute_id)
+{
+	if (PropertyById(attribute_id) != Property::IMAGE)
+		return;
+
+	if (auto so = m_owner.lock())
+	{
+		if (so->GetType() == SceneObjectType::STATIC)
+		{
+			load_image(so->GetImage());
+		}
+	}
+}
 
 std::any RenderComponent::provide_size()
 {

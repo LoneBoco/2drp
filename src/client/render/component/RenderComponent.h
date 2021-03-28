@@ -9,6 +9,7 @@
 
 #include "engine/common.h"
 #include "engine/component/Component.h"
+#include "engine/events/Events.h"
 #include "engine/resources/Resource.h"
 #include "engine/scene/SceneObject.h"
 
@@ -39,9 +40,12 @@ public:
 	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
 
 protected:
+	void load_image(const std::string& image);
+	void image_property_update(uint16_t attribute_id);
 	std::any provide_size();
 
 protected:
+	EventHandle m_handle_image_change;
 	std::weak_ptr<SceneObject> m_owner;
 	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
 	std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
