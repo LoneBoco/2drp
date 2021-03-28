@@ -36,7 +36,6 @@ Property PropertyById(T id)
 	return static_cast<Property>(id);
 }
 
-
 class SceneObject;
 class ObjectProperties
 {
@@ -63,6 +62,18 @@ public:
 	//! \return A pointer to the attribute.
 	std::shared_ptr<Attribute> Get(const Property prop);
 	std::shared_ptr<Attribute> Get(const std::string& prop);
+
+	//! Returns if we have any dirty attributes.
+	bool HasDirty() const
+	{
+		return std::any_of(m_properties.begin(), m_properties.end(), [](const auto& v) -> bool
+			{
+				return v.second->GetIsDirty();
+			});
+	}
+
+	//! Clears the dirty flag and dispatches events for the attributes.
+	void ClearDirty();
 
 public:
 	ObjectAttributes::attribute_map::iterator begin() { return m_properties.begin(); }

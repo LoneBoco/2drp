@@ -100,6 +100,18 @@ void ObjectProperties::clone(const ObjectProperties& properties)
 	m_properties = properties.m_properties;
 }
 
+void ObjectProperties::ClearDirty()
+{
+	for (auto& [key, value] : m_properties)
+	{
+		if (value->GetIsDirty())
+		{
+			value->SetIsDirty(false);
+			value->UpdateDispatch.Post(key);
+		}
+	}
+}
+
 /*
 bool ObjectProperties::parse(rha::net::packet& p)
 {

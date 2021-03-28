@@ -68,6 +68,9 @@ Attribute& Attribute::Set(const uint64_t value)
 	m_value_int.u = value;
 	m_type = AttributeType::UNSIGNED;
 
+	if (m_isDirty)
+		UpdateDispatch.Post(m_id);
+
 	return *this;
 }
 
@@ -79,6 +82,9 @@ Attribute& Attribute::Set(const float value)
 	m_value_string.clear();
 	m_value_float = value;
 	m_type = AttributeType::FLOAT;
+
+	if (m_isDirty)
+		UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -92,6 +98,9 @@ Attribute& Attribute::Set(const double value)
 	m_value_double = value;
 	m_type = AttributeType::DOUBLE;
 
+	if (m_isDirty)
+		UpdateDispatch.Post(m_id);
+
 	return *this;
 }
 
@@ -102,6 +111,9 @@ Attribute& Attribute::Set(const std::string& value)
 
 	m_value_string = value;
 	m_type = AttributeType::STRING;
+
+	if (m_isDirty)
+		UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -475,6 +487,21 @@ std::shared_ptr<const Attribute> ObjectAttributes::Get(const uint16_t id) const
 	auto i = m_attributes.find(id);
 	if (i == m_attributes.end()) return nullptr;
 	return i->second;
+}
+
+////////////////////////////
+
+void ObjectAttributes::ClearDirty()
+{
+	for (auto& [key, value] : m_attributes)
+	{
+		if (value->GetIsDirty())
+		{
+			value->SetIsDirty(false);
+			value->UpdateDispatch.Post(key);
+			DirtyUpdateDispatch.Post(key);
+		}
+	}
 }
 
 ////////////////////////////

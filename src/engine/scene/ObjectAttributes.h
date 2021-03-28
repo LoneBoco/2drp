@@ -65,6 +65,9 @@ public:
 	void SetIsDirty(bool dirty)			{ m_isDirty = dirty; }
 
 public:
+	EventDispatcher<uint16_t> UpdateDispatch;
+
+public:
 	static AttributeType TypeFromString(const std::string& type);
 
 protected:
@@ -209,6 +212,11 @@ public:
 			return v.second->GetIsDirty();
 		});
 	}
+
+	//! Clears the dirty flag and dispatches events for the attributes.
+	void ClearDirty();
+
+	EventDispatcher<uint16_t> DirtyUpdateDispatch;
 
 public:
 	attribute_map::iterator begin() { return m_attributes.begin(); };

@@ -23,6 +23,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include "engine/events/Events.h"
 #include "engine/helper/math.h"
 #include "engine/helper/flags.h"
 
