@@ -1,5 +1,7 @@
 #pragma once
 
+#include <any>
+
 #include "SFML/Graphics.hpp"
 #include "SFML/Audio.hpp"
 
@@ -35,6 +37,9 @@ public:
 public:
 	Rectf GetBoundingBox() const override;
 	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
+
+protected:
+	std::any provide_size();
 
 protected:
 	std::weak_ptr<SceneObject> m_owner;
