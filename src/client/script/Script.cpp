@@ -125,6 +125,19 @@ void bind_game(sol::state& lua)
         , { "Pause", sf::Keyboard::Pause }
     });
 
+    lua.new_enum<sf::Mouse::Wheel>("MouseWheel", {
+          { "Vertical", sf::Mouse::VerticalWheel }
+        , { "Horizontal", sf::Mouse::HorizontalWheel }
+    });
+
+    lua.new_enum<sf::Mouse::Button>("MouseButton", {
+          { "Left", sf::Mouse::Left }
+        , { "Right", sf::Mouse::Right }
+        , { "Middle", sf::Mouse::Middle }
+        , { "XButton1", sf::Mouse::XButton1 }
+        , { "XButton2", sf::Mouse::XButton2 }
+    });
+
     lua.new_usertype<Game>("Game", sol::no_constructor,
         "log", &log,
         "keydown", &keydown,
@@ -139,6 +152,9 @@ void bind_game(sol::state& lua)
         "OnConnected", sol::writeonly_property(&Game::SetOnConnected),
         "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),
         "OnKeyPress", sol::writeonly_property(&Game::SetOnKeyPress),
+        "OnMouseWheel", sol::writeonly_property(&Game::SetOnMouseWheel),
+        "OnMouseDown", sol::writeonly_property(&Game::SetOnMouseDown),
+        "OnMouseUp", sol::writeonly_property(&Game::SetOnMouseUp),
         "OnControlledActorChange", sol::writeonly_property(&Game::SetOnControlledActorChange),
         "OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
     );

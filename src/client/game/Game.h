@@ -36,6 +36,9 @@ class Game
 	SCRIPT_FUNCTION(OnConnected);
 	SCRIPT_FUNCTION(OnClientFrame);
 	SCRIPT_FUNCTION(OnKeyPress);
+	SCRIPT_FUNCTION(OnMouseWheel);
+	SCRIPT_FUNCTION(OnMouseDown);
+	SCRIPT_FUNCTION(OnMouseUp);
 	SCRIPT_FUNCTION(OnControlledActorChange);
 	SCRIPT_FUNCTION(OnSceneSwitch);
 	SCRIPT_ENVIRONMENT;

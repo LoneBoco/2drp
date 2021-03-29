@@ -45,15 +45,33 @@ void Window::EventLoop()
 			if (event.type == sf::Event::Closed)
 				m_window->close();
 
-			if (event.type == sf::Event::Resized)
+			else if (event.type == sf::Event::Resized)
 			{
 				//sf::FloatRect visibleArea(0.f, 0.f, event.size.width, event.size.height);
 				//m_window->setView(sf::View(visibleArea));
 			}
 
-			if (event.type == sf::Event::KeyPressed)
+			else if (event.type == sf::Event::KeyPressed)
 			{
 				Game->OnKeyPress.RunAll<tdrp::Game>(event.key.code);
+			}
+
+			else if (event.type == sf::Event::MouseWheelScrolled)
+			{
+				Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
+				Game->OnMouseWheel.RunAll<tdrp::Game>(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
+			}
+
+			else if (event.type == sf::Event::MouseButtonPressed)
+			{
+				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
+				Game->OnMouseDown.RunAll<tdrp::Game>(event.mouseButton.button, pos);
+			}
+
+			else if (event.type == sf::Event::MouseButtonReleased)
+			{
+				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
+				Game->OnMouseUp.RunAll<tdrp::Game>(event.mouseButton.button, pos);
 			}
 		}
 
