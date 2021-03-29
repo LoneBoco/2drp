@@ -2,6 +2,15 @@
 
 #include "engine/scene/SceneObject.h"
 
+namespace sol
+{
+	template <>
+	struct is_container<tdrp::ObjectAttributes> : std::false_type {};
+
+	template <>
+	struct is_container<tdrp::ObjectProperties> : std::false_type {};
+}
+
 namespace tdrp::script::modules
 {
 
@@ -37,6 +46,9 @@ void bind_sceneobject(sol::state& lua)
 			sol::resolve<bool(SceneObject&, const std::string&)>(&load_model),
 			sol::resolve<bool(SceneObject&, const std::string&, const std::string&)>(load_model)
 		),
+
+		"Attributes", &SceneObject::Attributes,
+		"Properties", &SceneObject::Properties,
 
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),

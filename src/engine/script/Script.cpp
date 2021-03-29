@@ -14,6 +14,7 @@ Script::Script()
 	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
 	script::modules::bind_player(lua);
 	script::modules::bind_scene(lua);
+	script::modules::bind_attributes(lua);
 	script::modules::bind_sceneobject(lua);
 	script::modules::bind_server(lua);
 	script::modules::bind_vector(lua);

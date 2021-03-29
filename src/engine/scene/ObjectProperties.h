@@ -29,13 +29,20 @@ enum class Property
 
 	COUNT
 };
+// Any changes also go into ObjectProperties::create() and bind_attributes.
+
 
 template <typename T> requires std::integral<T>
-Property PropertyById(T id)
+constexpr Property PropertyById(T id)
 {
 	if (id >= static_cast<T>(Property::COUNT))
 		return Property::INVALID;
 	return static_cast<Property>(id);
+}
+
+constexpr uint16_t PropertyToId(Property property)
+{
+	return static_cast<uint16_t>(property);
 }
 
 class SceneObject;
