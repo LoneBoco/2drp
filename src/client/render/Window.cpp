@@ -22,6 +22,7 @@ Window::Window(const char* title)
 	m_window = std::make_unique<sf::RenderWindow>(vm, title);
 	//m_window->setFramerateLimit(60);
 	m_window->setVerticalSyncEnabled(true);
+	m_window->setKeyRepeatEnabled(false);
 
 	sf::FloatRect visibleArea(0.f, 0.f, static_cast<float>(width), static_cast<float>(height));
 	m_window->setView(sf::View(visibleArea));
@@ -48,6 +49,11 @@ void Window::EventLoop()
 			{
 				//sf::FloatRect visibleArea(0.f, 0.f, event.size.width, event.size.height);
 				//m_window->setView(sf::View(visibleArea));
+			}
+
+			if (event.type == sf::Event::KeyPressed)
+			{
+				Game->OnKeyPress.RunAll<tdrp::Game>(event.key.code);
 			}
 		}
 

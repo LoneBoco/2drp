@@ -138,6 +138,7 @@ void bind_game(sol::state& lua)
         "OnCreated", sol::writeonly_property(&Game::SetOnCreated),
         "OnConnected", sol::writeonly_property(&Game::SetOnConnected),
         "OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),
+        "OnKeyPress", sol::writeonly_property(&Game::SetOnKeyPress),
         "OnControlledActorChange", sol::writeonly_property(&Game::SetOnControlledActorChange),
         "OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
     );
