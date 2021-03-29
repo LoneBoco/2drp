@@ -17,7 +17,9 @@ void bind_server(sol::state& lua)
 		"DeleteSceneObject", sol::resolve<bool(std::shared_ptr<SceneObject>)>(&server::Server::DeleteSceneObject),
 
 		"SwitchPlayerScene", &server::Server::SwitchPlayerScene,
-		"SwitchPlayerControlledSceneObject", &server::Server::SwitchPlayerControlledSceneObject
+		"SwitchPlayerControlledSceneObject", &server::Server::SwitchPlayerControlledSceneObject,
+
+		"SendEvent", &server::Server::SendEvent
 	);
 }
 

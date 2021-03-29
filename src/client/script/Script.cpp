@@ -16,7 +16,6 @@ namespace tdrp
 bool keydown(int key);
 bool keyup(int key);
 void log(const char* message);
-int send_event(std::shared_ptr<SceneObject> sender, const char* name, const char* data, Vector2df origin, float radius);
 
 void bind_game(sol::state& lua)
 {
@@ -131,6 +130,8 @@ void bind_game(sol::state& lua)
         "keydown", &keydown,
         "keyup", &keyup,
 
+        "SendEvent", &Game::SendEvent,
+
         "Camera", sol::readonly(&Game::Camera),
         "Player", sol::readonly(&Game::Player),
 
@@ -172,22 +173,6 @@ bool keyup(int key)
 void log(const char* message)
 {
     std::cout << ":: [SCRIPT] " << message << std::endl;
-}
-
-int send_event(std::shared_ptr<SceneObject> sender, const char* name, const char* data, Vector2df origin, float radius)
-{
-    tdrp::packet::CSendEvent packet;
-    packet.set_sender(sender->ID);
-    packet.set_name(name);
-    packet.set_data(data);
-    packet.set_x(origin.x);
-    packet.set_y(origin.y);
-    packet.set_radius(radius);
-
-    auto game = BabyDI::Get<tdrp::Game>();
-    game->Server.Send(0, PACKETID(ClientPackets::SENDEVENT), tdrp::network::Channel::RELIABLE, packet);
-
-    return 0;
 }
 
 } // end namespace tdrp

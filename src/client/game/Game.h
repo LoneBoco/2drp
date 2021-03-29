@@ -50,16 +50,22 @@ public:
 
 	void Initialize();
 
+public:
 	void Update();
 	void Render(sf::RenderWindow* window);
 
+public:
 	chrono::clock::duration GetTick() const;
 
+public:
 	void SetRenderWindow(sf::RenderWindow* render_window);
 	sf::RenderWindow* GetRenderWindow() const;
 
-	GameState State = GameState::INITIALIZING;
+public:
+	void SendEvent(std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
+public:
+	GameState State = GameState::INITIALIZING;
 	server::Server Server;
 	script::Script Script;
 	camera::Camera Camera;

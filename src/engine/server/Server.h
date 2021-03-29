@@ -59,7 +59,6 @@ public:
 public:
 	void PreUpdate();
 	void Update(chrono::clock::duration tick);
-	void PostUpdate();
 
 public:
 	void SetUniqueId(const std::string& id);
@@ -91,6 +90,9 @@ public:
 public:
 	bool SwitchPlayerScene(std::shared_ptr<server::Player>& player, std::shared_ptr<scene::Scene>& new_scene);
 	bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
+
+public:
+	int SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
 	const uint32_t GetNextSceneObjectID();

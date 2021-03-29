@@ -17,6 +17,7 @@
 
 #include "engine/network/PacketsClient.h"
 #include "engine/network/packets/CSceneObjectChange.pb.h"
+#include "engine/network/packets/CSendEvent.pb.h"
 
 
 namespace tdrp
@@ -95,7 +96,7 @@ void Game::Update()
 	else if (State == GameState::PLAYING)
 	{
 		// Run the client frame tick script.
-		OnClientFrame.RunAll<Game>(tick_in_ms);
+		OnClientFrame.RunAll<Game>(tick_in_ms.count());
 
 		// Send prop updates for NPCs we control.
 		if (Player)
@@ -163,6 +164,19 @@ void Game::Render(sf::RenderWindow* window)
 			}
 		}
 	}
+}
+
+void Game::SendEvent(std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+{
+	packet::CSendEvent packet;
+	packet.set_sender(sender ? sender->ID : 0);
+	packet.set_name(name);
+	packet.set_data(data);
+	packet.set_x(origin.x);
+	packet.set_y(origin.y);
+	packet.set_radius(radius);
+
+	Server.Send(0, network::PACKETID(network::ClientPackets::SENDEVENT), network::Channel::RELIABLE, packet);
 }
 
 /////////////////////////////

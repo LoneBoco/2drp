@@ -510,6 +510,42 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+int Server::SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+{
+	if (!scene)
+		return 0;
+
+	packet::SSendEvent packet;
+	packet.set_sender(sender ? sender->ID : 0);
+	packet.set_name(name);
+	packet.set_data(data);
+	packet.set_x(origin.x);
+	packet.set_y(origin.y);
+	packet.set_radius(radius);
+
+	// If no scene is specified, just send to everybody.
+	// TODO: Separate broadcast event?
+	/*
+	if (!scene)
+	{
+		Broadcast(network::PACKETID(ServerPackets::SENDEVENT), network::Channel::RELIABLE, packet);
+		return m_player_list.size();
+	}
+	*/
+
+	// Run events on all objects in range.
+	auto targets = scene->FindObjectsInRangeOf(origin, radius);
+	for (const auto& target : targets)
+		target->OnEvent.RunAll<SceneObject>(sender, name, data, origin, radius);
+
+	// Send the packet to players in range.
+	SendToScene(scene, origin, network::PACKETID(ServerPackets::SENDEVENT), network::Channel::RELIABLE, packet);
+
+	return targets.size();
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
 {
 	for (auto& [key, scene] : m_scenes)
