@@ -19,7 +19,7 @@ class TileMapRenderComponent : public IRenderableComponent, public Component
 
 public:
 	TileMapRenderComponent() = default;
-	~TileMapRenderComponent() = default;
+	~TileMapRenderComponent() override = default;
 
 	TileMapRenderComponent(const TileMapRenderComponent& other) = delete;
 	TileMapRenderComponent(TileMapRenderComponent&& other) = delete;

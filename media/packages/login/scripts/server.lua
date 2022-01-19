@@ -1,4 +1,4 @@
-log("Test")
+-- log("Test")
 
 Me.OnPlayerJoin = function(player)
 	local scene = player:GetCurrentScene()
@@ -10,5 +10,5 @@ Me.OnPlayerLeave = function(player)
 end
 
 Me.OnServerTick = function(tick)
-	log('OnServerTick: '..tick.."ms")
+	-- log('OnServerTick: '..tick.."ms")
 end

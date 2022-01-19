@@ -14,7 +14,6 @@
 
 #include <Windows.h>
 
-
 #if defined(_MSC_VER)
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "user32.lib")
@@ -97,7 +96,7 @@ void CALLBACK WatchCallback(DWORD dwErrorCode, DWORD dwNumberOfBytesTransfered, 
 #			if defined(UNICODE)
 			{
 				(void)lstrcpynW(szFile, pNotify->FileName,
-					std::min(static_cast<DWORD>(MAX_PATH), pNotify->FileNameLength / sizeof(WCHAR) + 1)
+					std::min(static_cast<DWORD>(MAX_PATH), static_cast<DWORD>(pNotify->FileNameLength / sizeof(WCHAR) + 1))
 				);
 			}
 #			else

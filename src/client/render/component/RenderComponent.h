@@ -22,7 +22,7 @@ class RenderComponent : public IRenderableComponent, public Component
 
 public:
 	RenderComponent() = default;
-	~RenderComponent() = default;
+	~RenderComponent() override = default;
 
 	RenderComponent(const RenderComponent& other) = delete;
 	RenderComponent(RenderComponent&& other) = delete;
@@ -48,7 +48,7 @@ protected:
 	EventHandle m_handle_image_change;
 	std::weak_ptr<SceneObject> m_owner;
 	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
+	//std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
 	sf::Sprite m_sprite;
 };
 

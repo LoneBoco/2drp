@@ -27,7 +27,7 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
 	m_textures.clear();
-	m_sounds.clear();
+	//m_sounds.clear();
 
 	if (auto so = m_owner.lock())
 	{

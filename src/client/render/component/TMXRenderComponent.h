@@ -24,7 +24,7 @@ class TMXRenderComponent : public IRenderableComponent, public Component
 
 public:
 	TMXRenderComponent() = default;
-	~TMXRenderComponent() = default;
+	~TMXRenderComponent() override = default;
 
 	TMXRenderComponent(const TMXRenderComponent& other) = delete;
 	TMXRenderComponent(TMXRenderComponent&& other) = delete;

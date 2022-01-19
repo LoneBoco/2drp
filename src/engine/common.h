@@ -17,6 +17,7 @@
 #include <map>
 #include <functional>
 #include <algorithm>
+#include <numeric>
 #include <atomic>
 #include <chrono>
 //#include <ranges>
