@@ -66,11 +66,11 @@ bool ProgramSettings::GetAs<bool>(const std::string& setting, const bool def) co
 	std::string lowervalue{ i->second };
 	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
-	if (lower == "on")
+	if (lowervalue == "on")
 		return true;
-	if (lower == "true")
+	if (lowervalue == "true")
 		return true;
-	if (lower == "yes")
+	if (lowervalue == "yes")
 		return true;
 
 	return false;

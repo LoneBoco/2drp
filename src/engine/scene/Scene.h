@@ -48,6 +48,7 @@ public:
 	std::shared_ptr<SceneObject> FindObject(const std::string& name) const;
 
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
+	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRectangle(const Recti& rectangle);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRectangle(const Rectf& rectangle);
 

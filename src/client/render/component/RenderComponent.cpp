@@ -20,6 +20,7 @@ void RenderComponent::Initialize(ComponentEntity& owner)
 
 		// Bind our provider.
 		owner.RegisterProvider("Size", std::bind(&RenderComponent::provide_size, this));
+		owner.RegisterProvider("BoundingBox", std::bind(&RenderComponent::provide_boundingbox, this));
 	}
 }
 
@@ -111,6 +112,18 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 				return;
 			}
 		}
+
+		if (Settings->GetAs<bool>("Debug.drawstaticbbox") && so->GetType() == SceneObjectType::STATIC)
+		{
+			sf::RectangleShape shape;
+			auto bbox = GetBoundingBox();
+			shape.setFillColor(sf::Color::Transparent);
+			shape.setOutlineColor(sf::Color::Red);
+			shape.setOutlineThickness(1.0f);
+			shape.setPosition({ bbox.pos.x, bbox.pos.y });
+			shape.setSize({ bbox.size.x, bbox.size.y });
+			window.draw(shape);
+		}
 	}
 }
 
@@ -147,6 +160,12 @@ std::any RenderComponent::provide_size()
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Vector2df>(box.size);
+}
+
+std::any RenderComponent::provide_boundingbox()
+{
+	auto box = GetBoundingBox();
+	return std::make_any<Rectf>(box);
 }
 
 } // end namespace tdrp::render::component

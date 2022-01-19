@@ -25,6 +25,7 @@ void AnimationRenderComponent::Initialize(ComponentEntity& owner)
 
 		// Bind our provider.
 		owner.RegisterProvider("Size", std::bind(&AnimationRenderComponent::provide_size, this));
+		owner.RegisterProvider("BoundingBox", std::bind(&AnimationRenderComponent::provide_boundingbox, this));
 		owner.RegisterProvider("Animation", std::bind(&AnimationRenderComponent::provide_animation, this));
 	}
 }
@@ -72,6 +73,11 @@ Rectf AnimationRenderComponent::GetBoundingBox() const
 		if (!animated_so || !m_animation)
 			return Rectf{ pos.x, pos.y, 0.0f, 0.0f };
 
+		auto bbox = m_animation->GetBoundingBox();
+		bbox.pos += pos;
+		return bbox;
+
+		/*
 		auto scale = so->GetScale();
 		auto size = m_animation->GetSize();
 		if (size.has_value())
@@ -87,6 +93,7 @@ Rectf AnimationRenderComponent::GetBoundingBox() const
 				return Rectf{ pos.x, pos.y, static_cast<float>(s.x) * scale.x, static_cast<float>(s.y) * scale.y };
 			}
 		}
+		*/
 	}
 
 	return Rectf{ 0.0f };
@@ -101,6 +108,18 @@ void AnimationRenderComponent::Render(sf::RenderTarget& window, std::chrono::mil
 
 		if (m_animation)
 			m_animation->Render(window, elapsed);
+
+		if (Settings->GetAs<bool>("Debug.drawanimatedbbox"))
+		{
+			sf::RectangleShape shape;
+			auto bbox = GetBoundingBox();
+			shape.setFillColor(sf::Color::Transparent);
+			shape.setOutlineColor(sf::Color::Red);
+			shape.setOutlineThickness(1.0f);
+			shape.setPosition({ bbox.pos.x, bbox.pos.y });
+			shape.setSize({ bbox.size.x, bbox.size.y });
+			window.draw(shape);
+		}
 	}
 }
 
@@ -232,6 +251,12 @@ std::any AnimationRenderComponent::provide_size()
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Vector2df>(box.size);
+}
+
+std::any AnimationRenderComponent::provide_boundingbox()
+{
+	auto box = GetBoundingBox();
+	return std::make_any<Rectf>(box);
 }
 
 std::any AnimationRenderComponent::provide_animation()

@@ -280,7 +280,8 @@ std::string GaniAnimation::convert_from_attribute(const std::string& attribute) 
 
 void GaniAnimation::recalculate_bounding_box()
 {
-	Rectf bounding_box;
+	Vector2df topleft = { 0.0f, 0.0f };
+	Vector2df bottomright = { 0.0f, 0.0f };
 
 	auto so = m_owner.lock();
 	auto anim = m_animation.lock();
@@ -300,21 +301,21 @@ void GaniAnimation::recalculate_bounding_box()
 
 				const auto& sp = it->second;
 
-				if (sprite.X < bounding_box.pos.x)
-					bounding_box.pos.x = static_cast<float>(sprite.X);
-				if (sprite.Y < bounding_box.pos.y)
-					bounding_box.pos.y = static_cast<float>(sprite.Y);
+				if (sprite.X < topleft.x)
+					topleft.x = static_cast<float>(sprite.X);
+				if (sprite.Y < topleft.y)
+					topleft.y = static_cast<float>(sprite.Y);
 
 				const auto& sp_box = sp.getGlobalBounds();
-				if (sprite.X + sp_box.width > bounding_box.size.x)
-					bounding_box.size.x = sprite.X + sp_box.width;
-				if (sprite.Y + sp_box.height > bounding_box.size.y)
-					bounding_box.size.y = sprite.Y + sp_box.height;
+				if (sprite.X + sp_box.width > bottomright.x)
+					bottomright.x = sprite.X + sp_box.width;
+				if (sprite.Y + sp_box.height > bottomright.y)
+					bottomright.y = sprite.Y + sp_box.height;
 			}
 		}
 	}
 
-	m_cached_bounding_box = std::move(bounding_box);
+	m_cached_bounding_box = Rectf{ topleft.x, topleft.y, bottomright.x - topleft.x, bottomright.y - topleft.y };
 	return;
 }
 

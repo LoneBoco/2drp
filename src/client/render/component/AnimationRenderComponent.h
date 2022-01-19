@@ -10,6 +10,7 @@
 #include "engine/events/Events.h"
 #include "engine/resources/Resource.h"
 #include "engine/scene/SceneObject.h"
+#include "engine/filesystem/ProgramSettings.h"
 
 #include "client/render/component/Renderable.h"
 #include "client/render/component/Animation/IAnimationSystem.h"
@@ -47,7 +48,11 @@ protected:
 	void property_update_animation(const uint16_t attribute_id);
 	void attributes_update(const uint16_t attribute_id);
 	std::any provide_size();
+	std::any provide_boundingbox();
 	std::any provide_animation();
+
+protected:
+	INJECT(settings::ProgramSettings, Settings);
 
 protected:
 	EventHandle m_handle_image;

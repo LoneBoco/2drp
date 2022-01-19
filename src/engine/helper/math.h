@@ -93,6 +93,29 @@ inline bool containsOrIntersects(const mathfu::Rect<T>& check, const mathfu::Rec
 		;
 }
 
+template <typename T>
+inline bool containsOrIntersects(const mathfu::Rect<T>& check, const mathfu::Vector<T, 2>& against_circle_origin, float against_circle_radius)
+{
+	mathfu::Vector<T, 2> center_rect{ check.pos.x + (check.size.x / 2), check.pos.y + (check.size.y / 2) };
+	
+	mathfu::Vector<float, 2> circle_distance;
+	circle_distance.x = std::abs(against_circle_origin.x - center_rect.x);
+	circle_distance.y = std::abs(against_circle_origin.y - center_rect.y);
+
+	if (circle_distance.x > (check.size.x / 2 + against_circle_radius))
+		return false;
+	if (circle_distance.y > (check.size.y / 2 + against_circle_radius))
+		return false;
+
+	if (circle_distance.x <= (check.size.x / 2))
+		return true;
+	if (circle_distance.y <= (check.size.y / 2))
+		return true;
+
+	float circle_distance_sq = std::pow(circle_distance.x - check.size.x / 2, 2) + std::pow(circle_distance.y - check.size.y / 2, 2);
+	return (circle_distance_sq <= std::pow(against_circle_radius, 2));
+}
+
 } // end namespace tdrp::math
 
 namespace tdrp

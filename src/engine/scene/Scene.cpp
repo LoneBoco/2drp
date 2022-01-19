@@ -55,6 +55,19 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vect
 	return result;
 }
 
+std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRangeOf(const Vector2df& position, float radius)
+{
+	std::vector<std::shared_ptr<SceneObject>> result;
+
+	for (auto p : m_graph)
+	{
+		if (math::containsOrIntersects(p.second->GetBounds(), position, radius))
+			result.push_back(p.second);
+	}
+
+	return result;
+}
+
 std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Recti& rectangle)
 {
 	std::vector<std::shared_ptr<SceneObject>> result;

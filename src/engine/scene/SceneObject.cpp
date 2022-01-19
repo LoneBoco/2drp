@@ -334,6 +334,13 @@ void SceneObject::SetAnimation(const std::string& image)
 
 Rectf SceneObject::GetBounds() const
 {
+	auto bbox = this->RetrieveFromProvider("BoundingBox");
+	if (bbox.has_value() && bbox.type() == typeid(Rectf))
+	{
+		auto r = std::any_cast<Rectf>(bbox);
+		return r;
+	}
+
 	auto size = this->RetrieveFromProvider("Size");
 	if (size.has_value() && size.type() == typeid(Vector2df))
 	{

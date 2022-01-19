@@ -534,7 +534,7 @@ int Server::SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<Scene
 	*/
 
 	// Run events on all objects in range.
-	auto targets = scene->FindObjectsInRangeOf(origin, radius);
+	auto targets = scene->FindObjectsBoundInRangeOf(origin, radius);
 	for (const auto& target : targets)
 		target->OnEvent.RunAll<SceneObject>(sender, name, data, origin, radius);
 

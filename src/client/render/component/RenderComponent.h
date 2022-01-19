@@ -12,6 +12,7 @@
 #include "engine/events/Events.h"
 #include "engine/resources/Resource.h"
 #include "engine/scene/SceneObject.h"
+#include "engine/filesystem/ProgramSettings.h"
 
 namespace tdrp::render::component
 {
@@ -43,6 +44,10 @@ protected:
 	void load_image(const std::string& image);
 	void image_property_update(uint16_t attribute_id);
 	std::any provide_size();
+	std::any provide_boundingbox();
+
+protected:
+	INJECT(settings::ProgramSettings, Settings);
 
 protected:
 	EventHandle m_handle_image_change;
