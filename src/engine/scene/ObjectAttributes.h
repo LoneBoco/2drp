@@ -176,25 +176,12 @@ public:
 	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const std::string& value, uint16_t id = INVALID_ATTRIBUTE);
 	std::weak_ptr<Attribute> AddAttribute(const std::string& name, const AttributeType type, const std::string& value, uint16_t id = INVALID_ATTRIBUTE);
 
-	//! Returns an attribute.
-	//! \param name The name of the attribute to get.
-	//! \return A pointer to the attribute structure, or nullptr if the attribute was not found.
 	std::shared_ptr<Attribute> Get(const std::string& name);
-
-	//! Returns an attribute.
-	//! \param id The id number of the attribute to get.
-	//! \return A pointer to the attribute structure, or nullptr if the attribute was not found.
 	std::shared_ptr<Attribute> Get(const uint16_t id);
-
-	//! Returns an attribute.
-	//! \param name The name of the attribute to get.
-	//! \return A pointer to the attribute structure, or nullptr if the attribute was not found.
 	std::shared_ptr<const Attribute> Get(const std::string& name) const;
-
-	//! Returns an attribute.
-	//! \param id The id number of the attribute to get.
-	//! \return A pointer to the attribute structure, or nullptr if the attribute was not found.
 	std::shared_ptr<const Attribute> Get(const uint16_t id) const;
+
+	std::shared_ptr<Attribute> GetOrCreate(const std::string& name);
 
 	//! Returns the attribute map.
 	//! \return The attribute map.

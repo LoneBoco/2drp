@@ -50,7 +50,12 @@ void bind_attributes(sol::state& lua)
 
 	lua.new_usertype<Attribute>("Attribute", sol::no_constructor,
 		"ID", sol::readonly_property(&Attribute::GetId),
-		"Type", sol::readonly_property(&Attribute::GetType)
+		"Type", sol::readonly_property(&Attribute::GetType),
+		"AsString", &Attribute::GetString,
+		"AsSigned", &Attribute::GetSigned,
+		"AsUnsigned", &Attribute::GetUnsigned,
+		"AsFloat", &Attribute::GetFloat,
+		"AsDouble", &Attribute::GetDouble
 	);
 
 	lua.new_usertype<ObjectAttributes>("ObjectAttributes", sol::no_constructor,
@@ -66,12 +71,12 @@ void bind_attributes(sol::state& lua)
 		),
 
 		sol::meta_function::new_index, sol::overload(
-			[](ObjectAttributes& attributes, uint16_t id, int64_t value) { attributes.Get(id)->Set(value); },
-			[](ObjectAttributes& attributes, uint16_t id, double value) { attributes.Get(id)->Set(value); },
-			[](ObjectAttributes& attributes, uint16_t id, const std::string& value) { attributes.Get(id)->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, int64_t value) { attributes.Get(name)->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, double value) { attributes.Get(name)->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, const std::string& value) { attributes.Get(name)->Set(value); }
+			[](ObjectAttributes& attributes, uint16_t id, int64_t value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
+			[](ObjectAttributes& attributes, uint16_t id, double value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
+			[](ObjectAttributes& attributes, uint16_t id, const std::string& value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
+			[](ObjectAttributes& attributes, const std::string& name, int64_t value) { attributes.GetOrCreate(name)->Set(value); },
+			[](ObjectAttributes& attributes, const std::string& name, double value) { attributes.GetOrCreate(name)->Set(value); },
+			[](ObjectAttributes& attributes, const std::string& name, const std::string& value) { attributes.GetOrCreate(name)->Set(value); }
 		)
 	);
 
@@ -79,12 +84,12 @@ void bind_attributes(sol::state& lua)
 		sol::meta_function::index, [](ObjectProperties& properties, Property prop) -> std::shared_ptr<Attribute> { return properties.Get(prop); },
 
 		sol::meta_function::new_index, sol::overload(
-			[](ObjectProperties& properties, Property prop, int64_t value) { properties.Get(prop)->Set(value); },
-			[](ObjectProperties& properties, Property prop, double value) { properties.Get(prop)->Set(value); },
-			[](ObjectProperties& properties, Property prop, const std::string& value) { properties.Get(prop)->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, int64_t value) { properties.Get(name)->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, double value) { properties.Get(name)->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, const std::string& value) { properties.Get(name)->Set(value); }
+			[](ObjectProperties& properties, Property prop, int64_t value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
+			[](ObjectProperties& properties, Property prop, double value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
+			[](ObjectProperties& properties, Property prop, const std::string& value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
+			[](ObjectProperties& properties, const std::string& name, int64_t value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); },
+			[](ObjectProperties& properties, const std::string& name, double value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); },
+			[](ObjectProperties& properties, const std::string& name, const std::string& value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); }
 		)
 	);
 }

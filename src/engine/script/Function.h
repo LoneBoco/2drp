@@ -52,7 +52,11 @@ public:
 			env["MODULENAME"] = entry->first;
 
 			auto result = entry->second.call(std::forward<Args>(args)...);
-			script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+			if (!result.valid())
+			{
+				std::cout << "[MODULE " << entry->first << "]";
+				script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+			}
 		}
 	}
 
@@ -68,7 +72,11 @@ public:
 				me.LuaEnvironment["Me"] = &me;
 
 				auto result = entry->second.call(std::forward<Args>(args)...);
-				script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+				if (!result.valid())
+				{
+					std::cout << "[MODULE " << module_name << "]";
+					script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+				}
 			}
 			else
 			{
@@ -77,8 +85,12 @@ public:
 				s["Me"] = &me;
 
 				auto result = entry->second.call(std::forward<Args>(args)...);
-				script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
-
+				if (!result.valid())
+				{
+					std::cout << "[MODULE " << module_name << "]";
+					script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
+				}
+					
 				s["Me"] = nullptr;
 			}
 		}
@@ -93,7 +105,11 @@ public:
 			env["MODULENAME"] = entry.first;
 
 			auto result = entry.second.call(std::forward<Args>(args)...);
-			script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+			if (!result.valid())
+			{
+				std::cout << "[MODULE " << entry.first << "]";
+				script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+			}
 		}
 	}
 
@@ -108,7 +124,11 @@ public:
 				me.LuaEnvironment["Me"] = &me;
 
 				auto result = entry.second.call(std::forward<Args>(args)...);
-				script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+				if (!result.valid())
+				{
+					std::cout << "[MODULE " << entry.first << "]";
+					script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+				}
 			}
 			else
 			{
@@ -117,7 +137,11 @@ public:
 				s["Me"] = &me;
 
 				auto result = entry.second.call(std::forward<Args>(args)...);
-				script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+				if (!result.valid())
+				{
+					std::cout << "[MODULE " << entry.first << "]";
+					script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
+				}
 
 				s["Me"] = nullptr;
 			}

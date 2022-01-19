@@ -138,6 +138,7 @@ void GaniAnimation::Render(sf::RenderTarget& window, std::chrono::milliseconds e
 				++m_current_frame;
 				if (m_current_frame >= anim->Frames.size())
 				{
+					so->OnAnimationEnd.RunAll<SceneObject>(m_current_animation);
 					if (!anim->IsLooped || !anim->Setbackto.empty())
 					{
 						m_animation_stopped = true;
@@ -230,6 +231,13 @@ void GaniAnimation::UpdateAnimation(const std::string& animation)
 	else
 	{
 		Load(animation);
+
+		// If our animation failed to load, at least call OnAnimationEnd in case we have a way to fix this issue.
+		if (m_animation.expired())
+		{
+			if (auto so = m_owner.lock())
+				so->OnAnimationEnd.RunAll<SceneObject>(so, "");
+		}
 	}
 }
 

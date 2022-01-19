@@ -26,6 +26,7 @@ void bind_sceneobject(sol::state& lua)
 
 	lua.new_usertype<SceneObject>("SceneObject", sol::no_constructor,
 		"ID", &SceneObject::ID,
+		"Type", sol::readonly_property(&SceneObject::GetType),
 
 		"Position", sol::property(&SceneObject::GetPosition, &SceneObject::SetPosition),
 		"Layer", sol::property(&SceneObject::GetDepth, &SceneObject::SetDepth),
@@ -46,7 +47,8 @@ void bind_sceneobject(sol::state& lua)
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
 		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent),
 		"OnPlayerGainedControl", sol::writeonly_property(&SceneObject::SetOnPlayerGainedControl),
-		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision)
+		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision),
+		"OnAnimationEnd", sol::writeonly_property(&SceneObject::SetOnAnimationEnd)
 	);
 }
 

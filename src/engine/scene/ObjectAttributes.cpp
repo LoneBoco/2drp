@@ -492,6 +492,11 @@ std::shared_ptr<const Attribute> ObjectAttributes::Get(const uint16_t id) const
 	return i->second;
 }
 
+std::shared_ptr<Attribute> ObjectAttributes::GetOrCreate(const std::string& name)
+{
+	return getOrCreateAttribute(name, INVALID_ATTRIBUTE);
+}
+
 ////////////////////////////
 
 void ObjectAttributes::ClearDirty()
@@ -511,7 +516,7 @@ void ObjectAttributes::ClearDirty()
 
 void ObjectAttributes::assignId(const uint16_t id, Attribute& prop)
 {
-	if (id != 0xFFFF)
+	if (id != INVALID_ATTRIBUTE)
 		prop.SetId(id);
 	else
 	{
