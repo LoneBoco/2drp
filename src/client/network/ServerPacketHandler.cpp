@@ -32,6 +32,7 @@ void handle(Game& game, const packet::SSceneObjectNew& packet);
 void handle(Game& game, const packet::SSceneObjectChange& packet);
 void handle(Game& game, const packet::SSceneObjectDelete& packet);
 void handle(Game& game, const packet::SSceneObjectControl& packet);
+void handle(Game& game, const packet::SSendEvent& packet);
 
 /////////////////////////////
 
@@ -79,6 +80,9 @@ void network_receive(Game& game, const uint16_t id, const uint16_t packet_id, co
 			break;
 		case ServerPackets::SCENEOBJECTCONTROL:
 			handle(game, construct<packet::SSceneObjectControl>(packet_data, packet_length));
+			break;
+		case ServerPackets::SENDEVENT:
+			handle(game, construct<packet::SSendEvent>(packet_data, packet_length));
 			break;
 	}
 }
@@ -485,6 +489,35 @@ void handle(Game& game, const packet::SSceneObjectControl& packet)
 
 	game.OnControlledActorChange.RunAll<Game>(old_so, new_so);
 	new_so->SetControllingPlayer(game.Player);
+}
+
+void handle(Game& game, const packet::SSendEvent& packet)
+{
+	const auto sender = packet.sender();
+	const auto name = packet.name();
+	const auto data = packet.data();
+	const auto x = packet.x();
+	const auto y = packet.y();
+	const auto radius = packet.radius();
+
+	if (auto scene = game.Player->GetCurrentScene().lock())
+	{
+		auto sender_so = game.Server.GetSceneObjectById(sender);
+		Vector2df origin{ x, y };
+
+		// Run events on all objects in range.
+		auto targets = scene->FindObjectsBoundInRangeOf(origin, radius);
+		for (const auto& target : targets)
+			target->OnEvent.RunAll<SceneObject>(sender_so, name, data, origin, radius);
+
+		// Draw event.
+		/*
+		sf::CircleShape circle{ radius * 20 };
+		circle.setFillColor(sf::Color::Red);
+		circle.setPosition({ x, y });
+		game.GetRenderWindow()->draw(circle);
+		*/
+	}
 }
 
 } // end namespace tdrp::handlers

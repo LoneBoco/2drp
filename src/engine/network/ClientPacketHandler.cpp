@@ -198,13 +198,17 @@ void handle(Server* server, std::shared_ptr<Player> player, const packet::CSendE
 
 		Vector2df position{ x, y };
 
+		std::cout << "Received event " << name << " from sender " << sender << " at (" << x << ", " << y << "): " << radius << " with data: " << data << std::endl;
+
 		// Determine objects within the event and handle script.
 		auto hits = scene->FindObjectsInRangeOf(position, radius);
-		for (auto p : hits)
+		for (auto& p : hits)
 		{
+			std::cout << "- hit " << p->ID << std::endl;
+
 			// Handle the event script.
-			auto so = server->GetSceneObjectById(sender);
-			p->OnEvent.RunAll<SceneObject>(so, name, data, position, radius);
+			auto sender_so = server->GetSceneObjectById(sender);
+			p->OnEvent.RunAll<SceneObject>(sender_so, name, data, position, radius);
 		}
 
 		tdrp::packet::SSendEvent message;
