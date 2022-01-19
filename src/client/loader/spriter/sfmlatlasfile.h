@@ -17,7 +17,7 @@ public:
 	bool loaded() {return m_loaded;}
 
 private:
-	sf::Texture texture;
+	std::weak_ptr<sf::Texture> texture;
 
 	void initializeFile();
 

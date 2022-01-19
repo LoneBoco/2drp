@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <memory>
+
 #include <spriterengine/override/soundfile.h>
 
 #include "SFML/Audio.hpp"
@@ -15,7 +17,7 @@ public:
 	SpriterEngine::SoundObjectInfoReference * newSoundInfoReference();
 
 private:
-	sf::SoundBuffer buffer;
+	std::shared_ptr<sf::SoundBuffer> buffer;
 
 	void initializeFile();
 };

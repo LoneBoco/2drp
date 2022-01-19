@@ -5,6 +5,13 @@
 
 #include "client/loader/spriter/sfmlatlasfile.h"
 
+#include "client/game/Game.h"
+#include "client/render/resource/SFMListream.h"
+
+#include "engine/common.h"
+#include "engine/resources/Resource.h"
+#include "engine/filesystem/File.h"
+
 namespace tdrp::loader::spriter
 {
 
@@ -17,15 +24,53 @@ SfmlImageFile::SfmlImageFile(std::string initialFilePath, SpriterEngine::point i
 
 void SfmlImageFile::initializeFile()
 {
-	if (texture.loadFromFile(path()))
+	auto game = BabyDI::Get<tdrp::Game>();
+	auto resources = BabyDI::Get<tdrp::ResourceManager>();
+
+	/*
+	auto ps = path();
+	auto atlasfile = ps.find('$');
+
+	// If this is an atlas file, pull off the index.
+	// The index is just to keep the image separated in the Spriter system.
+	filesystem::path imagepath;
+	if (atlasfile == std::string::npos)
+		imagepath = ps;
+	else imagepath = ps.substr(0, atlasfile);
+	*/
+
+	filesystem::path imagepath{ path() };
+
+	// Set the texture.
+	auto filename = imagepath.filename();
+	auto id = resources->FindId<sf::Texture>(filename.string());
+	if (id == 0)
 	{
-		// texture.setSmooth(true);
-		sprite.setTexture(texture);
+		auto base = game->Server.GetPackage()->GetBasePath();
+		auto file = game->Server.FileSystem.GetFile(base / imagepath);
+		if (file == nullptr)
+			file = game->Server.FileSystem.GetFile(filename);
+
+		if (file)
+		{
+			auto texture = std::make_shared<sf::Texture>();
+
+			render::SFMListream stream(*file);
+			texture->loadFromStream(stream);
+
+			id = resources->Add(filename.string(), std::move(texture));
+		}
 	}
-	else
+	if (id == 0)
 	{
 		SpriterEngine::Settings::Settings::error("SfmlImageFile::initializeFile - sfml texture unable to load file from path \"" + path() + "\"");
+		return;
 	}
+
+	auto handle = resources->Get<sf::Texture>(id);
+	if (auto h = handle.lock())
+		sprite.setTexture(*h);
+	else SpriterEngine::Settings::Settings::error("SfmlImageFile::initializeFile - texture handle could not be locked");
 }
 
 void SfmlImageFile::renderSprite(SpriterEngine::UniversalObjectInterface * spriteInfo)
