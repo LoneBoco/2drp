@@ -5,7 +5,7 @@
 
 #include "SFML/System/InputStream.hpp"
 
-namespace tdrp::render
+namespace tdrp::loader
 {
 
 class SFMListream : public sf::InputStream
@@ -24,8 +24,9 @@ public:
 
 	sf::Int64 seek(sf::Int64 position) override
 	{
-		m_stream->seekg(position, m_stream->beg);
-		return m_stream->gcount();
+		m_stream->clear();
+		m_stream->seekg(position);
+		return m_stream->tellg();
 	}
 
 	sf::Int64 tell() override
@@ -40,7 +41,7 @@ public:
 		m_stream->seekg(0, m_stream->end);
 		auto end_pos = static_cast<sf::Int64>(m_stream->tellg());
 
-		m_stream->seekg(current_pos, m_stream->beg);
+		m_stream->seekg(current_pos);
 		return end_pos;
 	}
 
@@ -48,4 +49,4 @@ protected:
 	std::istream* m_stream;
 };
 
-} // end namespace tdrp::render
+} // end namespace tdrp::loader

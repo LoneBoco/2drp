@@ -16,11 +16,13 @@ namespace tdrp
 bool keydown(int key);
 bool keyup(int key);
 void log(const char* message);
+// void playSound(const std::string& sound);
+// void playSound(const std::string& sound, const Vector2df& position);
 
-void bind_game(sol::state& lua)
+void bind_globals(sol::state& lua)
 {
     // Bind keyboard keys.
-	lua.new_enum<sf::Keyboard::Key>("Key", {
+    lua.new_enum<sf::Keyboard::Key>("Key", {
           { "Unknown", sf::Keyboard::Unknown }
         , { "A", sf::Keyboard::A }
         , { "B", sf::Keyboard::B }
@@ -138,6 +140,33 @@ void bind_game(sol::state& lua)
         , { "XButton2", sf::Mouse::XButton2 }
     });
 
+    /*
+    lua.set_function("playSound", sol::overload(
+        sol::resolve<void(const std::string&)>(playSound),
+        sol::resolve<void(const std::string&, const Vector2df&)>(playSound)
+    ));
+    */
+}
+
+void bind_camera(sol::state& lua)
+{
+    lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,
+        "Position", sol::property(&camera::Camera::GetPosition, &camera::Camera::LookAt),
+        "LerpTo", [&](camera::Camera& camera, const Vector2di& position, uint32_t ms) { camera.LerpTo(position, std::chrono::milliseconds(ms)); },
+        "FollowSceneObject", sol::overload(
+            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject) { camera.FollowSceneObject(sceneobject); },
+            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject, uint32_t ms) { camera.FollowSceneObject(sceneobject, std::chrono::milliseconds(ms)); }
+        ),
+        "FollowOffset", sol::property(&camera::Camera::GetFollowOffset, &camera::Camera::SetFollowOffset),
+        "Size", sol::property(&camera::Camera::GetSize, &camera::Camera::SetSize),
+        "SizeToWindow", &camera::Camera::SizeToWindow,
+        "ViewRect", sol::readonly_property(&camera::Camera::GetViewRect),
+        "IsSizedToWindow", &camera::Camera::IsSizedToWindow
+    );
+}
+
+void bind_game(sol::state& lua)
+{
     lua.new_usertype<Game>("Game", sol::no_constructor,
         "log", &log,
         "keydown", &keydown,
@@ -157,19 +186,6 @@ void bind_game(sol::state& lua)
         "OnMouseUp", sol::writeonly_property(&Game::SetOnMouseUp),
         "OnControlledActorChange", sol::writeonly_property(&Game::SetOnControlledActorChange),
         "OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
-    );
-
-    lua.new_usertype<camera::Camera>("Camera", sol::no_constructor,
-        "Position", sol::property(&camera::Camera::GetPosition, &camera::Camera::LookAt),
-        "LerpTo", [&](camera::Camera& camera, const Vector2di& position, uint32_t ms) { camera.LerpTo(position, std::chrono::milliseconds(ms)); },
-        "FollowSceneObject", sol::overload(
-            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject) { camera.FollowSceneObject(sceneobject); },
-            [&](camera::Camera& camera, std::shared_ptr<SceneObject>& sceneobject, uint32_t ms) { camera.FollowSceneObject(sceneobject, std::chrono::milliseconds(ms)); }
-        ),
-        "Size", sol::property(&camera::Camera::GetSize, &camera::Camera::SetSize),
-        "SizeToWindow", &camera::Camera::SizeToWindow,
-        "ViewRect", sol::readonly_property(&camera::Camera::GetViewRect),
-        "IsSizedToWindow", &camera::Camera::IsSizedToWindow
     );
 }
 
@@ -191,5 +207,17 @@ void log(const char* message)
 {
     std::cout << ":: [SCRIPT] " << message << std::endl;
 }
+
+/*
+void playSound(const std::string& sound)
+{
+
+}
+
+void playSound(const std::string& sound, const Vector2df& position)
+{
+
+}
+*/
 
 } // end namespace tdrp

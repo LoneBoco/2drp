@@ -56,6 +56,9 @@ Attribute& Attribute::Set(const int64_t value)
 	m_value_int.s = value;
 	m_type = AttributeType::SIGNED;
 
+	//if (m_isDirty)
+	//	UpdateDispatch.Post(m_id);
+
 	return *this;
 }
 
@@ -68,8 +71,8 @@ Attribute& Attribute::Set(const uint64_t value)
 	m_value_int.u = value;
 	m_type = AttributeType::UNSIGNED;
 
-	if (m_isDirty)
-		UpdateDispatch.Post(m_id);
+	//if (m_isDirty)
+	//	UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -83,8 +86,8 @@ Attribute& Attribute::Set(const float value)
 	m_value_float = value;
 	m_type = AttributeType::FLOAT;
 
-	if (m_isDirty)
-		UpdateDispatch.Post(m_id);
+	//if (m_isDirty)
+	//	UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -98,8 +101,8 @@ Attribute& Attribute::Set(const double value)
 	m_value_double = value;
 	m_type = AttributeType::DOUBLE;
 
-	if (m_isDirty)
-		UpdateDispatch.Post(m_id);
+	//if (m_isDirty)
+	//	UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -112,8 +115,8 @@ Attribute& Attribute::Set(const std::string& value)
 	m_value_string = value;
 	m_type = AttributeType::STRING;
 
-	if (m_isDirty)
-		UpdateDispatch.Post(m_id);
+	//if (m_isDirty)
+	//	UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -183,21 +186,21 @@ int64_t Attribute::GetSigned() const
 {
 	switch (m_type)
 	{
-	case AttributeType::SIGNED:
-		return m_value_int.s;
-	case AttributeType::UNSIGNED:
-		return static_cast<int64_t>(m_value_int.u);
-	case AttributeType::FLOAT:
-		return static_cast<int64_t>(m_value_float);
-	case AttributeType::DOUBLE:
-		return static_cast<int64_t>(m_value_double);
-	case AttributeType::STRING:
-	{
-		std::istringstream str(m_value_string);
-		int64_t r;
-		str >> r;
-		return r;
-	}
+		case AttributeType::SIGNED:
+			return m_value_int.s;
+		case AttributeType::UNSIGNED:
+			return static_cast<int64_t>(m_value_int.u);
+		case AttributeType::FLOAT:
+			return static_cast<int64_t>(m_value_float);
+		case AttributeType::DOUBLE:
+			return static_cast<int64_t>(m_value_double);
+		case AttributeType::STRING:
+		{
+			std::istringstream str(m_value_string);
+			int64_t r;
+			str >> r;
+			return r;
+		}
 	}
 	return 0;
 }
@@ -206,21 +209,21 @@ uint64_t Attribute::GetUnsigned() const
 {
 	switch (m_type)
 	{
-	case AttributeType::SIGNED:
-		return static_cast<uint64_t>(m_value_int.s);
-	case AttributeType::UNSIGNED:
-		return m_value_int.u;
-	case AttributeType::FLOAT:
-		return static_cast<uint64_t>(m_value_float);
-	case AttributeType::DOUBLE:
-		return static_cast<uint64_t>(m_value_double);
-	case AttributeType::STRING:
-	{
-		std::istringstream str(m_value_string);
-		uint64_t r;
-		str >> r;
-		return r;
-	}
+		case AttributeType::SIGNED:
+			return static_cast<uint64_t>(m_value_int.s);
+		case AttributeType::UNSIGNED:
+			return m_value_int.u;
+		case AttributeType::FLOAT:
+			return static_cast<uint64_t>(m_value_float);
+		case AttributeType::DOUBLE:
+			return static_cast<uint64_t>(m_value_double);
+		case AttributeType::STRING:
+		{
+			std::istringstream str(m_value_string);
+			uint64_t r;
+			str >> r;
+			return r;
+		}
 	}
 	return 0;
 }
@@ -229,21 +232,21 @@ float Attribute::GetFloat() const
 {
 	switch (m_type)
 	{
-	case AttributeType::SIGNED:
-		return static_cast<float>(m_value_int.s);
-	case AttributeType::UNSIGNED:
-		return static_cast<float>(m_value_int.u);
-	case AttributeType::FLOAT:
-		return m_value_float;
-	case AttributeType::DOUBLE:
-		return static_cast<float>(m_value_double);
-	case AttributeType::STRING:
-	{
-		std::istringstream str(m_value_string);
-		float r;
-		str >> r;
-		return r;
-	}
+		case AttributeType::SIGNED:
+			return static_cast<float>(m_value_int.s);
+		case AttributeType::UNSIGNED:
+			return static_cast<float>(m_value_int.u);
+		case AttributeType::FLOAT:
+			return m_value_float;
+		case AttributeType::DOUBLE:
+			return static_cast<float>(m_value_double);
+		case AttributeType::STRING:
+		{
+			std::istringstream str(m_value_string);
+			float r;
+			str >> r;
+			return r;
+		}
 	}
 	return 0;
 }
@@ -252,21 +255,21 @@ double Attribute::GetDouble() const
 {
 	switch (m_type)
 	{
-	case AttributeType::SIGNED:
-		return static_cast<double>(m_value_int.s);
-	case AttributeType::UNSIGNED:
-		return static_cast<double>(m_value_int.u);
-	case AttributeType::FLOAT:
-		return static_cast<double>(m_value_float);
-	case AttributeType::DOUBLE:
-		return m_value_double;
-	case AttributeType::STRING:
-	{
-		std::istringstream str(m_value_string);
-		double r;
-		str >> r;
-		return r;
-	}
+		case AttributeType::SIGNED:
+			return static_cast<double>(m_value_int.s);
+		case AttributeType::UNSIGNED:
+			return static_cast<double>(m_value_int.u);
+		case AttributeType::FLOAT:
+			return static_cast<double>(m_value_float);
+		case AttributeType::DOUBLE:
+			return m_value_double;
+		case AttributeType::STRING:
+		{
+			std::istringstream str(m_value_string);
+			double r;
+			str >> r;
+			return r;
+		}
 	}
 	return 0;
 }
@@ -276,20 +279,20 @@ std::string Attribute::GetString() const
 	std::stringstream str;
 	switch (m_type)
 	{
-	case AttributeType::SIGNED:
-		str << m_value_int.s;
-		break;
-	case AttributeType::UNSIGNED:
-		str << m_value_int.u;
-		break;
-	case AttributeType::FLOAT:
-		str << m_value_float;
-		break;
-	case AttributeType::DOUBLE:
-		str << m_value_double;
-		break;
-	case AttributeType::STRING:
-		return m_value_string;
+		case AttributeType::SIGNED:
+			str << m_value_int.s;
+			break;
+		case AttributeType::UNSIGNED:
+			str << m_value_int.u;
+			break;
+		case AttributeType::FLOAT:
+			str << m_value_float;
+			break;
+		case AttributeType::DOUBLE:
+			str << m_value_double;
+			break;
+		case AttributeType::STRING:
+			return m_value_string;
 	}
 	return str.str();
 }

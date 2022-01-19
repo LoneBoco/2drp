@@ -7,6 +7,8 @@
 namespace tdrp
 {
 
+void bind_globals(sol::state& lua);
+void bind_camera(sol::state& lua);
 void bind_game(sol::state& lua);
 
 } // end namespace tdrp

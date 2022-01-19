@@ -42,7 +42,9 @@ Game::Game()
 void Game::Initialize()
 {
 	// Bind game script classes.
+	bind_globals(Script.GetLuaState());
 	bind_game(Script.GetLuaState());
+	bind_camera(Script.GetLuaState());
 
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	if (settings->Exists("game.starthosting"))
@@ -122,7 +124,18 @@ void Game::Update()
 	// Update the server last so attributes are sent after all scripts are done.
 	Server.Update(GetTick());
 
+	// Update camera after everything has been drawn.
 	Camera.Update(GetTick());
+
+	// Remove any sounds that have finished playing.
+	std::erase_if(PlayingSounds,
+		[](decltype(PlayingSounds)::const_reference sound) -> bool
+		{
+			if (sound->getStatus() == sf::SoundSource::Stopped)
+				return true;
+			return false;
+		}
+	);
 }
 
 void Game::Render(sf::RenderWindow* window)

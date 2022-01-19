@@ -28,6 +28,10 @@ public:
 	void FollowSceneObject(std::shared_ptr<SceneObject>& sceneobject, const chrono::clock::duration lerp_duration = 0s);
 
 public:
+	void SetFollowOffset(const Vector2di& offset);
+	Vector2di GetFollowOffset() const;
+
+public:
 	void SetSize(const Vector2di& size);
 	Vector2di GetSize() const;
 	void SizeToWindow();
@@ -43,10 +47,16 @@ private:
 	Recti m_camera;
 	Vector2di m_interpolate_start;
 	Vector2di m_interpolate_end;
+	Vector2di m_follow_offset;
 	chrono::clock::duration m_interpolate_duration;
 	chrono::clock::duration m_interpolate_time;
 	std::weak_ptr<SceneObject> m_follow_object;
 };
+
+inline Vector2di Camera::GetFollowOffset() const
+{
+	return m_follow_offset;
+}
 
 inline Vector2di Camera::GetSize() const
 {

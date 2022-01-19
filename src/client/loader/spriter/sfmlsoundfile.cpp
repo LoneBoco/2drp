@@ -5,7 +5,7 @@
 #include "client/loader/spriter/sfmlsoundobjectinforeference.h"
 
 #include "client/game/Game.h"
-#include "client/render/resource/SFMListream.h"
+#include "client/loader/SFMListream.h"
 
 #include "engine/common.h"
 #include "engine/resources/Resource.h"
@@ -40,7 +40,7 @@ void SfmlSoundFile::initializeFile()
 		{
 			auto sound = std::make_shared<sf::SoundBuffer>();
 
-			render::SFMListream stream(*file);
+			loader::SFMListream stream(*file);
 			sound->loadFromStream(stream);
 
 			id = resources->Add(filename.string(), std::move(sound));

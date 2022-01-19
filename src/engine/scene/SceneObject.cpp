@@ -165,16 +165,6 @@ void SceneObject::SetDepth(int64_t z)
 	Properties[Property::Z] = z;
 }
 
-float SceneObject::GetRotation() const
-{
-	return Properties[Property::ROTATION].GetFloat();
-}
-
-void SceneObject::SetRotation(float rotation)
-{
-	Properties[Property::ROTATION] = rotation;
-}
-
 Vector2df SceneObject::GetScale() const
 {
 	return Vector2df{
@@ -288,6 +278,30 @@ void SceneObject::SetScale(const Vector2df& scale)
 */
 }
 
+// Velocity
+// Force
+// Torque
+
+float SceneObject::GetRotation() const
+{
+	return Properties[Property::ROTATION].GetFloat();
+}
+
+void SceneObject::SetRotation(float rotation)
+{
+	Properties[Property::ROTATION] = rotation;
+}
+
+uint64_t SceneObject::GetDirection() const
+{
+	return Properties[Property::DIRECTION].GetUnsigned();
+}
+
+void SceneObject::SetDirection(uint64_t dir)
+{
+	Properties[Property::DIRECTION] = dir;
+}
+
 std::string SceneObject::GetImage() const
 {
 	return Properties.Get(Property::IMAGE)->GetString();
@@ -296,6 +310,26 @@ std::string SceneObject::GetImage() const
 void SceneObject::SetImage(const std::string& image)
 {
 	Properties[Property::IMAGE] = image;
+}
+
+std::string SceneObject::GetEntity() const
+{
+	return Properties.Get(Property::ENTITY)->GetString();
+}
+
+void SceneObject::SetEntity(const std::string& image)
+{
+	Properties[Property::ENTITY] = image;
+}
+
+std::string SceneObject::GetAnimation() const
+{
+	return Properties.Get(Property::ANIMATION)->GetString();
+}
+
+void SceneObject::SetAnimation(const std::string& image)
+{
+	Properties[Property::ANIMATION] = image;
 }
 
 Rectf SceneObject::GetBounds() const
@@ -420,84 +454,20 @@ AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& o
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
-	Animation = other.Animation;
 	return *this;
 }
 
-void AnimatedSceneObject::SetImage(const std::string& image)
+void AnimatedSceneObject::SetAnimation(const std::string& image)
 {
-}
-
-void AnimatedSceneObject::SetModel(const std::string& model)
-{
-	Properties[Property::IMAGE] = model;
-	Properties[Property::ENTITY] = static_cast<uint64_t>(0);
-}
-
-void AnimatedSceneObject::SetModel(const std::string& model, const std::string& entity)
-{
-	Properties[Property::IMAGE] = model;
-	Properties[Property::ENTITY] = entity;
-}
-
-void AnimatedSceneObject::SetAnimation(const std::string& animation)
-{
-	Properties[Property::ANIMATION] = animation;
-}
-
-std::string AnimatedSceneObject::GetFullAnimation() const
-{
-	std::ostringstream result{ Properties.Get(Property::IMAGE)->GetString() };
-
-	/*
-	if (Animation != nullptr)
+	// Hack to make continuous animations work.
+	// If an animation is not set to continuous, then setting it to the same animation restarts it.
+	if (boost::iends_with(image, ".gani") && Properties[Property::ANIMATION].GetString() == image)
 	{
-		result << "," << Animation->currentEntityName() << "," << Animation->currentAnimationName();
-	}
-	*/
-
-	auto entity = Properties.Get(Property::ENTITY);
-	if (entity->GetType() == AttributeType::STRING)
-		result << "," << entity->GetString();
-	else
-	{
-		// We really don't have a link back to the Scml file to get the entity name.
-		// We just hope the current entity name is accurate.
-		// And if we don't even have that, just return the number.
-		if (Animation)
-			result << "," << Animation->currentEntityName();
-		else
-		{
-			auto index = entity->GetUnsigned();
-			result << "," << index;
-		}
+		auto anim = Properties.Get(Property::ANIMATION);
+		anim->UpdateDispatch.Post(anim->GetId());
 	}
 
-	result << "," << Properties.Get(Property::ANIMATION)->GetString();
-
-	return result.str();
-}
-
-std::string AnimatedSceneObject::GetAnimationModel() const
-{
-	return Properties.Get(Property::IMAGE)->GetString();
-}
-
-std::string AnimatedSceneObject::GetAnimationEntity() const
-{
-	auto entity = Properties.Get(Property::ENTITY);
-	if (entity->GetType() == AttributeType::STRING)
-		return entity->GetString();
-
-	if (Animation)
-		return Animation->currentEntityName();
-
-	return entity->GetString();
-}
-
-std::string AnimatedSceneObject::GetAnimation() const
-{
-	return Properties.Get(Property::ANIMATION)->GetString();
+	Properties[Property::ANIMATION] = image;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

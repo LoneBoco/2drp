@@ -1,6 +1,7 @@
 #include "client/game/Game.h"
 #include "client/render/component/TileMapRenderComponent.h"
-#include "client/render/resource/SFMListream.h"
+#include "client/loader/SFMListream.h"
+#include "client/loader/ResourceLoaders.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/scene/SceneObject.h"
@@ -36,26 +37,8 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 		{
 			std::string image = tiled_so->Tileset->File;
 
-			auto id = resources->FindId<sf::Texture>(image);
-			if (id == 0)
-			{
-				auto game = BabyDI::Get<tdrp::Game>();
-
-				auto file = game->Server.FileSystem.GetFile(image);
-				if (file && file->Opened())
-				{
-					auto texture = std::make_shared<sf::Texture>();
-
-					tdrp::render::SFMListream stream(*file);
-					texture->loadFromStream(stream);
-
-					id = resources->Add(image, std::move(texture));
-
-					auto handle = resources->Get<sf::Texture>(id);
-					m_textures.insert(std::make_pair(id, handle));
-				}
-			}
-			else
+			auto id = loader::LoadTexture(image);
+			if (id != 0)
 			{
 				auto handle = resources->Get<sf::Texture>(id);
 				m_textures.insert(std::make_pair(id, handle));

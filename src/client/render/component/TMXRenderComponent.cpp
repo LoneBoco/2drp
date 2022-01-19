@@ -3,7 +3,8 @@
 
 #include "client/game/Game.h"
 #include "client/render/component/TMXRenderComponent.h"
-#include "client/render/resource/SFMListream.h"
+#include "client/loader/SFMListream.h"
+#include "client/loader/ResourceLoaders.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/scene/SceneObject.h"
@@ -45,26 +46,8 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			{
 				filesystem::path image = tileset.getImagePath();
 
-				auto id = resources->FindId<sf::Texture>(image.filename().string());
-				if (id == 0)
-				{
-					auto game = BabyDI::Get<tdrp::Game>();
-
-					auto file = game->Server.FileSystem.GetFile(image);
-					if (file && file->Opened())
-					{
-						auto texture = std::make_shared<sf::Texture>();
-
-						tdrp::render::SFMListream stream(*file);
-						texture->loadFromStream(stream);
-
-						id = resources->Add(image.filename().string(), std::move(texture));
-
-						auto handle = resources->Get<sf::Texture>(id);
-						m_textures.insert(std::make_pair(id, handle));
-					}
-				}
-				else
+				auto id = loader::LoadTexture(image);
+				if (id != 0)
 				{
 					auto handle = resources->Get<sf::Texture>(id);
 					m_textures.insert(std::make_pair(id, handle));

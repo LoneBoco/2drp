@@ -6,7 +6,7 @@
 #include "client/loader/spriter/sfmlatlasfile.h"
 
 #include "client/game/Game.h"
-#include "client/render/resource/SFMListream.h"
+#include "client/loader/SFMListream.h"
 
 #include "engine/common.h"
 #include "engine/resources/Resource.h"
@@ -55,7 +55,7 @@ void SfmlImageFile::initializeFile()
 		{
 			auto texture = std::make_shared<sf::Texture>();
 
-			render::SFMListream stream(*file);
+			loader::SFMListream stream(*file);
 			texture->loadFromStream(stream);
 
 			id = resources->Add(filename.string(), std::move(texture));

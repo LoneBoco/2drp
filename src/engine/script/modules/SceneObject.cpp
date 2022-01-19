@@ -14,13 +14,6 @@ namespace sol
 namespace tdrp::script::modules
 {
 
-bool load_model(SceneObject& self, const std::string& model);
-bool load_model(SceneObject& self, const std::string& model, const std::string& entity);
-
-std::string get_animation(SceneObject& self);
-void set_animation(SceneObject& self, const std::string& animation);
-
-
 void bind_sceneobject(sol::state& lua)
 {
 	lua.new_enum("SceneObjectType",
@@ -35,17 +28,16 @@ void bind_sceneobject(sol::state& lua)
 		"ID", &SceneObject::ID,
 
 		"Position", sol::property(&SceneObject::GetPosition, &SceneObject::SetPosition),
-		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
-		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
-		"Image", sol::property(&SceneObject::GetImage, &SceneObject::SetImage),
 		"Layer", sol::property(&SceneObject::GetDepth, &SceneObject::SetDepth),
-
-		"Animation", sol::property(&get_animation, &set_animation),
-
-		"LoadModel", sol::overload(
-			sol::resolve<bool(SceneObject&, const std::string&)>(&load_model),
-			sol::resolve<bool(SceneObject&, const std::string&, const std::string&)>(load_model)
-		),
+		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
+		// Velocity
+		// Force
+		// Torque
+		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
+		"Direction", sol::property(&SceneObject::GetDirection, &SceneObject::SetDirection),
+		"Image", sol::property(&SceneObject::GetImage, &SceneObject::SetImage),
+		"Entity", sol::property(&SceneObject::GetEntity, &SceneObject::SetEntity),
+		"Animation", sol::property(&SceneObject::GetAnimation, &SceneObject::SetAnimation),
 
 		"Attributes", &SceneObject::Attributes,
 		"Properties", &SceneObject::Properties,
@@ -58,55 +50,13 @@ void bind_sceneobject(sol::state& lua)
 	);
 }
 
-
-bool load_model(SceneObject& self, const std::string& model)
+AnimatedSceneObject* asAnimated(SceneObject& self)
 {
 	if (self.GetType() != SceneObjectType::ANIMATED)
-		return false;
+		return nullptr;
 
 	auto animated_so = dynamic_cast<AnimatedSceneObject*>(&self);
-	if (!animated_so)
-		return false;
-
-	animated_so->SetModel(model);
-	return true;
-}
-
-bool load_model(SceneObject& self, const std::string& model, const std::string& entity)
-{
-	if (self.GetType() != SceneObjectType::ANIMATED)
-		return false;
-
-	auto animated_so = dynamic_cast<AnimatedSceneObject*>(&self);
-	if (!animated_so)
-		return false;
-
-	animated_so->SetModel(model, entity);
-	return true;
-}
-
-std::string get_animation(SceneObject& self)
-{
-	if (self.GetType() != SceneObjectType::ANIMATED)
-		return {};
-
-	auto animated_so = dynamic_cast<AnimatedSceneObject*>(&self);
-	if (!animated_so)
-		return {};
-
-	return animated_so->GetAnimation();
-}
-
-void set_animation(SceneObject& self, const std::string& animation)
-{
-	if (self.GetType() != SceneObjectType::ANIMATED)
-		return;
-
-	auto animated_so = dynamic_cast<AnimatedSceneObject*>(&self);
-	if (!animated_so)
-		return;
-
-	animated_so->SetAnimation(animation);
+	return animated_so;
 }
 
 } // end namespace tdrp::script::modules

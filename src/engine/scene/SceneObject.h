@@ -5,7 +5,6 @@
 
 //#include <Box2D/Box2D.h>
 #include <tmxlite/Map.hpp>
-#include <spriterengine/spriterengine.h>
 
 #include "engine/common.h"
 
@@ -185,13 +184,9 @@ class SceneObject : public ComponentEntity
 	SCRIPT_ENVIRONMENT;
 
 public:
-	//! Constructor.
 	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
-
-	//! Destructor.
 	virtual ~SceneObject();
 
-	//! Copy assignment.
 	SceneObject& operator=(const SceneObject& other);
 
 	SceneObject() = delete;
@@ -199,79 +194,54 @@ public:
 	SceneObject(SceneObject&& other) = delete;
 	SceneObject& operator=(SceneObject&& other) = delete;
 
-	//! Gets the class of the object.
-	//! \return A weak pointer to a const class.
 	std::weak_ptr<const ObjectClass> GetClass() const
 	{
 		return m_object_class;
 	}
-
-	//! Gets the class of the object.
-	//! \return A pointer to the class.
 	std::shared_ptr<ObjectClass> GetClass()
 	{
 		return m_object_class;
 	}
 
-	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const
 	{
 		return SceneObjectType::DEFAULT;
 	}
 
-	//! Returns the position of the scene object.
 	virtual Vector2df GetPosition() const;
-
-	//! Sets the position of the scene object.
-	//! \param position The new position to set.
 	virtual void SetPosition(const Vector2df& position);
 
-	//! Gets the depth of the scene object (Z).
-	//! \return The depth.
 	virtual int64_t GetDepth() const;
-
-	//! Sets the depth of the scene object (Z).
-	//! \param z The depth.
 	virtual void SetDepth(int64_t z);
 
-	//! Returns the rotation of the scene object.
-	virtual float GetRotation() const;
-
-	//! Sets the rotation of the scene object.
-	//! \param rotation The rotation to set.
-	virtual void SetRotation(float rotation);
-
-	//! Gets the scale of the scene object.
-	//! \return The scale.
 	virtual Vector2df GetScale() const;
-
-	//! Sets the scale of the scene object.
-	//! \param scale The new scale.
 	virtual void SetScale(const Vector2df& scale);
 
-	//! Returns the image.
-	virtual std::string GetImage() const;
+	// Velocity
+	// Force
+	// Torque
 
-	//! Sets the image of the scene node.
+	virtual float GetRotation() const;
+	virtual void SetRotation(float rotation);
+
+	virtual uint64_t GetDirection() const;
+	virtual void SetDirection(uint64_t dir);
+
+	virtual std::string GetImage() const;
 	virtual void SetImage(const std::string& image);
 
-	//! Gets the scene object's bounds.
+	virtual std::string GetEntity() const;
+	virtual void SetEntity(const std::string& image);
+
+	virtual std::string GetAnimation() const;
+	virtual void SetAnimation(const std::string& image);
+
 	virtual Rectf GetBounds() const;
 
-	/// <summary>
-	/// Gets the controlling player of the scene object.
-	/// </summary>
-	/// <returns>A weak pointer to the player.</returns>
 	std::weak_ptr<server::Player> GetControllingPlayer() const
 	{
 		return m_controlling_player;
 	}
-
-	/// <summary>
-	/// Sets the controlling player of the scene object.
-	/// Calls the OnPlayerGainedControl script callback.
-	/// </summary>
-	/// <param name="player">The player who is controlling this scene object.</param>
 	void SetControllingPlayer(std::shared_ptr<server::Player> player);
 
 /*
@@ -304,34 +274,21 @@ public:
 		ChangedProperties.clear();
 	}
 */
-	//! Returns if the object is global or not.
 	bool IsGlobal()
 	{
 		return (ID & GlobalSceneObjectIDFlag) != 0;
 	}
 
-	//! ID
 	const uint32_t ID;
-
-	//! Name.
 	std::string Name;
-
-	//! Client script.
 	std::string ClientScript;
-
-	//! Server script.
 	std::string ServerScript;
-
-	//! Attributes.
 	ObjectAttributes Attributes;
-
-	//! Properties.
 	ObjectProperties Properties;
 
 	//! Physics.
 	// physics::Physics Physics;
 	
-	//! Sets visibility.
 	bool Visible;
 
 protected:
@@ -345,18 +302,13 @@ protected:
 class StaticSceneObject : public SceneObject
 {
 public:
-	//! Constructor.
 	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 	: SceneObject(c, id)
-	{
-	}
+	{}
 
-	//! Destructor.
 	virtual ~StaticSceneObject()
-	{
-	}
+	{}
 
-	//! Returns the scene object type.
 	SceneObjectType GetType() const override
 	{
 		return SceneObjectType::STATIC;
@@ -366,66 +318,38 @@ public:
 class AnimatedSceneObject : public SceneObject
 {
 public:
-	//! Constructor.
 	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 	: SceneObject(c, id)
-	{
-	}
+	{}
 
-	//! Destructor.
 	virtual ~AnimatedSceneObject()
-	{
-	}
+	{}
 
-	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::ANIMATED;
 	}
 
-	//! Copy assignment.
 	AnimatedSceneObject& operator=(const AnimatedSceneObject& other);
 
-	// Override of set image to not do anything.
-	void SetImage(const std::string& image) override;
-
-	// Sets the model file and entity.
-	void SetModel(const std::string& model);
-	void SetModel(const std::string& model, const std::string& entity);
-
-	// Sets the animation.
-	void SetAnimation(const std::string& animation);
-
-	// Get the parts of our animation.
-	std::string GetFullAnimation() const;
-	std::string GetAnimationModel() const;
-	std::string GetAnimationEntity() const;
-	std::string GetAnimation() const;
-
-	std::shared_ptr<SpriterEngine::EntityInstance> Animation;
+	void SetAnimation(const std::string& image) override;
 };
 
 class TiledSceneObject : public SceneObject
 {
 public:
-	//! Constructor.
 	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 	: SceneObject(c, id)
-	{
-	}
+	{}
 
-	//! Destructor.
 	virtual ~TiledSceneObject()
-	{
-	}
+	{}
 
-	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::TILEMAP;
 	}
 
-	//! Gets the scene object's bounds.
 	virtual Rectf GetBounds() const override
 	{
 		if (Tileset == nullptr)
@@ -441,27 +365,20 @@ public:
 class TMXSceneObject : public SceneObject
 {
 public:
-	//! Constructor.
 	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
 		: SceneObject(c, id)
-	{
-	}
+	{}
 
-	//! Destructor.
 	virtual ~TMXSceneObject()
-	{
-	}
+	{}
 
-	//! Copy assignment.
 	TMXSceneObject& operator=(const TMXSceneObject& other);
 
-	//! Returns the scene object type.
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::TMX;
 	}
 
-	//! Gets the scene object's bounds.
 	virtual Rectf GetBounds() const override;
 
 	std::shared_ptr<tmx::Map> TmxMap;

@@ -13,6 +13,7 @@
 
 namespace sf
 {
+	class Sound;
 	class RenderWindow;
 	class RenderTarget;
 }
@@ -74,6 +75,9 @@ public:
 	script::Script Script;
 	camera::Camera Camera;
 	std::shared_ptr<server::Player> Player;
+
+public:
+	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
 
 private:
 	chrono::clock::time_point m_tick_previous;

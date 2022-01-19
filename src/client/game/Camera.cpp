@@ -1,3 +1,5 @@
+#include <SFML/Audio/Listener.hpp>
+
 #include "client/game/Camera.h"
 
 namespace tdrp::camera
@@ -32,9 +34,12 @@ void Camera::Update(chrono::clock::duration tick)
 	{
 		if (auto so = m_follow_object.lock())
 		{
-			m_camera.pos = math::convert<int32_t>(so->GetPosition());
+			m_camera.pos = math::convert<int32_t>(so->GetPosition()) + m_follow_offset;
 		}
 	}
+
+	sf::Listener::setDirection({ 0.0f, 1.0f, 0.0f });
+	sf::Listener::setPosition({ static_cast<float>(m_camera.pos.x), 0.0f, static_cast<float>(m_camera.pos.y) });
 }
 
 void Camera::LookAt(const Vector2di& position)
@@ -62,6 +67,11 @@ void Camera::FollowSceneObject(std::shared_ptr<SceneObject>& sceneobject, const 
 		m_interpolate_duration = lerp_duration;
 		m_interpolate_time = chrono::clock::duration::zero();
 	}
+}
+
+void Camera::SetFollowOffset(const Vector2di& offset)
+{
+	m_follow_offset = offset;
 }
 
 void Camera::SetSize(const Vector2di& size)
