@@ -51,6 +51,16 @@ void Window::EventLoop()
 				//m_window->setView(sf::View(visibleArea));
 			}
 
+			else if (event.type == sf::Event::LostFocus)
+			{
+				m_window_active = false;
+			}
+
+			else if (event.type == sf::Event::GainedFocus)
+			{
+				m_window_active = true;
+			}
+
 			else if (event.type == sf::Event::KeyPressed)
 			{
 				Game->OnKeyPress.RunAll<tdrp::Game>(event.key.code);

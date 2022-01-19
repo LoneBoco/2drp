@@ -3,6 +3,11 @@
 #include "client/game/Game.h"
 #include "client/script/Script.h"
 
+// Put these two together to resolve an undefined type error.
+#include "client/render/Window.h"
+#include "engine/filesystem/ProgramSettings.h"
+//
+
 #include "engine/scene/SceneObject.h"
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsClient.h"
@@ -193,14 +198,18 @@ void bind_game(sol::state& lua)
 
 bool keydown(int key)
 {
+    auto window = BabyDI::Get<render::Window>();
+
     auto ekey = static_cast<sf::Keyboard::Key>(key);
-    return sf::Keyboard::isKeyPressed(ekey);
+    return sf::Keyboard::isKeyPressed(ekey) && window->IsActive();
 }
 
 bool keyup(int key)
 {
+    auto window = BabyDI::Get<render::Window>();
+
     auto ekey = static_cast<sf::Keyboard::Key>(key);
-    return !sf::Keyboard::isKeyPressed(ekey);
+    return !sf::Keyboard::isKeyPressed(ekey) && window->IsActive();
 }
 
 void log(const char* message)
