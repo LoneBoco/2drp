@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message Login {
+	enum Method {
+		DEDICATED = 0;
+		PEER2PEER = 1;
+	}
+
+	Method method = 1;
+	string account = 2;
+	string passwordhash = 3;
+	uint32 type = 4;
+	string version = 5;
+}

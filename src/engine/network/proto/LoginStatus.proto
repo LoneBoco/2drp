@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message LoginStatus {
+	bool success = 1;
+	string message = 2;
+	fixed32 player_id = 3;
+}

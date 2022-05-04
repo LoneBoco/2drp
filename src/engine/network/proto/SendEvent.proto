@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SendEvent {
+	fixed32 sender = 1;
+	string scene = 2;
+	string name = 3;
+	string data = 4;
+	float x = 5;
+	float y = 6;
+	float radius = 7;
+}

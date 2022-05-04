@@ -11,11 +11,25 @@
 namespace tdrp::script
 {
 
+template <typename T> struct is_shared_ptr : std::false_type {};
+template <typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
+template <typename T> concept IsSharedPtr = is_shared_ptr<T>::value;
+
 template <typename T>
-concept ScriptWithEnvironment =
-	requires (T& t) {
-		t.LuaEnvironment;
+concept ValidScriptObjectDirect = requires (T t)
+{
+	T::ValidScriptObject;
+	t.LuaEnvironment;
 };
+template <typename T>
+concept ValidScriptObjectSmartPointer = requires (T t)
+{
+	std::remove_reference_t<decltype(*t)>::ValidScriptObject;
+	t->LuaEnvironment;
+};
+template <typename T>
+concept ValidScriptObject = ValidScriptObjectDirect<T> || ValidScriptObjectSmartPointer<T>;
+
 
 class Script
 {
@@ -46,73 +60,38 @@ public:
 		if (!pfr.valid())
 		{
 			sol::error err = pfr;
-			std::cout << "[LUA ERROR] " << err.what() << std::endl;
+			log::PrintLine("{}", err.what());
 		}
 		return pfr;
 	}
 
 public:
-	template <typename T>
+	template <typename T> requires ValidScriptObject<T>
 	void RunScript(const std::string& module_name, const std::string_view& script, T& me);
-
-	template <typename T>
-	void RunScript(const std::string& module_name, const std::string_view& script, std::shared_ptr<T>& me);
 
 protected:
 	sol::state lua;
 };
 
-template <typename T>
+template <typename T> requires ValidScriptObject<T>
 inline void Script::RunScript(const std::string& module_name, const std::string_view& script, T& me)
 {
 	if (script.empty())
 		return;
 
-	if constexpr (ScriptWithEnvironment<T>)
+	if constexpr (IsSharedPtr<T>)
+	{
+		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
+		me->LuaEnvironment["MODULENAME"] = module_name;
+		me->LuaEnvironment["Me"] = me;
+		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+	}
+	else
 	{
 		me.LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
 		me.LuaEnvironment["MODULENAME"] = module_name;
 		me.LuaEnvironment["Me"] = &me;
-
 		lua.safe_script(script, me.LuaEnvironment, Script::ErrorHandler);
-
-		// me.LuaEnvironment["Me"] = nullptr;
-	}
-	else
-	{
-		lua["MODULENAME"] = module_name;
-		lua["Me"] = &me;
-
-		lua.safe_script(script, Script::ErrorHandler);
-
-		lua["Me"] = nullptr;
-	}
-}
-
-template <typename T>
-inline void Script::RunScript(const std::string& module_name, const std::string_view& script, std::shared_ptr<T>& me)
-{
-	if (script.empty())
-		return;
-
-	if constexpr (ScriptWithEnvironment<T>)
-	{
-		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
-		me->LuaEnvironment["MODULENAME"] = module_name;
-		me->LuaEnvironment["Me"] = std::shared_ptr<T>(me);
-
-		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
-
-		// me->LuaEnvironment["Me"] = nullptr;
-	}
-	else
-	{
-		lua["MODULENAME"] = module_name;
-		lua["Me"] = std::shared_ptr<T>(me);
-
-		lua.safe_script(script, Script::ErrorHandler);
-
-		lua["Me"] = nullptr;
 	}
 }
 

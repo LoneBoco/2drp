@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SceneObjectChange {
+	message Attribute {
+		uint32 id = 1;
+		oneof value {
+			int64 as_int = 2;
+			uint64 as_uint = 3;
+			float as_float = 4;
+			double as_double = 5;
+			string as_string = 6;
+		}
+	}
+
+	fixed32 id = 1;
+	repeated Attribute properties = 2;
+	repeated Attribute attributes = 3;
+	bool non_replicated = 4;
+}

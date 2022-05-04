@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package tdrp.packet;
-
-message SClassDelete {
-	string name = 1;
-}

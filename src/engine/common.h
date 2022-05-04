@@ -20,6 +20,7 @@
 #include <numeric>
 #include <atomic>
 #include <chrono>
+#include <type_traits>
 //#include <ranges>
 
 #include <boost/algorithm/string.hpp>
@@ -27,6 +28,7 @@
 #include "engine/events/Events.h"
 #include "engine/helper/math.h"
 #include "engine/helper/flags.h"
+#include "engine/filesystem/Log.h"
 
 #include "BabyDI.hpp"
 

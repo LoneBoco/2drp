@@ -23,7 +23,7 @@ std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path f
 		// Collect all full path names.
 		for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 		{
-			result.push_back(archive->GetEntry(i)->GetFullName());
+			result.push_back(archive->GetEntry(static_cast<int>(i))->GetFullName());
 		}
 
 		// Collect CRC32.
@@ -89,7 +89,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 				archive_entry->FileSize = file.file_size();
 				archive_entry->ModifiedTime = file.last_write_time();
 
-				std::cout << "[ARCHIVE] " << path.filename() << std::endl;
+				log::PrintLine("-- [FS] Found archive {}.", path.filename().string());
 				directoryGroup->Archives.insert(std::make_pair(path.filename(), std::move(archive_entry)));
 
 				auto entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVE, path);
@@ -190,7 +190,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 				// Loop through all the files looking for ones that aren't in the file system (because they got removed).
 				for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 				{
-					auto entry = archive->GetEntry(i);
+					auto entry = archive->GetEntry(static_cast<int>(i));
 					auto& entry_file_name = entry->GetName();
 					auto& entry_full_path = entry->GetFullName();
 
@@ -220,13 +220,13 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 			archive_entry->FileSize = filesystem::file_size(dir / file);
 			archive_entry->ModifiedTime = filesystem::last_write_time(dir / file);
 
-			std::cout << "[ARCHIVE] " << file << std::endl;
+			log::PrintLine("-- [FS] -- file {}.", file.string());
 			directoryGroup->Archives.insert(std::make_pair(file, std::move(archive_entry)));
 
 			// Collecting entries from our new version of this archive.
 			for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 			{
-				auto entry = archive->GetEntry(i);
+				auto entry = archive->GetEntry(static_cast<int>(i));
 				auto& filename = entry->GetName();
 				auto& fullpath = entry->GetFullName();
 
@@ -269,7 +269,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 				{
 					// This is bad.  We added another zip file somewhere with the same name as an existing one.
 					// TODO: What to do?  Ignore?  Error?
-					std::cout << "!! File watcher identified a duplicate archive file." << std::endl;
+					log::PrintLine("!! File watcher identified a duplicate archive file: {}.", file.string());
 				}
 				else
 				{
@@ -428,7 +428,7 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 						auto& archive = iter->second->Archive;
 						for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 						{
-							auto entry = archive->GetEntry(i);
+							auto entry = archive->GetEntry(static_cast<int>(i));
 							if (entry->GetName() == file)
 							{
 								return std::make_shared<FileZip>(entry->GetFullName(), entry);
@@ -472,7 +472,7 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& root_dir, cons
 					auto& archive = iter->second->Archive;
 					for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
 					{
-						auto entry = archive->GetEntry(i);
+						auto entry = archive->GetEntry(static_cast<int>(i));
 						if (entry->GetName() == file)
 						{
 							return std::make_shared<FileZip>(entry->GetFullName(), entry);

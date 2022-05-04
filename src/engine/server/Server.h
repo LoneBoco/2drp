@@ -6,6 +6,7 @@
 
 #include "engine/filesystem/FileSystem.h"
 #include "engine/network/Network.h"
+#include "engine/network/DownloadManager.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
@@ -18,8 +19,9 @@ namespace tdrp::server
 
 enum class ServerType
 {
-	AUTHORITATIVE,
-	SUBORDINATE,
+	HOST,
+	GUEST,
+	DEDICATED
 };
 
 enum class ServerFlags : uint16_t
@@ -36,10 +38,10 @@ class Server
 	friend class loader::PackageLoader;
 	friend class network::Network;
 
+	SCRIPT_SETUP;
 	SCRIPT_FUNCTION(OnPlayerJoin);
 	SCRIPT_FUNCTION(OnPlayerLeave);
 	SCRIPT_FUNCTION(OnServerTick);
-	SCRIPT_ENVIRONMENT;
 
 public:
 	Server();
@@ -52,6 +54,7 @@ public:
 
 public:
 	bool Initialize(const std::string& package_name, const ServerType type, const uint16_t flags);
+	bool HostDedicated(const uint16_t port, const size_t peers = 32);
 	bool Host(const uint16_t port, const size_t peers = 32);
 	bool Connect(const std::string& hostname, const uint16_t port);
 	bool SinglePlayer();
@@ -64,9 +67,11 @@ public:
 	void SetUniqueId(const std::string& id);
 	void SetServerName(const std::string& name);
 	void SetMaxPlayers(const uint32_t max_players);
-	const std::string& GetUniqueId();
-	const std::string& GetServerName();
-	const uint32_t GetMaxPlayers();
+	void SetPlayerNumber(const uint16_t player_number);
+	const std::string& GetUniqueId() const;
+	const std::string& GetServerName() const;
+	const uint16_t GetMaxPlayers() const;
+	const PlayerPtr GetPlayer() const;
 	std::shared_ptr<package::Package> GetPackage();
 
 public:
@@ -77,11 +82,14 @@ public:
 public:
 	void AddClientScript(const std::string& name, const std::string& script);
 	bool DeleteClientScript(const std::string& name);
+	std::map<std::string, std::string>& GetClientScriptMap();
 
 public:
 	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
 	bool DeleteSceneObject(uint32_t id);
 	bool DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject);
+	size_t DeletePlayerOwnedSceneObjects(PlayerPtr player);
+	bool SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player);
 
 public:
 	// AddObjectClass
@@ -89,7 +97,7 @@ public:
 
 public:
 	bool SwitchPlayerScene(std::shared_ptr<server::Player>& player, std::shared_ptr<scene::Scene>& new_scene);
-	bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
+	//bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
 
 public:
 	int SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
@@ -98,26 +106,29 @@ public:
 	const uint32_t GetNextSceneObjectID();
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
+	const bool IsGuest() const;
+	const ServerType GetServerType() const;
 	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
 	std::shared_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const network::Channel channel);
-	void Broadcast(const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel);
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel);
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, google::protobuf::Message& message);
+	void Broadcast(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
 
 public:
-	void SetClientNetworkReceiveCallback(network::enet_receive_cb callback);
+	//void SetClientNetworkReceiveCallback(network::enet_receive_cb callback);
 	network::Network& GetNetwork();
 
 public:
 	tdrp::fs::FileSystem FileSystem;
 	filesystem::path DefaultDownloadPath;
+	network::DownloadManager DownloadManager;
 
 public:
 	script::Script Script;
@@ -144,11 +155,12 @@ protected:
 	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;
 	std::map<std::string, std::string> m_client_scripts;
 
-	std::map<uint16_t, std::shared_ptr<server::Player>> m_player_list;
+	std::map<uint16_t, PlayerPtr> m_player_list;
 
 	std::string m_unique_id;
 	std::string m_server_name;
-	uint32_t m_max_players;
+	uint16_t m_max_players;
+	PlayerPtr m_player;
 };
 
 inline void Server::SetUniqueId(const std::string& id)
@@ -166,19 +178,24 @@ inline void Server::SetMaxPlayers(const uint32_t max_players)
 	m_max_players = max_players;
 }
 
-inline const std::string& Server::GetUniqueId()
+inline const std::string& Server::GetUniqueId() const
 {
 	return m_unique_id;
 }
 
-inline const std::string& Server::GetServerName()
+inline const std::string& Server::GetServerName() const
 {
 	return m_server_name;
 }
 
-inline const uint32_t Server::GetMaxPlayers()
+inline const uint16_t Server::GetMaxPlayers() const
 {
 	return m_max_players;
+}
+
+inline const PlayerPtr Server::GetPlayer() const
+{
+	return m_player;
 }
 
 inline std::shared_ptr<package::Package> Server::GetPackage()
@@ -198,7 +215,17 @@ inline const bool Server::IsSinglePlayer() const
 
 inline const bool Server::IsHost() const
 {
-	return m_server_type == ServerType::AUTHORITATIVE;
+	return m_server_type == ServerType::HOST || m_server_type == ServerType::DEDICATED;
+}
+
+inline const bool Server::IsGuest() const
+{
+	return m_server_type == ServerType::GUEST;
+}
+
+inline const ServerType Server::GetServerType() const
+{
+	return m_server_type;
 }
 
 inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
@@ -206,14 +233,14 @@ inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
 	return m_player_list[id];
 }
 
-inline void Server::SetClientNetworkReceiveCallback(network::enet_receive_cb callback)
-{
-	m_network.SetReceiveCallback(callback);
-}
-
 inline network::Network& Server::GetNetwork()
 {
 	return m_network;
+}
+
+inline std::map<std::string, std::string>& Server::GetClientScriptMap()
+{
+	return m_client_scripts;
 }
 
 } // end namespace tdrp::server

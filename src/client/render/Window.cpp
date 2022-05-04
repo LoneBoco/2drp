@@ -63,25 +63,25 @@ void Window::EventLoop()
 
 			else if (event.type == sf::Event::KeyPressed)
 			{
-				Game->OnKeyPress.RunAll<tdrp::Game>(event.key.code);
+				Game->OnKeyPress.RunAll(event.key.code);
 			}
 
 			else if (event.type == sf::Event::MouseWheelScrolled)
 			{
 				Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
-				Game->OnMouseWheel.RunAll<tdrp::Game>(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
+				Game->OnMouseWheel.RunAll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
 			}
 
 			else if (event.type == sf::Event::MouseButtonPressed)
 			{
 				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-				Game->OnMouseDown.RunAll<tdrp::Game>(event.mouseButton.button, pos);
+				Game->OnMouseDown.RunAll(event.mouseButton.button, pos);
 			}
 
 			else if (event.type == sf::Event::MouseButtonReleased)
 			{
 				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-				Game->OnMouseUp.RunAll<tdrp::Game>(event.mouseButton.button, pos);
+				Game->OnMouseUp.RunAll(event.mouseButton.button, pos);
 			}
 		}
 

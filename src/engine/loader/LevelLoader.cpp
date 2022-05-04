@@ -89,6 +89,9 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						default: so = std::make_shared<SceneObject>(c, id); break;
 					}
 
+					// Check if it is a non-replicated scene object.
+					so->NonReplicated = object.attribute("nonreplicated").as_bool(false);
+
 					// Load all properties.
 					for (auto& prop : object.children("property"))
 					{
@@ -232,7 +235,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 							*layer_so = *tmx_so;
 
 							// Set the new properties of it.
-							layer_so->Layer = i;
+							layer_so->Layer = static_cast<uint8_t>(i);
 							layer_so->Properties[Property::Z] = static_cast<int64_t>(i);
 
 							// Add it to the scene.
@@ -241,8 +244,13 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 					}
 
 					// Handle the script.
-					server.Script.RunScript("sceneobject_" + std::to_string(id) + "_class_" + c->GetName(), c->ScriptServer, so);
-					server.Script.RunScript("sceneobject" + std::to_string(id), so->ServerScript, so);
+					if (server.IsHost())
+					{
+						server.Script.RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptServer, so);
+						server.Script.RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
+					}
+					server.Script.RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptClient, so);
+					server.Script.RunScript("sceneobject_cl_" + std::to_string(id), so->ClientScript, so);
 
 					// Add the object to the scene.
 					scene->AddObject(so);

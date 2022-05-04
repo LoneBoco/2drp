@@ -21,7 +21,7 @@ namespace sf
 namespace tdrp
 {
 
-constexpr std::chrono::milliseconds PROP_UPDATE_TIMER = 30ms;
+// constexpr std::chrono::milliseconds PROP_UPDATE_TIMER = 30ms;
 
 
 enum class GameState
@@ -33,6 +33,7 @@ enum class GameState
 
 class Game
 {
+	SCRIPT_SETUP;
 	SCRIPT_FUNCTION(OnCreated);
 	SCRIPT_FUNCTION(OnConnected);
 	SCRIPT_FUNCTION(OnClientFrame);
@@ -40,9 +41,8 @@ class Game
 	SCRIPT_FUNCTION(OnMouseWheel);
 	SCRIPT_FUNCTION(OnMouseDown);
 	SCRIPT_FUNCTION(OnMouseUp);
-	SCRIPT_FUNCTION(OnControlledActorChange);
+	SCRIPT_FUNCTION(OnGainedOwnership);
 	SCRIPT_FUNCTION(OnSceneSwitch);
-	SCRIPT_ENVIRONMENT;
 
 public:
 	Game();
@@ -74,7 +74,9 @@ public:
 	server::Server Server;
 	script::Script Script;
 	camera::Camera Camera;
-	std::shared_ptr<server::Player> Player;
+
+public:
+	server::PlayerPtr GetCurrentPlayer();
 
 public:
 	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
@@ -82,7 +84,7 @@ public:
 private:
 	chrono::clock::time_point m_tick_previous;
 	chrono::clock::time_point m_tick_current;
-	std::chrono::milliseconds m_prop_update_timer = std::chrono::milliseconds::zero();
+	//std::chrono::milliseconds m_prop_update_timer = std::chrono::milliseconds::zero();
 
 	sf::RenderWindow* m_render_window = nullptr;
 };
@@ -100,6 +102,11 @@ inline void Game::SetRenderWindow(sf::RenderWindow* render_window)
 inline sf::RenderWindow* Game::GetRenderWindow() const
 {
 	return m_render_window;
+}
+
+inline server::PlayerPtr Game::GetCurrentPlayer()
+{
+	return Server.GetPlayer();
 }
 
 } // end namespace tdrp

@@ -138,7 +138,7 @@ void GaniAnimation::Render(sf::RenderTarget& window, std::chrono::milliseconds e
 				++m_current_frame;
 				if (m_current_frame >= anim->Frames.size())
 				{
-					so->OnAnimationEnd.RunAll<SceneObject>(m_current_animation);
+					so->OnAnimationEnd.RunAll(m_current_animation);
 					if (!anim->IsLooped || !anim->Setbackto.empty())
 					{
 						m_animation_stopped = true;
@@ -213,18 +213,40 @@ void GaniAnimation::UpdateEntity(const std::string& entity)
 
 void GaniAnimation::UpdateAnimation(const std::string& animation)
 {
+	const char* debugStr = animation.c_str();
 	if (m_current_animation == animation)
 	{
-		if (auto animation = m_animation.lock())
+		if (auto anim = m_animation.lock())
 		{
-			if (animation->Frames.empty())
+			if (anim->Frames.empty())
 				return;
 
-			if (!animation->IsContinuous)
+			if (!anim->IsContinuous)
 			{
-				m_elapsed = 0ms;
-				m_current_frame = 0;
-				m_count_full_first_frame = true;
+				bool reset = true;
+				if (auto anim = m_animation.lock())
+				{
+					// Single frame animations usually don't have IsContinuous set.
+					// Avoid spamming changes.
+					if (anim->Frames.size() == 1)
+						reset = false;
+				}
+
+				if (reset)
+				{
+					m_elapsed = 0ms;
+					m_current_frame = 0;
+					m_count_full_first_frame = true;
+				}
+				else
+				{
+					// We are going to leave this alone.  Unset the dirty flag so it doesn't get sent.
+					if (auto so = m_owner.lock())
+					{
+						auto prop = so->Properties.Get(Property::ANIMATION);
+						prop->SetIsDirty(false);
+					}
+				}
 			}
 		}
 	}
@@ -236,7 +258,7 @@ void GaniAnimation::UpdateAnimation(const std::string& animation)
 		if (m_animation.expired())
 		{
 			if (auto so = m_owner.lock())
-				so->OnAnimationEnd.RunAll<SceneObject>(so, "");
+				so->OnAnimationEnd.RunAll("");
 		}
 	}
 }

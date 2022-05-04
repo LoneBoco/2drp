@@ -1,6 +1,7 @@
 #pragma once
 
 #include <future>
+#include <deque>
 
 #include "engine/common.h"
 
@@ -8,6 +9,7 @@
 #include "engine/scene/Scene.h"
 
 #include "engine/server/Account.h"
+#include "engine/server/Player.h"
 
 #include <google/protobuf/message.h>
 
@@ -26,6 +28,8 @@ namespace tdrp::server
 namespace tdrp::network
 {
 
+constexpr int HOSTID = 0;
+
 struct enet_host_deleter
 {
 	void operator()(_ENetHost* host) const;
@@ -36,6 +40,9 @@ typedef std::function<void(const uint16_t)> enet_connection_cb;
 
 //! Peer ID, Packet ID, Packet Data, Packet Length
 typedef std::function<void(const uint16_t, const uint16_t, const uint8_t* const, const size_t)> enet_receive_cb;
+
+using enet_connection_cb_container = std::deque<enet_connection_cb>;
+using enet_receive_cb_container = std::deque<enet_receive_cb>;
 
 enum class Channel
 {
@@ -69,43 +76,50 @@ public:
 	void DisconnectPeer(const uint16_t peer_id);
 
 public:
-	void Update(bool isServer = false);
+	void Update();
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel);
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const Channel channel);
-	void Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel);
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel);
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message);
+	void Broadcast(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude = {});
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude = {});
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude = {});
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude = {});
 
 protected:
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet);
+	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude = {});
+	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude = {});
 
 public:
 	bool BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account);
 	server::Account* GetAccountFromPeer(const uint16_t peer_id);
 
 private:
-	_ENetPacket* construct_packet(const Channel channel, const uint16_t packet_id, google::protobuf::Message* message = nullptr);
+	_ENetPacket* construct_packet(const Channel channel, const uint16_t packet_id, const google::protobuf::Message* message = nullptr);
 
 public:
-	void SetConnectCallback(enet_connection_cb callback) { m_connect_cb = callback; }
-	void SetDisconnectCallback(enet_connection_cb callback) { m_disconnect_cb = callback; }
-	void SetLoginCallback(enet_receive_cb callback) { m_login_cb = callback; }
-	void SetReceiveCallback(enet_receive_cb callback) { m_receive_cb = callback; }
+	template <class Insert = std::back_insert_iterator<enet_connection_cb_container>>
+	void AddConnectCallback(enet_connection_cb callback) { Insert where(m_connect_cb); *where = callback; }
+
+	template <class Insert = std::back_insert_iterator<enet_connection_cb_container>>
+	void AddDisconnectCallback(enet_connection_cb callback) { Insert where(m_disconnect_cb); *where = callback; }
+
+	template <class Insert = std::back_insert_iterator<enet_receive_cb_container>>
+	void AddLoginCallback(enet_receive_cb callback) { Insert where(m_login_cb); *where = callback; }
+
+	template <class Insert = std::back_insert_iterator<enet_receive_cb_container>>
+	void AddReceiveCallback(enet_receive_cb callback) { Insert where(m_receive_cb); *where = callback; }
 
 private:
 	static bool ms_started;
 	server::Server* m_server;
 
-	enet_connection_cb m_connect_cb;
-	enet_connection_cb m_disconnect_cb;
-	enet_receive_cb m_login_cb;
-	enet_receive_cb m_receive_cb;
+	enet_connection_cb_container m_connect_cb;
+	enet_connection_cb_container m_disconnect_cb;
+	enet_receive_cb_container m_login_cb;
+	enet_receive_cb_container m_receive_cb;
 	std::unique_ptr<_ENetHost, enet_host_deleter> m_host;
 	std::map<uint16_t, _ENetPeer*> m_peers;
 };

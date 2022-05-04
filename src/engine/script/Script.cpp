@@ -6,7 +6,7 @@ namespace tdrp::script
 
 void log(const char* message)
 {
-	std::cout << message << std::endl;
+	log::PrintLine("[LUA] {}", message);
 }
 
 Script::Script()

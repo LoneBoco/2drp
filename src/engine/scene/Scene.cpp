@@ -5,7 +5,9 @@ namespace tdrp::scene
 
 uint32_t Scene::AddObject(std::shared_ptr<SceneObject> so)
 {
-	auto p = m_graph.insert(std::make_pair(so->ID, so));
+	//auto p = m_graph.insert_or_assign(std::make_pair(so->ID, so));
+	auto p = m_graph.insert_or_assign(so->ID, so);
+	so->SetCurrentScene(shared_from_this());
 	return p.second;
 }
 
@@ -19,6 +21,8 @@ bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
 		return false;
 
 	m_graph.erase(p);
+	p->second->SetCurrentScene(nullptr);
+
 	return true;
 }
 

@@ -1,0 +1,7 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SceneObjectUnfollow {
+	repeated fixed32 id = 1;
+}

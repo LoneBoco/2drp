@@ -98,7 +98,7 @@ inline bool containsOrIntersects(const mathfu::Rect<T>& check, const mathfu::Vec
 {
 	mathfu::Vector<T, 2> center_rect{ check.pos.x + (check.size.x / 2), check.pos.y + (check.size.y / 2) };
 	
-	mathfu::Vector<float, 2> circle_distance;
+	mathfu::Vector<double, 2> circle_distance;
 	circle_distance.x = std::abs(against_circle_origin.x - center_rect.x);
 	circle_distance.y = std::abs(against_circle_origin.y - center_rect.y);
 
@@ -112,7 +112,7 @@ inline bool containsOrIntersects(const mathfu::Rect<T>& check, const mathfu::Vec
 	if (circle_distance.y <= (check.size.y / 2))
 		return true;
 
-	float circle_distance_sq = std::pow(circle_distance.x - check.size.x / 2, 2) + std::pow(circle_distance.y - check.size.y / 2, 2);
+	T circle_distance_sq = static_cast<T>(std::pow(circle_distance.x - check.size.x / 2, 2) + std::pow(circle_distance.y - check.size.y / 2, 2));
 	return (circle_distance_sq <= std::pow(against_circle_radius, 2));
 }
 

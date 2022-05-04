@@ -8,11 +8,11 @@
 #include "BabyDI.Configuration.h"
 
 #include "engine/common.h"
+#include "engine/filesystem/ProgramSettings.h"
 #include "engine/resources/Resource.h"
 
 #include "client/game/Game.h"
 #include "client/render/Window.h"
-#include "client/network/DownloadManager.h"
 
 
 int main(int argc, char* argv[])

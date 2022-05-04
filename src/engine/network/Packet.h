@@ -15,7 +15,7 @@ template <class T>
 const T construct(const uint8_t* const packet_data, const size_t packet_length)
 {
 	T packet;
-	packet.ParseFromArray(packet_data, packet_length);
+	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
 	return packet;
 }
 
@@ -23,42 +23,30 @@ const T construct(const uint8_t* const packet_data, const size_t packet_length)
 constexpr int PACKETVERSION = 1;
 
 // Don't adjust packet order without changing PACKETVERSION.
-enum class ClientPackets
-{
-	NOTHING = 0,
-	LOGIN,
-	READY,	// Blank
-	REQUESTFILE,
-	SCENEOBJECTCHANGE,
-	SCENEOBJECTUNFOLLOW,
-	SENDEVENT,
-
-	SERVERATTRIBUTES,
-
-	COUNT
-};
-
-// Don't adjust packet order without changing PACKETVERSION.
-enum class ServerPackets
+enum class Packets
 {
 	NOTHING = 0,
 	ERROR,
+	CLIENTREADY,
+	LOGIN,
 	LOGINSTATUS,
 	SERVERINFO,
-	TRANSFERFILE,
+	FILEREQUEST,
+	FILETRANSFER,
 	SWITCHSCENE,
-	CLIENTSCRIPT,
+	CLIENTSCRIPTADD,
 	CLIENTSCRIPTDELETE,
-	CLASS,
+	CLASSADD,
 	CLASSDELETE,
 	SCENEOBJECTNEW,
 	SCENEOBJECTCHANGE,
 	SCENEOBJECTDELETE,
-	SCENEOBJECTCONTROL,
+	SCENEOBJECTOWNERSHIP,
+	SCENEOBJECTUNFOLLOW,
 	SENDEVENT,
 
 	SERVERTYPE,				// [type]
-	CLASSADD,				// [name]
+	//CLASSADD,				// [name]
 	CLASSATTRIBUTEADD,		// [INT1 class length][class][INT2 id][name]
 	CLASSSCRIPT,			// [STRING class name][script]
 	SERVERATTRIBUTEADD,		// [INT2 id][name]

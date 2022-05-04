@@ -1,0 +1,9 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SceneObjectOwnership {
+	fixed32 sceneobject_id = 1;
+	fixed32 old_player_id = 2;
+	fixed32 new_player_id = 3;
+}

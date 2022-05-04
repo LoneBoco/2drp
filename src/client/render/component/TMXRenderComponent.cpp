@@ -25,6 +25,11 @@ void TMXRenderComponent::Initialize(ComponentEntity& owner)
 			auto so_tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
 			m_owner = so_tmx;
 			m_tmx = so_tmx->TmxMap;
+			if (!m_tmx)
+			{
+				log::PrintLine("** ERROR: TMX scene objects should be non-replicated.");
+				throw "TMX scene objects should be non-replicated.";
+			}
 		}
 	}
 }
@@ -70,7 +75,7 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			m_chunk_vertices.setPrimitiveType(sf::Quads);
 			m_chunk_vertices.resize(chunk_size.x * chunk_size.y * 4);
 
-			for (size_t i = 0; i < static_cast<size_t>(tile_count); ++i)
+			for (int i = 0; i < tile_count; ++i)
 			{
 				Vector2di pos{ getTilePosition(chunk_size, i) };
 

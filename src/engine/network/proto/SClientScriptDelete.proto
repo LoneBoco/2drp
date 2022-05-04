@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package tdrp.packet;
-
-message SClientScriptDelete {
-	string name = 1;
-}

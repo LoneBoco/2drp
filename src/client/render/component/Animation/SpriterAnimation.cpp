@@ -62,7 +62,7 @@ void SpriterAnimation::Render(sf::RenderTarget& window, std::chrono::millisecond
 		m_animation->setPosition(SpriterEngine::point{ animated_so->GetPosition().x, animated_so->GetPosition().y });
 
 		// Time elapsed right before render so our position gets updated properly.
-		m_animation->setTimeElapsed(elapsed.count());
+		m_animation->setTimeElapsed(static_cast<SpriterEngine::real>(elapsed.count()));
 		m_animation->render();
 	}
 }

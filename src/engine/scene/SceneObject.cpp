@@ -5,6 +5,7 @@
 
 #include "engine/common.h"
 #include "engine/server/Player.h"
+#include "engine/scene/Scene.h"
 
 #include "SceneObject.h"
 
@@ -103,9 +104,7 @@ void Physics::add_collision_edge(const core::vector2df& v1, const core::vector2d
 */
 
 SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-: ID(id),
-Visible(true), // SceneGraph(),
-m_object_class(c) /*UpdateCallback(nullptr), PhysicsUpdateCallback(nullptr),*/
+: ID(id), Visible(true), m_object_class(c)
 {
 	if (c)
 	{
@@ -350,10 +349,14 @@ Rectf SceneObject::GetBounds() const
 	return Rectf(GetPosition(), Vector2df(0.0f));
 }
 
-void SceneObject::SetControllingPlayer(std::shared_ptr<server::Player> player)
+void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
 {
-	m_controlling_player = player;
-	OnPlayerGainedControl.RunAll<SceneObject>(player);
+	m_owning_player = player;
+}
+
+void SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
+{
+	m_current_scene = scene;
 }
 
 //void SceneObject::Update()
@@ -466,15 +469,28 @@ AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& o
 
 void AnimatedSceneObject::SetAnimation(const std::string& image)
 {
-	// Hack to make continuous animations work.
-	// If an animation is not set to continuous, then setting it to the same animation restarts it.
-	if (boost::iends_with(image, ".gani") && Properties[Property::ANIMATION].GetString() == image)
+	auto dirty = Properties[Property::ANIMATION].GetIsDirty();
+	if (dirty)
 	{
+		// We've already been set to dirty and we are setting the animation again.
+		// We are probably in a script loop.  Post again to try to clear it.
 		auto anim = Properties.Get(Property::ANIMATION);
+		anim->Set(image);
 		anim->UpdateDispatch.Post(anim->GetId());
 	}
+	else
+	{
+		// Hack to make continuous animations work.
+		// If an animation is not set to continuous, then setting it to the same animation restarts it.
+		const char* debugStr = image.c_str();
+		if (boost::iends_with(image, ".gani") && Properties[Property::ANIMATION].GetString() == image)
+		{
+			// Set to dirty.  Gani animations can be restarted by re-setting the animation.
+			Properties[Property::ANIMATION].SetIsDirty(true);
+		}
 
-	Properties[Property::ANIMATION] = image;
+		Properties[Property::ANIMATION] = image;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////

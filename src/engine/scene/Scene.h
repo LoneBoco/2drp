@@ -19,7 +19,7 @@ namespace tdrp::loader
 namespace tdrp::scene
 {
 
-class Scene
+class Scene : public std::enable_shared_from_this<Scene>
 {
 	friend class tdrp::server::Server;
 	friend class tdrp::loader::LevelLoader;
@@ -40,12 +40,14 @@ public:
 
 	uint32_t AddObject(std::shared_ptr<SceneObject> so);
 	bool RemoveObject(std::shared_ptr<SceneObject> so);
-
+	
 	// uint32_t AddZone();
 	// bool RemoveZone();
 
 	std::shared_ptr<SceneObject> FindObject(uint32_t id) const;
 	std::shared_ptr<SceneObject> FindObject(const std::string& name) const;
+
+	std::map<uint32_t, std::shared_ptr<SceneObject>>& GetGraph();
 
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
@@ -59,12 +61,17 @@ public:
 protected:
 	std::string m_name;
 	std::map<uint32_t, std::shared_ptr<SceneObject>> m_graph;
-	uint32_t m_transmission_distance = 2000;
+	uint32_t m_transmission_distance = 6000;
 };
 
 inline const std::string& Scene::GetName() const
 {
 	return m_name;
+}
+
+inline std::map<uint32_t, std::shared_ptr<SceneObject>>& Scene::GetGraph()
+{
+	return m_graph;
 }
 
 inline const uint32_t Scene::GetTransmissionDistance() const

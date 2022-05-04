@@ -11,9 +11,11 @@ workspace "2drp"
 	libdirs { "Build/%{_ACTION}/bin/%{cfg.buildcfg}" }
 
 	-- C++20 support
-	cppdialect "C++20"
+	-- C++latest until <ranges> is supported outside of it.
+	cppdialect "C++latest"
 
 	linkgroups "On"
+	flags { "MultiProcessorCompile" }
 
 	filter "configurations:Debug"
 	 	defines { "DEBUG", "_DEBUG" }
@@ -31,11 +33,10 @@ workspace "2drp"
 	filter "platforms:x64"
 		architecture "x64"
 
-	-- C++17 support.
-	filter { "language:C++", "toolset:clang*" }
-		links { "c++experimental", "stdc++fs" }
-	filter "toolset:clang"
-		buildoptions { "-std=c++17", "-Wno-switch" }
+	-- C++20 support.
+	-- filter "toolset:clang*"
+	-- 	links { "c++experimental", "stdc++fs" }
+	-- 	buildoptions { "-std=c++20", "-Wno-switch" }
 
 	-- Toolset specific
 	filter "toolset:msc*"
@@ -45,7 +46,6 @@ workspace "2drp"
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
 			"/Zc:preprocessor",	-- Use alternative preprocessor (like GCC/clang, required for BabyDI)
-			"/MP",	-- Multi-core compiling
 		}
 
 	-- Windows defines.
@@ -130,7 +130,7 @@ project "2drp"
 	-- Post-build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
-		postbuildcommands { "{COPY} %{wks.location}/../media/packages/login/ %{cfg.targetdir}/packages/login/"}
+		postbuildcommands { "{COPY} %{wks.location}/../media/packages/ %{cfg.targetdir}/packages/"}
 
 	-- SFML post-build.
 	filter { "system:windows", "platforms:x32" }

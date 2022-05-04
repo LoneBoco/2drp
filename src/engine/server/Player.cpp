@@ -2,7 +2,7 @@
 
 #include "engine/server/Server.h"
 #include "engine/network/Packet.h"
-#include "engine/network/PacketsServer.h"
+//#include "engine/network/PacketsInc.h"
 #include "engine/network/construct/SceneObject.h"
 
 namespace tdrp::server

@@ -1,0 +1,14 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message FileTransfer {
+	enum Type {
+		PACKAGE = 0;
+		IMAGE = 1;
+	}
+	Type type = 1;
+	string name = 2;
+	sfixed64 date = 3;	// Duration from epoch.
+	bytes file = 4;
+}

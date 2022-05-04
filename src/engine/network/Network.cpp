@@ -2,7 +2,7 @@
 
 #include "engine/network/Network.h"
 #include "engine/network/Packet.h"
-#include "engine/network/ClientPacketHandler.h"
+#include "engine/network/PacketHandler.h"
 
 #include "engine/server/Server.h"
 
@@ -32,7 +32,7 @@ std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& 
 	size_t message_size = message.ByteSizeLong();
 
 	std::vector<uint8_t> result(message_size);
-	message.SerializeToArray(result.data(), message_size);
+	message.SerializeToArray(result.data(), static_cast<int>(message_size));
 
 	return result;
 }
@@ -40,6 +40,28 @@ std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& 
 inline bool _isSinglePlayer(const std::unique_ptr<_ENetHost, enet_host_deleter>& m_host)
 {
 	return !m_host;
+}
+
+inline bool _bypass(server::Server* server, const uint16_t peer_id)
+{
+	if (!server) return false;
+
+	if (server->IsSinglePlayer())
+		return true;
+
+	if (server->GetServerType() == server::ServerType::HOST && peer_id == network::HOSTID)
+		return true;
+
+	return false;
+}
+
+template <class T, typename ...Args>
+inline void _executeCallbacks(T queue, Args&&... args)
+{
+	for (auto& cb : queue)
+	{
+		cb(std::forward<Args>(args)...);
+	}
 }
 
 /////////////////////////////
@@ -118,14 +140,14 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 		address.port = port;
 		if (enet_address_set_host(&address, hostname.c_str()) != 0)
 		{
-			std::cout << "!! Network connect - Failed to determine host address." << std::endl;
+			log::PrintLine("!! Network connect - Failed to determine host address.");
 			return false;
 		}
 
 		ENetPeer* peer = enet_host_connect(m_host.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
 		if (peer == nullptr)
 		{
-			std::cout << "!! Network connect - Failed to connect to host." << std::endl;
+			log::PrintLine("!! Network connect - Failed to connect to host.");
 			return false;
 		}
 
@@ -134,14 +156,14 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 		{
 			if (event.type == ENET_EVENT_TYPE_CONNECT)
 			{
-				std::cout << ":: Network connect - Established link to host." << std::endl;
+				log::PrintLine(":: Network connect - Established link to host.");
 				m_peers.clear();
 				m_peers[0] = peer;
 				return true;
 			}
 		}
 
-		std::cout << "!! Network connect - Failure to establish link to host." << std::endl;
+		log::PrintLine("!! Network connect - Failure to establish link to host.");
 		enet_peer_reset(peer);
 		return false;
 	});
@@ -171,7 +193,7 @@ void Network::DisconnectPeer(const uint16_t peer_id)
 
 /////////////////////////////
 
-void Network::Update(bool isServer)
+void Network::Update()
 {
 	if (!m_host) return;
 	//if (m_host->connectedPeers == 0) return;
@@ -184,21 +206,22 @@ void Network::Update(bool isServer)
 			continue;
 
 		// Get our peer id.
-		uint16_t id = isServer ? event.peer->incomingPeerID : event.peer->outgoingPeerID;
+		// Add 1 to get the proper player id.
+		uint16_t id = event.peer->outgoingPeerID + 1;
+		if (m_server && m_server->IsHost())
+			id = event.peer->incomingPeerID + 1;
 
 		// Callbacks.
 		switch (event.type)
 		{
 			case ENET_EVENT_TYPE_CONNECT:
-				if (m_connect_cb)
-					m_connect_cb(id);
+				_executeCallbacks(m_connect_cb, id);
 
 				m_peers[id] = event.peer;
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
-				if (m_disconnect_cb)
-					m_disconnect_cb(id);
+				_executeCallbacks(m_disconnect_cb, id);
 
 				// Delete our account data tied to this player.
 				if (event.peer->data != nullptr)
@@ -216,23 +239,16 @@ void Network::Update(bool isServer)
 				{
 					// The first two bytes make up the packet id.
 					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
+					// log::PrintLine("-- Packet {}", packet_id);
 
 					// If login packet, call the login callback.
 					// Otherwise, if we are the host, attempt to handle client packets.
 					// Finally, if not handled, pass it to the normal receive callback.
-					if (packet_id == PACKETID(ClientPackets::LOGIN) && m_login_cb)
-						m_login_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+					if (packet_id == PACKETID(Packets::LOGIN) && !m_login_cb.empty())
+						_executeCallbacks(m_login_cb, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 					else
 					{
-						bool handled = false;
-
-						// If we are a server, handle incoming client packets.
-						if (isServer)
-							handled = tdrp::network::handlers::network_receive(m_server, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
-						
-						// If we have a receive callback and we haven't handled our packet yet, do the callback.
-						if (!handled && m_receive_cb)
-							m_receive_cb(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+						_executeCallbacks(m_receive_cb, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 					}
 				}
 
@@ -246,49 +262,59 @@ void Network::Update(bool isServer)
 
 void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, peer_id))
 	{
-		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
-		return;
+		_executeCallbacks(m_receive_cb, 0, packet_id, nullptr, 0);
+
+		if (_isSinglePlayer(m_host))
+			return;
 	}
 
-	if (m_peers.find(peer_id) == m_peers.end()) return;
+	auto peer = m_peers.find(peer_id);
+	if (peer == m_peers.end() || peer->second == nullptr)
+		return;
 
 	ENetPacket* packet = construct_packet(channel, packet_id);
 	if (packet == nullptr) return;
 
-	enet_peer_send(m_peers[peer_id], static_cast<uint8_t>(channel), packet);
+	enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
 }
 
-void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, peer_id))
 	{
 		auto data = _serializeMessageToVector(message);
-		if (packet_id == PACKETID(ClientPackets::LOGIN) && m_login_cb)
-			m_login_cb(0, packet_id, data.data(), data.size());
-		else if (m_receive_cb)
-			m_receive_cb(0, packet_id, data.data(), data.size());
-		return;
+		if (packet_id == PACKETID(Packets::LOGIN))
+			_executeCallbacks(m_login_cb, 0, packet_id, data.data(), data.size());
+		else
+			_executeCallbacks(m_receive_cb, 0, packet_id, data.data(), data.size());
+
+		if (_isSinglePlayer(m_host))
+			return;
 	}
 
-	if (m_peers.find(peer_id) == m_peers.end()) return;
+	auto peer = m_peers.find(peer_id);
+	if (peer == m_peers.end() || peer->second == nullptr)
+		return;
 
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
 
-	enet_peer_send(m_peers[peer_id], static_cast<uint8_t>(channel), packet);
+	enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
 }
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
-		return;
+		_executeCallbacks(m_receive_cb, 0, packet_id, nullptr, 0);
+
+		if (_isSinglePlayer(m_host))
+			return;
 	}
 
 	ENetPacket* packet = construct_packet(channel, packet_id);
@@ -297,17 +323,16 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
 }
 
-void Network::Broadcast(const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+void Network::Broadcast(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb)
-		{
-			auto data = _serializeMessageToVector(message);
-			m_receive_cb(0, packet_id, data.data(), data.size());
-		}
-		return;
+		auto data = _serializeMessageToVector(message);
+		_executeCallbacks(m_receive_cb, 0, packet_id, data.data(), data.size());
+
+		if (_isSinglePlayer(m_host))
+			return;
 	}
 
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
@@ -316,85 +341,148 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, google:
 	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
 }
 
-std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
+		bool hostExcluded = exclude.contains(m_server->GetPlayerById(network::HOSTID));
+		if (!hostExcluded)
+			_executeCallbacks(m_receive_cb, 0, packet_id, nullptr, 0);
+
+		if (_isSinglePlayer(m_host))
+			return {};
+	}
+
+	// Guest should just send to the server.  They won't have other peers.
+	if (m_server && m_server->IsGuest())
+	{
+		assert(false);
+		//Send(network::HOSTID, packet_id, channel);
 		return {};
 	}
 
-	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id));
+	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id), exclude);
 }
 
-std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb)
+		bool hostExcluded = exclude.contains(m_server->GetPlayerById(network::HOSTID));
+		if (!hostExcluded)
 		{
 			auto data = _serializeMessageToVector(message);
-			m_receive_cb(0, packet_id, data.data(), data.size());
+			_executeCallbacks(m_receive_cb, 0, packet_id, data.data(), data.size());
 		}
+		if (_isSinglePlayer(m_host))
+			return {};
+	}
+
+	// Guest should just send to the server.  They won't have other peers.
+	if (m_server && m_server->IsGuest())
+	{
+		assert(false);
+		//Send(network::HOSTID, packet_id, channel, message);
 		return {};
 	}
 
-	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message));
+	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
 }
 
-int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb) m_receive_cb(0, packet_id, nullptr, 0);
-		return 1;
+		bool hostExcluded = exclude.contains(m_server->GetPlayerById(network::HOSTID));
+		if (!hostExcluded)
+		{
+			_executeCallbacks(m_receive_cb, 0, packet_id, nullptr, 0);
+		}
+		if (_isSinglePlayer(m_host))
+			return 1;
 	}
 
-	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id));
+	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id), exclude);
 }
 
-int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, google::protobuf::Message& message)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
-	// If single player, bypass networking and send directly to the client portion of the engine.
-	if (_isSinglePlayer(m_host))
+	// Check for a network bypass.
+	if (_bypass(m_server, network::HOSTID))
 	{
-		if (m_receive_cb)
+		bool hostExcluded = exclude.contains(m_server->GetPlayerById(network::HOSTID));
+		if (!hostExcluded)
 		{
 			auto data = _serializeMessageToVector(message);
-			m_receive_cb(0, packet_id, data.data(), data.size());
+			_executeCallbacks(m_receive_cb, 0, packet_id, data.data(), data.size());
 		}
-		return 1;
+		if (_isSinglePlayer(m_host))
+			return 1;
 	}
 
-	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message));
+	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
 }
 
 /////////////////////////////
 
-std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
 {
 	std::vector<server::PlayerPtr> result;
 	
 	if (packet == nullptr)
 		return result;
+	if (m_peers.empty())
+		return result;
 
 	for (auto& [player_id, player] : m_server->m_player_list)
 	{
+		if (exclude.contains(player))
+			continue;
+
+		auto peer = m_peers.find(player_id);
+		if (peer == std::end(m_peers) || peer->second == nullptr)
+			continue;
+
+		// Assemble a list of owned scene objects.
+		std::set<SceneObjectPtr> owned_objects;
+		std::for_each(std::begin(player->FollowedSceneObjects), std::end(player->FollowedSceneObjects),
+			[&, this](const auto id)
+			{
+				auto so = m_server->GetSceneObjectById(id);
+				if (!so) return;
+
+				if (so->GetOwningPlayer().lock() == player)
+					owned_objects.insert(so);
+			}
+		);
+
 		if (const auto player_scene = player->GetCurrentScene().lock())
 		{
 			if (player_scene.get() == scene.get())
 			{
-				if (auto player_object = player->GetCurrentControlledSceneObject().lock())
-				{
-					auto distance = Vector2df::DistanceSquared(location, player_object->GetPosition());
-					if (distance <= scene->GetTransmissionDistance())
+				// Check of any of the owned scene objects are in range.
+				bool in_range = false;
+
+				(void)std::any_of(std::begin(owned_objects), std::end(owned_objects),
+					[&, this](const auto& so) -> bool
 					{
-						result.push_back(player);
-						enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
+						auto distance = Vector2df::Distance(location, so->GetPosition());
+						if (distance <= scene->GetTransmissionDistance())
+						{
+							in_range = true;
+							return true;
+						}
+						return false;
 					}
+				);
+
+				if (in_range)
+				{
+					result.push_back(player);
+					enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
 				}
 			}
 		}
@@ -403,19 +491,27 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 	return result;
 }
 
-int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet)
+int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
 {
 	if (packet == nullptr) return 0;
+	if (m_peers.empty()) return 0;
 
 	int count = 0;
-	for (auto[player_id, player] : m_server->m_player_list)
+	for (auto& [player_id, player] : m_server->m_player_list)
 	{
+		if (exclude.contains(player))
+			continue;
+
+		auto peer = m_peers.find(player_id);
+		if (peer == std::end(m_peers) || peer->second == nullptr)
+			continue;
+
 		if (auto player_scene = player->GetCurrentScene().lock())
 		{
 			if (player_scene.get() == scene.get())
 			{
 				++count;
-				enet_peer_send(m_peers[player_id], static_cast<uint8_t>(channel), packet);
+				enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
 			}
 		}
 	}
@@ -449,7 +545,7 @@ server::Account* Network::GetAccountFromPeer(const uint16_t peer_id)
 
 /////////////////////////////
 
-_ENetPacket* Network::construct_packet(const Channel channel, const uint16_t packet_id, google::protobuf::Message* message)
+_ENetPacket* Network::construct_packet(const Channel channel, const uint16_t packet_id, const google::protobuf::Message* message)
 {
 	uint32_t flags = _determine_flags(channel);
 	size_t message_size = (message == nullptr) ? 0 : message->ByteSizeLong();
@@ -460,7 +556,7 @@ _ENetPacket* Network::construct_packet(const Channel channel, const uint16_t pac
 	packet->data[0] = static_cast<uint8_t>(packet_id & 0xFF);
 	packet->data[1] = static_cast<uint8_t>((packet_id >> 8) & 0xFF);
 	if (message != nullptr)
-		message->SerializeToArray(packet->data + 2, message_size);
+		message->SerializeToArray(packet->data + 2, static_cast<int>(message_size));
 
 	return packet;
 }

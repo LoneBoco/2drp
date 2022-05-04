@@ -1,6 +1,7 @@
 #include "engine/script/modules/bind.h"
 
 #include "engine/server/Server.h"
+#include "engine/scene/Scene.h"
 
 namespace tdrp::script::modules
 {
@@ -8,16 +9,22 @@ namespace tdrp::script::modules
 void bind_server(sol::state& lua)
 {
 	lua.new_usertype<server::Server>("Server", sol::no_constructor,
+		"Player", sol::readonly_property(&server::Server::GetPlayer),
+
 		"OnPlayerJoin", sol::writeonly_property(&server::Server::SetOnPlayerJoin),
 		"OnPlayerLeave", sol::writeonly_property(&server::Server::SetOnPlayerLeave),
 		"OnServerTick", sol::writeonly_property(&server::Server::SetOnServerTick),
 
+		"GetScene", &server::Server::GetScene,
+		"GetDefaultScene", [](server::Server& server) -> std::shared_ptr<scene::Scene> { return server.GetScene(server.GetPackage()->GetStartingScene()); },
+
 		"CreateSceneObject", &server::Server::CreateSceneObject,
 		"DeleteSceneObject", sol::resolve<bool(uint32_t)>(&server::Server::DeleteSceneObject),
 		"DeleteSceneObject", sol::resolve<bool(std::shared_ptr<SceneObject>)>(&server::Server::DeleteSceneObject),
+		"DeletePlayerOwnedSceneObjects", &server::Server::DeletePlayerOwnedSceneObjects,
 
 		"SwitchPlayerScene", &server::Server::SwitchPlayerScene,
-		"SwitchPlayerControlledSceneObject", &server::Server::SwitchPlayerControlledSceneObject,
+		"SwitchSceneObjectOwnership", &server::Server::SwitchSceneObjectOwnership,
 
 		"SendEvent", &server::Server::SendEvent
 	);

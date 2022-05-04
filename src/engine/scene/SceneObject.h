@@ -25,6 +25,10 @@ namespace tdrp::server
 {
 	class Player;
 }
+namespace tdrp::scene
+{
+	class Scene;
+}
 
 namespace tdrp
 {
@@ -176,13 +180,13 @@ constexpr uint32_t GlobalSceneObjectIDFlag = 0x80'00'00'00;
 
 class SceneObject : public ComponentEntity
 {
+	SCRIPT_SETUP;
 	SCRIPT_FUNCTION(OnCreated);
 	SCRIPT_FUNCTION(OnUpdate);
 	SCRIPT_FUNCTION(OnEvent);
-	SCRIPT_FUNCTION(OnPlayerGainedControl);
+	SCRIPT_FUNCTION(OnOwnershipChange);
 	SCRIPT_FUNCTION(OnCollision);
 	SCRIPT_FUNCTION(OnAnimationEnd);
-	SCRIPT_ENVIRONMENT;
 
 public:
 	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
@@ -239,11 +243,17 @@ public:
 
 	virtual Rectf GetBounds() const;
 
-	std::weak_ptr<server::Player> GetControllingPlayer() const
+	std::weak_ptr<server::Player> GetOwningPlayer() const
 	{
-		return m_controlling_player;
+		return m_owning_player;
 	}
-	void SetControllingPlayer(std::shared_ptr<server::Player> player);
+	void SetOwningPlayer(std::shared_ptr<server::Player> player);
+
+	std::weak_ptr<scene::Scene> GetCurrentScene() const
+	{
+		return m_current_scene;
+	}
+	void SetCurrentScene(std::shared_ptr<scene::Scene> scene);
 
 /*
 	//! Sets the callback function used when update() is called.
@@ -282,23 +292,30 @@ public:
 
 	const uint32_t ID;
 	std::string Name;
-	std::string ClientScript;
-	std::string ServerScript;
+	bool Visible = true;
+	bool NonReplicated = false;
+
 	ObjectAttributes Attributes;
 	ObjectProperties Properties;
+
+	std::string ClientScript;
+	std::string ServerScript;
 
 	//! Physics.
 	// physics::Physics Physics;
 	
-	bool Visible;
 
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;
-	std::weak_ptr<server::Player> m_controlling_player;
+	std::weak_ptr<server::Player> m_owning_player;
+	std::weak_ptr<scene::Scene> m_current_scene;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;
 	// b2Vec2 PreviousPhysicsPosition;
 };
+
+using SceneObjectPtr = std::shared_ptr<SceneObject>;
+
 
 class StaticSceneObject : public SceneObject
 {
@@ -397,9 +414,14 @@ T getPropsPacket(SceneObject& so)
 	// Loop through all dirty attributes and add them to the packet.
 	for (auto& attribute : ObjectAttributes::Dirty(so.Attributes))
 	{
-		attribute.SetIsDirty(false);
 		attribute.UpdateDispatch.Post(attribute.GetId());
 		so.Attributes.DirtyUpdateDispatch.Post(attribute.GetId());
+
+		// If our dispatch removed the dirty flag, skip this attribute.
+		if (!attribute.GetIsDirty())
+			continue;
+
+		attribute.SetIsDirty(false);
 
 		auto attr = packet.add_attributes();
 		attr->set_id(attribute.GetId());
@@ -430,8 +452,13 @@ T getPropsPacket(SceneObject& so)
 		if (!property->GetIsDirty())
 			continue;
 
-		property->SetIsDirty(false);
 		property->UpdateDispatch.Post(id);
+
+		// If our dispatch removed the dirty flag, skip this property.
+		if (!property->GetIsDirty())
+			continue;
+
+		property->SetIsDirty(false);
 
 		auto prop = packet.add_properties();
 		prop->set_id(id);
