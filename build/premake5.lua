@@ -97,7 +97,7 @@ project "2drp"
 		"../dependencies/tmxlite/tmxlite/include/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite" }
+	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi" }
 
 	-- Libraries.
 	links {
@@ -106,7 +106,6 @@ project "2drp"
 		"bzip2",
 		"zlib",
 		"enet",
-		-- "pugixml",
 		"protobuf",
 		"lua51",
 		"ziplib",
@@ -114,7 +113,7 @@ project "2drp"
 		"SpriterPlusPlus",
 	}
 
-	defines { "SFML_STATIC", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
+	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -176,7 +175,6 @@ project "2drp_server"
 		"bzip2",
 		"zlib",
 		"enet",
-		-- "pugixml",
 		"protobuf",
 		"lua51",
 		"ziplib",
@@ -525,7 +523,6 @@ project "tmxlite"
 	location "projects"
 	includedirs {
 		"../dependencies/tmxlite/tmxlite/include",
-		-- "../dependencies/pugixml/src/",
 	}
 	files {
 		"../dependencies/tmxlite/tmxlite/include/**",
@@ -533,6 +530,29 @@ project "tmxlite"
 	}
 	defines { "TMXLITE_STATIC" }
 
-	-- Use project-wide pugixml to avoid linker errors.
+	-- Use header-only pugixml to avoid linker errors.
 	defines { "PUGIXML_HEADER_ONLY" }
-	-- links { "pugixml" }
+
+project "RmlUi"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+	includedirs {
+		"../dependencies/RmlUi/Include/",
+		"../dependencies/luajit-2.0/src/",
+		"../dependencies/SFML/extlibs/headers/freetype2/",
+	}
+	files {
+		"../dependencies/RmlUi/Source/Core/**",
+		"../dependencies/RmlUi/Source/Debugger/**",
+		"../dependencies/RmlUi/Source/Lua/**",
+	}
+	defines { "RMLUI_STATIC_LIB", "_CRT_SECURE_NO_WARNINGS" }
+	links { "lua51", "freetype" }
+	libdirs { "../dependencies/luajit-2.0/src/" }
+
+	-- For freetype2.
+	filter { "system:windows", "platforms:x32" }
+		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x86/" }
+	filter { "system:windows", "platforms:x64" }
+		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x64/" }
