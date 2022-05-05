@@ -83,7 +83,7 @@ void GaniAnimation::Load(const filesystem::path& image)
 
 						sf::Sprite s;
 						s.setTexture(*t);
-						s.setTextureRect({ sprite.Source.pos.x, sprite.Source.pos.y, sprite.Source.size.x, sprite.Source.size.y });
+						s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
 						m_sprites[index] = std::move(s);
 					}
 				}
@@ -373,13 +373,13 @@ void GaniAnimation::swap_images(const std::string& attribute, const std::string&
 						{
 							auto& s = it->second;
 							s.setTexture(*texture);
-							s.setTextureRect({ sprite.Source.pos.x, sprite.Source.pos.y, sprite.Source.size.x, sprite.Source.size.y });
+							s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
 						}
 						else
 						{
 							sf::Sprite s;
 							s.setTexture(*texture);
-							s.setTextureRect({ sprite.Source.pos.x, sprite.Source.pos.y, sprite.Source.size.x, sprite.Source.size.y });
+							s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
 							m_sprites[index] = std::move(s);
 						}
 					}

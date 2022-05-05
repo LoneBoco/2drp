@@ -55,8 +55,8 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 			auto tile_size = tiled_so->Tileset->TileDimensions;
 			auto tile_count = tiled_so->Dimension;
 
-			vertices.setPrimitiveType(sf::Quads);
-			vertices.resize(tile_count.x * tile_count.y * 4);
+			vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
+			vertices.resize(tile_count.x * tile_count.y * 6);
 
 			for (size_t i = 0; i < tiled_so->TileData.size(); i += 2)
 			{
@@ -66,16 +66,40 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 				auto tu = tiled_so->TileData[i];
 				auto tv = tiled_so->TileData[i + 1];
 
-				auto* quad = &vertices[tile_number * 4];
+				/*
+				* 0--1   5
+				* | /   /|
+				* |/   /_|
+				* 2   3  4
+				*/
+
+				auto* quad = &vertices[tile_number * 6];
+				// 0 quad[0].position = { static_cast<float>(x * tile_size.x), static_cast<float>(y * tile_size.y) };
+				// 1 quad[1].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>(y * tile_size.y) };
+				// 4 quad[2].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+				// 2 quad[4].position = { static_cast<float>(x * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+
 				quad[0].position = { static_cast<float>(x * tile_size.x), static_cast<float>(y * tile_size.y) };
 				quad[1].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>(y * tile_size.y) };
-				quad[2].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+				quad[2].position = { static_cast<float>(x * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+
 				quad[3].position = { static_cast<float>(x * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+				quad[4].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>((y + 1) * tile_size.y) };
+				quad[5].position = { static_cast<float>((x + 1) * tile_size.x), static_cast<float>(y * tile_size.y) };
+
+
+				// 0 quad[0].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>(tv * tile_size.y) };
+				// 1 quad[1].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>(tv * tile_size.y) };
+				// 4 quad[2].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
+				// 2 quad[3].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
 
 				quad[0].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>(tv * tile_size.y) };
 				quad[1].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>(tv * tile_size.y) };
-				quad[2].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
+				quad[2].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
+
 				quad[3].texCoords = { static_cast<float>(tu * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
+				quad[4].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>((tv + 1) * tile_size.y) };
+				quad[5].texCoords = { static_cast<float>((tu + 1) * tile_size.x), static_cast<float>(tv * tile_size.y) };
 			}
 		}
 
@@ -101,7 +125,9 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 				state.texture = tileset.get();
 
 				auto texture = std::make_shared<sf::RenderTexture>();
-				texture->create(width, height);
+				auto success = texture->create(width, height);
+				if (!success) continue;
+
 				texture->clear();
 				texture->draw(vertices, state);
 				texture->display();
@@ -157,7 +183,7 @@ void TileMapRenderComponent::Render(sf::RenderTarget& window, std::chrono::milli
 		sf::RenderStates state;
 		state.transform
 			.translate({ pos.x, pos.y })
-			.rotate(rotate)
+			.rotate(sf::degrees(rotate))
 			.scale({ scale.x, scale.y });
 
 		for (auto& sprite : m_sprites)

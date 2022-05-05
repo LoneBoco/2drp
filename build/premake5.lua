@@ -24,8 +24,9 @@ workspace "2drp"
 
 	filter "configurations:Release"
 		defines { "NDEBUG" }
-		optimize "On"
+		optimize "Size"
 		flags { "LinkTimeOptimization" }
+		staticruntime "On"
 
 	-- Set our platform architectures.
 	filter "platforms:x32"
@@ -105,7 +106,7 @@ project "2drp"
 		"bzip2",
 		"zlib",
 		"enet",
-		"pugixml",
+		-- "pugixml",
 		"protobuf",
 		"lua51",
 		"ziplib",
@@ -113,7 +114,7 @@ project "2drp"
 		"SpriterPlusPlus",
 	}
 
-	defines { "SFML_STATIC", "NOMINMAX" }
+	defines { "SFML_STATIC", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -175,7 +176,7 @@ project "2drp_server"
 		"bzip2",
 		"zlib",
 		"enet",
-		"pugixml",
+		-- "pugixml",
 		"protobuf",
 		"lua51",
 		"ziplib",
@@ -197,6 +198,8 @@ project "2drp_server"
 	}
 
 	dependson { "PlayRho", "bzip2", "zlib", "enet" }
+
+	defines { "NOMINMAX", "PUGIXML_HEADER_ONLY" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
@@ -220,24 +223,44 @@ project "SFML"
 	kind "StaticLib"
 	language "C++"
 	location "projects"
-	dependson { "flac", "ogg", "vorbis" }
+	-- dependson { "flac", "ogg", "vorbis" }
 	includedirs {
 		"../dependencies/SFML/include/",
 		"../dependencies/SFML/src/",
-		"../dependencies/SFML/extlibs/headers/stb_image/",
+		"../dependencies/SFML/include/SFML/Audio/",
+		"../dependencies/SFML/include/SFML/Graphics/",
+		"../dependencies/SFML/include/SFML/Main/",
+		"../dependencies/SFML/include/SFML/System/",
+		"../dependencies/SFML/include/SFML/Window/",
+		"../dependencies/SFML/extlibs/headers/",
+		"../dependencies/SFML/extlibs/headers/AL/",
+		"../dependencies/SFML/extlibs/headers/freetype2/",
 		"../dependencies/SFML/extlibs/headers/glad/include/",
+		"../dependencies/SFML/extlibs/headers/minimp3/",
+		"../dependencies/SFML/extlibs/headers/stb_image/",
 		"../dependencies/SFML/extlibs/headers/vulkan/",
-		"../dependencies/flac/include/",
-		"../dependencies/freetype2/include/",
-		"../dependencies/_config/ogg/include/",
-		"../dependencies/ogg/include/",
-		"../dependencies/OpenAL/include/AL/",
-		"../dependencies/vorbis/include/",
+		-- "../dependencies/flac/include/",
+		-- "../dependencies/freetype2/include/",
+		-- "../dependencies/_config/ogg/include/",
+		-- "../dependencies/ogg/include/",
+		-- "../dependencies/OpenAL/include/AL/",
+		-- "../dependencies/vorbis/include/",
+	}
+	files {
+		-- "../dependencies/SFML/extlibs/headers/AL/*",
+		"../dependencies/SFML/extlibs/headers/FLAC/*",
+		-- "../dependencies/SFML/extlibs/headers/freetype2/*",
+		-- "../dependencies/SFML/extlibs/headers/glad/include/*",
+		-- "../dependencies/SFML/extlibs/headers/minimp3/*",
+		"../dependencies/SFML/extlibs/headers/ogg/*",
+		-- "../dependencies/SFML/extlibs/headers/stb_image/*",
+		"../dependencies/SFML/extlibs/headers/vorbis/*",
+		-- "../dependencies/SFML/extlibs/headers/vulkan/*",
 	}
 	files {
 		"../dependencies/SFML/src/SFML/Audio/**",
 		"../dependencies/SFML/src/SFML/Graphics/**",
-		"../dependencies/SFML/src/SFML/System/*.cpp",
+		"../dependencies/SFML/src/SFML/System/*",
 		"../dependencies/SFML/src/SFML/Window/*",
 	}
 	removefiles {
@@ -246,124 +269,48 @@ project "SFML"
 	}
 	links {
 		"flac",
+		"freetype",
 		"ogg",
+		"OpenAL32",
 		"vorbis",
-		"freetype", -- external
-		"OpenAL32", -- external
+		"vorbisenc",
+		"vorbisfile",
 		"OpenGL32", -- external
 	}
 	defines {
+		-- Avoid warnings in vorbisfile.h
 		"OV_EXCLUDE_STATIC_CALLBACKS",
 		"FLAC__NO_DLL",
+
+		"STBI_FAILURE_USERMSG",
 		"SFML_STATIC",
 	}
-	filter { "system:windows", "platforms:x32" }
-		libdirs { "../dependencies/freetype2/release dll/win32/", "../dependencies/OpenAL/lib/win32/" }
-	filter { "system:windows", "platforms:x64" }
-		libdirs { "../dependencies/freetype2/release dll/win64/", "../dependencies/OpenAL/lib/win64/" }
+
 	filter "system:windows"
 		files {
 			"../dependencies/SFML/src/SFML/Main/MainWin32.cpp",
 			"../dependencies/SFML/src/SFML/System/Win32/**",
 			"../dependencies/SFML/src/SFML/Window/Win32/**",
 		}
-		defines { "UNICODE", "_UNICODE" }
+		disablewarnings { "4068" }
+		defines { "UNICODE", "_UNICODE", "_CRT_SECURE_NO_DEPRECATE", "_SCL_SECURE_NO_WARNINGS" }
 		links { "winmm", "gdi32" }
 	filter "system:linux"
 		files {
 			"../dependencies/SFML/src/SFML/System/Unix/**",
 			"../dependencies/SFML/src/SFML/Window/Unix/**",
 		}
-		links { "pthread" }
+		links { "rt", "pthread", "X11", "UDev", "dl" }
 	filter { "toolset:gcc", "files:ImageLoader.cpp" }
 		buildoptions { "-fno-strict-aliasing" }
 
-	-- Post-build commands
+	filter { "toolset:msc*"}
+		links { "legacy_stdio_definitions" }
+
 	filter { "system:windows", "platforms:x32" }
-		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype2/release dll/win32/freetype.dll\" %{cfg.targetdir}" }
+		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x86/" }
 	filter { "system:windows", "platforms:x64" }
-		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype2/release dll/win64/freetype.dll\" %{cfg.targetdir}" }
-
-project "flac"
-	kind "StaticLib"
-	language "C"
-	compileas "C"
-	location "projects"
-	dependson { "ogg" }
-	includedirs {
-		"../dependencies/flac/include/",
-		"../dependencies/flac/src/libFLAC/include/",
-		"../dependencies/_config/ogg/include/",
-		"../dependencies/ogg/include/"
-	}
-	files { "../dependencies/flac/src/libFLAC/*.c" }
-	links { "ogg" }
-	defines {
-		"_LIB",
-		"FLAC__HAS_OGG",
-		"FLAC__CPU_X86_64",
-		"FLAC__NO_ASM",
-		"FLAC__HAS_X86INTRIN",
-		"FLAC__ALIGN_MALLOC_DATA",
-		"PACKAGE_VERSION=\"1.3.2\"",
-		"FLAC__NO_DLL",
-		"FLaC__INLINE=_inline",
-	}
-
-project "vorbis"
-	kind "StaticLib"
-	language "C"
-	compileas "C"
-	location "projects"
-	dependson "ogg"
-	includedirs {
-		"../dependencies/vorbis/include/",
-		"../dependencies/vorbis/lib/",
-		"../dependencies/_config/ogg/include/",
-		"../dependencies/ogg/include/",
-	}
-	files {
-		"../dependencies/vorbis/lib/analysis.c",
-		"../dependencies/vorbis/lib/bitrate.c",
-		"../dependencies/vorbis/lib/block.c",
-		"../dependencies/vorbis/lib/codebook.c",
-		"../dependencies/vorbis/lib/envelope.c",
-		"../dependencies/vorbis/lib/floor0.c",
-		"../dependencies/vorbis/lib/floor1.c",
-		"../dependencies/vorbis/lib/info.c",
-		"../dependencies/vorbis/lib/lookup.c",
-		"../dependencies/vorbis/lib/lpc.c",
-		"../dependencies/vorbis/lib/lsp.c",
-		"../dependencies/vorbis/lib/mapping0.c",
-		"../dependencies/vorbis/lib/mdct.c",
-		"../dependencies/vorbis/lib/psy.c",
-		"../dependencies/vorbis/lib/registry.c",
-		"../dependencies/vorbis/lib/res0.c",
-		"../dependencies/vorbis/lib/sharedbook.c",
-		"../dependencies/vorbis/lib/smallft.c",
-		"../dependencies/vorbis/lib/synthesis.c",
-		"../dependencies/vorbis/lib/vorbisenc.c",
-		"../dependencies/vorbis/lib/window.c",
-		"../dependencies/vorbis/lib/vorbisenc.c",
-		"../dependencies/vorbis/lib/vorbisfile.c",
-	}
-	links { "ogg" }
-	callingconvention "Cdecl"
-	defines { "_USRDLL", "LIBVORBIS_EXPORTS" }
-	filter "toolset:msc*"
-		disablewarnings { "4244", "4100", "4267", "4189", "4305", "4127", "4706" }
-
-project "ogg"
-	kind "StaticLib"
-	language "C"
-	compileas "C"
-	location "projects"
-	includedirs {
-		"../dependencies/_config/ogg/include/",
-		"../dependencies/ogg/include/",
-	}
-	files { "../dependencies/ogg/src/*.c" }
-	defines { "INCLUDE_STDINT_H" }
+		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x64/" }
 
 project "PlayRho"
 	kind "StaticLib"
@@ -416,14 +363,14 @@ project "enet"
 -- 	kind "None"
 -- 	files { "../dependencies/mathfu/include/**" }
 
-project "pugixml"
-	kind "StaticLib"
-	language "C++"
-	location "projects"
-	files { "../dependencies/pugixml/src/**" }
-	flags { "NoPCH", "NoMinimalRebuild" }
-	editandcontinue "Off"
-	uuid "89A1E353-E2DC-495C-B403-742BE206ACED"
+-- project "pugixml"
+-- 	kind "StaticLib"
+-- 	language "C++"
+-- 	location "projects"
+-- 	files { "../dependencies/pugixml/src/**" }
+-- 	flags { "NoPCH", "NoMinimalRebuild" }
+-- 	editandcontinue "Off"
+-- 	uuid "89A1E353-E2DC-495C-B403-742BE206ACED"
 
 project "protobuf"
 	kind "StaticLib"
@@ -432,6 +379,48 @@ project "protobuf"
 	includedirs { "../dependencies/protobuf/src/", "../dependencies/zlib/" }
 	defines { "HAVE_ZLIB", "UNICODE", "_UNICODE" }
 	links { "zlib" }
+	optimize "Size"
+	-- staticruntime "On"
+
+	cppdialect "C++17"
+
+	-- libprotobuf-lite.cmake
+	files {
+		"../dependencies/protobuf/src/google/protobuf/any_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/arena.cc",
+		"../dependencies/protobuf/src/google/protobuf/arenastring.cc",
+		"../dependencies/protobuf/src/google/protobuf/arenaz_sampler.cc",
+		"../dependencies/protobuf/src/google/protobuf/extension_set.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_enum_util.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_tctable_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_util.cc",
+		"../dependencies/protobuf/src/google/protobuf/implicit_weak_message.cc",
+		"../dependencies/protobuf/src/google/protobuf/inlined_string_field.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/coded_stream.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/io_win32.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/strtod.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/map.cc",
+		"../dependencies/protobuf/src/google/protobuf/message_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/parse_context.cc",
+		"../dependencies/protobuf/src/google/protobuf/repeated_field.cc",
+		"../dependencies/protobuf/src/google/protobuf/repeated_ptr_field.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/bytestream.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/common.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/int128.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/status.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/statusor.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/stringpiece.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/stringprintf.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/structurally_valid.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/strutil.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/time.cc",
+		"../dependencies/protobuf/src/google/protobuf/wire_format_lite.cc",
+	}
+
+	-- libprotobuf.cmake
 	files {
 		"../dependencies/protobuf/src/google/protobuf/any.cc",
 		"../dependencies/protobuf/src/google/protobuf/any.pb.cc",
@@ -446,13 +435,15 @@ project "protobuf"
 		"../dependencies/protobuf/src/google/protobuf/empty.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/extension_set_heavy.cc",
 		"../dependencies/protobuf/src/google/protobuf/field_mask.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_bases.cc",
 		"../dependencies/protobuf/src/google/protobuf/generated_message_reflection.cc",
-		"../dependencies/protobuf/src/google/protobuf/generated_message_table_driven.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_tctable_full.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/gzip_stream.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/printer.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/tokenizer.cc",
 		"../dependencies/protobuf/src/google/protobuf/map_field.cc",
 		"../dependencies/protobuf/src/google/protobuf/message.cc",
+		"../dependencies/protobuf/src/google/protobuf/reflection_internal.h",
 		"../dependencies/protobuf/src/google/protobuf/reflection_ops.cc",
 		"../dependencies/protobuf/src/google/protobuf/service.cc",
 		"../dependencies/protobuf/src/google/protobuf/source_context.pb.cc",
@@ -477,7 +468,6 @@ project "protobuf"
 		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectsource.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectwriter.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/internal/type_info.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/type_info_test_helper.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/internal/utility.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/json_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/message_differencer.cc",
@@ -486,119 +476,13 @@ project "protobuf"
 		"../dependencies/protobuf/src/google/protobuf/wire_format.cc",
 		"../dependencies/protobuf/src/google/protobuf/wrappers.pb.cc",
 	}
-	files {
-		"../dependencies/protobuf/src/google/protobuf/any.h",
-		"../dependencies/protobuf/src/google/protobuf/any.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/api.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/compiler/importer.h",
-		"../dependencies/protobuf/src/google/protobuf/compiler/parser.h",
-		"../dependencies/protobuf/src/google/protobuf/descriptor.h",
-		"../dependencies/protobuf/src/google/protobuf/descriptor.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/descriptor_database.h",
-		"../dependencies/protobuf/src/google/protobuf/duration.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/dynamic_message.h",
-		"../dependencies/protobuf/src/google/protobuf/empty.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/field_mask.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/generated_message_reflection.h",
-		"../dependencies/protobuf/src/google/protobuf/io/gzip_stream.h",
-		"../dependencies/protobuf/src/google/protobuf/io/printer.h",
-		"../dependencies/protobuf/src/google/protobuf/io/tokenizer.h",
-		"../dependencies/protobuf/src/google/protobuf/map_field.h",
-		"../dependencies/protobuf/src/google/protobuf/message.h",
-		"../dependencies/protobuf/src/google/protobuf/reflection_ops.h",
-		"../dependencies/protobuf/src/google/protobuf/service.h",
-		"../dependencies/protobuf/src/google/protobuf/source_context.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/struct.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/substitute.h",
-		"../dependencies/protobuf/src/google/protobuf/text_format.h",
-		"../dependencies/protobuf/src/google/protobuf/timestamp.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/type.pb.h",
-		"../dependencies/protobuf/src/google/protobuf/unknown_field_set.h",
-		"../dependencies/protobuf/src/google/protobuf/util/delimited_message_util.h",
-		"../dependencies/protobuf/src/google/protobuf/util/field_comparator.h",
-		"../dependencies/protobuf/src/google/protobuf/util/field_mask_util.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/datapiece.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/default_value_objectwriter.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/error_listener.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/field_mask_utility.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_escaping.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_objectwriter.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_stream_parser.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/object_writer.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/proto_writer.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectsource.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectwriter.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/type_info.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/type_info_test_helper.h",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/utility.h",
-		"../dependencies/protobuf/src/google/protobuf/util/json_util.h",
-		"../dependencies/protobuf/src/google/protobuf/util/message_differencer.h",
-		"../dependencies/protobuf/src/google/protobuf/util/time_util.h",
-		"../dependencies/protobuf/src/google/protobuf/util/type_resolver_util.h",
-		"../dependencies/protobuf/src/google/protobuf/wire_format.h",
-		"../dependencies/protobuf/src/google/protobuf/wrappers.pb.h",
-	}
-	files {
-		"../dependencies/protobuf/src/google/protobuf/any_lite.cc",
-		"../dependencies/protobuf/src/google/protobuf/arena.cc",
-		"../dependencies/protobuf/src/google/protobuf/arenastring.cc",
-		"../dependencies/protobuf/src/google/protobuf/extension_set.cc",
-		"../dependencies/protobuf/src/google/protobuf/generated_enum_util.cc",
-		"../dependencies/protobuf/src/google/protobuf/generated_message_table_driven_lite.cc",
-		"../dependencies/protobuf/src/google/protobuf/generated_message_util.cc",
-		"../dependencies/protobuf/src/google/protobuf/implicit_weak_message.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/coded_stream.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/io_win32.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/strtod.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
-		"../dependencies/protobuf/src/google/protobuf/map.cc",
-		"../dependencies/protobuf/src/google/protobuf/message_lite.cc",
-		"../dependencies/protobuf/src/google/protobuf/parse_context.cc",
-		"../dependencies/protobuf/src/google/protobuf/repeated_field.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/bytestream.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/common.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/int128.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/status.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/statusor.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringpiece.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringprintf.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/structurally_valid.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/strutil.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/time.cc",
-		"../dependencies/protobuf/src/google/protobuf/wire_format_lite.cc",
-	}
-	files {
-		"../dependencies/protobuf/src/google/protobuf/arena.h",
-		"../dependencies/protobuf/src/google/protobuf/arenastring.h",
-		"../dependencies/protobuf/src/google/protobuf/extension_set.h",
-		"../dependencies/protobuf/src/google/protobuf/generated_message_util.h",
-		"../dependencies/protobuf/src/google/protobuf/implicit_weak_message.h",
-		"../dependencies/protobuf/src/google/protobuf/parse_context.h",
-		"../dependencies/protobuf/src/google/protobuf/io/coded_stream.h",
-		"../dependencies/protobuf/src/google/protobuf/io/strtod.h",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream.h",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl.h",
-		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl_lite.h",
-		"../dependencies/protobuf/src/google/protobuf/message_lite.h",
-		"../dependencies/protobuf/src/google/protobuf/repeated_field.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/bytestream.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/common.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/int128.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/once.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/status.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/statusor.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringpiece.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringprintf.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/strutil.h",
-		"../dependencies/protobuf/src/google/protobuf/stubs/time.h",
-		"../dependencies/protobuf/src/google/protobuf/wire_format_lite.h",
-	}
+
 	filter "toolset:msc*"
 		disablewarnings { "4018", "4065", "4146", "4244", "4251", "4267", "4305", "4307", "4309", "4334", "4355", "4506", "4800", "4996" }
+
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
 		defines { "HAVE_PTHREAD" }
+		links { "pthread" }
 
 project "ziplib"
 	kind "StaticLib"
@@ -640,10 +524,15 @@ project "tmxlite"
 	language "C++"
 	location "projects"
 	includedirs {
-		"../dependencies/tmxlite/tmxlite/include"
+		"../dependencies/tmxlite/tmxlite/include",
+		-- "../dependencies/pugixml/src/",
 	}
 	files {
 		"../dependencies/tmxlite/tmxlite/include/**",
 		"../dependencies/tmxlite/tmxlite/src/**"
 	}
 	defines { "TMXLITE_STATIC" }
+
+	-- Use project-wide pugixml to avoid linker errors.
+	defines { "PUGIXML_HEADER_ONLY" }
+	-- links { "pugixml" }

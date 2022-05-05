@@ -49,9 +49,11 @@ void SfmlAtlasFile::initializeFile()
 			auto texture = std::make_shared<sf::Texture>();
 
 			loader::SFMListream stream(*file);
-			texture->loadFromStream(stream);
-
-			id = resources->Add(filename.string(), std::move(texture));
+			auto success = texture->loadFromStream(stream);
+			if (success)
+			{
+				id = resources->Add(filename.string(), std::move(texture));
+			}
 		}
 	}
 	if (id == 0)

@@ -56,9 +56,11 @@ void SfmlImageFile::initializeFile()
 			auto texture = std::make_shared<sf::Texture>();
 
 			loader::SFMListream stream(*file);
-			texture->loadFromStream(stream);
-
-			id = resources->Add(filename.string(), std::move(texture));
+			auto success = texture->loadFromStream(stream);
+			if (success)
+			{
+				id = resources->Add(filename.string(), std::move(texture));
+			}
 		}
 	}
 	if (id == 0)
@@ -81,33 +83,33 @@ void SfmlImageFile::renderSprite(SpriterEngine::UniversalObjectInterface * sprit
 		// Adding of transformations is in the reverse order you would expect.
 		sf::Transform t;
 		if(atlasFrameData.rotated) {
-			t.translate(static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y));
-			t.rotate(static_cast<float>(SpriterEngine::toDegrees(spriteInfo->getAngle())));
-			t.scale(static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y));
-			t.translate(static_cast<float>(-spriteInfo->getPivot().x * atlasFrameData.sourceSize.x), static_cast<float>(-spriteInfo->getPivot().y * atlasFrameData.sourceSize.y));
+			t.translate({ static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y) });
+			t.rotate(sf::radians(static_cast<float>(spriteInfo->getAngle())));
+			t.scale({ static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y) });
+			t.translate({ static_cast<float>(-spriteInfo->getPivot().x * atlasFrameData.sourceSize.x), static_cast<float>(-spriteInfo->getPivot().y * atlasFrameData.sourceSize.y) });
 			// Turn it because the image is rotated
-			t.rotate(-90.0f);
+			t.rotate(sf::degrees(-90.0f));
 			// Translate the cutoff in atlas (spriteSourcePosition is the position of the atlas in the original == offset)
 			// X and Y swapped
 			// Also translate it the height (sourceSize.y) up so that the left-up corner of the original image is at the x0 y0.
-			t.translate(static_cast<float>(atlasFrameData.spriteSourcePosition.y - atlasFrameData.sourceSize.y), static_cast<float>(atlasFrameData.spriteSourcePosition.x));
+			t.translate({ static_cast<float>(atlasFrameData.spriteSourcePosition.y - atlasFrameData.sourceSize.y), static_cast<float>(atlasFrameData.spriteSourcePosition.x) });
 		}
 		else {
-			t.translate(static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y));
-			t.rotate(static_cast<float>(SpriterEngine::toDegrees(spriteInfo->getAngle())));
-			t.scale(static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y));
+			t.translate({ static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y) });
+			t.rotate(sf::radians(static_cast<float>(spriteInfo->getAngle())));
+			t.scale({ static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y) });
 			// Translate the cutoff in atlas (spriteSourcePosition is the position of the atlas in the original == offset)
 			// Also translate the pivot at onces (saves an extra instruction)
-			t.translate(static_cast<float>(atlasFrameData.spriteSourcePosition.x - spriteInfo->getPivot().x * atlasFrameData.sourceSize.x),
-						static_cast<float>(atlasFrameData.spriteSourcePosition.y - spriteInfo->getPivot().y * atlasFrameData.sourceSize.y));
+			t.translate({ static_cast<float>(atlasFrameData.spriteSourcePosition.x - spriteInfo->getPivot().x * atlasFrameData.sourceSize.x),
+						  static_cast<float>(atlasFrameData.spriteSourcePosition.y - spriteInfo->getPivot().y * atlasFrameData.sourceSize.y) });
 		}
 		renderWindow->draw(sprite, t);
 	}
 	else {
-		sprite.setPosition(static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y));
-		sprite.setRotation(static_cast<float>(SpriterEngine::toDegrees(spriteInfo->getAngle())));
-		sprite.setScale(static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y));
-		sprite.setOrigin(static_cast<float>(spriteInfo->getPivot().x * texture.getSize().x), static_cast<float>(spriteInfo->getPivot().y * texture.getSize().y));
+		sprite.setPosition({ static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y) });
+		sprite.setRotation(sf::radians(static_cast<float>(spriteInfo->getAngle())));
+		sprite.setScale({ static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y) });
+		sprite.setOrigin({ static_cast<float>(spriteInfo->getPivot().x * texture.getSize().x), static_cast<float>(spriteInfo->getPivot().y * texture.getSize().y) });
 		renderWindow->draw(sprite);
 	}
 }
@@ -123,12 +125,12 @@ void SfmlImageFile::setAtlasFile(SpriterEngine::AtlasFile *initialAtlasFile, Spr
 		sprite.setTexture(*texture);
 		if(atlasFrameData.rotated) {
 			// When rotated, the atlasdata framesize are relative to the original. Not the frame
-			sprite.setTextureRect(sf::IntRect(static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y),
-												static_cast<int>(atlasFrameData.frameSize.y), static_cast<int>(atlasFrameData.frameSize.x)));
+			sprite.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
+									{ static_cast<int>(atlasFrameData.frameSize.y), static_cast<int>(atlasFrameData.frameSize.x) } });
 		}
 		else {
-			sprite.setTextureRect(sf::IntRect(static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y),
-												static_cast<int>(atlasFrameData.frameSize.x), static_cast<int>(atlasFrameData.frameSize.y)));
+			sprite.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
+									{ static_cast<int>(atlasFrameData.frameSize.x), static_cast<int>(atlasFrameData.frameSize.y) } });
 		}
 	}
 }

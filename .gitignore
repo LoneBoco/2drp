@@ -1,3 +1,4 @@
 # Media
 /media/
 !/media/packages/login/
+/src/engine/network/packets/

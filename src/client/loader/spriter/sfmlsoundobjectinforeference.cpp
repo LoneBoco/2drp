@@ -23,7 +23,7 @@ void SfmlSoundObjectInfoReference::setPlaybackVolume()
 
 void SfmlSoundObjectInfoReference::setPlaybackPanning()
 {
-	sound.setPosition(static_cast<float>(100 * getPanning()), 0, 0);
+	sound.setPosition({ static_cast<float>(100 * getPanning()), 0, 0 });
 }
 
 }

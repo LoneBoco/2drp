@@ -16,10 +16,10 @@ void SfmlBoxInstanceInfo::render()
 {
 	if (SpriterEngine::Settings::renderDebugBoxes)
 	{
-		rectangle.setPosition(static_cast<float>(getPosition().x), static_cast<float>(getPosition().y));
-		rectangle.setRotation(static_cast<float>(SpriterEngine::toDegrees(getAngle())));
-		rectangle.setScale(static_cast<float>(getScale().x), static_cast<float>(getScale().y));
-		rectangle.setOrigin(static_cast<float>(getPivot().x * getSize().x), static_cast<float>(getPivot().y * getSize().y));
+		rectangle.setPosition({ static_cast<float>(getPosition().x), static_cast<float>(getPosition().y) });
+		rectangle.setRotation(sf::radians(static_cast<float>(getAngle())));
+		rectangle.setScale({ static_cast<float>(getScale().x), static_cast<float>(getScale().y) });
+		rectangle.setOrigin({ static_cast<float>(getPivot().x * getSize().x), static_cast<float>(getPivot().y * getSize().y) });
 		renderWindow->draw(rectangle);
 	}
 }

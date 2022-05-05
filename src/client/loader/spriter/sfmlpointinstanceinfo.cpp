@@ -10,15 +10,15 @@ SfmlPointInstanceInfo::SfmlPointInstanceInfo(sf::RenderWindow *validRenderWindow
 	circle(10)
 {
 	circle.setFillColor(sf::Color::Red);
-	circle.setOrigin(5, 5);
+	circle.setOrigin({ 5, 5 });
 }
 
 void SfmlPointInstanceInfo::render()
 {
 	if (SpriterEngine::Settings::renderDebugPoints)
 	{
-		circle.setPosition(static_cast<float>(getPosition().x), static_cast<float>(getPosition().y));
-		circle.setRotation(static_cast<float>(SpriterEngine::toDegrees(getAngle())));
+		circle.setPosition({ static_cast<float>(getPosition().x), static_cast<float>(getPosition().y) });
+		circle.setRotation(sf::radians(static_cast<float>(getAngle())));
 		renderWindow->draw(circle);
 	}
 }

@@ -72,18 +72,26 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			auto chunk_size = tilelayer.getChunks().at(0).size;
 			auto tile_count = chunk_size.x * chunk_size.y;
 
-			m_chunk_vertices.setPrimitiveType(sf::Quads);
-			m_chunk_vertices.resize(chunk_size.x * chunk_size.y * 4);
+			m_chunk_vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
+			m_chunk_vertices.resize(chunk_size.x * chunk_size.y * 6);
 
 			for (int i = 0; i < tile_count; ++i)
 			{
 				Vector2di pos{ getTilePosition(chunk_size, i) };
 
-				auto* quad = &m_chunk_vertices[i * 4];
+				auto* quad = &m_chunk_vertices[i * 6];
+				// 0 quad[0].position = { static_cast<float>(pos.x * tile_size.x), static_cast<float>(pos.y * tile_size.y) };
+				// 1 quad[1].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>(pos.y * tile_size.y) };
+				// 4 quad[2].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
+				// 2 quad[3].position = { static_cast<float>(pos.x * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
+				// 0 1 2 2 4 1
+
 				quad[0].position = { static_cast<float>(pos.x * tile_size.x), static_cast<float>(pos.y * tile_size.y) };
 				quad[1].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>(pos.y * tile_size.y) };
-				quad[2].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
+				quad[2].position = { static_cast<float>(pos.x * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
 				quad[3].position = { static_cast<float>(pos.x * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
+				quad[4].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>((pos.y + 1) * tile_size.y) };
+				quad[5].position = { static_cast<float>((pos.x + 1) * tile_size.x), static_cast<float>(pos.y * tile_size.y) };
 			}
 		}
 
@@ -130,7 +138,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseco
 		sf::RenderStates state;
 		state.transform
 			.translate({ pos.x, pos.y })
-			.rotate(rotate)
+			.rotate(sf::degrees(rotate))
 			.scale({ scale.x, scale.y });
 
 		auto game = BabyDI::Get<tdrp::Game>();
@@ -233,7 +241,7 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 			return;
 
 		const auto& chunk = tilelayer.getChunks().at(index);
-		if (chunk.size.x * chunk.size.y * 4 != m_chunk_vertices.getVertexCount())
+		if (chunk.size.x * chunk.size.y * 6 != m_chunk_vertices.getVertexCount())
 			return;
 
 		const auto tilesize = m_tmx->getTileSize();
@@ -255,7 +263,10 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		// Create our texture.
 		auto texture = std::make_shared<sf::RenderTexture>();
-		texture->create(size_in_pixels.x, size_in_pixels.y);
+		auto success = texture->create(size_in_pixels.x, size_in_pixels.y);
+		if (!success)
+			return;
+
 		texture->clear(sf::Color::Transparent);
 
 		for (const auto& tileset : tilesets)
@@ -264,7 +275,7 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 			bool hasTile = false;
 			for (size_t i = 0; i < chunk.tiles.size(); ++i)
 			{
-				auto* quad = &m_chunk_vertices[i * 4];
+				auto* quad = &m_chunk_vertices[i * 6];
 
 				// Retrieve the tile.  If no tile found, zero the texture coordinates.
 				// It may be on another tileset.
@@ -276,10 +287,14 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 					quad[1].texCoords = { 0.0f, 0.0f };
 					quad[2].texCoords = { 0.0f, 0.0f };
 					quad[3].texCoords = { 0.0f, 0.0f };
+					quad[4].texCoords = { 0.0f, 0.0f };
+					quad[5].texCoords = { 0.0f, 0.0f };
 					quad[0].color = sf::Color::Transparent;
 					quad[1].color = sf::Color::Transparent;
 					quad[2].color = sf::Color::Transparent;
 					quad[3].color = sf::Color::Transparent;
+					quad[4].color = sf::Color::Transparent;
+					quad[5].color = sf::Color::Transparent;
 					continue;
 				}
 
@@ -292,16 +307,25 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 				auto sizey = tile->imageSize.y;
 
 				// Construct our texture coordinates.
+				// 0 quad[0].texCoords = { static_cast<float>(tu), static_cast<float>(tv) };
+				// 1 quad[1].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv) };
+				// 4 quad[2].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv + sizey) };
+				// 2 quad[3].texCoords = { static_cast<float>(tu), static_cast<float>(tv + sizey) };
+				// 0 1 2 2 4 1
 				quad[0].texCoords = { static_cast<float>(tu), static_cast<float>(tv) };
 				quad[1].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv) };
-				quad[2].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv + sizey) };
+				quad[2].texCoords = { static_cast<float>(tu), static_cast<float>(tv + sizey) };
 				quad[3].texCoords = { static_cast<float>(tu), static_cast<float>(tv + sizey) };
+				quad[4].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv + sizey) };
+				quad[5].texCoords = { static_cast<float>(tu + sizex), static_cast<float>(tv) };
 
 				// Set color.
 				quad[0].color = sf::Color::White;
 				quad[1].color = sf::Color::White;
 				quad[2].color = sf::Color::White;
 				quad[3].color = sf::Color::White;
+				quad[4].color = sf::Color::White;
+				quad[5].color = sf::Color::White;
 			}
 
 			// Now render this tileset to our final texture.
@@ -326,7 +350,7 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		// Create the sprite for this chunk and position it.
 		sf::Sprite sprite{ texture->getTexture() };
-		sprite.setPosition(static_cast<float>(chunk.position.x), static_cast<float>(chunk.position.y));
+		sprite.setPosition({ static_cast<float>(chunk.position.x), static_cast<float>(chunk.position.y) });
 
 		// Save our sprite and texture via the chunk index.
 		m_sprites.insert({ index, std::move(sprite) });

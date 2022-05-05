@@ -31,9 +31,11 @@ std::size_t LoadSound(const filesystem::path& file)
 			auto buffer = std::make_shared<sf::SoundBuffer>();
 
 			SFMListream stream(*f);
-			buffer->loadFromStream(stream);
-
-			id = resources->Add(filename, std::move(buffer));
+			auto success = buffer->loadFromStream(stream);
+			if (success)
+			{
+				id = resources->Add(filename, std::move(buffer));
+			}
 		}
 	}
 
@@ -57,9 +59,11 @@ std::size_t LoadTexture(const filesystem::path& file)
 			auto texture = std::make_shared<sf::Texture>();
 
 			loader::SFMListream stream(*f);
-			texture->loadFromStream(stream);
-
-			id = resources->Add(filename, std::move(texture));
+			auto success = texture->loadFromStream(stream);
+			if (success)
+			{
+				id = resources->Add(filename, std::move(texture));
+			}
 		}
 	}
 

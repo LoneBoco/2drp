@@ -19,15 +19,6 @@
 [submodule "dependencies/SFML"]
 	path = dependencies/SFML
 	url = git@github.com:SFML/SFML.git
-[submodule "dependencies/flac"]
-	path = dependencies/flac
-	url = https://git.xiph.org/flac.git
-[submodule "dependencies/vorbis"]
-	path = dependencies/vorbis
-	url = https://git.xiph.org/vorbis.git
-[submodule "dependencies/ogg"]
-	path = dependencies/ogg
-	url = https://git.xiph.org/ogg.git
 [submodule "dependencies/freetype2"]
 	path = dependencies/freetype2
 	url = git@github.com:ubawurinna/freetype-windows-binaries.git

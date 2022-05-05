@@ -41,9 +41,11 @@ void SfmlSoundFile::initializeFile()
 			auto sound = std::make_shared<sf::SoundBuffer>();
 
 			loader::SFMListream stream(*file);
-			sound->loadFromStream(stream);
-
-			id = resources->Add(filename.string(), std::move(sound));
+			auto success = sound->loadFromStream(stream);
+			if (success)
+			{
+				id = resources->Add(filename.string(), std::move(sound));
+			}
 		}
 	}
 	if (id == 0)
