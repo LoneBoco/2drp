@@ -278,7 +278,12 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	ENetPacket* packet = construct_packet(channel, packet_id);
 	if (packet == nullptr) return;
 
-	enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	if (success != 0)
+	{
+		enet_packet_destroy(packet);
+		log::Print("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
+	}
 }
 
 void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
@@ -303,7 +308,12 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
 
-	enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	if (success != 0)
+	{
+		enet_packet_destroy(packet);
+		log::Print("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
+	}
 }
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel)
@@ -482,7 +492,13 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 				if (in_range)
 				{
 					result.push_back(player);
-					enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+
+					auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+					if (success != 0)
+					{
+						enet_packet_destroy(packet);
+						log::Print("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
+					}
 				}
 			}
 		}
@@ -511,7 +527,13 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 			if (player_scene.get() == scene.get())
 			{
 				++count;
-				enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+
+				auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+				if (success != 0)
+				{
+					enet_packet_destroy(packet);
+					log::Print("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
+				}
 			}
 		}
 	}
