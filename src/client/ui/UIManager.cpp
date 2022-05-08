@@ -1,6 +1,6 @@
 #include <RmlUi/Lua.h>
 #include <RmlUi/Debugger.h>
-#include <RmlSolLua.h>
+#include <RmlSolLua/RmlSolLua.h>
 
 #include "client/ui/UIManager.h"
 

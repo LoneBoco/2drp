@@ -96,7 +96,7 @@ project "2drp"
 		"../dependencies/SpriterPlusPlus/",
 		"../dependencies/tmxlite/tmxlite/include/",
 		"../dependencies/RmlUi/include/",
-		"../dependencies/RmlSolLua/src/",
+		"../dependencies/RmlSolLua/include/",
 	}
 
 	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua" }
@@ -569,8 +569,14 @@ project "RmlSolLua"
 	location "projects"
 
 	-- Add files.
-	files { "../dependencies/RmlSolLua/src/**" }
-	includedirs { "../dependencies/RmlSolLua/src" }
+	files {
+		"../dependencies/RmlSolLua/src/**",
+		"../dependencies/RmlSolLua/include/**",
+	}
+	includedirs {
+		"../dependencies/RmlSolLua/src",
+		"../dependencies/RmlSolLua/include",
+	}
 
 	-- Library includes.
 	includedirs {
