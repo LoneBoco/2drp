@@ -14,7 +14,9 @@ void bind_player(sol::state& lua)
 		"GetCurrentScene", &server::Player::LuaGetCurrentScene,
 		"GetCurrentControlledSceneObject", &server::Player::LuaGetCurrentControlledSceneObject,
 
-		"GetPlayerId", &server::Player::GetPlayerId
+		"GetPlayerId", &server::Player::GetPlayerId,
+
+		"OnSwitchedControl", sol::writeonly_property(&server::Player::SetOnSwitchedControl)
 	);
 }
 

@@ -6,15 +6,10 @@
 
 #include "BabyDI.hpp"
 
-namespace tdrp
-{
-	class Game;
-}
+#include "engine/filesystem/ProgramSettings.h"
 
-namespace tdrp::settings
-{
-	class ProgramSettings;
-}
+
+namespace tdrp { class Game; }
 
 namespace tdrp::render
 {

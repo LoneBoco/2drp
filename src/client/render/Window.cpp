@@ -2,6 +2,7 @@
 #include <cstdlib>
 
 #include <SFML/Graphics/View.hpp>
+#include <RmlUi/Debugger.h>
 
 #include "engine/common.h"
 #include "engine/filesystem/ProgramSettings.h"
@@ -47,8 +48,7 @@ void Window::EventLoop()
 
 			else if (event.type == sf::Event::Resized)
 			{
-				//sf::FloatRect visibleArea(0.f, 0.f, event.size.width, event.size.height);
-				//m_window->setView(sf::View(visibleArea));
+				Game->UI->ScreenSizeUpdate();
 			}
 
 			else if (event.type == sf::Event::LostFocus)
@@ -63,23 +63,78 @@ void Window::EventLoop()
 
 			else if (event.type == sf::Event::KeyPressed)
 			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessKeyDown(si->TranslateKey(event.key.code), si->GetKeyModifiers());
+				});
+
+				if (event.key.code == sf::Keyboard::F8)
+					Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
+
 				Game->OnKeyPress.RunAll(event.key.code);
+			}
+
+			else if (event.type == sf::Event::KeyReleased)
+			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessKeyUp(si->TranslateKey(event.key.code), si->GetKeyModifiers());
+				});
+			}
+
+			else if (event.type == sf::Event::TextEntered)
+			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					if (event.text.unicode > 32)
+						context.ProcessTextInput(Rml::Character(event.text.unicode));
+				});
+			}
+
+			else if (event.type == sf::Event::MouseMoved)
+			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessMouseMove(event.mouseMove.x, event.mouseMove.y, si->GetKeyModifiers());
+				});
 			}
 
 			else if (event.type == sf::Event::MouseWheelScrolled)
 			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessMouseWheel(event.mouseWheelScroll.delta, si->GetKeyModifiers());
+				});
+
 				Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
 				Game->OnMouseWheel.RunAll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
 			}
 
 			else if (event.type == sf::Event::MouseButtonPressed)
 			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessMouseButtonDown(event.mouseButton.button, si->GetKeyModifiers());
+				});
+
 				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
 				Game->OnMouseDown.RunAll(event.mouseButton.button, pos);
 			}
 
 			else if (event.type == sf::Event::MouseButtonReleased)
 			{
+				Game->UI->ForEachVisible([&event](auto& context)
+				{
+					auto& si = Game->UI->SystemInterface;
+					context.ProcessMouseButtonUp(event.mouseButton.button, si->GetKeyModifiers());
+				});
+
 				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
 				Game->OnMouseUp.RunAll(event.mouseButton.button, pos);
 			}
@@ -107,8 +162,12 @@ void Window::EventLoop()
 		};
 		m_window->setView(view);
 
+		// Update the UI.
+		Game->UI->Update();
+
 		// Render the game.
 		Game->Render(m_window.get());
+		Game->UI->Render();
 
 		// Draw to the window.
 		m_window->display();

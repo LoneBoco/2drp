@@ -1,6 +1,7 @@
 #pragma once
 
 #include "client/game/Camera.h"
+#include "client/ui/UIManager.h"
 
 #include "engine/common.h"
 
@@ -74,6 +75,7 @@ public:
 	server::Server Server;
 	script::Script Script;
 	camera::Camera Camera;
+	ui::UIManagerPtr UI = nullptr;
 
 public:
 	server::PlayerPtr GetCurrentPlayer();
@@ -97,6 +99,11 @@ inline chrono::clock::duration Game::GetTick() const
 inline void Game::SetRenderWindow(sf::RenderWindow* render_window)
 {
 	m_render_window = render_window;
+	if (UI)
+	{
+		UI->RenderInterface->SetWindow(render_window);
+		UI->ScreenSizeUpdate();
+	}
 }
 
 inline sf::RenderWindow* Game::GetRenderWindow() const

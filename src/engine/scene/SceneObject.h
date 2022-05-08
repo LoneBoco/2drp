@@ -187,6 +187,7 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnOwnershipChange);
 	SCRIPT_FUNCTION(OnCollision);
 	SCRIPT_FUNCTION(OnAnimationEnd);
+	SCRIPT_FUNCTION(OnAttributeChange);
 
 public:
 	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);

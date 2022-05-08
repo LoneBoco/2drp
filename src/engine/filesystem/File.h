@@ -90,6 +90,12 @@ public:
 	//! \return A string containing a single line, excluding the line ending.
 	virtual std::string ReadLine() const;
 
+	//! Reads data into a buffer.
+	//! \param buffer The buffer to fill.
+	//! \param count How many bytes to read.
+	//! \return How much bytes were actually read.
+	virtual size_t ReadIntoBuffer(uint8_t* buffer, size_t count);
+
 	//! Reads the position indicator of the file.
 	//! \return The position indicator.
 	virtual std::streampos GetReadPosition() const;
@@ -97,6 +103,11 @@ public:
 	//! Sets the position indicator of the file.
 	//! \param position The position in the file.
 	virtual void SetReadPosition(const std::streampos& position);
+
+	//! Sets the position indicator of the file.
+	//! \param offset The offset for our new read position.
+	//! \param origin Where we calculate the offset from.
+	virtual void SetReadPosition(const std::streamoff& offset, const std::ios_base::seekdir origin = std::ios_base::beg);
 
 	//! Tells us if the file is opened.
 	//! \return If the file is opened or not.
@@ -137,6 +148,8 @@ protected:
 	filesystem::path m_file;
 	mutable std::unique_ptr<std::istream> m_stream;
 };
+
+using FilePtr = std::shared_ptr<File>;
 
 
 class FileZip : public File

@@ -16,6 +16,9 @@ class Server;
 
 class Player
 {
+	SCRIPT_SETUP;
+	SCRIPT_FUNCTION(OnSwitchedControl);
+
 public:
 	Player() = delete;
 	Player(uint16_t id) : m_player_id(id) {}

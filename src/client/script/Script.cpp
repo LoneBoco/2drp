@@ -179,6 +179,8 @@ void bind_game(sol::state& lua)
 
 		"SendEvent", &Game::SendEvent,
 
+		"SetUIVisibility", [](Game& self, const std::string& name, bool visible) { self.UI->ToggleVisibility(name, visible); },
+
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
 

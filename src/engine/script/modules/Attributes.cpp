@@ -15,6 +15,16 @@ namespace sol
 namespace tdrp::script::modules
 {
 
+EventHandle subscribe(Attribute& self, sol::protected_function func)
+{
+	return self.UpdateDispatch.Subscribe(
+		[&self, func](uint16_t id)
+		{
+			func.call(self);
+		}
+	);
+}
+
 void bind_attributes(sol::state& lua)
 {
 	lua.new_enum("AttributeType",
@@ -48,6 +58,8 @@ void bind_attributes(sol::state& lua)
 		"ANIMATION", Property::ANIMATION
 	);
 
+	using AttributeDispatcher = EventDispatcher<uint16_t>;
+
 	lua.new_usertype<Attribute>("Attribute", sol::no_constructor,
 		"ID", sol::readonly_property(&Attribute::GetId),
 		"Type", sol::readonly_property(&Attribute::GetType),
@@ -55,7 +67,25 @@ void bind_attributes(sol::state& lua)
 		"AsSigned", &Attribute::GetSigned,
 		"AsUnsigned", &Attribute::GetUnsigned,
 		"AsFloat", &Attribute::GetFloat,
-		"AsDouble", &Attribute::GetDouble
+		"AsDouble", &Attribute::GetDouble,
+
+		"Set", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
+		"SetString", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
+		"SetSigned", sol::resolve<Attribute& (const int64_t)>(&Attribute::Set),
+		"SetUnsigned", sol::resolve<Attribute& (const uint64_t)>(&Attribute::Set),
+		"SetFloat", sol::resolve<Attribute& (const float)>(&Attribute::Set),
+		"SetDouble", sol::resolve<Attribute& (const double)>(&Attribute::Set),
+
+		sol::meta_function::new_index, sol::overload(
+			sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
+			sol::resolve<Attribute& (const int64_t)>(&Attribute::Set),
+			sol::resolve<Attribute& (const uint64_t)>(&Attribute::Set),
+			sol::resolve<Attribute& (const float)>(&Attribute::Set),
+			sol::resolve<Attribute& (const double)>(&Attribute::Set)
+		),
+
+		"Subscribe", &subscribe,
+		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
 	);
 
 	lua.new_usertype<ObjectAttributes>("ObjectAttributes", sol::no_constructor,

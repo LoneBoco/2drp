@@ -18,7 +18,7 @@ workspace "2drp"
 	flags { "MultiProcessorCompile" }
 
 	filter "configurations:Debug"
-	 	defines { "DEBUG", "_DEBUG" }
+		defines { "DEBUG", "_DEBUG" }
 		editandcontinue "Off"
 		optimize "Off"
 
@@ -95,9 +95,11 @@ project "2drp"
 		"../dependencies/ziplib/Source/ZipLib/",
 		"../dependencies/SpriterPlusPlus/",
 		"../dependencies/tmxlite/tmxlite/include/",
+		"../dependencies/RmlUi/include/",
+		"../dependencies/RmlSolLua/src/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi" }
+	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua" }
 
 	-- Libraries.
 	links {
@@ -111,6 +113,8 @@ project "2drp"
 		"ziplib",
 		"tmxlite",
 		"SpriterPlusPlus",
+		"RmlUi",
+		"RmlSolLua",
 	}
 
 	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
@@ -142,9 +146,11 @@ project "2drp"
 	filter {}
 		libdirs { "../dependencies/luajit-2.0/src/" }
 	filter { "system:windows", "platforms:x32" }
-		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		-- prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
-		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		-- prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
 
@@ -206,9 +212,9 @@ project "2drp_server"
 	-- Pre-link LuaJIT building.
 	libdirs { "../dependencies/luajit-2.0/src/" }
 	filter { "system:windows", "platforms:x32" }
-		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
-		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
+		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
 
@@ -545,7 +551,7 @@ project "RmlUi"
 	files {
 		"../dependencies/RmlUi/Source/Core/**",
 		"../dependencies/RmlUi/Source/Debugger/**",
-		"../dependencies/RmlUi/Source/Lua/**",
+		-- "../dependencies/RmlUi/Source/Lua/**",
 	}
 	defines { "RMLUI_STATIC_LIB", "_CRT_SECURE_NO_WARNINGS" }
 	links { "lua51", "freetype" }
@@ -556,3 +562,34 @@ project "RmlUi"
 		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x86/" }
 	filter { "system:windows", "platforms:x64" }
 		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x64/" }
+
+project "RmlSolLua"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+
+	-- Add files.
+	files { "../dependencies/RmlSolLua/src/**" }
+	includedirs { "../dependencies/RmlSolLua/src" }
+
+	-- Library includes.
+	includedirs {
+		"../dependencies/sol2/include/",
+		"../dependencies/RmlUi/Include/",
+		"../dependencies/luajit-2.0/src/",
+	}
+
+	-- Links.
+	links {
+		"lua51",
+		"RmlUi",
+	}
+	libdirs { "../dependencies/luajit-2.0/src/" }
+
+	-- Defines
+	defines {
+		"RMLUI_STATIC_LIB",
+		-- "RMLUI_NO_THIRDPARTY_CONTAINERS".	-- Enable to use STL containers.
+	}
+
+	dependson { "RmlUi" }

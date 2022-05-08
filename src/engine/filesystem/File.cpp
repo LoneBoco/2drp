@@ -45,8 +45,9 @@ std::vector<char> File::Read(std::size_t count) const
 		return std::vector<char>();
 
 	std::vector<char> result(count);
-	auto read = m_stream->readsome(result.data(), count);
-	result.resize(static_cast<size_t>(read));
+	m_stream->read(result.data(), count);
+	auto amount = m_stream->gcount();
+	result.resize(static_cast<size_t>(amount));
 	return result;
 }
 
@@ -86,6 +87,17 @@ std::string File::ReadLine() const
 	return result;
 }
 
+size_t File::ReadIntoBuffer(uint8_t* buffer, size_t count)
+{
+	if (!Opened() || Finished())
+		return 0;
+
+	auto as_char = reinterpret_cast<char*>(buffer);
+	m_stream->read(as_char, count);
+	auto amount = m_stream->gcount();
+	return static_cast<size_t>(amount);
+}
+
 std::streampos File::GetReadPosition() const
 {
 	return m_stream->tellg();
@@ -95,6 +107,12 @@ void File::SetReadPosition(const std::streampos& position)
 {
 	if (Opened())
 		m_stream->seekg(position);
+}
+
+void File::SetReadPosition(const std::streamoff& offset, const std::ios_base::seekdir origin)
+{
+	if (Opened())
+		m_stream->seekg(offset, origin);
 }
 
 bool File::Opened() const

@@ -36,6 +36,7 @@ std::weak_ptr<SceneObject> Player::SwitchControlledSceneObject(std::shared_ptr<S
 	auto old_so = m_current_sceneobject;
 
 	m_current_sceneobject = new_scene_object;
+	OnSwitchedControl.RunAll(new_scene_object, old_so);
 
 	return old_so;
 }

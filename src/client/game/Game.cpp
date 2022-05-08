@@ -1,12 +1,14 @@
 #include <iostream>
 
 #include <SFML/Graphics.hpp>
+#include <RmlUi/Core.h>
 
 #include "client/game/Game.h"
 
 #include "client/render/component/RenderComponent.h"
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
+#include "client/loader/ui/UILoader.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/ProgramSettings.h"
@@ -47,6 +49,12 @@ void Game::Initialize()
 	bind_game(Script.GetLuaState());
 	bind_camera(Script.GetLuaState());
 
+	// Load the UI.
+	UI = loader::UILoader::CreateUIManager();
+	UI->RenderInterface->SetWindow(m_render_window);
+	UI->ScreenSizeUpdate();
+
+	// Load settings.
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	if (settings->Exists("game.starthosting"))
 	{
