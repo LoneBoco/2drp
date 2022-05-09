@@ -15,7 +15,7 @@
 	url = https://github.com/zeux/pugixml.git
 [submodule "dependencies/BabyDI"]
 	path = dependencies/BabyDI
-	url = https://github.com/simply-jos/BabyDI
+	url = https://github.com/LoneBoco/BabyDI.git
 [submodule "dependencies/SFML"]
 	path = dependencies/SFML
 	url = https://github.com/SFML/SFML.git

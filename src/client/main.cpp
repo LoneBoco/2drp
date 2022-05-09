@@ -42,5 +42,13 @@ int main(int argc, char* argv[])
 	auto window = BabyDI::Get<tdrp::render::Window>();
 	window->EventLoop();
 
+	// Clean up in order.
+	RELEASE(tdrp::Game);
+	RELEASE(tdrp::ResourceManager);
+
+	// Window last for SFML cleanup.
+	// SFML will clean up OpenGL resources so we must make sure everything is destroyed before this point.
+	RELEASE(tdrp::render::Window);
+
 	return 0;
 }
