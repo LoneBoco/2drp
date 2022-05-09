@@ -42,7 +42,10 @@ workspace "2drp"
 	-- Toolset specific
 	filter "toolset:msc*"
 		defines { "_CRT_SECURE_NO_WARNINGS" }
-		disablewarnings { "5105" }
+		disablewarnings {
+			"5105",
+			"26812",	-- Enum unscoped
+		}
 		buildoptions {
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
@@ -131,6 +134,21 @@ project "2drp"
 	filter "toolset:msc*"
 		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING" }
 
+	-- Per-platform libraries.
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread", "dl" }
+
+	filter { "system:linux" }
+		links { "X11", "GL" }
+
+	-- Per-platform file cleanup.
+	filter { "system:windows" }
+		removefiles { "../src/client/ui/interface/macosx/**", "../src/client/ui/interface/x11/**" }
+	filter { "system:linux or system:bsd or system:solaris" }
+		removefiles { "../src/client/ui/interface/macosx/**", "../src/client/ui/interface/win32/**" }
+	filter { "system:macosx" }
+		removefiles { "../src/client/ui/interface/win32/**", "../src/client/ui/interface/x11/**" }
+
 	-- Post-build commands.
 	filter {}
 		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
@@ -153,13 +171,6 @@ project "2drp"
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
-
-	-- Per-platform libraries.
-	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-		links { "pthread", "dl" }
-
-	filter { "system:linux" }
-		links { "X11", "GL" }
 
 
 project "2drp_server"

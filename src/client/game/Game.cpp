@@ -31,6 +31,9 @@ Game::Game()
 {
 	m_tick_current = chrono::clock::now();
 
+	auto script_manager = BabyDI::Get<script::ScriptManager>();
+	Script = script_manager->CreateScriptInstance("Game");
+
 	using namespace std::placeholders;
 	//Server.SetClientNetworkReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 	Server.GetNetwork().AddReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
@@ -45,9 +48,11 @@ Game::Game()
 void Game::Initialize()
 {
 	// Bind game script classes.
-	bind_globals(Script.GetLuaState());
-	bind_game(Script.GetLuaState());
-	bind_camera(Script.GetLuaState());
+	Script->BindIntoMe(
+		&bind_globals,
+		&bind_game,
+		&bind_camera
+	);
 
 	// Load the UI.
 	UI = loader::UILoader::CreateUIManager();
@@ -75,7 +80,7 @@ void Game::Initialize()
 		// Register client scripts.
 		for (const auto& [name, script] : Server.GetClientScriptMap())
 		{
-			Script.RunScript(name, script, *this);
+			Script->RunScript(name, script, *this);
 			OnCreated.Run(name);
 		}
 
@@ -89,6 +94,7 @@ void Game::Initialize()
 
 Game::~Game()
 {
+	log::PrintLine(":: Shutting down game.");
 }
 
 void Game::Update()

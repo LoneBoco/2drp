@@ -437,11 +437,11 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	{
 		if (class_)
 		{
-			server.Script.RunScript("sceneobject_cl_" + std::to_string(pid) + "_c_" + pclass, class_->ScriptClient, so);
+			server.Script->RunScript("sceneobject_cl_" + std::to_string(pid) + "_c_" + pclass, class_->ScriptClient, so);
 		}
 
 		so->ClientScript = pscript;
-		server.Script.RunScript("sceneobject_cl_" + std::to_string(pid), so->ClientScript, so);
+		server.Script->RunScript("sceneobject_cl_" + std::to_string(pid), so->ClientScript, so);
 	}
 }
 

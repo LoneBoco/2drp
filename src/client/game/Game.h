@@ -73,9 +73,9 @@ public:
 public:
 	GameState State = GameState::INITIALIZING;
 	server::Server Server;
-	script::Script Script;
 	camera::Camera Camera;
-	ui::UIManagerPtr UI = nullptr;
+	script::ScriptPtr Script;
+	ui::UIManagerPtr UI;
 
 public:
 	server::PlayerPtr GetCurrentPlayer();

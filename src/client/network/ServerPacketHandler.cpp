@@ -102,7 +102,7 @@ void handle(Game& game, const packet::ClientScriptAdd& packet)
 	log::PrintLine("<- Executing client script {}.", name);
 
 	game.Server.AddClientScript(name, script);
-	game.Script.RunScript(name, script, game);
+	game.Script->RunScript(name, script, game);
 	game.OnCreated.Run(name);
 }
 

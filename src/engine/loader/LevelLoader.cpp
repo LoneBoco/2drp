@@ -246,11 +246,11 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 					// Handle the script.
 					if (server.IsHost())
 					{
-						server.Script.RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptServer, so);
-						server.Script.RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
+						server.Script->RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptServer, so);
+						server.Script->RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
 					}
-					server.Script.RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptClient, so);
-					server.Script.RunScript("sceneobject_cl_" + std::to_string(id), so->ClientScript, so);
+					server.Script->RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptClient, so);
+					server.Script->RunScript("sceneobject_cl_" + std::to_string(id), so->ClientScript, so);
 
 					// Add the object to the scene.
 					scene->AddObject(so);

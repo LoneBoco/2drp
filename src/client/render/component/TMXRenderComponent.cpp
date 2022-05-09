@@ -13,6 +13,11 @@
 namespace tdrp::render::component
 {
 
+TMXRenderComponent::~TMXRenderComponent()
+{
+	m_render_textures.clear();
+}
+
 void TMXRenderComponent::Initialize(ComponentEntity& owner)
 {
 	if (auto p_so = dynamic_cast<SceneObject*>(&owner))

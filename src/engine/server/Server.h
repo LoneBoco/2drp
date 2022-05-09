@@ -131,7 +131,7 @@ public:
 	network::DownloadManager DownloadManager;
 
 public:
-	script::Script Script;
+	script::ScriptPtr Script;
 
 protected:
 	void network_connect(const uint16_t id);

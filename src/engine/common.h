@@ -21,6 +21,7 @@
 #include <atomic>
 #include <chrono>
 #include <type_traits>
+#include <concepts>
 //#include <ranges>
 
 #include <boost/algorithm/string.hpp>

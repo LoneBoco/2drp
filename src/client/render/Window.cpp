@@ -6,6 +6,7 @@
 
 #include "engine/common.h"
 #include "engine/filesystem/ProgramSettings.h"
+#include "engine/filesystem/Log.h"
 
 #include "client/render/Window.h"
 #include "client/game/Game.h"
@@ -34,6 +35,7 @@ Window::Window(const char* title)
 
 Window::~Window()
 {
+	log::PrintLine(":: Closing window.");
 }
 
 void Window::EventLoop()

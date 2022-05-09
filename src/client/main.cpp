@@ -10,6 +10,7 @@
 #include "engine/common.h"
 #include "engine/filesystem/ProgramSettings.h"
 #include "engine/resources/Resource.h"
+#include "engine/script/Script.h"
 
 #include "client/game/Game.h"
 #include "client/render/Window.h"
@@ -44,6 +45,7 @@ int main(int argc, char* argv[])
 
 	// Clean up in order.
 	RELEASE(tdrp::Game);
+	RELEASE(tdrp::script::ScriptManager);
 	RELEASE(tdrp::ResourceManager);
 
 	// Window last for SFML cleanup.

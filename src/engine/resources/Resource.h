@@ -7,6 +7,9 @@
 #include <typeinfo>
 #include <any>
 
+#include "engine/filesystem/Log.h"
+
+
 namespace tdrp
 {
 
@@ -73,6 +76,10 @@ class ResourceManager
 
 public:
 	ResourceManager() = default;
+	~ResourceManager()
+	{
+		log::PrintLine(":: Erasing resources.");
+	}
 
 	ResourceManager(const ResourceManager& other) = delete;
 	ResourceManager(const ResourceManager&& other) = delete;

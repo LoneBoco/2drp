@@ -13,6 +13,8 @@
 #include "client/ui/interface/ShellFileInterface.h"
 #include "client/ui/interface/SystemInterfaceSFML.h"
 
+#include "engine/script/Script.h"
+
 
 //namespace tdrp::render { class Window; }
 
@@ -48,13 +50,14 @@ public:
 	void Render();
 
 public:
-	std::unique_ptr<sol::state> Lua;
+	script::ScriptPtr Script;
 	std::unique_ptr<ShellFileInterface> FileInterface = nullptr;
 	std::unique_ptr<RmlUiSFMLRenderer> RenderInterface = nullptr;
 	std::unique_ptr<RmlUiSFMLSystemInterface> SystemInterface = nullptr;
 
 protected:
 	INJECT(::tdrp::render::Window, Window);
+	INJECT(::tdrp::script::ScriptManager, ScriptManager);
 	std::set<std::string> m_visible_contexts;
 
 public:

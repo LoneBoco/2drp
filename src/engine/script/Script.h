@@ -2,6 +2,7 @@
 
 #include <string_view>
 #include <unordered_map>
+#include <initializer_list>
 
 #include <sol/sol.hpp>
 
@@ -44,15 +45,8 @@ public:
 	bool operator==(const Script& other) = delete;
 
 public:
-	sol::state& GetLuaState()
-	{
-		return lua;
-	}
-
-	const sol::state& GetLuaState() const
-	{
-		return lua;
-	}
+	sol::state& GetLuaState() { return lua; }
+	const sol::state& GetLuaState() const { return lua; }
 
 public:
 	static sol::protected_function_result ErrorHandler(lua_State*, sol::protected_function_result pfr)
@@ -60,18 +54,56 @@ public:
 		if (!pfr.valid())
 		{
 			sol::error err = pfr;
-			log::PrintLine("{}", err.what());
+			log::PrintLine("[LUA][ERROR] {}", err.what());
 		}
 		return pfr;
+	}
+	static int DefaultErrorHandler(lua_State* state, sol::optional<const std::exception&> ex, sol::string_view what)
+	{
+		log::PrintLine("[LUA][ERROR] An exception has occured: {}", what);
+		lua_pushlstring(state, what.data(), what.size());
+		return 1;
 	}
 
 public:
 	template <typename T> requires ValidScriptObject<T>
 	void RunScript(const std::string& module_name, const std::string_view& script, T& me);
 
+public:
+	template <class F>
+		requires std::invocable<F, sol::state&>
+	void BindIntoMe(F function)
+	{
+		std::invoke(function, lua);
+	}
+	template <class F, typename... Args>
+		requires std::invocable<F, sol::state&>
+	void BindIntoMe(F function, Args... args)
+	{
+		std::invoke(function, lua);
+		return BindIntoMe(args...);
+	}
+
+	template <class F>
+		requires std::invocable<F, sol::state*>
+	void BindIntoMe(F function)
+	{
+		std::invoke(function, &lua);
+	}
+	template <class F, typename... Args>
+		requires std::invocable<F, sol::state*>
+	void BindIntoMe(F function, Args... args)
+	{
+		std::invoke(function, &lua);
+		return BindIntoMe(args...);
+	}
+
 protected:
 	sol::state lua;
 };
+
+using ScriptPtr = std::shared_ptr<Script>;
+
 
 template <typename T> requires ValidScriptObject<T>
 inline void Script::RunScript(const std::string& module_name, const std::string_view& script, T& me)
@@ -94,5 +126,26 @@ inline void Script::RunScript(const std::string& module_name, const std::string_
 		lua.safe_script(script, me.LuaEnvironment, Script::ErrorHandler);
 	}
 }
+
+
+class ScriptManager
+{
+public:
+	ScriptManager() = default;
+	~ScriptManager();
+
+	ScriptManager(const ScriptManager& other) = delete;
+	ScriptManager(ScriptManager&& other) = delete;
+	ScriptManager& operator=(const ScriptManager& other) = delete;
+	ScriptManager& operator=(ScriptManager&& other) = delete;
+	bool operator==(const ScriptManager& other) = delete;
+
+public:
+	std::shared_ptr<Script> CreateScriptInstance(const std::string& name);
+	std::shared_ptr<Script> GetScriptInstance(const std::string& name);
+
+protected:
+	std::unordered_map<std::string, std::shared_ptr<Script>> m_script_instances;
+};
 
 } // end namespace tdrp::script

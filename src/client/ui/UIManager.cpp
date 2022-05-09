@@ -20,52 +20,49 @@ namespace tdrp::ui
 
 UIManager::UIManager()
 {
-	FileInterface = std::make_unique<ShellFileInterface>();
-	RenderInterface = std::make_unique<RmlUiSFMLRenderer>();
-	SystemInterface = std::make_unique<RmlUiSFMLSystemInterface>();
+	// Bind Rml.
+	{
+		FileInterface = std::make_unique<ShellFileInterface>();
+		RenderInterface = std::make_unique<RmlUiSFMLRenderer>();
+		SystemInterface = std::make_unique<RmlUiSFMLSystemInterface>();
 
-	Rml::SetFileInterface(FileInterface.get());
-	Rml::SetRenderInterface(RenderInterface.get());
-	Rml::SetSystemInterface(SystemInterface.get());
-	
-	Lua = std::make_unique<sol::state>();
-	Lua->open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
-	sol::set_default_exception_handler(*Lua);
+		Rml::SetFileInterface(FileInterface.get());
+		Rml::SetRenderInterface(RenderInterface.get());
+		Rml::SetSystemInterface(SystemInterface.get());
 
-	Rml::Initialise();
-	Rml::SolLua::Initialise(Lua.get());
+		Rml::Initialise();
+	}
 
-	script::modules::bind_events(*Lua);
-	script::modules::bind_attributes(*Lua);
-	script::modules::bind_player(*Lua);
-	script::modules::bind_scene(*Lua);
-	script::modules::bind_sceneobject(*Lua);
-	script::modules::bind_server(*Lua);
-	script::modules::bind_vector(*Lua);
+	// Bind Lua.
+	{
+		Script = ScriptManager->CreateScriptInstance("UI");
+		Rml::SolLua::Initialise(&Script->GetLuaState());
 
-	bind_globals(*Lua);
-	bind_game(*Lua);
-	bind_camera(*Lua);
+		// Bind the game scripts.
+		Script->BindIntoMe(
+			&bind_globals,
+			&bind_game,
+			&bind_camera
+		);
 
-	(*Lua)["log"] = [](const std::string& message) { log::PrintLine("{}", message); };
-	(*Lua)["MODULENAME"] = "UI";
+		auto& state = Script->GetLuaState();
+		state["MODULENAME"] = "UI";
 
-	auto game = BabyDI::Get<tdrp::Game>();
-	(*Lua)["Game"] = game;
+		auto game = BabyDI::Get<tdrp::Game>();
+		state["Game"] = game;
 
-	log::PrintLine("[UI] Loaded Lua into UI.");
+		log::PrintLine("[UI] Loaded Lua into UI.");
 
-	// Load the UI bindings into the game's script state.
-	Rml::SolLua::RegisterLua(&game->Script.GetLuaState());
-	log::PrintLine("[UI] Loaded Lua into Game.");
+		// Load the UI bindings into the game's script state.
+		Rml::SolLua::RegisterLua(&game->Script->GetLuaState());
+		log::PrintLine("[UI] Loaded Lua into Game.");
+	}
 }
 
 UIManager::~UIManager()
 {
 	// Rml::Debugger::Shutdown();
 	Rml::Shutdown();
-
-	Lua = nullptr;
 }
 
 Rml::Context* UIManager::CreateContext(const std::string& name)
@@ -76,7 +73,9 @@ Rml::Context* UIManager::CreateContext(const std::string& name)
 	auto context = Rml::CreateContext(name, size, RenderInterface.get());
 	if (!context) return nullptr;
 
-	Rml::Debugger::Initialise(context);
+	if (Rml::GetNumContexts() == 1)
+		Rml::Debugger::Initialise(context);
+
 	return context;
 }
 
@@ -105,7 +104,7 @@ void UIManager::ToggleDocumentVisibility(const std::string& context, const std::
 void UIManager::ReloadUI()
 {
 	// Turn off the debugger so we don't get a million error messages.
-	//Rml::Debugger::Shutdown();
+	Rml::Debugger::SetContext(nullptr);
 
 	// Reload document stylesheets.
 	for (int c = 0; c < Rml::GetNumContexts(); ++c)
@@ -122,7 +121,7 @@ void UIManager::ReloadUI()
 		}
 
 		// Add the debugger back in.
-		//Rml::Debugger::Initialise(context);
+		Rml::Debugger::SetContext(context);
 	}
 }
 

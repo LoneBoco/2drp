@@ -43,6 +43,9 @@ std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& 
 Server::Server()
 	: m_connecting(false), m_server_type(ServerType::HOST), m_server_flags(0), m_sceneobject_counter(0), m_server_name("PEER"), m_max_players(8)
 {
+	auto script_manager = BabyDI::Get<script::ScriptManager>();
+	Script = script_manager->CreateScriptInstance("Server");
+
 	// Make up unique id.
 	m_unique_id = tdrp::os::CalculateComputerName();
 
@@ -118,7 +121,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 		if (file)
 		{
 			auto script = file->ReadAsString();
-			Script.RunScript("server", script, *this);
+			Script->RunScript("server", script, *this);
 		}
 	}
 
@@ -532,15 +535,15 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 	// Handle the script.
 	if (IsHost() && so && oc)
 	{
-		Script.RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptServer, so);
-		Script.RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
+		Script->RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptServer, so);
+		Script->RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
 	}
 
 	// Single player checks.
 	if (IsSinglePlayer())
 	{
-		Script.RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptClient, so);
-		Script.RunScript("sceneobject_cl" + std::to_string(id), so->ClientScript, so);
+		Script->RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptClient, so);
+		Script->RunScript("sceneobject_cl" + std::to_string(id), so->ClientScript, so);
 	}
 
 	// Send to players in range.
