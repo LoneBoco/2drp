@@ -63,10 +63,15 @@ std::unique_ptr<ui::UIManager> UILoader::CreateUIManager()
 				if (file.empty()) continue;
 
 				auto d = c->LoadDocument(file);
+				d->Show();
+
 				log::PrintLine("[UI] Loaded document \"{}\".", file);
-				if (document.attribute("show").as_bool(false))
+				if (!document.attribute("show").as_bool(false))
 				{
-					d->Show();
+					d->Hide();
+				}
+				else
+				{
 					log::PrintLine("[UI] Setting document to visible.");
 				}
 			}

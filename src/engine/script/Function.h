@@ -49,6 +49,12 @@ public:
 		auto entry = m_function.find(module_name);
 		if (entry != std::end(m_function))
 		{
+			if (!entry->second.valid())
+			{
+				m_function.erase(entry);
+				return;
+			}
+
 			sol::environment env{ sol::env_key, entry->second };
 			env["MODULENAME"] = entry->first;
 
@@ -70,6 +76,12 @@ public:
 
 		for (const auto& entry : m_function)
 		{
+			if (!entry.second.valid())
+			{
+				failed.insert(entry.first);
+				continue;
+			}
+
 			sol::environment env{ sol::env_key, entry.second };
 			env["MODULENAME"] = entry.first;
 

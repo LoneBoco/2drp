@@ -19,7 +19,7 @@
 namespace tdrp::ui
 {
 
-using ContextIterationFunc = std::function<void(Rml::Context&)>;
+using ContextIterationFunc = std::function<bool(Rml::Context&)>;
 
 class UIManager
 {
@@ -38,7 +38,9 @@ public:
 	Rml::Context* GetContext(const std::string& name);
 
 public:
-	void ToggleVisibility(const std::string& name, bool visible);
+	void ToggleContextVisibility(const std::string& context, bool visible);
+	void ToggleDocumentVisibility(const std::string& context, const std::string& document, bool visible);
+	void ReloadUI();
 	
 public:
 	void ScreenSizeUpdate();
@@ -56,7 +58,7 @@ protected:
 	std::set<std::string> m_visible_contexts;
 
 public:
-	void ForEachVisible(ContextIterationFunc func);
+	bool ForEachVisible(ContextIterationFunc func);
 };
 
 using UIManagerPtr = std::unique_ptr<UIManager>;

@@ -53,7 +53,11 @@ UIManager::UIManager()
 	auto game = BabyDI::Get<tdrp::Game>();
 	(*Lua)["Game"] = game;
 
-	log::PrintLine("[UI] Loaded LUA.");
+	log::PrintLine("[UI] Loaded Lua into UI.");
+
+	// Load the UI bindings into the game's script state.
+	Rml::SolLua::RegisterLua(&game->Script.GetLuaState());
+	log::PrintLine("[UI] Loaded Lua into Game.");
 }
 
 UIManager::~UIManager()
@@ -72,16 +76,54 @@ Rml::Context* UIManager::CreateContext(const std::string& name)
 	auto context = Rml::CreateContext(name, size, RenderInterface.get());
 	if (!context) return nullptr;
 
-	//Rml::Debugger::Initialise(context);
+	Rml::Debugger::Initialise(context);
 	return context;
 }
 
-void UIManager::ToggleVisibility(const std::string& name, bool visible)
+void UIManager::ToggleContextVisibility(const std::string& name, bool visible)
 {
 	if (visible)
 		m_visible_contexts.insert(name);
 	else
 		m_visible_contexts.erase(name);
+}
+
+void UIManager::ToggleDocumentVisibility(const std::string& context, const std::string& document, bool visible)
+{
+	auto c = Rml::GetContext(context);
+	if (c != nullptr)
+	{
+		auto d = c->GetDocument(document);
+		if (d)
+		{
+			if (visible) d->Show();
+			else d->Hide();
+		}
+	}
+}
+
+void UIManager::ReloadUI()
+{
+	// Turn off the debugger so we don't get a million error messages.
+	//Rml::Debugger::Shutdown();
+
+	// Reload document stylesheets.
+	for (int c = 0; c < Rml::GetNumContexts(); ++c)
+	{
+		auto context = Rml::GetContext(c);
+		for (int d = 0; d < context->GetNumDocuments(); ++d)
+		{
+			auto document = context->GetDocument(d);
+			if (document)
+			{
+				document->ReloadStyleSheet();
+				document->DispatchEvent(Rml::EventId::Load, Rml::Dictionary());
+			}
+		}
+
+		// Add the debugger back in.
+		//Rml::Debugger::Initialise(context);
+	}
 }
 
 void UIManager::ScreenSizeUpdate()
@@ -116,16 +158,20 @@ void UIManager::Render()
 	}
 }
 
-void UIManager::ForEachVisible(ContextIterationFunc func)
+bool UIManager::ForEachVisible(ContextIterationFunc func)
 {
+	bool result = true;
+
 	for (int i = 0; i < Rml::GetNumContexts(); ++i)
 	{
 		auto context = Rml::GetContext(i);
 		if (!context) continue;
 
 		if (m_visible_contexts.contains(context->GetName()))
-			func(*context);
+			result &= func(*context);
 	}
+
+	return !result;
 }
 
 } // end namespace tdrp::ui
