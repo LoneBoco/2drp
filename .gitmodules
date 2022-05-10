@@ -41,7 +41,9 @@
 [submodule "dependencies/RmlUi"]
 	path = dependencies/RmlUi
 	url = https://github.com/LoneBoco/RmlUi.git
-	branch = compat-5.2
 [submodule "dependencies/RmlSolLua"]
 	path = dependencies/RmlSolLua
 	url = https://github.com/LoneBoco/RmlSolLua.git
+[submodule "dependencies/freetype-windows-binaries"]
+	path = dependencies/freetype-windows-binaries
+	url = https://github.com/ubawurinna/freetype-windows-binaries.git

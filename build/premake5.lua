@@ -100,24 +100,26 @@ project "2drp"
 		"../dependencies/tmxlite/tmxlite/include/",
 		"../dependencies/RmlUi/include/",
 		"../dependencies/RmlSolLua/include/",
+		"../dependencies/freetype-windows-binaries/include/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "zlib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua" }
+	dependson { "SFML", "PlayRho", "bzip2", "ziplib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua" }
 
 	-- Libraries.
 	links {
-		"SFML",
-		"PlayRho",
-		"bzip2",
-		"zlib",
+		-- "bzip2",
+		-- "zlib",
+		"ziplib",
 		"enet",
 		"protobuf",
-		"lua51",
-		"ziplib",
-		"tmxlite",
-		"SpriterPlusPlus",
+		-- "freetype",
+		"SFML",
+		"PlayRho",
 		"RmlUi",
 		"RmlSolLua",
+		"lua51",
+		"SpriterPlusPlus",
+		"tmxlite",
 	}
 
 	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
@@ -137,9 +139,14 @@ project "2drp"
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
 		links { "pthread", "dl" }
-
 	filter { "system:linux" }
 		links { "X11", "GL" }
+
+	-- Freetype
+	filter { "system:windows", "platforms:x32" }
+		libdirs { "../dependencies/freetype-windows-binaries/release dll/win32/" }
+	filter { "system:windows", "platforms:x64" }
+		libdirs { "../dependencies/freetype-windows-binaries/release dll/win64/" }
 
 	-- Per-platform file cleanup.
 	filter { "system:windows" }
@@ -157,8 +164,10 @@ project "2drp"
 	-- SFML post-build.
 	filter { "system:windows", "platforms:x32" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x86/openal32.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype-windows-binaries/release dll/win32/freetype.dll %{cfg.targetdir}" }
 	filter { "system:windows", "platforms:x64" }
 		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x64/openal32.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype-windows-binaries/release dll/win64/freetype.dll %{cfg.targetdir}" }
 
 	-- Pre-link LuaJIT building.
 	filter {}
@@ -189,8 +198,8 @@ project "2drp_server"
 	-- Libraries.
 	links {
 		"PlayRho",
-		"bzip2",
-		"zlib",
+		-- "bzip2",
+		-- "zlib",
 		"enet",
 		"protobuf",
 		"lua51",
@@ -256,6 +265,7 @@ project "SFML"
 		"../dependencies/SFML/extlibs/headers/vulkan/",
 		-- "../dependencies/flac/include/",
 		-- "../dependencies/freetype2/include/",
+		"../dependencies/freetype-windows-binaries/include/",
 		-- "../dependencies/_config/ogg/include/",
 		-- "../dependencies/ogg/include/",
 		-- "../dependencies/OpenAL/include/AL/",
@@ -323,9 +333,15 @@ project "SFML"
 		links { "legacy_stdio_definitions" }
 
 	filter { "system:windows", "platforms:x32" }
-		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x86/" }
+		libdirs {
+			"../dependencies/freetype-windows-binaries/release dll/win32/",
+			"../dependencies/SFML/extlibs/libs-msvc-universal/x86/",
+		}
 	filter { "system:windows", "platforms:x64" }
-		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x64/" }
+		libdirs {
+			"../dependencies/freetype-windows-binaries/release dll/win64/",
+			"../dependencies/SFML/extlibs/libs-msvc-universal/x64/",
+		}
 
 project "PlayRho"
 	kind "StaticLib"
@@ -557,7 +573,7 @@ project "RmlUi"
 	includedirs {
 		"../dependencies/RmlUi/Include/",
 		"../dependencies/luajit-2.0/src/",
-		"../dependencies/SFML/extlibs/headers/freetype2/",
+		"../dependencies/freetype-windows-binaries/include/",
 	}
 	files {
 		"../dependencies/RmlUi/Source/Core/**",
@@ -565,14 +581,20 @@ project "RmlUi"
 		-- "../dependencies/RmlUi/Source/Lua/**",
 	}
 	defines { "RMLUI_STATIC_LIB", "_CRT_SECURE_NO_WARNINGS" }
-	links { "lua51", "freetype" }
+	links { "freetype" }
 	libdirs { "../dependencies/luajit-2.0/src/" }
 
 	-- For freetype2.
 	filter { "system:windows", "platforms:x32" }
-		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x86/" }
+		libdirs {
+			"../dependencies/freetype-windows-binaries/release dll/win32/",
+			-- "../dependencies/SFML/extlibs/libs-msvc-universal/x86/",
+		}
 	filter { "system:windows", "platforms:x64" }
-		libdirs { "../dependencies/SFML/extlibs/libs-msvc-universal/x64/" }
+		libdirs {
+			"../dependencies/freetype-windows-binaries/release dll/win64/",
+			-- "../dependencies/SFML/extlibs/libs-msvc-universal/x64/",
+		}
 
 project "RmlSolLua"
 	kind "StaticLib"
