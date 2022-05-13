@@ -12,24 +12,12 @@
 namespace tdrp::script
 {
 
-template <typename T> struct is_shared_ptr : std::false_type {};
-template <typename T> struct is_shared_ptr<std::shared_ptr<T>> : std::true_type {};
-template <typename T> concept IsSharedPtr = is_shared_ptr<T>::value;
-
 template <typename T>
-concept ValidScriptObjectDirect = requires (T t)
+concept ValidScriptObject = requires (T t)
 {
 	T::ValidScriptObject;
 	t.LuaEnvironment;
 };
-template <typename T>
-concept ValidScriptObjectSmartPointer = requires (T t)
-{
-	std::remove_reference_t<decltype(*t)>::ValidScriptObject;
-	t->LuaEnvironment;
-};
-template <typename T>
-concept ValidScriptObject = ValidScriptObjectDirect<T> || ValidScriptObjectSmartPointer<T>;
 
 
 class Script
@@ -67,7 +55,28 @@ public:
 
 public:
 	template <typename T> requires ValidScriptObject<T>
-	void RunScript(const std::string& module_name, const std::string_view& script, T& me);
+	void RunScript(const std::string& module_name, const std::string& script, std::shared_ptr<T> me)
+	{
+		if (script.empty())
+			return;
+
+		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
+		me->LuaEnvironment["MODULENAME"] = module_name;
+		me->LuaEnvironment["Me"] = me;
+		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+	}
+
+	template <typename T> requires ValidScriptObject<T>
+	void RunScript(const std::string& module_name, const std::string& script, T* me)
+	{
+		if (script.empty())
+			return;
+
+		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
+		me->LuaEnvironment["MODULENAME"] = module_name;
+		me->LuaEnvironment["Me"] = me;
+		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+	}
 
 public:
 	template <class F>
@@ -103,29 +112,6 @@ protected:
 };
 
 using ScriptPtr = std::shared_ptr<Script>;
-
-
-template <typename T> requires ValidScriptObject<T>
-inline void Script::RunScript(const std::string& module_name, const std::string_view& script, T& me)
-{
-	if (script.empty())
-		return;
-
-	if constexpr (IsSharedPtr<T>)
-	{
-		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
-		me->LuaEnvironment["MODULENAME"] = module_name;
-		me->LuaEnvironment["Me"] = me;
-		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
-	}
-	else
-	{
-		me.LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
-		me.LuaEnvironment["MODULENAME"] = module_name;
-		me.LuaEnvironment["Me"] = &me;
-		lua.safe_script(script, me.LuaEnvironment, Script::ErrorHandler);
-	}
-}
 
 
 class ScriptManager

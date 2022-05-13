@@ -39,6 +39,7 @@ class Server
 	friend class network::Network;
 
 	SCRIPT_SETUP;
+	SCRIPT_FUNCTION(OnStarted);
 	SCRIPT_FUNCTION(OnPlayerJoin);
 	SCRIPT_FUNCTION(OnPlayerLeave);
 	SCRIPT_FUNCTION(OnServerTick);

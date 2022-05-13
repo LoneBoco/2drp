@@ -121,7 +121,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 		if (file)
 		{
 			auto script = file->ReadAsString();
-			Script->RunScript("server", script, *this);
+			Script->RunScript("server", script, this);
 		}
 	}
 
@@ -134,6 +134,9 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 			m_client_scripts["client"] = file->ReadAsString();
 		}
 	}
+
+	// Run our started script.
+	OnStarted.RunAll();
 
 	return true;
 }
