@@ -188,7 +188,7 @@ void TileMapRenderComponent::Render(sf::RenderTarget& window, std::chrono::milli
 
 		for (auto& sprite : m_sprites)
 		{
-			window.draw(sprite);
+			window.draw(sprite, state);
 		}
 	}
 }

@@ -106,9 +106,7 @@ void AnimationRenderComponent::Render(sf::RenderTarget& window, std::chrono::mil
 		if (so->GetType() != SceneObjectType::ANIMATED)
 			return;
 
-		if (m_animation)
-			m_animation->Render(window, elapsed);
-
+		// Draw the bounding box first to avoid a weird SFML bug.
 		if (Settings->GetAs<bool>("Debug.drawanimatedbbox"))
 		{
 			sf::RectangleShape shape;
@@ -120,6 +118,9 @@ void AnimationRenderComponent::Render(sf::RenderTarget& window, std::chrono::mil
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
 		}
+
+		if (m_animation)
+			m_animation->Render(window, elapsed);
 	}
 }
 

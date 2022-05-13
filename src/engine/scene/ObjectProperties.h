@@ -26,6 +26,7 @@ enum class Property
 	IMAGE,
 	ENTITY,
 	ANIMATION,
+	TEXT,
 
 	COUNT
 };

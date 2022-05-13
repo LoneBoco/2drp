@@ -93,6 +93,7 @@ void ObjectProperties::create()
 	_PROP(Property::IMAGE, "");
 	_PROP(Property::ENTITY, "");
 	_PROP(Property::ANIMATION, "");
+	_PROP(Property::TEXT, "");
 
 #undef _PROP
 }

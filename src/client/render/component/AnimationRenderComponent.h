@@ -2,8 +2,8 @@
 
 #include <any>
 
-#include "SFML/Graphics.hpp"
-#include "SFML/Audio.hpp"
+#include <SFML/Graphics.hpp>
+#include <SFML/Audio.hpp>
 
 #include "engine/common.h"
 #include "engine/component/Component.h"

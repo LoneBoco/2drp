@@ -185,6 +185,7 @@ void bind_game(sol::state& lua)
 
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
+		"Server", sol::readonly_property(&Game::Server),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),
 		"OnConnected", sol::writeonly_property(&Game::SetOnConnected),

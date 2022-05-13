@@ -6,6 +6,7 @@
 #include "engine/common.h"
 #include "engine/server/Player.h"
 #include "engine/scene/Scene.h"
+#include "engine/filesystem/Log.h"
 
 #include "SceneObject.h"
 
@@ -141,10 +142,24 @@ SceneObject& SceneObject::operator=(const SceneObject& other)
 
 Vector2df SceneObject::GetPosition() const
 {
-	return Vector2df{
-		Properties[Property::X].GetFloat(),
-		Properties[Property::Y].GetFloat()
-	};
+	if (m_attached_to.expired())
+	{
+		return Vector2df{
+			Properties[Property::X].GetFloat(),
+			Properties[Property::Y].GetFloat()
+		};
+	}
+	else
+	{
+		auto attached = m_attached_to.lock();
+		if (!attached)
+			return Vector2df{ Properties[Property::X].GetFloat(), Properties[Property::Y].GetFloat() };
+		else
+		{
+			Vector2df pos{ Properties[Property::X].GetFloat(), Properties[Property::Y].GetFloat() };
+			return attached->GetPosition() + pos;
+		}
+	}
 }
 
 void SceneObject::SetPosition(const Vector2df& position)
@@ -331,6 +346,16 @@ void SceneObject::SetAnimation(const std::string& image)
 	Properties[Property::ANIMATION] = image;
 }
 
+std::string SceneObject::GetText() const
+{
+	return Properties.Get(Property::TEXT)->GetString();
+}
+
+void SceneObject::SetText(const std::string& text)
+{
+	Properties[Property::TEXT] = text;
+}
+
 Rectf SceneObject::GetBounds() const
 {
 	auto bbox = this->RetrieveFromProvider("BoundingBox");
@@ -357,6 +382,38 @@ void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
 void SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
 {
 	m_current_scene = scene;
+}
+
+void SceneObject::AttachTo(SceneObjectPtr other)
+{
+	auto old = m_attached_to.lock();
+
+	if (old && old == other)
+		return;
+
+	// If we are detaching, set our position to our current location.
+	// If we are attaching, set our position offset to 0,0.
+	if (other == nullptr)
+	{
+		log::PrintLine(":: Detaching scene object {}.", ID);
+		SetPosition(other->GetPosition() + GetPosition());
+	}
+	else
+	{
+		log::PrintLine(":: Attaching scene object {} to {}.", ID, other->ID);
+		SetPosition({ 0, 0 });
+	}
+
+	m_attached_to = other;
+	OnAttached.RunAll(m_attached_to, old);
+}
+
+uint32_t SceneObject::GetAttachedId()
+{
+	if (m_attached_to.expired()) return 0;
+	auto attached = m_attached_to.lock();
+	if (!attached) return 0;
+	return attached->ID;
 }
 
 //void SceneObject::Update()
@@ -514,6 +571,46 @@ Rectf TMXSceneObject::GetBounds() const
 		return Rectf(GetPosition(), Vector2df(0.0f));
 
 	return Rectf(GetPosition() + Bounds.pos, Bounds.size);
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+const std::string& TextSceneObject::GetFont() const
+{
+	return m_font;
+}
+
+void TextSceneObject::SetFont(const std::string& font)
+{
+	m_font = font;
+
+	// Dispatch text so the render component can get our font changes.
+	auto text = Properties.Get(Property::TEXT);
+	text->UpdateDispatch.Post(text->GetId());
+}
+
+uint32_t TextSceneObject::GetFontSize() const
+{
+	return m_font_size;
+}
+
+void TextSceneObject::SetFontSize(uint32_t size)
+{
+	m_font_size = size;
+
+	// Dispatch text so the render component can get our font changes.
+	auto text = Properties.Get(Property::TEXT);
+	text->UpdateDispatch.Post(text->GetId());
+}
+
+bool TextSceneObject::GetCentered() const
+{
+	return m_centered;
+}
+
+void TextSceneObject::SetCentered(bool centered)
+{
+	m_centered = centered;
 }
 
 } // end namespace tdrp

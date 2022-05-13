@@ -77,6 +77,8 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						sotype = SceneObjectType::TILEMAP;
 					else if (boost::iequals(type, "tmx"))
 						sotype = SceneObjectType::TMX;
+					else if (boost::iequals(type, "text"))
+						sotype = SceneObjectType::TEXT;
 
 					// Create our scene object.
 					std::shared_ptr<SceneObject> so = nullptr;
@@ -86,6 +88,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						case SceneObjectType::ANIMATED: so = std::make_shared<AnimatedSceneObject>(c, id); break;
 						case SceneObjectType::TILEMAP: so = std::make_shared<TiledSceneObject>(c, id); break;
 						case SceneObjectType::TMX: so = std::make_shared<TMXSceneObject>(c, id); break;
+						case SceneObjectType::TEXT: so = std::make_shared<TextSceneObject>(c, id); break;
 						default: so = std::make_shared<SceneObject>(c, id); break;
 					}
 

@@ -14,11 +14,26 @@ namespace sol
 namespace tdrp::script::modules
 {
 
-std::string get_class_name(const SceneObject& self)
+namespace functions
 {
-	auto c = self.GetClass().lock();
-	if (c) return c->GetName();
-	else return {};
+	template <typename T>
+	T* convert(SceneObject& so)
+	{
+		auto test = dynamic_cast<T*>(&so);
+		if (test == nullptr)
+			return nullptr;
+
+		return test;
+	}
+
+	#define CONVERSION(T) static_cast<T* (*)(SceneObject&)>(&functions::convert)
+
+	std::string get_class_name(const SceneObject& self)
+	{
+		auto c = self.GetClass().lock();
+		if (c) return c->GetName();
+		else return {};
+	}
 }
 
 void bind_sceneobject(sol::state& lua)
@@ -28,13 +43,18 @@ void bind_sceneobject(sol::state& lua)
 		"STATIC", SceneObjectType::STATIC,
 		"ANIMATED", SceneObjectType::ANIMATED,
 		"TILEMAP", SceneObjectType::TILEMAP,
-		"TMX", SceneObjectType::TMX
+		"TMX", SceneObjectType::TMX,
+		"TEXT", SceneObjectType::TEXT
 	);
+
+	auto so_as = lua.create_named_table("_SceneObjectAs");
+	so_as["TEXT"] = CONVERSION(TextSceneObject);
+
 
 	lua.new_usertype<SceneObject>("SceneObject", sol::no_constructor,
 		"ID", &SceneObject::ID,
 		"Type", sol::readonly_property(&SceneObject::GetType),
-		"ClassName", sol::readonly_property(&get_class_name),
+		"ClassName", sol::readonly_property(&functions::get_class_name),
 
 		"Position", sol::property(&SceneObject::GetPosition, &SceneObject::SetPosition),
 		"Layer", sol::property(&SceneObject::GetDepth, &SceneObject::SetDepth),
@@ -47,10 +67,13 @@ void bind_sceneobject(sol::state& lua)
 		"Image", sol::property(&SceneObject::GetImage, &SceneObject::SetImage),
 		"Entity", sol::property(&SceneObject::GetEntity, &SceneObject::SetEntity),
 		"Animation", sol::property(&SceneObject::GetAnimation, &SceneObject::SetAnimation),
+		"Text", sol::property(&SceneObject::GetText, &SceneObject::SetText),
+
+		"AttachTo", &SceneObject::AttachTo,
 
 		"Attributes", &SceneObject::Attributes,
 		"Properties", &SceneObject::Properties,
-		
+
 		"Visible", &SceneObject::Visible,
 		"NonReplicated", sol::readonly_property(&SceneObject::NonReplicated),
 
@@ -59,7 +82,17 @@ void bind_sceneobject(sol::state& lua)
 		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent),
 		"OnOwnershipChange", sol::writeonly_property(&SceneObject::SetOnOwnershipChange),
 		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision),
-		"OnAnimationEnd", sol::writeonly_property(&SceneObject::SetOnAnimationEnd)
+		"OnAnimationEnd", sol::writeonly_property(&SceneObject::SetOnAnimationEnd),
+
+		"As", sol::readonly_property([&lua]() { return lua["_SceneObjectAs"]; })
+	);
+
+	lua.new_usertype<TextSceneObject>("TextSceneObject", sol::no_constructor,
+		"Font", sol::property(&TextSceneObject::GetFont, &TextSceneObject::SetFont),
+		"FontSize", sol::property(&TextSceneObject::GetFontSize, &TextSceneObject::SetFontSize),
+		"Centered", sol::property(&TextSceneObject::GetCentered, &TextSceneObject::SetCentered),
+
+		sol::base_classes, sol::bases<SceneObject>()
 	);
 }
 

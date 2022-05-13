@@ -316,7 +316,8 @@ void Server::Update(chrono::clock::duration tick)
 					continue;
 
 				packet.set_id(id);
-				packet.set_non_replicated(false);
+				packet.set_non_replicated(object->NonReplicated);
+				packet.set_attached_to(object->GetAttachedId());
 
 				if (!IsSinglePlayer() && !object->NonReplicated)
 				{
@@ -522,6 +523,9 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 			break;
 		case SceneObjectType::TMX:
 			so = std::make_shared<tdrp::TMXSceneObject>(oc, id);
+			break;
+		case SceneObjectType::TEXT:
+			so = std::make_shared<tdrp::TextSceneObject>(oc, id);
 			break;
 	}
 

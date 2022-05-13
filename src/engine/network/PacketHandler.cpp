@@ -333,6 +333,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	const auto ptype = packet.type();
 	const auto& pclass = packet.class_();
 	const auto& pscript = packet.script();
+	const auto pattached_to = packet.attached_to();
 	const auto& pscene = packet.scene();
 
 	auto class_ = server.GetObjectClass(pclass);
@@ -349,88 +350,101 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	if (so != nullptr)
 	{
 		log::PrintLine("!! Scene object {} already exists, skipping add.", pid);
-		return;
 	}
-
-	log::PrintLine(":: Adding scene object {}.", pid);
-
-	// Create our new scene object.
-	switch (type)
+	else
 	{
-	case SceneObjectType::STATIC:
-		so = std::make_shared<StaticSceneObject>(class_, pid);
-		break;
-	case SceneObjectType::ANIMATED:
-		so = std::make_shared<AnimatedSceneObject>(class_, pid);
-		break;
-	case SceneObjectType::TILEMAP:
-		so = std::make_shared<TiledSceneObject>(class_, pid);
-		break;
-	case SceneObjectType::TMX:
-		so = std::make_shared<TMXSceneObject>(class_, pid);
-		break;
-	default:
-		so = std::make_shared<SceneObject>(class_, pid);
-		break;
-	}
+		log::PrintLine(":: Adding scene object {}.", pid);
 
-	// Add props and attributes.
-	for (int i = 0; i < packet.attributes_size(); ++i)
-	{
-		const auto& attribute = packet.attributes(i);
-		switch (attribute.value_case())
+		// Create our new scene object.
+		switch (type)
 		{
-		case packet::SceneObjectNew_Attribute::kAsInt:
-			so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
+		case SceneObjectType::STATIC:
+			so = std::make_shared<StaticSceneObject>(class_, pid);
 			break;
-		case packet::SceneObjectNew_Attribute::kAsUint:
-			so->Attributes.AddAttribute(attribute.name(), attribute.as_uint(), attribute.id());
+		case SceneObjectType::ANIMATED:
+			so = std::make_shared<AnimatedSceneObject>(class_, pid);
 			break;
-		case packet::SceneObjectNew_Attribute::kAsFloat:
-			so->Attributes.AddAttribute(attribute.name(), attribute.as_float(), attribute.id());
+		case SceneObjectType::TILEMAP:
+			so = std::make_shared<TiledSceneObject>(class_, pid);
 			break;
-		case packet::SceneObjectNew_Attribute::kAsDouble:
-			so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
+		case SceneObjectType::TMX:
+			so = std::make_shared<TMXSceneObject>(class_, pid);
 			break;
-		case packet::SceneObjectNew_Attribute::kAsString:
-			so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
+		case SceneObjectType::TEXT:
+			so = std::make_shared<TextSceneObject>(class_, pid);
+			break;
+		default:
+			so = std::make_shared<SceneObject>(class_, pid);
 			break;
 		}
-	}
 
-	for (int i = 0; i < packet.properties_size(); ++i)
-	{
-		const auto& prop = packet.properties(i);
-		auto soprop = so->Properties.Get(prop.name());
-		if (soprop)
+		// Set attached to.
+		// Do this before we read in attributes/props as attaching sets the position to {0, 0}.
+		if (pattached_to != 0)
 		{
-			switch (prop.value_case())
+			auto attached = server.GetSceneObjectById(pattached_to);
+			if (attached)
+				so->AttachTo(attached);
+		}
+
+		// Add props and attributes.
+		for (int i = 0; i < packet.attributes_size(); ++i)
+		{
+			const auto& attribute = packet.attributes(i);
+			switch (attribute.value_case())
 			{
 			case packet::SceneObjectNew_Attribute::kAsInt:
-				soprop->Set(prop.as_int());
+				so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsUint:
-				soprop->Set(prop.as_uint());
+				so->Attributes.AddAttribute(attribute.name(), attribute.as_uint(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsFloat:
-				soprop->Set(prop.as_float());
+				so->Attributes.AddAttribute(attribute.name(), attribute.as_float(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsDouble:
-				soprop->Set(prop.as_double());
+				so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsString:
-				soprop->Set(prop.as_string());
+				so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
 				break;
 			}
 		}
+
+		for (int i = 0; i < packet.properties_size(); ++i)
+		{
+			const auto& prop = packet.properties(i);
+			auto soprop = so->Properties.Get(prop.name());
+			if (soprop)
+			{
+				switch (prop.value_case())
+				{
+				case packet::SceneObjectNew_Attribute::kAsInt:
+					soprop->Set(prop.as_int());
+					break;
+				case packet::SceneObjectNew_Attribute::kAsUint:
+					soprop->Set(prop.as_uint());
+					break;
+				case packet::SceneObjectNew_Attribute::kAsFloat:
+					soprop->Set(prop.as_float());
+					break;
+				case packet::SceneObjectNew_Attribute::kAsDouble:
+					soprop->Set(prop.as_double());
+					break;
+				case packet::SceneObjectNew_Attribute::kAsString:
+					soprop->Set(prop.as_string());
+					break;
+				}
+			}
+		}
+
+		// Add it to the appropriate scene.
+		scene->AddObject(so);
+
+		// Clear the dirty flag.
+		so->Attributes.ClearDirty();
+		so->Properties.ClearDirty();
 	}
-
-	// Add it to the appropriate scene.
-	scene->AddObject(so);
-
-	// Clear the dirty flag.
-	so->Attributes.ClearDirty();
-	so->Properties.ClearDirty();
 
 	// Handle the script.
 	if (so)
@@ -442,12 +456,15 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 
 		so->ClientScript = pscript;
 		server.Script->RunScript("sceneobject_cl_" + std::to_string(pid), so->ClientScript, so);
+
+		so->OnCreated.RunAll();
 	}
 }
 
 void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& packet)
 {
 	const auto pid = packet.id();
+	const auto pattached_to = packet.attached_to();
 
 	auto so = server.GetSceneObjectById(pid);
 	if (!so) return;
@@ -455,6 +472,15 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 	auto player = server.GetPlayerById(id);
 	if (!so->GetOwningPlayer().expired() && so->GetOwningPlayer().lock() != player)
 		return;
+
+	// Set attached to.
+	// Do this before we read in attributes/props as attaching sets the position to {0, 0}.
+	if (pattached_to != 0)
+	{
+		auto attached = server.GetSceneObjectById(pattached_to);
+		if (attached)
+			so->AttachTo(attached);
+	}
 
 	for (int i = 0; i < packet.attributes_size(); ++i)
 	{
@@ -520,6 +546,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 		soprop->SetIsDirty(true);
 	}
 
+	// Run updates on the dirty props.
 	so->Attributes.ClearDirty();
 	so->Properties.ClearDirty();
 

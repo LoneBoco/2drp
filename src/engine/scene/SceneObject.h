@@ -2,23 +2,19 @@
 
 #include <deque>
 #include <set>
+#include <any>
 
 //#include <Box2D/Box2D.h>
 #include <tmxlite/Map.hpp>
 
 #include "engine/common.h"
 
-#include "engine/events/Events.h"
-
-// #include "Managers/CPhysicsManager.h"
+#include "engine/component/Component.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/ObjectAttributes.h"
 #include "engine/scene/ObjectProperties.h"
 #include "engine/scene/Tileset.h"
-
 #include "engine/script/Function.h"
-
-#include "engine/component/Component.h"
 
 
 namespace tdrp::server
@@ -41,6 +37,7 @@ enum class SceneObjectType
 	ANIMATED,
 	TILEMAP,
 	TMX,
+	TEXT,
 
 	COUNT
 };
@@ -188,6 +185,7 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnCollision);
 	SCRIPT_FUNCTION(OnAnimationEnd);
 	SCRIPT_FUNCTION(OnAttributeChange);
+	SCRIPT_FUNCTION(OnAttached);
 
 public:
 	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
@@ -200,15 +198,19 @@ public:
 	SceneObject(SceneObject&& other) = delete;
 	SceneObject& operator=(SceneObject&& other) = delete;
 
-	std::weak_ptr<const ObjectClass> GetClass() const
-	{
-		return m_object_class;
-	}
-	std::shared_ptr<ObjectClass> GetClass()
-	{
-		return m_object_class;
-	}
+public:
+	std::weak_ptr<const ObjectClass> GetClass() const;
+	std::shared_ptr<ObjectClass> GetClass();
+	std::weak_ptr<server::Player> GetOwningPlayer() const;
+	std::weak_ptr<scene::Scene> GetCurrentScene() const;
 
+	void SetOwningPlayer(std::shared_ptr<server::Player> player);
+	void SetCurrentScene(std::shared_ptr<scene::Scene> scene);
+
+	void AttachTo(std::shared_ptr<SceneObject> other);
+	uint32_t GetAttachedId();
+
+public:
 	virtual SceneObjectType GetType() const
 	{
 		return SceneObjectType::DEFAULT;
@@ -242,19 +244,10 @@ public:
 	virtual std::string GetAnimation() const;
 	virtual void SetAnimation(const std::string& image);
 
+	virtual std::string GetText() const;
+	virtual void SetText(const std::string& text);
+
 	virtual Rectf GetBounds() const;
-
-	std::weak_ptr<server::Player> GetOwningPlayer() const
-	{
-		return m_owning_player;
-	}
-	void SetOwningPlayer(std::shared_ptr<server::Player> player);
-
-	std::weak_ptr<scene::Scene> GetCurrentScene() const
-	{
-		return m_current_scene;
-	}
-	void SetCurrentScene(std::shared_ptr<scene::Scene> scene);
 
 /*
 	//! Sets the callback function used when update() is called.
@@ -304,12 +297,13 @@ public:
 
 	//! Physics.
 	// physics::Physics Physics;
-	
 
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;
 	std::weak_ptr<server::Player> m_owning_player;
 	std::weak_ptr<scene::Scene> m_current_scene;
+	std::weak_ptr<SceneObject> m_attached_to;
+	std::vector<std::weak_ptr<SceneObject>> m_attached;
 	// FSceneObjectUpdate UpdateCallback;
 	// FSceneObjectUpdate PhysicsUpdateCallback;
 	// b2Vec2 PreviousPhysicsPosition;
@@ -317,16 +311,31 @@ protected:
 
 using SceneObjectPtr = std::shared_ptr<SceneObject>;
 
+inline std::weak_ptr<const ObjectClass> SceneObject::GetClass() const
+{
+	return m_object_class;
+}
+inline std::shared_ptr<ObjectClass> SceneObject::GetClass()
+{
+	return m_object_class;
+}
+inline std::weak_ptr<server::Player> SceneObject::GetOwningPlayer() const
+{
+	return m_owning_player;
+}
+inline std::weak_ptr<scene::Scene> SceneObject::GetCurrentScene() const
+{
+	return m_current_scene;
+}
+
+
+/////////////////////////////
 
 class StaticSceneObject : public SceneObject
 {
 public:
-	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-	: SceneObject(c, id)
-	{}
-
-	virtual ~StaticSceneObject()
-	{}
+	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id)	{}
+	virtual ~StaticSceneObject() {}
 
 	SceneObjectType GetType() const override
 	{
@@ -334,41 +343,40 @@ public:
 	}
 };
 
+/////////////////////////////
+
 class AnimatedSceneObject : public SceneObject
 {
 public:
-	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-	: SceneObject(c, id)
-	{}
-
-	virtual ~AnimatedSceneObject()
-	{}
+	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	virtual ~AnimatedSceneObject() {}
 
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::ANIMATED;
 	}
 
+public:
 	AnimatedSceneObject& operator=(const AnimatedSceneObject& other);
 
+public:
 	void SetAnimation(const std::string& image) override;
 };
+
+/////////////////////////////
 
 class TiledSceneObject : public SceneObject
 {
 public:
-	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-	: SceneObject(c, id)
-	{}
-
-	virtual ~TiledSceneObject()
-	{}
+	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	virtual ~TiledSceneObject() {}
 
 	virtual SceneObjectType GetType() const override
 	{
 		return SceneObjectType::TILEMAP;
 	}
 
+public:
 	virtual Rectf GetBounds() const override
 	{
 		if (Tileset == nullptr)
@@ -376,20 +384,19 @@ public:
 		return Rectf(GetPosition(), math::convert<float>(Dimension) * math::convert<float>(Tileset->TileDimensions));
 	}
 
+public:
 	Vector2di Dimension;
 	std::vector<char> TileData;
 	std::shared_ptr<scene::Tileset> Tileset;
 };
 
+/////////////////////////////
+
 class TMXSceneObject : public SceneObject
 {
 public:
-	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
-		: SceneObject(c, id)
-	{}
-
-	virtual ~TMXSceneObject()
-	{}
+	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	virtual ~TMXSceneObject() {}
 
 	TMXSceneObject& operator=(const TMXSceneObject& other);
 
@@ -398,11 +405,42 @@ public:
 		return SceneObjectType::TMX;
 	}
 
+public:
 	virtual Rectf GetBounds() const override;
 
+public:
 	std::shared_ptr<tmx::Map> TmxMap;
 	uint8_t Layer = 0;
 	Rectf Bounds;
+};
+
+/////////////////////////////
+
+class TextSceneObject : public SceneObject
+{
+public:
+	TextSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	virtual ~TextSceneObject() {}
+
+	SceneObjectType GetType() const override
+	{
+		return SceneObjectType::TEXT;
+	}
+
+public:
+	const std::string& GetFont() const;
+	void SetFont(const std::string& font);
+
+	uint32_t GetFontSize() const;
+	void SetFontSize(uint32_t size);
+
+	bool GetCentered() const;
+	void SetCentered(bool centered);
+
+protected:
+	std::string m_font;
+	uint32_t m_font_size;
+	bool m_centered = false;
 };
 
 ///////////////////////////////////////////////////////////////////////////////

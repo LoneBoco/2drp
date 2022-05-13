@@ -22,6 +22,7 @@ message SceneObjectNew {
 	repeated Attribute properties = 5;
 	repeated Attribute attributes = 6;
 	bool non_replicated = 7;
+	fixed32 attached_to = 8;
 
-	string scene = 8;
+	string scene = 9;
 }

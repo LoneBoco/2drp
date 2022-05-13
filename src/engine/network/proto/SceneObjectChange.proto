@@ -18,4 +18,5 @@ message SceneObjectChange {
 	repeated Attribute properties = 2;
 	repeated Attribute attributes = 3;
 	bool non_replicated = 4;
+	fixed32 attached_to = 5;
 }

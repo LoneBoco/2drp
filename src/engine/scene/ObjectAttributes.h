@@ -108,6 +108,14 @@ public:
 			m_begin = attributes.m_attributes.begin();
 			m_end = attributes.m_attributes.end();
 			m_iter = iterator;
+
+			// Find the first dirty attribute.
+			while (m_iter != m_end)
+			{
+				if (m_iter->second->GetIsDirty())
+					break;
+				++m_iter;
+			}
 		}
 		IteratorDirty(IteratorDirty& other) : m_begin(other.m_begin), m_end(other.m_end), m_iter(other.m_iter) {}
 

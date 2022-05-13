@@ -13,7 +13,7 @@
 @rem   static   static linkage
 
 cd ..\dependencies\luajit-2.0\src
-if exist lua51.dll (goto :END)
+if exist lua51.lib (goto :END)
 
 @if not defined INCLUDE goto :FAIL
 

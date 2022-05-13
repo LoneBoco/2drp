@@ -152,7 +152,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseco
 		for (const auto& chunk : chunks)
 		{
 			if (m_sprites.contains(chunk))
-				window.draw(m_sprites.at(chunk));
+				window.draw(m_sprites.at(chunk), state);
 			else
 				renderChunkToTexture(chunk);
 		}

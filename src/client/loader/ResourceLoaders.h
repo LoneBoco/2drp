@@ -49,10 +49,10 @@ std::size_t LoadTexture(const filesystem::path& file)
 	auto game = BabyDI::Get<tdrp::Game>();
 
 	auto filename = file.filename().string();
-	auto id = resources->FindId<sf::SoundBuffer>(filename);
+	auto id = resources->FindId<sf::Texture>(filename);
 	if (id == 0)
 	{
-		// Sound buffer doesn't exist yet, load it.
+		// Texture doesn't exist yet, load it.
 		auto f = game->Server.FileSystem.GetFile(file);
 		if (f)
 		{

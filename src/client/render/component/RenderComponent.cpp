@@ -28,8 +28,7 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 {
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
-	m_textures.clear();
-	//m_sounds.clear();
+	m_texture.reset();
 
 	if (auto so = m_owner.lock())
 	{
@@ -63,10 +62,10 @@ Rectf RenderComponent::GetBoundingBox() const
 			
 			case SceneObjectType::STATIC:
 			{
-				if (m_textures.empty())
+				if (m_texture.expired())
 					return Rectf{ pos.x, pos.y, 0.0f, 0.0f };
 
-				auto texture = m_textures.begin()->second.lock();
+				auto texture = m_texture.lock();
 				if (texture == nullptr)
 					return Rectf{ pos.x, pos.y, 0.0f, 0.0f };
 
@@ -85,35 +84,20 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 {
 	if (auto so = m_owner.lock())
 	{
-		switch (so->GetType())
-		{
-			default:
-			case SceneObjectType::DEFAULT:
-				return;
+		if (so->GetType() != SceneObjectType::STATIC)
+			return;
 
-			case SceneObjectType::STATIC:
-			{
-				if (m_textures.empty())
-					return;
+		if (m_texture.expired())
+			return;
 
-				auto pos = so->GetPosition();
-				auto scale = so->GetScale();
+		auto pos = so->GetPosition();
+		auto scale = so->GetScale();
 
-				m_sprite.setPosition({ pos.x, pos.y });
-				m_sprite.setScale({ scale.x, scale.y });
+		m_sprite.setPosition({ pos.x, pos.y });
+		m_sprite.setScale({ scale.x, scale.y });
 
-				auto texture = m_textures.begin()->second.lock();
-				if (texture == nullptr)
-					return;
-
-				m_sprite.setTexture(*texture, true);
-
-				window.draw(m_sprite);
-				return;
-			}
-		}
-
-		if (Settings->GetAs<bool>("Debug.drawstaticbbox") && so->GetType() == SceneObjectType::STATIC)
+		// Draw the bounding box first to avoid a weird SFML bug.
+		if (Settings->GetAs<bool>("Debug.drawstaticbbox"))
 		{
 			sf::RectangleShape shape;
 			auto bbox = GetBoundingBox();
@@ -124,6 +108,8 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
 		}
+
+		window.draw(m_sprite);
 	}
 }
 
@@ -131,14 +117,17 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 
 void RenderComponent::load_image(const std::string& image)
 {
-	m_textures.clear();
-
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 	auto id = loader::LoadTexture(image);
 	if (id != 0)
 	{
 		auto handle = resources->Get<sf::Texture>(id);
-		m_textures.insert(std::make_pair(id, handle));
+		m_texture = handle;
+
+		if (auto texture = m_texture.lock())
+		{
+			m_sprite.setTexture(*texture, true);
+		}
 	}
 }
 

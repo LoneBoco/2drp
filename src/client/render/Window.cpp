@@ -93,7 +93,7 @@ void Window::EventLoop()
 				auto eat = Game->UI->ForEachVisible([&event](auto& context)
 				{
 					auto& si = Game->UI->SystemInterface;
-					if (event.text.unicode > 32)
+					if (event.text.unicode >= 32)
 						return context.ProcessTextInput(Rml::Character(event.text.unicode));
 					return false;
 				});

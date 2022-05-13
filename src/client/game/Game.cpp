@@ -80,7 +80,7 @@ void Game::Initialize()
 		// Register client scripts.
 		for (const auto& [name, script] : Server.GetClientScriptMap())
 		{
-			Script->RunScript(name, script, *this);
+			Script->RunScript(name, script, this);
 			OnCreated.Run(name);
 		}
 

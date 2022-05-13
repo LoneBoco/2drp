@@ -158,16 +158,16 @@ project "2drp"
 
 	-- Post-build commands.
 	filter {}
-		postbuildcommands { "{COPY} %{wks.location}/../doc/settings.ini %{cfg.targetdir}" }
-		postbuildcommands { "{COPY} %{wks.location}/../media/packages/ %{cfg.targetdir}/packages/"}
+		postbuildcommands { "{COPY} \"%{wks.location}/../doc/settings.ini\" \"%{cfg.targetdir}\"" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../media/packages/\" \"%{cfg.targetdir}/packages/\""}
 
 	-- SFML post-build.
 	filter { "system:windows", "platforms:x32" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x86/openal32.dll %{cfg.targetdir}" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype-windows-binaries/release dll/win32/freetype.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/SFML/extlibs/bin/x86/openal32.dll\" \"%{cfg.targetdir}\"" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype-windows-binaries/release dll/win32/freetype.dll\" \"%{cfg.targetdir}\"" }
 	filter { "system:windows", "platforms:x64" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/SFML/extlibs/bin/x64/openal32.dll %{cfg.targetdir}" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/freetype-windows-binaries/release dll/win64/freetype.dll %{cfg.targetdir}" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/SFML/extlibs/bin/x64/openal32.dll\" \"%{cfg.targetdir}\"" }
+		postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/freetype-windows-binaries/release dll/win64/freetype.dll\" \"%{cfg.targetdir}\"" }
 
 	-- Pre-link LuaJIT building.
 	filter {}
@@ -178,8 +178,8 @@ project "2drp"
 	filter { "system:windows", "platforms:x64" }
 		-- prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
-	filter { "system:windows" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
+	-- filter { "system:windows" }
+	-- 	postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/luajit-2.0/src/lua51.dll\" \"%{cfg.targetdir}\"" }
 
 
 project "2drp_server"
@@ -235,8 +235,8 @@ project "2drp_server"
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
-	filter { "system:windows" }
-		postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
+	-- filter { "system:windows" }
+	-- 	postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
 
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }

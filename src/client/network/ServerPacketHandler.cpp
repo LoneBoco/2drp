@@ -7,6 +7,7 @@
 #include "client/render/component/TileMapRenderComponent.h"
 #include "client/render/component/TMXRenderComponent.h"
 #include "client/render/component/AnimationRenderComponent.h"
+#include "client/render/component/TextRenderComponent.h"
 
 #include "engine/scene/SceneObject.h"
 #include "engine/network/Packet.h"
@@ -102,7 +103,7 @@ void handle(Game& game, const packet::ClientScriptAdd& packet)
 	log::PrintLine("<- Executing client script {}.", name);
 
 	game.Server.AddClientScript(name, script);
-	game.Script->RunScript(name, script, game);
+	game.Script->RunScript(name, script, &game);
 	game.OnCreated.Run(name);
 }
 
@@ -137,6 +138,9 @@ void handle(Game& game, const packet::SceneObjectNew& packet)
 			break;
 		case SceneObjectType::ANIMATED:
 			so->AddComponent<render::component::AnimationRenderComponent>();
+			break;
+		case SceneObjectType::TEXT:
+			so->AddComponent<render::component::TextRenderComponent>();
 			break;
 		}
 	}
