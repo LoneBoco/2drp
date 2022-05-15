@@ -1,6 +1,7 @@
 #pragma once
 
 #include <sstream>
+#include <cstddef>
 
 #include "engine/common.h"
 
@@ -39,6 +40,8 @@ public:
 	Attribute& Set(const double value);
 	Attribute& Set(const std::string& value);
 	Attribute& SetAsType(const AttributeType type, const std::string& value);
+	Attribute& Set(const Attribute& other);
+	Attribute& Set(std::nullptr_t);
 
 	Attribute& operator=(const int64_t value);
 	Attribute& operator=(const uint64_t value);

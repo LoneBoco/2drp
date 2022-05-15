@@ -56,9 +56,6 @@ Attribute& Attribute::Set(const int64_t value)
 	m_value_int.s = value;
 	m_type = AttributeType::SIGNED;
 
-	//if (m_isDirty)
-	//	UpdateDispatch.Post(m_id);
-
 	return *this;
 }
 
@@ -70,9 +67,6 @@ Attribute& Attribute::Set(const uint64_t value)
 	m_value_string.clear();
 	m_value_int.u = value;
 	m_type = AttributeType::UNSIGNED;
-
-	//if (m_isDirty)
-	//	UpdateDispatch.Post(m_id);
 
 	return *this;
 }
@@ -86,9 +80,6 @@ Attribute& Attribute::Set(const float value)
 	m_value_float = value;
 	m_type = AttributeType::FLOAT;
 
-	//if (m_isDirty)
-	//	UpdateDispatch.Post(m_id);
-
 	return *this;
 }
 
@@ -101,9 +92,6 @@ Attribute& Attribute::Set(const double value)
 	m_value_double = value;
 	m_type = AttributeType::DOUBLE;
 
-	//if (m_isDirty)
-	//	UpdateDispatch.Post(m_id);
-
 	return *this;
 }
 
@@ -115,8 +103,34 @@ Attribute& Attribute::Set(const std::string& value)
 	m_value_string = value;
 	m_type = AttributeType::STRING;
 
-	//if (m_isDirty)
-	//	UpdateDispatch.Post(m_id);
+	return *this;
+}
+
+Attribute& Attribute::Set(const Attribute& other)
+{
+	switch (other.m_type)
+	{
+	case AttributeType::SIGNED:
+		return Set(other.m_value_int.s);
+	case AttributeType::UNSIGNED:
+		return Set(other.m_value_int.u);
+	case AttributeType::FLOAT:
+		return Set(other.m_value_float);
+	case AttributeType::DOUBLE:
+		return Set(other.m_value_double);
+	case AttributeType::STRING:
+		return Set(other.m_value_string);
+	}
+
+	return *this;
+}
+
+Attribute& Attribute::Set(std::nullptr_t)
+{
+	if (m_type != AttributeType::INVALID)
+		m_isDirty = true;
+
+	m_type = AttributeType::INVALID;
 
 	return *this;
 }
@@ -158,28 +172,23 @@ Attribute& Attribute::SetAsType(const AttributeType type, const std::string& val
 
 Attribute& Attribute::operator=(const int64_t value)
 {
-	Set(value);
-	return *this;
+	return Set(value);
 }
 Attribute& Attribute::operator=(const uint64_t value)
 {
-	Set(value);
-	return *this;
+	return Set(value);
 }
 Attribute& Attribute::operator=(const float value)
 {
-	Set(value);
-	return *this;
+	return Set(value);
 }
 Attribute& Attribute::operator=(const double value)
 {
-	Set(value);
-	return *this;
+	return Set(value);
 }
 Attribute& Attribute::operator=(const std::string& value)
 {
-	Set(value);
-	return *this;
+	return Set(value);
 }
 
 int64_t Attribute::GetSigned() const

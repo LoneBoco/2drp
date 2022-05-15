@@ -25,6 +25,43 @@ EventHandle subscribe(Attribute& self, sol::protected_function func)
 	);
 }
 
+sol::object asObject(Attribute& attribute, sol::this_state s)
+{
+	sol::state_view lua{ s };
+	switch (attribute.GetType())
+	{
+		case AttributeType::SIGNED:
+			return sol::object(lua, sol::in_place_type<int64_t>, attribute.GetSigned());
+		case AttributeType::UNSIGNED:
+			return sol::object(lua, sol::in_place_type<uint64_t>, attribute.GetUnsigned());
+		case AttributeType::FLOAT:
+			return sol::object(lua, sol::in_place_type<float>, attribute.GetFloat());
+		case AttributeType::DOUBLE:
+			return sol::object(lua, sol::in_place_type<double>, attribute.GetDouble());
+		case AttributeType::INVALID:
+		default:
+			return sol::make_object(lua, sol::lua_nil);
+	}
+}
+
+void fromObject(Attribute& attribute, const sol::object& object)
+{
+	if (object.is<int64_t>())
+		attribute.Set(object.as<int64_t>());
+	else if (object.is<uint64_t>())
+		attribute.Set(object.as<uint64_t>());
+	else if (object.is<float>())
+		attribute.Set(object.as<float>());
+	else if (object.is<double>())
+		attribute.Set(object.as<double>());
+	else if (object.is<std::string>())
+		attribute.Set(object.as<std::string>());
+	else if (object.is<Attribute>())
+		attribute.Set(object.as<Attribute>());
+	else attribute.Set(nullptr);
+}
+
+
 void bind_attributes(sol::state& lua)
 {
 	lua.new_enum("AttributeType",
@@ -69,12 +106,15 @@ void bind_attributes(sol::state& lua)
 		"AsFloat", &Attribute::GetFloat,
 		"AsDouble", &Attribute::GetDouble,
 
-		"Set", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
+		"Set", &fromObject,
 		"SetString", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
 		"SetSigned", sol::resolve<Attribute& (const int64_t)>(&Attribute::Set),
 		"SetUnsigned", sol::resolve<Attribute& (const uint64_t)>(&Attribute::Set),
 		"SetFloat", sol::resolve<Attribute& (const float)>(&Attribute::Set),
 		"SetDouble", sol::resolve<Attribute& (const double)>(&Attribute::Set),
+
+		/*
+		sol::meta_function::index, [](Attribute& self, sol::this_state s) { return asObject(self, s); },
 
 		sol::meta_function::new_index, sol::overload(
 			sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
@@ -83,6 +123,7 @@ void bind_attributes(sol::state& lua)
 			sol::resolve<Attribute& (const float)>(&Attribute::Set),
 			sol::resolve<Attribute& (const double)>(&Attribute::Set)
 		),
+		*/
 
 		"Subscribe", &subscribe,
 		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
@@ -101,25 +142,20 @@ void bind_attributes(sol::state& lua)
 		),
 
 		sol::meta_function::new_index, sol::overload(
-			[](ObjectAttributes& attributes, uint16_t id, int64_t value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
-			[](ObjectAttributes& attributes, uint16_t id, double value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
-			[](ObjectAttributes& attributes, uint16_t id, const std::string& value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; a->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, int64_t value) { attributes.GetOrCreate(name)->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, double value) { attributes.GetOrCreate(name)->Set(value); },
-			[](ObjectAttributes& attributes, const std::string& name, const std::string& value) { attributes.GetOrCreate(name)->Set(value); }
+			[](ObjectAttributes& attributes, uint16_t id, const sol::object& value) { auto a = attributes.Get(id); if (a == nullptr) throw "Invalid attribute ID"; fromObject(*a, value); },
+			[](ObjectAttributes& attributes, const std::string& name, const sol::object& value) { auto a = attributes.GetOrCreate(name); fromObject(*a, value); }
 		)
 	);
 
 	lua.new_usertype<ObjectProperties>("ObjectProperties", sol::no_constructor,
-		sol::meta_function::index, [](ObjectProperties& properties, Property prop) -> std::shared_ptr<Attribute> { return properties.Get(prop); },
+		sol::meta_function::index, sol::overload(
+			[](ObjectProperties& properties, Property prop) -> std::shared_ptr<Attribute> { return properties.Get(prop); },
+			[](ObjectProperties& properties, const std::string& name) -> std::shared_ptr<Attribute> { return properties.Get(name); }
+		),
 
 		sol::meta_function::new_index, sol::overload(
-			[](ObjectProperties& properties, Property prop, int64_t value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
-			[](ObjectProperties& properties, Property prop, double value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
-			[](ObjectProperties& properties, Property prop, const std::string& value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; p->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, int64_t value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, double value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); },
-			[](ObjectProperties& properties, const std::string& name, const std::string& value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; p->Set(value); }
+			[](ObjectProperties& properties, Property prop, const sol::object& value) { auto p = properties.Get(prop); if (p == nullptr) throw "Invalid property"; fromObject(*p, value); },
+			[](ObjectProperties& properties, const std::string& name, const sol::object& value) { auto p = properties.Get(name); if (p == nullptr) throw "Invalid property"; fromObject(*p, value); }
 		)
 	);
 }
