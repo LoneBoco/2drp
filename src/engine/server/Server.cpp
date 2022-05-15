@@ -64,6 +64,11 @@ Server::Server()
 
 Server::~Server()
 {
+	if (IsHost() || IsSinglePlayer())
+	{
+		network_disconnect(0);
+	}
+
 	network::Network::Shutdown();
 }
 
@@ -555,7 +560,7 @@ bool Server::DeleteSceneObject(uint32_t id)
 
 bool Server::DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject)
 {
-	if (!sceneobject->IsGlobal())
+	if (sceneobject == nullptr || !sceneobject->IsGlobal())
 		return false;
 	if (sceneobject->GetOwningPlayer().lock() != m_player)
 		return false;
@@ -833,9 +838,9 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	packet::Login packet;
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
 
-	// Bind the account.
-	auto account = std::make_unique<server::Account>();
-	m_network.BindAccountToPeer(id, std::move(account));
+	// Load up the account.
+	auto player = GetPlayerById(id);
+	// player->Account.Load();
 
 	packet::LoginStatus login_status;
 	login_status.set_player_id(id);

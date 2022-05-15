@@ -223,14 +223,6 @@ void Network::Update()
 			case ENET_EVENT_TYPE_DISCONNECT:
 				_executeCallbacks(m_disconnect_cb, id);
 
-				// Delete our account data tied to this player.
-				if (event.peer->data != nullptr)
-				{
-					auto peeraccount = static_cast<server::Account*>(event.peer->data);
-					delete peeraccount;
-				}
-
-				event.peer->data = nullptr;
 				m_peers.erase(id);
 				break;
 
@@ -539,30 +531,6 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 	}
 
 	return count;
-}
-
-/////////////////////////////
-
-bool Network::BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account)
-{
-	if (m_peers.find(peer_id) == m_peers.end())
-		return false;
-
-	auto peeraccount = static_cast<server::Account*>(m_peers[peer_id]->data);
-	if (peeraccount != nullptr)
-		delete peeraccount;
-
-	m_peers[peer_id]->data = account.release();
-	return true;
-}
-
-server::Account* Network::GetAccountFromPeer(const uint16_t peer_id)
-{
-	auto iter = m_peers.find(peer_id);
-	if (iter == m_peers.end())
-		return nullptr;
-
-	return static_cast<server::Account*>(iter->second->data);
 }
 
 /////////////////////////////

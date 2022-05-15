@@ -9,6 +9,9 @@
 
 #include "engine/script/Function.h"
 
+#include "engine/server/Account.h"
+
+
 namespace tdrp::server
 {
 
@@ -44,6 +47,9 @@ public:
 
 public:
 	std::set<uint32_t> FollowedSceneObjects;
+
+public:
+	server::Account Account;
 
 protected:
 	server::Server* m_server = nullptr;

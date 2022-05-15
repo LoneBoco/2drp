@@ -92,10 +92,6 @@ protected:
 	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude = {});
 	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude = {});
 
-public:
-	bool BindAccountToPeer(const uint16_t peer_id, std::unique_ptr<server::Account>&& account);
-	server::Account* GetAccountFromPeer(const uint16_t peer_id);
-
 private:
 	_ENetPacket* construct_packet(const Channel channel, const uint16_t packet_id, const google::protobuf::Message* message = nullptr);
 
