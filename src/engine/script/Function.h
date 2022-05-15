@@ -102,7 +102,7 @@ public:
 public:
 	void Set(const std::string& module_name, sol::protected_function& function)
 	{
-		m_function[module_name] = function;
+		m_function[module_name] = std::move(function);
 	}
 
 	void Remove(const std::string& module_name)

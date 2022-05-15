@@ -71,6 +71,8 @@ void TextRenderComponent::Render(sf::RenderTarget& window, std::chrono::millisec
 {
 	if (m_text.getString().isEmpty())
 		return;
+	if (!m_good_font)
+		return;
 
 	if (auto so = m_owner.lock())
 	{
@@ -126,6 +128,7 @@ void TextRenderComponent::load_font(const std::string& name)
 		return;
 
 	m_font_name = name;
+	m_good_font = false;
 
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 	auto id = resources->FindId<sf::Font>(name);
@@ -134,6 +137,7 @@ void TextRenderComponent::load_font(const std::string& name)
 		auto handle = resources->Get<sf::Font>(id).lock();
 		m_font = handle;
 		m_text.setFont(*m_font);
+		m_good_font = true;
 	}
 	else
 	{
@@ -146,6 +150,7 @@ void TextRenderComponent::load_font(const std::string& name)
 		auto success = font->loadFromFile(filepath);
 		if (success)
 		{
+			m_good_font = true;
 			m_font = font;
 			m_text.setFont(*m_font);
 			id = resources->Add(name, std::move(font));

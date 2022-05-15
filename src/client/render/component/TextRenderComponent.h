@@ -55,6 +55,7 @@ protected:
 	std::shared_ptr<sf::Font> m_font;
 	sf::Text m_text;
 	std::string m_font_name;
+	bool m_good_font = false;
 };
 
 } // end namespace tdrp::render::component

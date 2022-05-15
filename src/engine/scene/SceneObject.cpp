@@ -384,7 +384,7 @@ void SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
 	m_current_scene = scene;
 }
 
-void SceneObject::AttachTo(SceneObjectPtr other)
+void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 {
 	auto old = m_attached_to.lock();
 

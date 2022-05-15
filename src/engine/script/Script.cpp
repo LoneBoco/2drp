@@ -32,6 +32,14 @@ Script::~Script()
 ScriptManager::~ScriptManager()
 {
 	log::PrintLine(":: Shutting down scripting system.");
+	try
+	{
+		// An object gets deleted somewhere and Lua can't handle it.
+		// We are terminating anyway so just keep going.
+		m_script_instances.clear();
+	}
+	catch (...)
+	{}
 }
 
 std::shared_ptr<Script> ScriptManager::CreateScriptInstance(const std::string& name)
