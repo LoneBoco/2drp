@@ -184,6 +184,8 @@ bool Server::SinglePlayer()
 	network_connect(0);
 
 	packet::Login packet;
+	packet.set_method(packet::Login_Method_PEER2PEER);
+	packet.set_account("singleplayer");
 	Send(network::HOSTID, PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
 
 	return true;
@@ -206,12 +208,13 @@ void Server::PreUpdate()
 				log::PrintLine(":: Connection was successful, sending login packet.");
 
 				packet::Login packet;
+				packet.set_method(packet::Login_Method_PEER2PEER);
+				/*
 				packet.set_account("test");
 				packet.set_passwordhash("testpass");
 				packet.set_type(0);
 				packet.set_version("first");
-
-				//if ()
+				*/
 
 				Send(network::HOSTID, PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
 			}
@@ -329,10 +332,19 @@ void Server::Update(chrono::clock::duration tick)
 void Server::SetPlayerNumber(const uint16_t player_number)
 {
 	log::PrintLine(":: Player number {}.", player_number);
-	auto player = std::make_shared<Player>(player_number);
-	player->BindServer(this);
-	m_player_list[player_number] = player;
-	m_player = player;
+
+	if (IsSinglePlayer() || IsHost())
+	{
+		auto player = GetPlayerById(player_number);
+		m_player = player;
+	}
+	else
+	{
+		auto player = std::make_shared<Player>(player_number);
+		player->BindServer(this);
+		m_player_list[player_number] = player;
+		m_player = player;
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -823,6 +835,9 @@ void Server::network_disconnect(const uint16_t id)
 	auto player = GetPlayerById(id);
 	OnPlayerLeave.RunAll(player);
 
+	// Save account.
+	player->Account.Save();
+
 	// TODO: Send disconnection packet to peers.
 	log::PrintLine("<- Disconnection from player {}.", id);
 	m_player_list.erase(id);
@@ -837,25 +852,41 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 
 	packet::Login packet;
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
-
-	// Load up the account.
-	auto player = GetPlayerById(id);
-	// player->Account.Load();
-
+	
 	packet::LoginStatus login_status;
 	login_status.set_player_id(id);
 
 	// If this is single player, just accept the login.
 	if (IsSinglePlayer())
 	{
+		// Load account.
+		auto player = GetPlayerById(id);
+		player->Account.Load("singleplayer");
+
+		// Send response.
 		login_status.set_success(true);
 		Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		log::PrintLine("-> Sending login status - Singleplayer.");
 	}
 	else
 	{
+		const auto& method = packet.method();
+		const auto& account = packet.account();
+		const auto& passwordhash = packet.passwordhash();
+		const auto& type = packet.type();
+		const auto& version = packet.version();
 
 		// TODO: Properly handle account verification for servers that use it.
+		// Load the account.
+		auto player = GetPlayerById(id);
+		if (method == packet::Login_Method_DEDICATED)
+			player->Account.Load(account);
+		else
+		{
+			if (IsHost())
+				player->Account.Load("host");
+			else player->Account.Load("guest" + std::to_string(id));
+		}
 
 		// Login successful.
 		if (true)

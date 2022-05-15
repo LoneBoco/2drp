@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <cstddef>
+#include <string_view>
 
 #include "engine/common.h"
 
@@ -72,6 +73,11 @@ public:
 
 public:
 	static AttributeType TypeFromString(const std::string& type);
+	std::string_view TypeAsString();
+	friend std::ostream& operator<<(std::ostream& os, const Attribute& attribute)
+	{
+		return os << attribute.GetString();
+	}
 
 protected:
 	uint16_t m_id;
@@ -88,6 +94,9 @@ protected:
 	double m_value_double;
 	std::string m_value_string;
 };
+
+using AttributePtr = std::shared_ptr<Attribute>;
+
 
 class ObjectAttributes
 {

@@ -2,6 +2,7 @@
 
 #include "ObjectAttributes.h"
 
+
 namespace tdrp
 {
 
@@ -320,6 +321,22 @@ AttributeType Attribute::TypeFromString(const std::string& type)
 		return AttributeType::STRING;
 
 	return AttributeType::INVALID;
+}
+
+std::string_view Attribute::TypeAsString()
+{
+	if (m_type == AttributeType::SIGNED)
+		return "signed";
+	if (m_type == AttributeType::UNSIGNED)
+		return "unsigned";
+	if (m_type == AttributeType::FLOAT)
+		return "float";
+	if (m_type == AttributeType::DOUBLE)
+		return "double";
+	if (m_type == AttributeType::STRING)
+		return "string";
+
+	return "invalid";
 }
 
 ///////////////////////////////////////////////////////////////////////////////

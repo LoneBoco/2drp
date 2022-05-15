@@ -24,7 +24,7 @@ class Player
 
 public:
 	Player() = delete;
-	Player(uint16_t id) : m_player_id(id) {}
+	Player(uint16_t id) : m_player_id(id), Account(this) {}
 	~Player() = default;
 
 	Player(const Player& other) = delete;
@@ -33,6 +33,7 @@ public:
 	Player& operator=(Player&& other) = delete;
 
 	void BindServer(server::Server* server);
+	server::Server* GetServer() const { return m_server; }
 
 	std::weak_ptr<scene::Scene> SwitchScene(std::shared_ptr<scene::Scene>& new_scene);
 	std::weak_ptr<SceneObject> SwitchControlledSceneObject(std::shared_ptr<SceneObject>& new_scene_object);
