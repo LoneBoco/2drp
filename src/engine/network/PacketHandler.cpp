@@ -27,6 +27,7 @@ void handle(Server& server, const uint16_t id, const packet::ServerInfo& packet)
 void handle(Server& server, const uint16_t id, const packet::FileRequest& packet);
 void handle(Server& server, const uint16_t id, const packet::FileTransfer& packet);
 void handle(Server& server, const uint16_t id, const packet::SwitchScene& packet);
+void handle(Server& server, const uint16_t id, const packet::ClientControlScript& packet);
 void handle(Server& server, const uint16_t id, const packet::ClientScriptAdd& packet);
 void handle(Server& server, const uint16_t id, const packet::ClientScriptDelete& packet);
 void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet);
@@ -71,6 +72,9 @@ void network_receive_server(Server& server, const uint16_t id, const uint16_t pa
 		break;
 	case Packets::SWITCHSCENE:
 		HANDLE(packet::SwitchScene);
+		break;
+	case Packets::CLIENTCONTROLSCRIPT:
+		HANDLE(packet::ClientControlScript);
 		break;
 	case Packets::CLIENTSCRIPTADD:
 		HANDLE(packet::ClientScriptAdd);
@@ -262,6 +266,12 @@ void handle(Server& server, const uint16_t id, const packet::FileTransfer& packe
 }
 
 void handle(Server& server, const uint16_t id, const packet::SwitchScene& packet)
+{
+	// Client handles.
+	//assert(false);
+}
+
+void handle(Server& server, const uint16_t id, const packet::ClientControlScript& packet)
 {
 	// Client handles.
 	//assert(false);

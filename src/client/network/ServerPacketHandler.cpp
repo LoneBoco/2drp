@@ -24,6 +24,7 @@ namespace tdrp::handlers
 void handle(Game& game, const packet::LoginStatus& packet);
 void handle(Game& game, const packet::ServerInfo& packet);
 void handle(Game& game, const packet::SwitchScene& packet);
+void handle(Game& game, const packet::ClientControlScript& packet);
 void handle(Game& game, const packet::ClientScriptAdd& packet);
 void handle(Game& game, const packet::ClientScriptDelete& packet);
 void handle(Game& game, const packet::SceneObjectNew& packet);
@@ -49,6 +50,9 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 		case Packets::SWITCHSCENE:
 			HANDLE(packet::SwitchScene);
 			break;
+		case Packets::CLIENTCONTROLSCRIPT:
+			HANDLE(packet::ClientControlScript);
+			break;
 		case Packets::CLIENTSCRIPTADD:
 			HANDLE(packet::ClientScriptAdd);
 			break;
@@ -56,13 +60,13 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 			HANDLE(packet::ClientScriptDelete);
 			break;
 		case Packets::SCENEOBJECTNEW:
-			handle(game, construct<packet::SceneObjectNew>(packet_data, packet_length));
+			HANDLE(packet::SceneObjectNew);
 			break;
 		case Packets::SCENEOBJECTOWNERSHIP:
-			handle(game, construct<packet::SceneObjectOwnership>(packet_data, packet_length));
+			HANDLE(packet::SceneObjectOwnership);
 			break;
 		case Packets::SENDEVENT:
-			handle(game, construct<packet::SendEvent>(packet_data, packet_length));
+			HANDLE(packet::SendEvent);
 			break;
 	}
 }
@@ -95,16 +99,27 @@ void handle(Game& game, const packet::SwitchScene& packet)
 	}
 }
 
+void handle(Game& game, const packet::ClientControlScript& packet)
+{
+	const auto& script = packet.script();
+
+	log::PrintLine(":: Setting client control script.");
+	std::for_each(std::begin(game.BoundScriptFunctions), std::end(game.BoundScriptFunctions), [](tdrp::script::Function* function) { function->Remove("clientcontrol"); });
+	game.Script->RunScript("clientcontrol", script, &game);
+	game.OnCreated.Run("clientcontrol");
+}
+
 void handle(Game& game, const packet::ClientScriptAdd& packet)
 {
 	const auto& name = packet.name();
 	const auto& script = packet.script();
 
-	log::PrintLine("<- Executing client script {}.", name);
-
-	game.Server.AddClientScript(name, script);
-	game.Script->RunScript(name, script, &game);
-	game.OnCreated.Run(name);
+	if (game.Server.AddClientScript(name, script))
+	{
+		log::PrintLine("<- Executing client script {}.", name);
+		game.Script->RunScript(name, script, &game);
+		game.OnCreated.Run(name);
+	}
 }
 
 void handle(Game& game, const packet::ClientScriptDelete& packet)
@@ -113,7 +128,6 @@ void handle(Game& game, const packet::ClientScriptDelete& packet)
 
 	game.Server.DeleteClientScript(name);
 }
-
 
 void handle(Game& game, const packet::SceneObjectNew& packet)
 {

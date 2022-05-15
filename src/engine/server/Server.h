@@ -81,7 +81,7 @@ public:
 	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
 
 public:
-	void AddClientScript(const std::string& name, const std::string& script);
+	bool AddClientScript(const std::string& name, const std::string& script);
 	bool DeleteClientScript(const std::string& name);
 	std::map<std::string, std::string>& GetClientScriptMap();
 
@@ -155,7 +155,8 @@ protected:
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;
 	std::map<std::string, std::string> m_client_scripts;
-	std::map<std::string, std::string> m_server_scripts;
+	std::string m_server_control_script;
+	std::string m_client_control_script;
 
 	std::map<uint16_t, PlayerPtr> m_player_list;
 

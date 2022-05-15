@@ -116,12 +116,8 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine(":: Loading server scripts.");
-		for (const auto& [name, script] : m_server_scripts)
-		{
-			log::PrintLine("---- {}", name);
-			Script->RunScript("server", script, this);
-		}
+		log::PrintLine(":: Loading server control script.");
+		Script->RunScript("servercontrol", m_server_control_script, this);
 	}
 
 	// Run our started script.
@@ -434,17 +430,17 @@ bool Server::SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Server::AddClientScript(const std::string& name, const std::string& script)
+bool Server::AddClientScript(const std::string& name, const std::string& script)
 {
 	if (m_client_scripts.contains(name))
-		return;
+		return false;
 
 	log::PrintLine(":: Adding client script {}.", name);
 
 	m_client_scripts[name] = script;
 
 	if (IsSinglePlayer())
-		return;
+		return true;
 
 	// Broadcast to players if we are the host.
 	if (IsHost() && !IsSinglePlayer())
@@ -455,6 +451,8 @@ void Server::AddClientScript(const std::string& name, const std::string& script)
 
 		Broadcast(PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
 	}
+
+	return true;
 }
 
 bool Server::DeleteClientScript(const std::string& name)
@@ -875,6 +873,19 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	}
 
 	// Send client control script.
+	log::PrintLine("-> Sending client control script to player {}.", id);
+	packet::ClientControlScript client_control;
+	client_control.set_script(m_client_control_script);
+	Send(id, PACKETID(Packets::CLIENTCONTROLSCRIPT), network::Channel::RELIABLE, client_control);
+
+	// Send classes.
+	for (const auto& [name, oc] : m_object_classes)
+	{
+		auto packet = network::constructClassAddPacket(oc);
+		Send(id, PACKETID(Packets::CLASSADD), network::Channel::RELIABLE, packet);
+	}
+
+	// Send client scripts.
 	for (const auto& [name, script] : m_client_scripts)
 	{
 		log::PrintLine("-> Sending client script {} to player {}.", name, id);
@@ -882,13 +893,6 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		client_script.set_name(name);
 		client_script.set_script(script);
 		Send(id, PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, client_script);
-	}
-
-	// Send classes.
-	for (const auto& [name, oc] : m_object_classes)
-	{
-		auto packet = network::constructClassAddPacket(oc);
-		Send(id, PACKETID(Packets::CLASSADD), network::Channel::RELIABLE, packet);
 	}
 
 	// Send server info.

@@ -6,6 +6,7 @@
 
 #include "engine/network/packets/ClassAdd.pb.h"
 #include "engine/network/packets/ClassDelete.pb.h"
+#include "engine/network/packets/ClientControlScript.pb.h"
 #include "engine/network/packets/ClientScriptAdd.pb.h"
 #include "engine/network/packets/ClientScriptDelete.pb.h"
 #include "engine/network/packets/Error.pb.h"

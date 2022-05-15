@@ -5,6 +5,8 @@
 #include <format>
 #include <string>
 #include <map>
+#include <vector>
+
 #include <pugixml.hpp>
 
 namespace tdrp::loader
@@ -73,7 +75,7 @@ void LoadObjectClasses(server::Server& server, std::map<std::string, std::shared
 	}
 }
 
-void LoadScripts(server::Server& server, std::map<std::string, std::string>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& node_name, pugi::xml_node& node_doc)
+void LoadScripts(server::Server& server, std::vector<std::string>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& node_name, pugi::xml_node& node_doc)
 {
 	for (const auto& node_scripts : node_doc.children(node_name.data()))
 	{
@@ -100,16 +102,13 @@ void LoadScripts(server::Server& server, std::map<std::string, std::string>& scr
 					// Load script from file.
 					auto scriptfile = server.FileSystem.GetFile(package->GetBasePath(), file);
 					auto script = scriptfile->ReadAsString();
-					scripts.insert(std::make_pair(file, script));
+					scripts.push_back(script);
 				}
 				else
 				{
 					// Load text directly.
 					auto script = node_script.text().get();
-
-					// Generate a random name.
-					std::string name = std::format("{}_{}", node_name, scripts.size() + 1);
-					scripts.insert(std::make_pair(name, script));
+					scripts.push_back(script);
 				}
 			}
 		}
@@ -170,8 +169,12 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			LoadObjectClasses(server, server.m_object_classes, package, node_package);
 
 			// Load our client scripts.
-			LoadScripts(server, server.m_client_scripts, package, "clientscripts", node_package);
-			LoadScripts(server, server.m_server_scripts, package, "serverscripts", node_package);
+			std::vector<std::string> clientcontrolscripts;
+			std::vector<std::string> servercontrolscripts;
+			LoadScripts(server, clientcontrolscripts, package, "clientcontrolscripts", node_package);
+			LoadScripts(server, servercontrolscripts, package, "servercontrolscripts", node_package);
+			std::for_each(std::begin(clientcontrolscripts), std::end(clientcontrolscripts), [&server](const auto& script) { server.m_client_control_script += script; server.m_client_control_script += "\n"; });
+			std::for_each(std::begin(servercontrolscripts), std::end(servercontrolscripts), [&server](const auto& script) { server.m_server_control_script += script; server.m_server_control_script += "\n"; });
 		}
 	}
 

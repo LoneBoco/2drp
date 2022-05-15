@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include <unordered_map>
 #include <sol/sol.hpp>
 
@@ -9,10 +10,12 @@
 
 #define SCRIPT_SETUP \
 public: using ValidScriptObject = std::true_type; \
-sol::environment LuaEnvironment;
+sol::environment LuaEnvironment; \
+std::unordered_set<tdrp::script::Function*> BoundScriptFunctions;
 
 #define SCRIPT_FUNCTION(name) \
 public: void Set##name(sol::this_state s, sol::protected_function func, sol::this_environment te) { \
+	BoundScriptFunctions.insert(&name); \
 	sol::environment& env = te; \
 	if (env) { \
 		std::string mod = env["MODULENAME"]; \
