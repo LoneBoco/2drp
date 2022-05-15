@@ -116,22 +116,11 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine(":: Loading server script.");
-		auto file = FileSystem.GetFile("server.lua");
-		if (file)
+		log::PrintLine(":: Loading server scripts.");
+		for (const auto& [name, script] : m_server_scripts)
 		{
-			auto script = file->ReadAsString();
+			log::PrintLine("---- {}", name);
 			Script->RunScript("server", script, this);
-		}
-	}
-
-	// Load the client scripts.
-	{
-		log::PrintLine(":: Loading client script.");
-		auto file = FileSystem.GetFile("client.lua");
-		if (file)
-		{
-			m_client_scripts["client"] = file->ReadAsString();
 		}
 	}
 

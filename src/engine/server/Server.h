@@ -155,6 +155,7 @@ protected:
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;
 	std::map<std::string, std::string> m_client_scripts;
+	std::map<std::string, std::string> m_server_scripts;
 
 	std::map<uint16_t, PlayerPtr> m_player_list;
 
