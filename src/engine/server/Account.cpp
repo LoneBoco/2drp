@@ -39,6 +39,14 @@ void Account::Load(const std::string& name)
 		std::string attrvalue = node_attribute.attribute("value").as_string();
 		Flags.AddAttribute(attrname, Attribute::TypeFromString(attrtype), attrvalue);
 	}
+
+	// Scripts.
+	auto node_scripts = doc.child("scripts");
+	for (const auto& node_script : node_scripts.children("script"))
+	{
+		std::string attrname = node_script.attribute("name").as_string();
+		ClientScripts.insert(attrname);
+	}
 }
 
 void Account::Save()
@@ -66,6 +74,13 @@ void Account::Save()
 		attrtype.set_value(attribute.second->TypeAsString().data());
 		attrvalue.set_value(attribute.second->GetString().c_str());
 	}
+	auto node_scripts = doc.append_child("scripts");
+	for (const auto& script : ClientScripts)
+	{
+		auto node_script = node_scripts.append_child("script");
+		auto attrname = node_script.append_attribute("name");
+		attrname.set_value(script.c_str());
+	}
 
 	// Create directories that don't exist.
 	auto basepath{ filesystem::path("accounts") / server->GetUniqueId() };
@@ -76,6 +91,16 @@ void Account::Save()
 	doc.save_file(filename.c_str(), "\t");
 
 	log::PrintLine(":: Saved account {}.", m_name);
+}
+
+void Account::AddClientScript(const std::string& name)
+{
+	ClientScripts.insert(name);
+}
+
+void Account::RemoveClientScript(const std::string& name)
+{
+	ClientScripts.erase(name);
 }
 
 } // end namespace tdrp::server

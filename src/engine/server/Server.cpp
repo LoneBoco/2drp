@@ -447,49 +447,98 @@ bool Server::SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-bool Server::AddClientScript(const std::string& name, const std::string& script)
+void Server::LoadClientScript(const std::string& name, const std::string& script)
 {
-	if (m_client_scripts.contains(name))
-		return false;
-
-	log::PrintLine(":: Adding client script {}.", name);
-
-	m_client_scripts[name] = script;
-
-	if (IsSinglePlayer())
-		return true;
-
-	// Broadcast to players if we are the host.
-	if (IsHost() && !IsSinglePlayer())
+	auto it = m_client_scripts.find(name);
+	if (it == std::end(m_client_scripts))
 	{
-		packet::ClientScriptAdd packet;
-		packet.set_name(name);
-		packet.set_script(script);
-
-		Broadcast(PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
+		log::PrintLine(":: Adding client script \"{}\".", name);
+		m_client_scripts[name] = script;
 	}
+	else
+	{
+		log::PrintLine(":: Replacing client script \"{}\".", name);
+		m_client_scripts[name] = script;
 
-	return true;
+		// Send the changes to all players who have this script.
+		if (IsHost())
+		{
+			for (auto& player : m_player_list)
+			{
+				if (player.second->Account.ClientScripts.contains(name))
+				{
+					packet::ClientScriptAdd packet;
+					packet.set_name(name);
+					packet.set_script(script);
+
+					Send(player.first, PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
+				}
+			}
+		}
+	}
 }
 
-bool Server::DeleteClientScript(const std::string& name)
+void Server::EraseClientScript(const std::string& name)
 {
-	auto iter = m_client_scripts.find(name);
-	if (iter == m_client_scripts.end())
-		return false;
+	auto it = m_client_scripts.find(name);
+	if (it == std::end(m_client_scripts))
+		return;
 
-	m_client_scripts.erase(iter);
+	log::PrintLine(":: Erasing client script \"{}\".", name);
+	m_client_scripts.erase(it);
 
-	// Broadcast to players if we are the host.
-	if (IsHost() && !IsSinglePlayer())
+	// Send the changes to all players who have this script.
+	if (IsHost())
 	{
-		packet::ClientScriptDelete packet;
-		packet.set_name(name);
+		for (auto& player : m_player_list)
+		{
+			if (player.second->Account.ClientScripts.contains(name))
+			{
+				packet::ClientScriptDelete packet;
+				packet.set_name(name);
 
-		Broadcast(PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+				Send(player.first, PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+			}
+		}
 	}
+}
 
-	return true;
+void Server::AddPlayerClientScript(const std::string& name, PlayerPtr player)
+{
+	if (player == nullptr) return;
+
+	auto it = m_client_scripts.find(name);
+	if (it == std::end(m_client_scripts))
+		return;
+
+	player->Account.AddClientScript(name);
+
+	const auto& script = it->second;
+
+	packet::ClientScriptAdd packet;
+	packet.set_name(name);
+	packet.set_script(script);
+
+	Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
+
+	log::PrintLine("-> Sending client script \"{}\" to player {}.", name, player->GetPlayerId());
+}
+
+void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
+{
+	if (player == nullptr) return;
+
+	auto it = m_client_scripts.find(name);
+	if (it == std::end(m_client_scripts))
+		return;
+
+	player->Account.RemoveClientScript(name);
+
+	packet::ClientScriptDelete packet;
+	packet.set_name(name);
+	Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+
+	log::PrintLine("-> Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -856,11 +905,12 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	packet::LoginStatus login_status;
 	login_status.set_player_id(id);
 
+	auto player = GetPlayerById(id);
+
 	// If this is single player, just accept the login.
 	if (IsSinglePlayer())
 	{
 		// Load account.
-		auto player = GetPlayerById(id);
 		player->Account.Load("singleplayer");
 
 		// Send response.
@@ -878,7 +928,6 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 
 		// TODO: Properly handle account verification for servers that use it.
 		// Load the account.
-		auto player = GetPlayerById(id);
 		if (method == packet::Login_Method_DEDICATED)
 			player->Account.Load(account);
 		else
@@ -922,13 +971,10 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	}
 
 	// Send client scripts.
-	for (const auto& [name, script] : m_client_scripts)
+	for (const auto& name : player->Account.ClientScripts)
 	{
 		log::PrintLine("-> Sending client script {} to player {}.", name, id);
-		packet::ClientScriptAdd client_script;
-		client_script.set_name(name);
-		client_script.set_script(script);
-		Send(id, PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, client_script);
+		AddPlayerClientScript(name, player);
 	}
 
 	// Send server info.

@@ -81,8 +81,10 @@ public:
 	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
 
 public:
-	bool AddClientScript(const std::string& name, const std::string& script);
-	bool DeleteClientScript(const std::string& name);
+	void LoadClientScript(const std::string& name, const std::string& script);
+	void EraseClientScript(const std::string& name);
+	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
+	void RemovePlayerClientScript(const std::string& name, PlayerPtr player);
 	std::map<std::string, std::string>& GetClientScriptMap();
 
 public:

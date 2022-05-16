@@ -3,6 +3,8 @@
 #include "engine/common.h"
 #include "engine/scene/ObjectAttributes.h"
 
+#include <unordered_set>
+
 
 namespace tdrp::server
 {
@@ -25,7 +27,12 @@ public:
 	void Save();
 
 public:
+	void AddClientScript(const std::string& name);
+	void RemoveClientScript(const std::string& name);
+
+public:
 	ObjectAttributes Flags;
+	std::unordered_set<std::string> ClientScripts;
 
 protected:
 	Player* m_player;

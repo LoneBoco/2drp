@@ -114,19 +114,18 @@ void handle(Game& game, const packet::ClientScriptAdd& packet)
 	const auto& name = packet.name();
 	const auto& script = packet.script();
 
-	if (game.Server.AddClientScript(name, script))
-	{
-		log::PrintLine("<- Executing client script {}.", name);
-		game.Script->RunScript(name, script, &game);
-		game.OnCreated.Run(name);
-	}
+	game.Server.LoadClientScript(name, script);
+
+	log::PrintLine("<- Executing client script {}.", name);
+	game.Script->RunScript(name, script, &game);
+	game.OnCreated.Run(name);
 }
 
 void handle(Game& game, const packet::ClientScriptDelete& packet)
 {
 	const auto& name = packet.name();
 
-	game.Server.DeleteClientScript(name);
+	game.Server.EraseClientScript(name);
 }
 
 void handle(Game& game, const packet::SceneObjectNew& packet)
