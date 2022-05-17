@@ -43,6 +43,8 @@ class Server
 	SCRIPT_FUNCTION(OnPlayerJoin);
 	SCRIPT_FUNCTION(OnPlayerLeave);
 	SCRIPT_FUNCTION(OnServerTick);
+	SCRIPT_FUNCTION(OnServerEvent);
+	SCRIPT_FUNCTION(OnEvent);
 
 public:
 	Server();
@@ -81,6 +83,7 @@ public:
 	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
 
 public:
+	void LoadClientScript(const filesystem::path& file);
 	void LoadClientScript(const std::string& name, const std::string& script);
 	void EraseClientScript(const std::string& name);
 	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
@@ -103,7 +106,7 @@ public:
 	//bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
 
 public:
-	int SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	int SendEvent(std::shared_ptr<scene::Scene> scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
 	const uint32_t GetNextSceneObjectID();

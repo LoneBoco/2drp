@@ -40,9 +40,7 @@ UIManager::UIManager()
 
 		// Bind the game scripts.
 		Script->BindIntoMe(
-			&bind_globals,
-			&bind_game,
-			&bind_camera
+			&bind_client
 		);
 
 		auto& state = Script->GetLuaState();
@@ -73,7 +71,8 @@ Rml::Context* UIManager::CreateContext(const std::string& name)
 	auto context = Rml::CreateContext(name, size, RenderInterface.get());
 	if (!context) return nullptr;
 
-	if (Rml::GetNumContexts() == 1)
+	//if (Rml::GetNumContexts() == 1)
+	if (name != "loading")
 		Rml::Debugger::Initialise(context);
 
 	return context;

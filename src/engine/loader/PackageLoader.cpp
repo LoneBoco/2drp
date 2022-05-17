@@ -6,6 +6,7 @@
 #include <string>
 #include <map>
 #include <vector>
+#include <string_view>
 
 #include <pugixml.hpp>
 
@@ -151,6 +152,7 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			auto node_tileset = node_package.child("tileset");
 			auto node_startingscene = node_package.child("startingscene");
 			auto node_loadingscene = node_package.child("loadingscene");
+			auto node_loaduseables = node_package.child("loaduseables");
 
 			package->m_name = name;
 			package->m_version = version;
@@ -165,16 +167,35 @@ std::pair<bool, std::shared_ptr<package::Package>> PackageLoader::LoadIntoServer
 			if (!node_loadingscene.empty())
 				package->m_loading_scene = node_loadingscene.text().get();
 
-			// Load our classes.
+			// Load object classes.
 			LoadObjectClasses(server, server.m_object_classes, package, node_package);
 
-			// Load our client scripts.
+			// Load client scripts.
 			std::vector<std::string> clientcontrolscripts;
 			std::vector<std::string> servercontrolscripts;
 			LoadScripts(server, clientcontrolscripts, package, "clientcontrolscripts", node_package);
 			LoadScripts(server, servercontrolscripts, package, "servercontrolscripts", node_package);
 			std::for_each(std::begin(clientcontrolscripts), std::end(clientcontrolscripts), [&server](const auto& script) { server.m_client_control_script += script; server.m_client_control_script += "\n"; });
 			std::for_each(std::begin(servercontrolscripts), std::end(servercontrolscripts), [&server](const auto& script) { server.m_server_control_script += script; server.m_server_control_script += "\n"; });
+
+			// Load useables.
+			for (const auto& node_script : node_loaduseables.child("script"))
+			{
+				std::string_view file{ node_script.attribute("file").as_string() };
+				if (!file.empty())
+					server.LoadClientScript(file);
+			}
+			for (const auto& node_directory : node_loaduseables.child("directory"))
+			{
+				if (node_directory.empty()) continue;
+				auto p = root_dir / node_directory.value();
+				for (auto& f : filesystem::directory_iterator(p))
+				{
+					if (!filesystem::is_regular_file(f.status()))
+						continue;
+					server.LoadClientScript(f.path().filename());
+				}
+			}
 		}
 	}
 

@@ -632,7 +632,7 @@ void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
 
 	if (scene)
 	{
-		log::PrintLine("<- Event \"{}\" from {} to scene \"{}\" at ({}, {}): {} with data: {}", name, sender, pscene, x, y, radius, data);
+		log::PrintLine("<- Event \"{}\" from {} to scene \"{}\" at ({}, {})-{} with data: {}", name, sender, pscene, x, y, radius, data);
 
 		// Get objects in range.
 		auto targets = scene->FindObjectsBoundInRangeOf(origin, radius);
@@ -649,12 +649,18 @@ void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
 
 		// Run events on each one.
 		std::for_each(std::begin(hits), std::end(hits), [&](const auto& target) { target->OnEvent.RunAll(sender_so, name, data, origin, radius); });
+
+		// Run event on the server.
+		auto player = server.GetPlayerById(id);
+		server.OnEvent.RunAll(sender_so, name, data, origin, radius, player);
 	}
 	else
 	{
-		log::PrintLine("<- Received global event {} from sender {} with data: {}", name, sender, data);
+		log::PrintLine("<- Received global event \"{}\" from player {} with data: {}", name, id, data);
 
-		// TODO: Global events.
+		// Global events.
+		auto player = server.GetPlayerById(id);
+		server.OnServerEvent.RunAll(sender_so, name, data, origin, radius, player);
 	}
 }
 

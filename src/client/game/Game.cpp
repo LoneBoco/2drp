@@ -49,9 +49,7 @@ void Game::Initialize()
 {
 	// Bind game script classes.
 	Script->BindIntoMe(
-		&bind_globals,
-		&bind_game,
-		&bind_camera
+		&bind_client
 	);
 
 	// Load the UI.
@@ -78,11 +76,13 @@ void Game::Initialize()
 		State = GameState::PLAYING;
 
 		// Register client scripts.
+		/*
 		for (const auto& [name, script] : Server.GetClientScriptMap())
 		{
 			Script->RunScript(name, script, this);
 			OnCreated.Run(name);
 		}
+		*/
 
 		// Call connected callback.
 		OnConnected.RunAll();
@@ -188,9 +188,45 @@ void Game::Render(sf::RenderWindow* window)
 	}
 }
 
-void Game::SendEvent(std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+void Game::SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
 {
 	Server.SendEvent(GetCurrentPlayer()->GetCurrentScene().lock(), sender, name, data, origin, radius);
+}
+
+useable::UseablePtr Game::CreateUseable(const std::string& name, const std::string& image, const std::string& description)
+{
+	auto it = m_useables.find(name);
+	if (it != std::end(m_useables))
+	{
+		log::PrintLine("!! Tried to add useable {}, but it already exists.", name);
+		return nullptr;
+	}
+
+	auto [useable, inserted] = m_useables.emplace(name, std::make_shared<useable::Useable>(name, image, description));
+	return useable->second;
+}
+
+void Game::DeleteUseable(const std::string& name)
+{
+	auto it = m_useables.find(name);
+	if (it != std::end(m_useables))
+	{
+		log::PrintLine(":: Deleting useable {}.", name);
+		m_useables.erase(it);
+	}
+	else
+	{
+		log::PrintLine(":: Could not find useable {} to delete.", name);
+	}
+}
+
+void Game::CallUseable(const std::string& name)
+{
+	auto it = m_useables.find(name);
+	if (it != std::end(m_useables))
+	{
+		it->second->OnUsed.RunAll();
+	}
 }
 
 /////////////////////////////

@@ -15,9 +15,14 @@ void bind_server(sol::state& lua)
 		"OnPlayerJoin", sol::writeonly_property(&server::Server::SetOnPlayerJoin),
 		"OnPlayerLeave", sol::writeonly_property(&server::Server::SetOnPlayerLeave),
 		"OnServerTick", sol::writeonly_property(&server::Server::SetOnServerTick),
+		"OnServerEvent", sol::writeonly_property(&server::Server::SetOnServerEvent),
+		"OnEvent", sol::writeonly_property(&server::Server::SetOnEvent),
 
 		"GetScene", &server::Server::GetScene,
 		"GetDefaultScene", [](server::Server& server) -> std::shared_ptr<scene::Scene> { return server.GetScene(server.GetPackage()->GetStartingScene()); },
+
+		"GiveClientScript", &server::Server::AddPlayerClientScript,
+		"RemoveClientScript", &server::Server::RemovePlayerClientScript,
 
 		"CreateSceneObject", &server::Server::CreateSceneObject,
 		"DeleteSceneObject", sol::resolve<bool(uint32_t)>(&server::Server::DeleteSceneObject),

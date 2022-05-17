@@ -25,7 +25,7 @@ inline std::ofstream& get_file()
 
 inline bool& get_wrote_newline()
 {
-	static bool m_wrote_newline = false;
+	static bool m_wrote_newline = true;
 	return m_wrote_newline;
 }
 

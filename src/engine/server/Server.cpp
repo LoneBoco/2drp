@@ -94,7 +94,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	// Load everything from the package into the server.
 	if (HASFLAG(m_server_flags, ServerFlags::PRELOAD_EVERYTHING))
 	{
-		log::PrintLine(":: Loading everything.");
+		log::PrintLine(":: Loading all scenes in package.");
 
 		// Load all scenes.
 		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "levels" })
@@ -447,6 +447,18 @@ bool Server::SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& 
 
 ///////////////////////////////////////////////////////////////////////////////
 
+void Server::LoadClientScript(const filesystem::path& file)
+{
+	auto name = file.stem().string();
+
+	std::string script;
+	auto f = FileSystem.GetFile(file);
+	if (f && f->Opened())
+		script = f->ReadAsString();
+
+	LoadClientScript(name, script);
+}
+
 void Server::LoadClientScript(const std::string& name, const std::string& script)
 {
 	auto it = m_client_scripts.find(name);
@@ -513,15 +525,17 @@ void Server::AddPlayerClientScript(const std::string& name, PlayerPtr player)
 
 	player->Account.AddClientScript(name);
 
-	const auto& script = it->second;
+	if (IsHost())
+	{
+		const auto& script = it->second;
 
-	packet::ClientScriptAdd packet;
-	packet.set_name(name);
-	packet.set_script(script);
+		packet::ClientScriptAdd packet;
+		packet.set_name(name);
+		packet.set_script(script);
 
-	Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
-
-	log::PrintLine("-> Sending client script \"{}\" to player {}.", name, player->GetPlayerId());
+		log::PrintLine("-> Sending client script \"{}\" to player {}.", name, player->GetPlayerId());
+		Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
+	}
 }
 
 void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
@@ -534,11 +548,14 @@ void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
 
 	player->Account.RemoveClientScript(name);
 
-	packet::ClientScriptDelete packet;
-	packet.set_name(name);
-	Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+	if (IsHost())
+	{
+		packet::ClientScriptDelete packet;
+		packet.set_name(name);
 
-	log::PrintLine("-> Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
+		log::PrintLine("-> Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
+		Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -747,7 +764,7 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int Server::SendEvent(std::shared_ptr<scene::Scene> scene, std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+int Server::SendEvent(std::shared_ptr<scene::Scene> scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
 {
 	packet::SendEvent packet;
 	packet.set_sender(sender ? sender->ID : 0);
@@ -973,7 +990,6 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	// Send client scripts.
 	for (const auto& name : player->Account.ClientScripts)
 	{
-		log::PrintLine("-> Sending client script {} to player {}.", name, id);
 		AddPlayerClientScript(name, player);
 	}
 

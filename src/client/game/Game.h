@@ -1,7 +1,10 @@
 #pragma once
 
+#include <unordered_map>
+
 #include "client/game/Camera.h"
 #include "client/ui/UIManager.h"
+#include "client/useable/Useable.h"
 
 #include "engine/common.h"
 
@@ -36,6 +39,7 @@ class Game
 {
 	SCRIPT_SETUP;
 	SCRIPT_FUNCTION(OnCreated);
+	SCRIPT_FUNCTION(OnDestroyed);
 	SCRIPT_FUNCTION(OnConnected);
 	SCRIPT_FUNCTION(OnClientFrame);
 	SCRIPT_FUNCTION(OnKeyPress);
@@ -68,7 +72,11 @@ public:
 	sf::RenderWindow* GetRenderWindow() const;
 
 public:
-	void SendEvent(std::shared_ptr<SceneObject> sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	void SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	useable::UseablePtr CreateUseable(const std::string& name, const std::string& image, const std::string& description);
+	void DeleteUseable(const std::string& name);
+	void CallUseable(const std::string& name);
+	std::unordered_map<std::string, useable::UseablePtr>& GetUseablesMap();
 
 public:
 	GameState State = GameState::INITIALIZING;
@@ -82,6 +90,9 @@ public:
 
 public:
 	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
+
+private:
+	std::unordered_map<std::string, useable::UseablePtr> m_useables;
 
 private:
 	chrono::clock::time_point m_tick_previous;
@@ -114,6 +125,11 @@ inline sf::RenderWindow* Game::GetRenderWindow() const
 inline server::PlayerPtr Game::GetCurrentPlayer()
 {
 	return Server.GetPlayer();
+}
+
+inline std::unordered_map<std::string, useable::UseablePtr>& Game::GetUseablesMap()
+{
+	return m_useables;
 }
 
 } // end namespace tdrp

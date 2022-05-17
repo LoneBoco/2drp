@@ -24,6 +24,14 @@ void logF(const char* message);
 // void playSound(const std::string& sound);
 // void playSound(const std::string& sound, const Vector2df& position);
 
+void bind_client(sol::state& lua)
+{
+	bind_globals(lua);
+	bind_camera(lua);
+	bind_game(lua);
+	bind_useable(lua);
+}
+
 void bind_globals(sol::state& lua)
 {
 	// Bind keyboard keys.
@@ -170,6 +178,27 @@ void bind_camera(sol::state& lua)
 	);
 }
 
+namespace functions
+{
+	void SendEvent(Game& self, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+	{
+		self.SendEvent(sender, name, data, origin, radius);
+	}
+
+	void SendServerEvent(Game& self, SceneObject* sender, const std::string& name, const std::string& data, sol::variadic_args args)
+	{
+		Vector2df origin{ 0, 0 };
+		float radius = 0.f;
+
+		if (args.size() == 1)
+			origin = args.get<Vector2df>(0);
+		if (args.size() == 2)
+			radius = args.get<float>(1);
+
+		self.Server.SendEvent(nullptr, sender, name, data, origin, radius);
+	}
+} // end namespace functions
+
 void bind_game(sol::state& lua)
 {
 	lua.new_usertype<Game>("Game", sol::no_constructor,
@@ -177,7 +206,12 @@ void bind_game(sol::state& lua)
 		"keydown", &keydown,
 		"keyup", &keyup,
 
-		"SendEvent", &Game::SendEvent,
+		"SendEvent", &functions::SendEvent,
+		"SendServerEvent", &functions::SendServerEvent,
+
+		"CreateUseable", &Game::CreateUseable,
+		"DeleteUseable", &Game::DeleteUseable,
+		"CallUseable", &Game::CallUseable,
 
 		"ToggleUIContext", [](Game& self, const std::string& context, bool visible) { self.UI->ToggleContextVisibility(context, visible); },
 		"ToggleUIDocument", [](Game& self, const std::string& context, const std::string& document, bool visible) { self.UI->ToggleDocumentVisibility(context, document, visible); },
@@ -186,8 +220,10 @@ void bind_game(sol::state& lua)
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
 		"Server", sol::readonly_property(&Game::Server),
+		"Useables", sol::readonly_property([](Game& game) { return sol::as_table(game.GetUseablesMap()); }),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),
+		"OnDestroyed", sol::writeonly_property(&Game::SetOnDestroyed),
 		"OnConnected", sol::writeonly_property(&Game::SetOnConnected),
 		"OnClientFrame", sol::writeonly_property(&Game::SetOnClientFrame),
 		"OnKeyPress", sol::writeonly_property(&Game::SetOnKeyPress),
@@ -196,6 +232,19 @@ void bind_game(sol::state& lua)
 		"OnMouseUp", sol::writeonly_property(&Game::SetOnMouseUp),
 		"OnGainedOwnership", sol::writeonly_property(&Game::SetOnGainedOwnership),
 		"OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
+	);
+}
+
+void bind_useable(sol::state& lua)
+{
+	lua.new_usertype<useable::Useable>("Useable", sol::no_constructor,
+		"Name", &useable::Useable::Name,
+		"Image", &useable::Useable::Image,
+		"Description", &useable::Useable::Description,
+
+		"Use", [](useable::Useable& self) { self.OnUsed.RunAll(); },
+
+		"OnUsed", sol::writeonly_property(&useable::Useable::SetOnUsed)
 	);
 }
 
