@@ -5,12 +5,13 @@ package tdrp.packet;
 message SceneObjectChange {
 	message Attribute {
 		uint32 id = 1;
+		string name = 2;
 		oneof value {
-			int64 as_int = 2;
-			uint64 as_uint = 3;
-			float as_float = 4;
-			double as_double = 5;
-			string as_string = 6;
+			int64 as_int = 3;
+			uint64 as_uint = 4;
+			float as_float = 5;
+			double as_double = 6;
+			string as_string = 7;
 		}
 	}
 

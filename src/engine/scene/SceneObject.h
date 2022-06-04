@@ -509,6 +509,7 @@ T getPropsPacket(SceneObject& so)
 
 		auto attr = packet.add_attributes();
 		attr->set_id(attribute.GetId());
+		attr->set_name(attribute.GetName());
 
 		switch (attribute.GetType())
 		{
@@ -546,6 +547,7 @@ T getPropsPacket(SceneObject& so)
 
 		auto prop = packet.add_properties();
 		prop->set_id(id);
+		// prop->set_name(property->GetName());
 
 		switch (property->GetType())
 		{

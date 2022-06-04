@@ -502,7 +502,11 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 		const auto attribute_id = static_cast<uint16_t>(attribute.id());
 		auto soattrib = so->Attributes.Get(attribute_id);
 		if (!soattrib)
-			continue;
+		{
+			const auto& name = attribute.name();
+			soattrib = so->Attributes.GetOrCreate(name);
+		}
+		if (!soattrib) continue;
 
 		switch (attribute.value_case())
 		{
