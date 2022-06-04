@@ -241,10 +241,19 @@ void Server::Update(chrono::clock::duration tick)
 	OnServerTick.RunAll(tick_in_ms);
 
 	// Iterate through all the players and determine if any new scene objects should be sent.
+	// While iterating through players, also deal with flag changes.
 	for (auto& [id, player] : m_player_list)
 	{
 		if (player == nullptr)
 			continue;
+
+		// Check our flags.
+		if (player->Account.Flags.HasDirty())
+		{
+			packet::FlagSet message = getPropsPacket<packet::FlagSet>(player->Account.Flags, &packet::FlagSet::add_attributes);
+			if (IsHost() && !IsSinglePlayer() && player != m_player)
+				Send(player->GetPlayerId(), PACKETID(network::Packets::FLAGSET), network::Channel::RELIABLE, message);
+		}
 
 		// Don't send to ourselves.
 		if (player == m_player)
@@ -364,7 +373,7 @@ std::shared_ptr<ObjectClass> Server::GetObjectClass(const std::string& name)
 	return iter->second;
 }
 
-std::shared_ptr<scene::Tileset> Server::GetTileset(const std::string& name)
+std::shared_ptr<scene::Tileset> Server::GetTileset(const std::string& name) const
 {
 	auto iter = m_tilesets.find(name);
 	if (iter == m_tilesets.end())
@@ -372,7 +381,7 @@ std::shared_ptr<scene::Tileset> Server::GetTileset(const std::string& name)
 	return iter->second;
 }
 
-std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name)
+std::shared_ptr<scene::Scene> Server::GetScene(const std::string& name) const
 {
 	auto iter = m_scenes.find(name);
 	if (iter == m_scenes.end())
@@ -556,6 +565,24 @@ void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
 		log::PrintLine("-> Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
 		Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
 	}
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+void Server::SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value)
+{
+	if (player == nullptr) return;
+
+	auto f = player->Account.Flags.GetOrCreate(flag);
+	f->Set(value);
+}
+
+AttributePtr Server::GetAccountFlag(const server::PlayerPtr player, const std::string& flag) const
+{
+	if (player == nullptr) return nullptr;
+
+	auto f = player->Account.Flags.Get(flag);
+	return f;
 }
 
 ///////////////////////////////////////////////////////////////////////////////

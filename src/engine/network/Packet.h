@@ -45,6 +45,7 @@ enum class Packets
 	SCENEOBJECTOWNERSHIP,
 	SCENEOBJECTUNFOLLOW,
 	SENDEVENT,
+	FLAGSET,
 
 	SERVERTYPE,				// [type]
 	//CLASSADD,				// [name]

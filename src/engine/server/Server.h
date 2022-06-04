@@ -75,12 +75,12 @@ public:
 	const std::string& GetServerName() const;
 	const uint16_t GetMaxPlayers() const;
 	const PlayerPtr GetPlayer() const;
-	std::shared_ptr<package::Package> GetPackage();
+	std::shared_ptr<package::Package> GetPackage() const;
 
 public:
 	std::shared_ptr<ObjectClass> GetObjectClass(const std::string& name);
-	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name);
-	std::shared_ptr<scene::Scene> GetScene(const std::string& name);
+	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name) const;
+	std::shared_ptr<scene::Scene> GetScene(const std::string& name) const;
 
 public:
 	void LoadClientScript(const filesystem::path& file);
@@ -89,6 +89,10 @@ public:
 	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
 	void RemovePlayerClientScript(const std::string& name, PlayerPtr player);
 	std::map<std::string, std::string>& GetClientScriptMap();
+
+public:
+	void SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value);
+	AttributePtr GetAccountFlag(const server::PlayerPtr player, const std::string& flag) const;
 
 public:
 	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
@@ -206,7 +210,7 @@ inline const PlayerPtr Server::GetPlayer() const
 	return m_player;
 }
 
-inline std::shared_ptr<package::Package> Server::GetPackage()
+inline std::shared_ptr<package::Package> Server::GetPackage() const
 {
 	return m_package;
 }

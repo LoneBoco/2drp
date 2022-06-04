@@ -446,6 +446,51 @@ protected:
 ///////////////////////////////////////////////////////////////////////////////
 
 template <typename T>
+T getPropsPacket(ObjectAttributes& attributes, auto adder)
+{
+	T packet;
+
+	// Loop through all dirty attributes and add them to the packet.
+	for (auto& attribute : ObjectAttributes::Dirty(attributes))
+	{
+		attribute.UpdateDispatch.Post(attribute.GetId());
+		attributes.DirtyUpdateDispatch.Post(attribute.GetId());
+
+		// If our dispatch removed the dirty flag, skip this attribute.
+		if (!attribute.GetIsDirty())
+			continue;
+
+		attribute.SetIsDirty(false);
+
+		auto attr = std::invoke(adder, packet);
+		attr->set_id(attribute.GetId());
+		attr->set_name(attribute.GetName());
+
+		switch (attribute.GetType())
+		{
+		case AttributeType::SIGNED:
+			attr->set_as_int(attribute.GetSigned());
+			break;
+		case AttributeType::UNSIGNED:
+			attr->set_as_uint(attribute.GetUnsigned());
+			break;
+		case AttributeType::FLOAT:
+			attr->set_as_float(attribute.GetFloat());
+			break;
+		case AttributeType::DOUBLE:
+			attr->set_as_double(attribute.GetDouble());
+			break;
+		default:
+		case AttributeType::STRING:
+			attr->set_as_string(attribute.GetString());
+			break;
+		}
+	}
+
+	return packet;
+}
+
+template <typename T>
 T getPropsPacket(SceneObject& so)
 {
 	T packet;

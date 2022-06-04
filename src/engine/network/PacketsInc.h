@@ -12,6 +12,7 @@
 #include "engine/network/packets/Error.pb.h"
 #include "engine/network/packets/FileRequest.pb.h"
 #include "engine/network/packets/FileTransfer.pb.h"
+#include "engine/network/packets/FlagSet.pb.h"
 #include "engine/network/packets/Login.pb.h"
 #include "engine/network/packets/LoginStatus.pb.h"
 #include "engine/network/packets/SceneObjectChange.pb.h"

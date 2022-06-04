@@ -1,4 +1,5 @@
 #include "engine/script/modules/bind.h"
+#include "engine/script/helpers/AttributeHelper.h"
 
 #include "engine/scene/ObjectAttributes.h"
 #include "engine/scene/ObjectProperties.h"
@@ -15,58 +16,6 @@ namespace sol
 namespace tdrp::script::modules
 {
 
-EventHandle subscribe(Attribute& self, sol::protected_function func)
-{
-	return self.UpdateDispatch.Subscribe(
-		[&self, func](uint16_t id)
-		{
-			func.call(self);
-		}
-	);
-}
-
-sol::object asObject(const AttributePtr& attribute, sol::this_state s)
-{
-	sol::state_view lua{ s };
-	if (attribute == nullptr)
-		return sol::make_object(lua, sol::lua_nil);
-
-	switch (attribute->GetType())
-	{
-		case AttributeType::SIGNED:
-			return sol::object(lua, sol::in_place_type<int64_t>, attribute->GetSigned());
-		case AttributeType::UNSIGNED:
-			return sol::object(lua, sol::in_place_type<uint64_t>, attribute->GetUnsigned());
-		case AttributeType::FLOAT:
-			return sol::object(lua, sol::in_place_type<float>, attribute->GetFloat());
-		case AttributeType::DOUBLE:
-			return sol::object(lua, sol::in_place_type<double>, attribute->GetDouble());
-		case AttributeType::STRING:
-			return sol::make_object(lua, attribute->GetString());
-		case AttributeType::INVALID:
-		default:
-			return sol::make_object(lua, sol::lua_nil);
-	}
-}
-
-void fromObject(Attribute& attribute, const sol::object& object)
-{
-	if (object.is<int64_t>())
-		attribute.Set(object.as<int64_t>());
-	else if (object.is<uint64_t>())
-		attribute.Set(object.as<uint64_t>());
-	else if (object.is<float>())
-		attribute.Set(object.as<float>());
-	else if (object.is<double>())
-		attribute.Set(object.as<double>());
-	else if (object.is<std::string>())
-		attribute.Set(object.as<std::string>());
-	else if (object.is<Attribute>())
-		attribute.Set(object.as<Attribute>());
-	else attribute.Set(nullptr);
-}
-
-
 void bind_attributes(sol::state& lua)
 {
 	lua.new_enum("AttributeType",
@@ -78,7 +27,7 @@ void bind_attributes(sol::state& lua)
 		"STRING", AttributeType::STRING
 	);
 
-	lua["NEW_ID"] = &INVALID_ATTRIBUTE;
+	lua["NEW_ID"] = INVALID_ATTRIBUTE;
 
 	lua.new_enum("Property",
 		"INVALID", Property::INVALID,
@@ -111,8 +60,8 @@ void bind_attributes(sol::state& lua)
 		"AsFloat", &Attribute::GetFloat,
 		"AsDouble", &Attribute::GetDouble,
 
-		"Get", &asObject,
-		"Set", &fromObject,
+		"Get", &helpers::asObject,
+		"Set", &helpers::fromObject,
 
 		"SetString", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
 		"SetSigned", sol::resolve<Attribute& (const int64_t)>(&Attribute::Set),
@@ -132,7 +81,7 @@ void bind_attributes(sol::state& lua)
 		),
 		*/
 
-		"Subscribe", &subscribe,
+		"Subscribe", &helpers::subscribe,
 		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
 	);
 
@@ -149,21 +98,21 @@ void bind_attributes(sol::state& lua)
 		),
 
 		sol::meta_function::index, sol::overload(
-			[](ObjectAttributes& attributes, const std::string& name, sol::this_state s) { return asObject(attributes.Get(name), s); },
-			[](ObjectAttributes& attributes, uint16_t id, sol::this_state s) { return asObject(attributes.Get(id), s); }
+			[](ObjectAttributes& attributes, const std::string& name, sol::this_state s) { return helpers::asObject(attributes.Get(name), s); },
+			[](ObjectAttributes& attributes, uint16_t id, sol::this_state s) { return helpers::asObject(attributes.Get(id), s); }
 		),
 
 		sol::meta_function::new_index, sol::overload(
 			[](ObjectAttributes& attributes, const std::string& name, const sol::object& value)
 			{
 				auto a = attributes.GetOrCreate(name);
-				fromObject(*a, value);
+				helpers::fromObject(*a, value);
 			},
 			[](ObjectAttributes& attributes, uint16_t id, const sol::object& value)
 			{
 				auto a = attributes.Get(id);
 				if (a == nullptr) throw "Invalid attribute ID";
-				fromObject(*a, value);
+				helpers::fromObject(*a, value);
 			}
 		)
 	);
@@ -175,8 +124,8 @@ void bind_attributes(sol::state& lua)
 		),
 
 		sol::meta_function::index, sol::overload(
-			[](ObjectProperties& properties, Property prop, sol::this_state s) { return asObject(properties.Get(prop), s); },
-			[](ObjectProperties& properties, const std::string& name, sol::this_state s) { return asObject(properties.Get(name), s); }
+			[](ObjectProperties& properties, Property prop, sol::this_state s) { return helpers::asObject(properties.Get(prop), s); },
+			[](ObjectProperties& properties, const std::string& name, sol::this_state s) { return helpers::asObject(properties.Get(name), s); }
 		),
 
 		sol::meta_function::new_index, sol::overload(
@@ -184,13 +133,13 @@ void bind_attributes(sol::state& lua)
 			{
 				auto p = properties.Get(prop);
 				if (p == nullptr) throw "Invalid property";
-				fromObject(*p, value);
+				helpers::fromObject(*p, value);
 			},
 			[](ObjectProperties& properties, const std::string& name, const sol::object& value)
 			{
 				auto p = properties.Get(name);
 				if (p == nullptr) throw "Invalid property";
-				fromObject(*p, value);
+				helpers::fromObject(*p, value);
 			}
 		)
 	);

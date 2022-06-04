@@ -22,7 +22,7 @@
 #include <chrono>
 #include <type_traits>
 #include <concepts>
-//#include <ranges>
+#include <ranges>
 
 #include <boost/algorithm/string.hpp>
 
@@ -49,11 +49,11 @@ public:
 	MyClass() = default;
 	~MyClass() = default;
 
-	MyClass(const MyClass& other) = delete;
-	MyClass(MyClass&& other) = delete;
-	MyClass& operator=(const MyClass& other) = delete;
-	MyClass& operator=(MyClass&& other) = delete;
-	bool operator==(const MyClass& other) = delete;
+	MyClass(const MyClass&) = delete;
+	MyClass(MyClass&&) = delete;
+	MyClass& operator=(const MyClass&) = delete;
+	MyClass& operator=(MyClass&&) = delete;
+	bool operator==(const MyClass&) = delete;
 };
 
 } // end namespace tdrp

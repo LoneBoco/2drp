@@ -180,6 +180,14 @@ void bind_camera(sol::state& lua)
 
 namespace functions
 {
+	ObjectAttributes* GetFlags(Game& self)
+	{
+		auto player = self.GetCurrentPlayer();
+		if (player == nullptr) return nullptr;
+
+		return &player->Account.Flags;
+	}
+
 	void SendEvent(Game& self, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
 	{
 		self.SendEvent(sender, name, data, origin, radius);
@@ -221,6 +229,7 @@ void bind_game(sol::state& lua)
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
 		"Server", sol::readonly_property(&Game::Server),
 		"Useables", sol::readonly_property([](Game& game) { return sol::as_table(game.GetUseablesMap()); }),
+		"Flags", sol::readonly_property(&functions::GetFlags),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),
 		"OnDestroyed", sol::writeonly_property(&Game::SetOnDestroyed),

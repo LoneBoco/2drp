@@ -38,6 +38,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectDelete& 
 void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnership& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet);
 void handle(Server& server, const uint16_t id, const packet::SendEvent& packet);
+void handle(Server& server, const uint16_t id, const packet::FlagSet& packet);
 
 /////////////////////////////
 
@@ -102,6 +103,9 @@ void network_receive_server(Server& server, const uint16_t id, const uint16_t pa
 		break;
 	case Packets::SENDEVENT:
 		HANDLE(packet::SendEvent);
+		break;
+	case Packets::FLAGSET:
+		HANDLE(packet::FlagSet);
 		break;
 	}
 }
@@ -661,6 +665,47 @@ void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
 		// Global events.
 		auto player = server.GetPlayerById(id);
 		server.OnServerEvent.RunAll(sender_so, name, data, origin, radius, player);
+	}
+}
+
+void handle(Server& server, const uint16_t id, const packet::FlagSet& packet)
+{
+	auto player = server.GetPlayerById(id);
+	if (player == nullptr) return;
+	if (player == server.GetPlayer()) return;
+
+	for (int i = 0; i < packet.attributes_size(); ++i)
+	{
+		const auto& attribute = packet.attributes(i);
+		const auto attribute_id = static_cast<uint16_t>(attribute.id());
+		auto flag = player->Account.Flags.Get(attribute_id);
+		if (!flag)
+		{
+			const auto& name = attribute.name();
+			flag = player->Account.Flags.GetOrCreate(name);
+		}
+		if (!flag) continue;
+
+		switch (attribute.value_case())
+		{
+		case packet::SceneObjectChange_Attribute::kAsInt:
+			flag->Set(attribute.as_int());
+			break;
+		case packet::SceneObjectChange_Attribute::kAsUint:
+			flag->Set(attribute.as_uint());
+			break;
+		case packet::SceneObjectChange_Attribute::kAsFloat:
+			flag->Set(attribute.as_float());
+			break;
+		case packet::SceneObjectChange_Attribute::kAsDouble:
+			flag->Set(attribute.as_double());
+			break;
+		case packet::SceneObjectChange_Attribute::kAsString:
+			flag->Set(attribute.as_string());
+			break;
+		}
+
+		flag->SetIsDirty(true);
 	}
 }
 
