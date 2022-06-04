@@ -2,6 +2,8 @@
 #include <RmlUi/Debugger.h>
 #include <RmlSolLua/RmlSolLua.h>
 
+#include "client/useable/Useable.h"
+
 #include "client/ui/UIManager.h"
 
 #include "client/game/Game.h"
@@ -35,8 +37,8 @@ UIManager::UIManager()
 
 	// Bind Lua.
 	{
-		Script = ScriptManager->CreateScriptInstance("UI");
-		Rml::SolLua::Initialise(&Script->GetLuaState());
+		Script = script_manager->CreateScriptInstance("UI");
+		Rml::SolLua::Initialise(&Script->GetLuaState(), "MODULENAME");
 
 		// Bind the game scripts.
 		Script->BindIntoMe(
@@ -66,14 +68,31 @@ UIManager::~UIManager()
 Rml::Context* UIManager::CreateContext(const std::string& name)
 {
 	// Convert to RmlUi size.
-	Rml::Vector2i size{ Window->GetWidth(), Window->GetHeight() };
+	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
 
 	auto context = Rml::CreateContext(name, size, RenderInterface.get());
 	if (!context) return nullptr;
 
-	//if (Rml::GetNumContexts() == 1)
-	if (name != "loading")
-		Rml::Debugger::Initialise(context);
+	// Bind Useables.
+	{
+		if (auto constructor = context->CreateDataModel("useables"))
+		{
+			auto mhandle = constructor.GetModelHandle();
+			m_useable_handles.insert(std::make_pair(name, mhandle));
+
+			if (auto uhandle = constructor.RegisterStruct<useable::Useable>())
+			{
+				uhandle.RegisterMember("name", &useable::Useable::Name);
+				uhandle.RegisterMember("description", &useable::Useable::Description);
+				uhandle.RegisterMember("image", &useable::Useable::Image);
+			}
+
+			constructor.RegisterArray<UseablesList>();
+
+			auto game = BabyDI::Get<tdrp::Game>();
+			constructor.Bind("useables", &game->GetUseables());
+		}
+	}
 
 	return context;
 }
@@ -86,7 +105,7 @@ void UIManager::ToggleContextVisibility(const std::string& name, bool visible)
 		m_visible_contexts.erase(name);
 }
 
-void UIManager::ToggleDocumentVisibility(const std::string& context, const std::string& document, bool visible)
+void UIManager::ToggleDocumentVisibility(const std::string& context, const std::string& document)
 {
 	auto c = Rml::GetContext(context);
 	if (c != nullptr)
@@ -94,8 +113,8 @@ void UIManager::ToggleDocumentVisibility(const std::string& context, const std::
 		auto d = c->GetDocument(document);
 		if (d)
 		{
-			if (visible) d->Show();
-			else d->Hide();
+			if (d->IsVisible()) d->Hide();
+			else d->Show();
 		}
 	}
 }
@@ -124,9 +143,27 @@ void UIManager::ReloadUI()
 	}
 }
 
+void UIManager::AssignDebugger(const std::string& context)
+{
+	auto c = Rml::GetContext(context);
+	if (c == nullptr)
+		return;
+
+	Rml::Debugger::Shutdown();
+	Rml::Debugger::Initialise(c);
+}
+
+void UIManager::MakeUseablesDirty()
+{
+	for (auto& [k, v] : m_useable_handles)
+	{
+		v.DirtyVariable("useables");
+	}
+}
+
 void UIManager::ScreenSizeUpdate()
 {
-	Rml::Vector2i size{ Window->GetWidth(), Window->GetHeight() };
+	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
 
 	for (int i = 0; i < Rml::GetNumContexts(); ++i)
 		Rml::GetContext(i)->SetDimensions(size);

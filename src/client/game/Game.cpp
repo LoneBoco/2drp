@@ -195,24 +195,29 @@ void Game::SendEvent(SceneObject* sender, const std::string& name, const std::st
 
 useable::UseablePtr Game::CreateUseable(const std::string& name, const std::string& image, const std::string& description)
 {
-	auto it = m_useables.find(name);
+	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
 	if (it != std::end(m_useables))
 	{
-		log::PrintLine("!! Tried to add useable {}, but it already exists.", name);
-		return nullptr;
+		log::PrintLine("!! Useable {} already exists, overwriting.", name);
+		m_useables.erase(it);
 	}
 
-	auto [useable, inserted] = m_useables.emplace(name, std::make_shared<useable::Useable>(name, image, description));
-	return useable->second;
+	auto& useable = m_useables.emplace_back(std::make_shared<useable::Useable>(name, image, description));
+
+	UI->MakeUseablesDirty();
+
+	return useable;
 }
 
 void Game::DeleteUseable(const std::string& name)
 {
-	auto it = m_useables.find(name);
+	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
 	if (it != std::end(m_useables))
 	{
 		log::PrintLine(":: Deleting useable {}.", name);
 		m_useables.erase(it);
+
+		UI->MakeUseablesDirty();
 	}
 	else
 	{
@@ -222,10 +227,10 @@ void Game::DeleteUseable(const std::string& name)
 
 void Game::CallUseable(const std::string& name)
 {
-	auto it = m_useables.find(name);
+	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
 	if (it != std::end(m_useables))
 	{
-		it->second->OnUsed.RunAll();
+		(*it)->OnUsed.RunAll();
 	}
 }
 

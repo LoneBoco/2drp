@@ -26,6 +26,7 @@ namespace tdrp
 {
 
 // constexpr std::chrono::milliseconds PROP_UPDATE_TIMER = 30ms;
+using UseablesList = std::vector<useable::UseablePtr>;
 
 
 enum class GameState
@@ -76,7 +77,7 @@ public:
 	useable::UseablePtr CreateUseable(const std::string& name, const std::string& image, const std::string& description);
 	void DeleteUseable(const std::string& name);
 	void CallUseable(const std::string& name);
-	std::unordered_map<std::string, useable::UseablePtr>& GetUseablesMap();
+	UseablesList& GetUseables();
 
 public:
 	GameState State = GameState::INITIALIZING;
@@ -92,7 +93,7 @@ public:
 	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
 
 private:
-	std::unordered_map<std::string, useable::UseablePtr> m_useables;
+	UseablesList m_useables;
 
 private:
 	chrono::clock::time_point m_tick_previous;
@@ -127,7 +128,7 @@ inline server::PlayerPtr Game::GetCurrentPlayer()
 	return Server.GetPlayer();
 }
 
-inline std::unordered_map<std::string, useable::UseablePtr>& Game::GetUseablesMap()
+inline UseablesList& Game::GetUseables()
 {
 	return m_useables;
 }

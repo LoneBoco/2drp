@@ -205,10 +205,62 @@ namespace functions
 
 		self.Server.SendEvent(nullptr, sender, name, data, origin, radius);
 	}
-} // end namespace functions
+}
+
+struct Useables {};
+
+namespace useables
+{
+	useable::UseablePtr Get(Useables& self, sol::object index)
+	{
+		auto game = BabyDI::Get<Game>();
+		if (index.get_type() == sol::type::number)
+			return game->GetUseables().at(index.as<int>());
+		else if (index.get_type() == sol::type::string)
+		{
+			auto& useables = game->GetUseables();
+			auto name = index.as<std::string>();
+			auto it = std::ranges::find_if(useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
+			if (it == std::end(useables))
+				return nullptr;
+			return *it;
+		}
+
+		return nullptr;
+	}
+
+	auto GetIPairs()
+	{
+		auto game = BabyDI::Get<Game>();
+		return sol::as_table(game->GetUseables());
+	}
+
+	auto GetPairs()
+	{
+		auto game = BabyDI::Get<Game>();
+		auto& useables = game->GetUseables();
+
+		std::unordered_map<std::string, useable::UseablePtr> result;
+		std::ranges::for_each(useables, [&result](useable::UseablePtr& useable) { result.insert(std::make_pair(useable->Name, useable)); });
+		return sol::as_table(result);
+	}
+
+	auto GetLength()
+	{
+		auto game = BabyDI::Get<Game>();
+		return game->GetUseables().size();
+	}
+}
 
 void bind_game(sol::state& lua)
 {
+	auto useables = lua.new_usertype<Useables>("Useables", sol::no_constructor,
+		sol::meta_function::index, &useables::Get,
+		sol::meta_function::ipairs, &useables::GetIPairs,
+		sol::meta_function::pairs, &useables::GetPairs,
+		sol::meta_function::length, &useables::GetLength
+	);
+
 	lua.new_usertype<Game>("Game", sol::no_constructor,
 		"log", &logF,
 		"keydown", &keydown,
@@ -222,13 +274,14 @@ void bind_game(sol::state& lua)
 		"CallUseable", &Game::CallUseable,
 
 		"ToggleUIContext", [](Game& self, const std::string& context, bool visible) { self.UI->ToggleContextVisibility(context, visible); },
-		"ToggleUIDocument", [](Game& self, const std::string& context, const std::string& document, bool visible) { self.UI->ToggleDocumentVisibility(context, document, visible); },
+		"ToggleUIDocument", [](Game& self, const std::string& context, const std::string& document) { self.UI->ToggleDocumentVisibility(context, document); },
 		"ReloadUI", [](Game& self) { self.UI->ReloadUI(); },
+		"AssignDebugger", [](Game& self, const std::string& context) { self.UI->AssignDebugger(context); },
 
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
 		"Server", sol::readonly_property(&Game::Server),
-		"Useables", sol::readonly_property([](Game& game) { return sol::as_table(game.GetUseablesMap()); }),
+		"Useables", sol::readonly_property([]() { return std::make_shared<Useables>(); }),
 		"Flags", sol::readonly_property(&functions::GetFlags),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),

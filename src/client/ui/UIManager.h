@@ -29,11 +29,11 @@ public:
 	UIManager();
 	~UIManager();
 
-	UIManager(const UIManager& other) = delete;
-	UIManager(UIManager&& other) = delete;
-	UIManager& operator=(const UIManager& other) = delete;
-	UIManager& operator=(UIManager&& other) = delete;
-	bool operator==(const UIManager& other) = delete;
+	UIManager(const UIManager&) = delete;
+	UIManager(UIManager&&) = delete;
+	UIManager& operator=(const UIManager&) = delete;
+	UIManager& operator=(UIManager&&) = delete;
+	bool operator==(const UIManager&) = delete;
 
 public:
 	Rml::Context* CreateContext(const std::string& name);
@@ -41,8 +41,10 @@ public:
 
 public:
 	void ToggleContextVisibility(const std::string& context, bool visible);
-	void ToggleDocumentVisibility(const std::string& context, const std::string& document, bool visible);
+	void ToggleDocumentVisibility(const std::string& context, const std::string& document);
 	void ReloadUI();
+	void AssignDebugger(const std::string& context);
+	void MakeUseablesDirty();
 	
 public:
 	void ScreenSizeUpdate();
@@ -56,8 +58,9 @@ public:
 	std::unique_ptr<RmlUiSFMLSystemInterface> SystemInterface = nullptr;
 
 protected:
-	INJECT(::tdrp::render::Window, Window);
-	INJECT(::tdrp::script::ScriptManager, ScriptManager);
+	INJECT(::tdrp::render::Window, window);
+	INJECT(::tdrp::script::ScriptManager, script_manager);
+	std::unordered_map<std::string, Rml::DataModelHandle> m_useable_handles;
 	std::set<std::string> m_visible_contexts;
 
 public:

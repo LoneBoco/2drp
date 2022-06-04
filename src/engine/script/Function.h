@@ -1,5 +1,6 @@
 #pragma once
 
+#include <set>
 #include <unordered_set>
 #include <unordered_map>
 #include <sol/sol.hpp>
@@ -12,6 +13,8 @@
 public: using ValidScriptObject = std::true_type; \
 sol::environment LuaEnvironment; \
 std::unordered_set<tdrp::script::Function*> BoundScriptFunctions;
+
+#define SCRIPT_ERASE do { for (auto* f : BoundScriptFunctions) f->RemoveAll(); BoundScriptFunctions.clear(); } while(false)
 
 #define SCRIPT_FUNCTION(name) \
 public: void Set##name(sol::this_state s, sol::protected_function func, sol::this_environment te) { \
@@ -111,6 +114,11 @@ public:
 	void Remove(const std::string& module_name)
 	{
 		m_function.erase(module_name);
+	}
+
+	void RemoveAll()
+	{
+		m_function.clear();
 	}
 
 private:
