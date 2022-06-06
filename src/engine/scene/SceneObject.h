@@ -419,7 +419,7 @@ public:
 class TextSceneObject : public SceneObject
 {
 public:
-	TextSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	TextSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id), m_font_size(12) {}
 	virtual ~TextSceneObject() {}
 
 	SceneObjectType GetType() const override

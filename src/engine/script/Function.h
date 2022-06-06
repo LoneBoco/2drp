@@ -11,10 +11,11 @@
 
 #define SCRIPT_SETUP \
 public: using ValidScriptObject = std::true_type; \
-sol::environment LuaEnvironment; \
+std::shared_ptr<sol::environment> LuaEnvironment; \
 std::unordered_set<tdrp::script::Function*> BoundScriptFunctions;
 
-#define SCRIPT_ERASE do { for (auto* f : BoundScriptFunctions) f->RemoveAll(); BoundScriptFunctions.clear(); } while(false)
+#define SCRIPT_ME_ERASE do { for (auto* f : BoundScriptFunctions) f->RemoveAll(); BoundScriptFunctions.clear(); LuaEnvironment = nullptr; } while(false)
+#define SCRIPT_THEM_ERASE(them) do { for (auto* f : them->BoundScriptFunctions) f->RemoveAll(); them->BoundScriptFunctions.clear(); } while(false)
 
 #define SCRIPT_FUNCTION(name) \
 public: void Set##name(sol::this_state s, sol::protected_function func, sol::this_environment te) { \

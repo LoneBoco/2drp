@@ -95,6 +95,15 @@ void Game::Initialize()
 Game::~Game()
 {
 	log::PrintLine(":: Shutting down game.");
+
+	Server.Shutdown();
+
+	// Erase script instance.
+	SCRIPT_ME_ERASE;
+
+	// Erase our script instance.
+	auto script_manager = BabyDI::Get<script::ScriptManager>();
+	script_manager->EraseScriptInstance("Game");
 }
 
 void Game::Update()

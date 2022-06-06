@@ -68,6 +68,8 @@ public:
 
 	static bool Startup();
 	static void Shutdown();
+	static bool IsStarted() { return ms_started; }
+
 	bool Initialize(const size_t peers = 1, const uint16_t port = 0);
 
 public:

@@ -11,22 +11,28 @@ void log(const char* message)
 
 Script::Script()
 {
-	lua.open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
-	sol::set_default_exception_handler(lua, &DefaultErrorHandler);
+	lua = std::make_unique<sol::state>();
 
-	script::modules::bind_events(lua);
-	script::modules::bind_player(lua);
-	script::modules::bind_scene(lua);
-	script::modules::bind_attributes(lua);
-	script::modules::bind_sceneobject(lua);
-	script::modules::bind_server(lua);
-	script::modules::bind_vector(lua);
+	lua->open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
+	sol::set_default_exception_handler(*lua, &DefaultErrorHandler);
 
-	lua.set_function("log", &log);
+	script::modules::bind_events(*lua);
+	script::modules::bind_player(*lua);
+	script::modules::bind_scene(*lua);
+	script::modules::bind_attributes(*lua);
+	script::modules::bind_sceneobject(*lua);
+	script::modules::bind_server(*lua);
+	script::modules::bind_vector(*lua);
+
+	lua->set_function("log", &log);
 }
 
 Script::~Script()
 {
+	lua->stack_clear();
+
+	environments.clear();
+	lua.reset();
 }
 
 ScriptManager::~ScriptManager()
@@ -60,6 +66,16 @@ std::shared_ptr<Script> ScriptManager::GetScriptInstance(const std::string& name
 		return nullptr;
 
 	return it->second;
+}
+
+bool ScriptManager::EraseScriptInstance(const std::string& name)
+{
+	auto it = m_script_instances.find(name);
+	if (it == std::end(m_script_instances))
+		return false;
+
+	m_script_instances.erase(it);
+	return true;
 }
 
 } // end namespace tdrp::script

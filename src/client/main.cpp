@@ -45,12 +45,14 @@ int main(int argc, char* argv[])
 
 	// Clean up in order.
 	RELEASE(tdrp::Game);
-	RELEASE(tdrp::script::ScriptManager);
 	RELEASE(tdrp::ResourceManager);
 
 	// Window last for SFML cleanup.
 	// SFML will clean up OpenGL resources so we must make sure everything is destroyed before this point.
 	RELEASE(tdrp::render::Window);
+
+	// Script manager last so everything gets cleaned up.
+	RELEASE(tdrp::script::ScriptManager);
 
 	return 0;
 }

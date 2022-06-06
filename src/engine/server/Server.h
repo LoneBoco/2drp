@@ -63,6 +63,9 @@ public:
 	bool SinglePlayer();
 
 public:
+	void Shutdown();
+
+public:
 	void PreUpdate();
 	void Update(chrono::clock::duration tick);
 

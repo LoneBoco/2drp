@@ -21,12 +21,7 @@ EventDispatcherBase::EventDispatcherBase()
 EventDispatcherBase::~EventDispatcherBase()
 {
 	// Kill any handles just in case :)
-	for (auto& handler : m_eventHandlers)
-	{
-		auto ptr = handler.second.lock();
-		if (ptr)
-			ptr->m_dispatcher = nullptr;
-	}
+	UnsubscribeAll();
 }
 
 bool EventDispatcherBase::Unsubscribe(EventHandleBase* handle)
@@ -56,5 +51,17 @@ bool EventDispatcherBase::Unsubscribe(std::shared_ptr<EventHandleBase> handle)
 	else
 		return false;
 };
+
+void EventDispatcherBase::UnsubscribeAll()
+{
+	for (auto& handler : m_eventHandlers)
+	{
+		auto ptr = handler.second.lock();
+		if (ptr)
+			ptr->m_dispatcher = nullptr;
+	}
+
+	m_eventHandlers.clear();
+}
 
 } // end namespace tdrp

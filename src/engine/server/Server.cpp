@@ -64,12 +64,7 @@ Server::Server()
 
 Server::~Server()
 {
-	if (IsHost() || IsSinglePlayer())
-	{
-		network_disconnect(0);
-	}
-
-	network::Network::Shutdown();
+	Shutdown();
 }
 
 bool Server::Initialize(const std::string& package_name, const ServerType type, const uint16_t flags)
@@ -189,6 +184,41 @@ bool Server::SinglePlayer()
 	Send(network::HOSTID, PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
 
 	return true;
+}
+
+/////////////////////////////
+
+void Server::Shutdown()
+{
+	if (!network::Network::IsStarted())
+		return;
+
+	// Disconnect.
+	// Script object will be erased in network_disconnect.
+	while (!m_player_list.empty())
+	{
+		auto player = m_player_list.begin();
+		network_disconnect(player->first);
+	}
+	m_player = nullptr;
+
+	// Shut down the network.
+	network::Network::Shutdown();
+
+	// Erase script instance on every scene object.
+	for (auto& [k, scene] : m_scenes)
+	{
+		for (auto& [k, so] : scene->GetGraph())
+		{
+			SCRIPT_THEM_ERASE(so);
+		}
+	}
+
+	// Clear the scenes.
+	m_scenes.clear();
+
+	// Erase script instance.
+	SCRIPT_ME_ERASE;
 }
 
 /////////////////////////////
@@ -684,6 +714,8 @@ bool Server::DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject)
 		BroadcastToScene(scene, PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet, { m_player });
 	}
 
+	SCRIPT_THEM_ERASE(sceneobject);
+
 	return true;
 }
 
@@ -703,6 +735,8 @@ size_t Server::DeletePlayerOwnedSceneObjects(PlayerPtr player)
 			auto sceneobject = it->second;
 			if (sceneobject->GetOwningPlayer().lock() == player)
 			{
+				SCRIPT_THEM_ERASE(sceneobject);
+
 				++count;
 				graph.erase(it++);
 
@@ -933,6 +967,8 @@ void Server::network_disconnect(const uint16_t id)
 
 	// TODO: Send disconnection packet to peers.
 	log::PrintLine("<- Disconnection from player {}.", id);
+
+	SCRIPT_THEM_ERASE(player);
 	m_player_list.erase(id);
 }
 

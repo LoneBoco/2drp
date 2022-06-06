@@ -2,6 +2,7 @@
 
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <initializer_list>
 
 #include <sol/sol.hpp>
@@ -33,8 +34,8 @@ public:
 	bool operator==(const Script& other) = delete;
 
 public:
-	sol::state& GetLuaState() { return lua; }
-	const sol::state& GetLuaState() const { return lua; }
+	sol::state& GetLuaState() { return *lua; }
+	const sol::state& GetLuaState() const { return *lua; }
 
 public:
 	static sol::protected_function_result ErrorHandler(lua_State*, sol::protected_function_result pfr)
@@ -60,10 +61,12 @@ public:
 		if (script.empty())
 			return;
 
-		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
-		me->LuaEnvironment["MODULENAME"] = module_name;
-		me->LuaEnvironment["Me"] = me;
-		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
+		environments.insert(me->LuaEnvironment);
+
+		(*me->LuaEnvironment)["MODULENAME"] = module_name;
+		(*me->LuaEnvironment)["Me"] = me;
+		lua->safe_script(script, *me->LuaEnvironment, Script::ErrorHandler);
 	}
 
 	template <typename T> requires ValidScriptObject<T>
@@ -72,10 +75,12 @@ public:
 		if (script.empty())
 			return;
 
-		me->LuaEnvironment = sol::environment(lua, sol::create, lua.globals());
-		me->LuaEnvironment["MODULENAME"] = module_name;
-		me->LuaEnvironment["Me"] = me;
-		lua.safe_script(script, me->LuaEnvironment, Script::ErrorHandler);
+		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
+		environments.insert(me->LuaEnvironment);
+
+		(*me->LuaEnvironment)["MODULENAME"] = module_name;
+		(*me->LuaEnvironment)["Me"] = me;
+		lua->safe_script(script, *me->LuaEnvironment, Script::ErrorHandler);
 	}
 
 public:
@@ -83,13 +88,13 @@ public:
 		requires std::invocable<F, sol::state&>
 	void BindIntoMe(F function)
 	{
-		std::invoke(function, lua);
+		std::invoke(function, *lua);
 	}
 	template <class F, typename... Args>
 		requires std::invocable<F, sol::state&>
 	void BindIntoMe(F function, Args... args)
 	{
-		std::invoke(function, lua);
+		std::invoke(function, *lua);
 		return BindIntoMe(args...);
 	}
 
@@ -97,18 +102,19 @@ public:
 		requires std::invocable<F, sol::state*>
 	void BindIntoMe(F function)
 	{
-		std::invoke(function, &lua);
+		std::invoke(function, lua->get());
 	}
 	template <class F, typename... Args>
 		requires std::invocable<F, sol::state*>
 	void BindIntoMe(F function, Args... args)
 	{
-		std::invoke(function, &lua);
+		std::invoke(function, lua->get());
 		return BindIntoMe(args...);
 	}
 
 protected:
-	sol::state lua;
+	std::unique_ptr<sol::state> lua;
+	std::unordered_set<std::shared_ptr<sol::environment>> environments;
 };
 
 using ScriptPtr = std::shared_ptr<Script>;
@@ -129,6 +135,7 @@ public:
 public:
 	std::shared_ptr<Script> CreateScriptInstance(const std::string& name);
 	std::shared_ptr<Script> GetScriptInstance(const std::string& name);
+	bool EraseScriptInstance(const std::string& name);
 
 protected:
 	std::unordered_map<std::string, std::shared_ptr<Script>> m_script_instances;

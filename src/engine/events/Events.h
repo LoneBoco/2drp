@@ -40,6 +40,11 @@ public:
 	 */
 	bool Unsubscribe(std::shared_ptr<EventHandleBase> handle);
 
+	/**
+	 * Unsubscribe all event handlers.
+	 */
+	void UnsubscribeAll();
+
 protected:
 	std::unordered_map<uint32_t, std::weak_ptr<EventHandleBase>> m_eventHandlers;
 };

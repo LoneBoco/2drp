@@ -75,6 +75,9 @@ UIManager::~UIManager()
 
 	// Pray.
 	Rml::Shutdown();
+
+	// Erase script instance.
+	script_manager->EraseScriptInstance("UI");
 }
 
 Rml::Context* UIManager::CreateContext(const std::string& name)
