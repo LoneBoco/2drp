@@ -196,9 +196,11 @@ void UIManager::Update()
 
 void UIManager::Render()
 {
-	for (int i = 0; i < Rml::GetNumContexts(); ++i)
+	// Render back to front.
+	// We want the debugger to render last.
+	for (int i = Rml::GetNumContexts(); i > 0; --i)
 	{
-		auto context = Rml::GetContext(i);
+		auto context = Rml::GetContext(i - 1);
 		if (!context) continue;
 
 		if (m_visible_contexts.contains(context->GetName()))

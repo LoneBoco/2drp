@@ -3,7 +3,7 @@
 #include "engine/common.h"
 #include "client/render/Window.h"
 
-#include <set>
+#include <unordered_set>
 #include <functional>
 
 #include <RmlUi/Core.h>
@@ -61,7 +61,7 @@ protected:
 	INJECT(::tdrp::render::Window, window);
 	INJECT(::tdrp::script::ScriptManager, script_manager);
 	std::unordered_map<std::string, Rml::DataModelHandle> m_useable_handles;
-	std::set<std::string> m_visible_contexts;
+	std::unordered_set<std::string> m_visible_contexts;
 	Rml::Context* m_debugger_host;
 	Rml::Context* m_debugger_context;
 
