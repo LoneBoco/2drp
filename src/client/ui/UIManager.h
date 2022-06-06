@@ -62,6 +62,8 @@ protected:
 	INJECT(::tdrp::script::ScriptManager, script_manager);
 	std::unordered_map<std::string, Rml::DataModelHandle> m_useable_handles;
 	std::set<std::string> m_visible_contexts;
+	Rml::Context* m_debugger_host;
+	Rml::Context* m_debugger_context;
 
 public:
 	bool ForEachVisible(ContextIterationFunc func);

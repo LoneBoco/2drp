@@ -57,11 +57,23 @@ UIManager::UIManager()
 		Rml::SolLua::RegisterLua(&game->Script->GetLuaState());
 		log::PrintLine("[UI] Loaded Lua into Game.");
 	}
+
+	// Create debugger context.
+	{
+		m_visible_contexts.emplace("debugger");
+		Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
+		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface.get());
+		Rml::Debugger::Initialise(m_debugger_host);
+	}
 }
 
 UIManager::~UIManager()
 {
-	// Rml::Debugger::Shutdown();
+	// Set the context to nullptr to clear the "click" and "mouseover" event listeners.
+	// Those will cause a crash if not erased.
+	Rml::Debugger::SetContext(nullptr);
+
+	// Pray.
 	Rml::Shutdown();
 }
 
@@ -137,10 +149,11 @@ void UIManager::ReloadUI()
 				document->DispatchEvent(Rml::EventId::Load, Rml::Dictionary());
 			}
 		}
-
-		// Add the debugger back in.
-		Rml::Debugger::SetContext(context);
 	}
+
+	// Add the debugger back in.
+	if (m_debugger_context != nullptr)
+		Rml::Debugger::SetContext(m_debugger_context);
 }
 
 void UIManager::AssignDebugger(const std::string& context)
@@ -149,8 +162,8 @@ void UIManager::AssignDebugger(const std::string& context)
 	if (c == nullptr)
 		return;
 
-	Rml::Debugger::Shutdown();
-	Rml::Debugger::Initialise(c);
+	m_debugger_context = c;
+	Rml::Debugger::SetContext(m_debugger_context);
 }
 
 void UIManager::MakeUseablesDirty()
