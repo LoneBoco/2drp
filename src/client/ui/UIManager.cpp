@@ -69,10 +69,6 @@ UIManager::UIManager()
 
 UIManager::~UIManager()
 {
-	// Set the context to nullptr to clear the "click" and "mouseover" event listeners.
-	// Those will cause a crash if not erased.
-	Rml::Debugger::SetContext(nullptr);
-
 	// Pray.
 	Rml::Shutdown();
 
@@ -222,6 +218,9 @@ bool UIManager::ForEachVisible(ContextIterationFunc func)
 
 		if (m_visible_contexts.contains(context->GetName()))
 			result &= func(*context);
+
+		if (!result)
+			break;
 	}
 
 	return !result;
