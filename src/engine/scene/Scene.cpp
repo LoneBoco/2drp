@@ -26,7 +26,7 @@ bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
 	return true;
 }
 
-std::shared_ptr<SceneObject> Scene::FindObject(uint32_t id) const
+std::shared_ptr<SceneObject> Scene::FindObject(SceneObjectID id) const
 {
 	auto p = m_graph.find(id);
 	if (p == m_graph.end())
@@ -37,7 +37,7 @@ std::shared_ptr<SceneObject> Scene::FindObject(uint32_t id) const
 
 std::shared_ptr<SceneObject> Scene::FindObject(const std::string& name) const
 {
-	for (auto p : m_graph)
+	for (auto& p : m_graph)
 	{
 		if (p.second->Name == name)
 			return p.second;
@@ -50,7 +50,7 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vect
 {
 	std::vector<std::shared_ptr<SceneObject>> result;
 
-	for (auto p : m_graph)
+	for (auto& p : m_graph)
 	{
 		if (Vector2df::Distance(p.second->GetPosition(), position) <= radius)
 			result.push_back(p.second);
@@ -63,7 +63,7 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRangeOf(const
 {
 	std::vector<std::shared_ptr<SceneObject>> result;
 
-	for (auto p : m_graph)
+	for (auto& p : m_graph)
 	{
 		if (math::containsOrIntersects(p.second->GetBounds(), position, radius))
 			result.push_back(p.second);
@@ -76,7 +76,7 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Re
 {
 	std::vector<std::shared_ptr<SceneObject>> result;
 
-	for (auto p : m_graph)
+	for (auto& p : m_graph)
 	{
 		if (math::contains(p.second->GetPosition(), rectangle))
 			result.push_back(p.second);
@@ -89,7 +89,7 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRectangle(con
 {
 	std::vector<std::shared_ptr<SceneObject>> result;
 
-	for (auto p : m_graph)
+	for (auto& p : m_graph)
 	{
 		if (math::containsOrIntersects(p.second->GetBounds(), rectangle))
 			result.push_back(p.second);

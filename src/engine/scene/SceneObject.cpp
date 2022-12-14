@@ -104,7 +104,7 @@ void Physics::add_collision_edge(const core::vector2df& v1, const core::vector2d
 } // end namespace physics
 */
 
-SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id)
+SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id)
 : ID(id), Visible(true), m_object_class(c)
 {
 	if (c)
@@ -408,7 +408,7 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 	OnAttached.RunAll(m_attached_to, old);
 }
 
-uint32_t SceneObject::GetAttachedId()
+SceneObjectID SceneObject::GetAttachedId()
 {
 	if (m_attached_to.expired()) return 0;
 	auto attached = m_attached_to.lock();

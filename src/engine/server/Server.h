@@ -99,7 +99,7 @@ public:
 
 public:
 	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
-	bool DeleteSceneObject(uint32_t id);
+	bool DeleteSceneObject(SceneObjectID id);
 	bool DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject);
 	size_t DeletePlayerOwnedSceneObjects(PlayerPtr player);
 	bool SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player);
@@ -116,13 +116,13 @@ public:
 	int SendEvent(std::shared_ptr<scene::Scene> scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
-	const uint32_t GetNextSceneObjectID();
+	const SceneObjectID GetNextSceneObjectID();
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
 	const bool IsGuest() const;
 	const ServerType GetServerType() const;
 	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
-	std::shared_ptr<tdrp::SceneObject> GetSceneObjectById(uint32_t id);
+	std::shared_ptr<tdrp::SceneObject> GetSceneObjectById(SceneObjectID id);
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);
@@ -160,7 +160,7 @@ protected:
 	ServerType m_server_type;
 	uint16_t m_server_flags;
 
-	uint32_t m_sceneobject_counter;
+	SceneObjectID m_sceneobject_counter;
 
 	std::shared_ptr<package::Package> m_package;
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
@@ -218,7 +218,7 @@ inline std::shared_ptr<package::Package> Server::GetPackage() const
 	return m_package;
 }
 
-inline const uint32_t Server::GetNextSceneObjectID()
+inline const SceneObjectID Server::GetNextSceneObjectID()
 {
 	return ++m_sceneobject_counter;
 }

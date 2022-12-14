@@ -296,7 +296,7 @@ void Server::Update(chrono::clock::duration tick)
 			// Get all scene objects nearby.
 			auto nearby = scene->FindObjectsInRangeOf(pso->GetPosition(), scene->GetTransmissionDistance() * 1.5f);
 
-			std::set<uint32_t> new_objects;
+			std::set<SceneObjectID> new_objects;
 
 			// Find every one not known about.
 			//for (auto& so : nearby | std::views)
@@ -687,7 +687,7 @@ std::shared_ptr<tdrp::SceneObject> Server::CreateSceneObject(SceneObjectType typ
 	return so;
 }
 
-bool Server::DeleteSceneObject(uint32_t id)
+bool Server::DeleteSceneObject(SceneObjectID id)
 {
 	auto so = GetSceneObjectById(id);
 	return DeleteSceneObject(so);
@@ -863,7 +863,7 @@ int Server::SendEvent(std::shared_ptr<scene::Scene> scene, SceneObject* sender, 
 
 ///////////////////////////////////////////////////////////////////////////////
 
-std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(uint32_t id)
+std::shared_ptr<tdrp::SceneObject> Server::GetSceneObjectById(SceneObjectID id)
 {
 	for (auto& [key, scene] : m_scenes)
 	{

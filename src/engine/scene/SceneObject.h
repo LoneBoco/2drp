@@ -42,6 +42,8 @@ enum class SceneObjectType
 	COUNT
 };
 
+using SceneObjectID = uint32_t;
+
 /*
 namespace physics
 {
@@ -173,7 +175,7 @@ namespace physics
 } // end namespace physics
 */
 
-constexpr uint32_t GlobalSceneObjectIDFlag = 0x80'00'00'00;
+constexpr SceneObjectID GlobalSceneObjectIDFlag = 0x80'00'00'00;
 
 class SceneObject : public ComponentEntity
 {
@@ -188,7 +190,7 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnAttached);
 
 public:
-	SceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id);
+	SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id);
 	virtual ~SceneObject();
 
 	SceneObject& operator=(const SceneObject& other);
@@ -208,7 +210,7 @@ public:
 	void SetCurrentScene(std::shared_ptr<scene::Scene> scene);
 
 	void AttachTo(std::shared_ptr<SceneObject> other);
-	uint32_t GetAttachedId();
+	SceneObjectID GetAttachedId();
 
 public:
 	virtual SceneObjectType GetType() const
@@ -284,7 +286,7 @@ public:
 		return (ID & GlobalSceneObjectIDFlag) != 0;
 	}
 
-	const uint32_t ID;
+	const SceneObjectID ID;
 	std::string Name;
 	bool Visible = true;
 	bool NonReplicated = false;
@@ -334,7 +336,7 @@ inline std::weak_ptr<scene::Scene> SceneObject::GetCurrentScene() const
 class StaticSceneObject : public SceneObject
 {
 public:
-	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id)	{}
+	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id)	{}
 	virtual ~StaticSceneObject() {}
 
 	SceneObjectType GetType() const override
@@ -348,7 +350,7 @@ public:
 class AnimatedSceneObject : public SceneObject
 {
 public:
-	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id) {}
 	virtual ~AnimatedSceneObject() {}
 
 	virtual SceneObjectType GetType() const override
@@ -368,7 +370,7 @@ public:
 class TiledSceneObject : public SceneObject
 {
 public:
-	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id) {}
 	virtual ~TiledSceneObject() {}
 
 	virtual SceneObjectType GetType() const override
@@ -395,7 +397,7 @@ public:
 class TMXSceneObject : public SceneObject
 {
 public:
-	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id) {}
+	TMXSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id) {}
 	virtual ~TMXSceneObject() {}
 
 	TMXSceneObject& operator=(const TMXSceneObject& other);
@@ -419,7 +421,7 @@ public:
 class TextSceneObject : public SceneObject
 {
 public:
-	TextSceneObject(const std::shared_ptr<ObjectClass> c, const uint32_t id) : SceneObject(c, id), m_font_size(12) {}
+	TextSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id), m_font_size(12) {}
 	virtual ~TextSceneObject() {}
 
 	SceneObjectType GetType() const override

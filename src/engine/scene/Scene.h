@@ -44,10 +44,10 @@ public:
 	// uint32_t AddZone();
 	// bool RemoveZone();
 
-	std::shared_ptr<SceneObject> FindObject(uint32_t id) const;
+	std::shared_ptr<SceneObject> FindObject(SceneObjectID id) const;
 	std::shared_ptr<SceneObject> FindObject(const std::string& name) const;
 
-	std::map<uint32_t, std::shared_ptr<SceneObject>>& GetGraph();
+	std::map<SceneObjectID, std::shared_ptr<SceneObject>>& GetGraph();
 
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
 	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
@@ -60,7 +60,7 @@ public:
 
 protected:
 	std::string m_name;
-	std::map<uint32_t, std::shared_ptr<SceneObject>> m_graph;
+	std::map<SceneObjectID, std::shared_ptr<SceneObject>> m_graph;
 	uint32_t m_transmission_distance = 6000;
 };
 

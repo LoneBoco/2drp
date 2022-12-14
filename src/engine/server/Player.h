@@ -47,7 +47,7 @@ public:
 	uint16_t GetPlayerId() const;
 
 public:
-	std::set<uint32_t> FollowedSceneObjects;
+	std::set<SceneObjectID> FollowedSceneObjects;
 
 public:
 	server::Account Account;
