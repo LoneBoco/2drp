@@ -17,7 +17,7 @@ namespace tdrp::render::component::animation
 void GaniAnimation::Load(const filesystem::path& image)
 {
 	m_textures.clear();
-	m_sprites.clear();
+	//m_sprites.clear();
 	m_sounds.clear();
 	m_animation.reset();
 	m_current_frame = 0;
@@ -80,11 +80,12 @@ void GaniAnimation::Load(const filesystem::path& image)
 					if (auto t = texture.lock())
 					{
 						m_textures[index] = texture;
-
-						sf::Sprite s;
-						s.setTexture(*t);
-						s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
-						m_sprites[index] = std::move(s);
+						if (auto existing_sprite = m_sprites.find(index); existing_sprite != std::end(m_sprites))
+						{
+							existing_sprite->second.setTexture(*t);
+							existing_sprite->second.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
+						}
+						else m_sprites.emplace(std::make_pair(index, sf::Sprite{ *t, { { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } } }));
 					}
 				}
 			}
