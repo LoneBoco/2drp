@@ -55,8 +55,8 @@ public:
 	}
 
 public:
-	template <typename T> requires ValidScriptObject<T>
-	void RunScript(const std::string& module_name, const std::string& script, std::shared_ptr<T> me)
+	template <typename T> requires ValidScriptObject<T> && is_not_pointer<T>
+	void RunScript(const std::string_view& module_name, const std::string& script, std::shared_ptr<T> me)
 	{
 		if (script.empty())
 			return;
@@ -70,7 +70,7 @@ public:
 	}
 
 	template <typename T> requires ValidScriptObject<T>
-	void RunScript(const std::string& module_name, const std::string& script, T* me)
+	void RunScript(const std::string_view& module_name, const std::string& script, T* me)
 	{
 		if (script.empty())
 			return;

@@ -154,7 +154,7 @@ void GaniAnimation::Render(sf::RenderTarget& window, std::chrono::milliseconds e
 
 			// Get our current direction.
 			const auto& cur_frame = anim->Frames[m_current_frame];
-			auto direction = so->Properties[Property::DIRECTION].GetUnsigned();
+			auto direction = so->Properties[Property::DIRECTION].GetAs<uint8_t>();
 			if (direction >= cur_frame.Sprites.size())
 				direction = 0;
 			if (cur_frame.Sprites.empty())
@@ -214,7 +214,6 @@ void GaniAnimation::UpdateEntity(const std::string& entity)
 
 void GaniAnimation::UpdateAnimation(const std::string& animation)
 {
-	const char* debugStr = animation.c_str();
 	if (m_current_animation == animation)
 	{
 		if (auto anim = m_animation.lock())
@@ -245,7 +244,7 @@ void GaniAnimation::UpdateAnimation(const std::string& animation)
 					if (auto so = m_owner.lock())
 					{
 						auto prop = so->Properties.Get(Property::ANIMATION);
-						prop->SetIsDirty(false);
+						prop->ResetAllDirty();
 					}
 				}
 			}
@@ -270,7 +269,7 @@ void GaniAnimation::UpdateAttribute(const uint16_t attribute_id)
 	{
 		const auto& attr = so->Attributes.Get(attribute_id);
 
-		const auto name = attr->GetName();
+		const auto name = attr->Name;
 		if (boost::iequals(name, "SPRITES")
 			|| boost::iequals(name, "HEAD")
 			|| boost::iequals(name, "BODY")
@@ -279,7 +278,7 @@ void GaniAnimation::UpdateAttribute(const uint16_t attribute_id)
 			|| boost::istarts_with(name, "ATTR")
 			)
 		{
-			swap_images(name, attr->GetString());
+			swap_images(name, attr->GetAs<std::string>());
 		}
 	}
 }
@@ -290,7 +289,7 @@ std::string GaniAnimation::convert_from_attribute(const std::string& attribute) 
 	{
 		const auto& attr = so->Attributes.Get(attribute);
 		if (attr)
-			return attr->GetString();
+			return attr->GetAs<std::string>();
 
 		if (boost::iequals(attribute, "SPRITES"))
 			return "sprites.png";

@@ -11,6 +11,7 @@
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsInc.h"
 #include "engine/network/PacketHandler.h"
+#include "engine/network/construct/Attributes.h"
 #include "engine/network/construct/SceneObject.h"
 #include "engine/network/construct/Class.h"
 
@@ -147,6 +148,8 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	m_network.Initialize(peers, port);
 	m_connecting = true;
 
+	network_connect(0);
+
 	// Force a successful connection.
 	std::promise<bool> connecting_promise;
 	m_connecting_future = connecting_promise.get_future();
@@ -263,12 +266,10 @@ void Server::PreUpdate()
 	}
 }
 
-void Server::Update(chrono::clock::duration tick)
+void Server::Update(const std::chrono::milliseconds& tick)
 {
-	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(tick).count();
-
 	// Run server update script.
-	OnServerTick.RunAll(tick_in_ms);
+	OnServerTick.RunAll(tick.count());
 
 	// Iterate through all the players and determine if any new scene objects should be sent.
 	// While iterating through players, also deal with flag changes.
@@ -280,7 +281,8 @@ void Server::Update(chrono::clock::duration tick)
 		// Check our flags.
 		if (player->Account.Flags.HasDirty())
 		{
-			packet::FlagSet message = getPropsPacket<packet::FlagSet>(player->Account.Flags, &packet::FlagSet::add_attributes);
+			packet::FlagSet message;
+			network::processAndAssignAttributesToPacket(message, player->Account.Flags, &packet::FlagSet::add_attributes, tick);
 			if (IsHost() && !IsSinglePlayer() && player != m_player)
 				Send(player->GetPlayerId(), PACKETID(network::Packets::FLAGSET), network::Channel::RELIABLE, message);
 		}
@@ -326,26 +328,29 @@ void Server::Update(chrono::clock::duration tick)
 		for (auto& [id, object] : scene->m_graph)
 		{
 			// Run the server tick script on the object.
-			object->OnUpdate.RunAll(tick_in_ms);
-
-			// If we don't own this scene object, don't check dirty props.
-			// Non-replicated objects skip this check.
-			if ((object->GetOwningPlayer().expired() || object->GetOwningPlayer().lock() != m_player) && !object->NonReplicated)
-			{
-				// If the scene object isn't owned and we are the host, we'll take care of the events.
-				if (!IsHost())
-					continue;
-			}
+			object->OnUpdate.RunAll(tick.count());
 
 			// Check if we have dirty attributes.
 			if (object->Properties.HasDirty() || object->Attributes.HasDirty())
 			{
 				// Create a packet that contains our updated attributes.
-				auto packet = getPropsPacket<packet::SceneObjectChange>(*object);
+				packet::SceneObjectChange packet;
+				network::processAndAssignAttributesToPacket(packet, object->Attributes, &packet::SceneObjectChange::add_attributes, tick);
+				network::processAndAssignAttributesToPacket(packet, object->Properties, &packet::SceneObjectChange::add_properties, tick);
 
 				// Nothing is being sent anymore.  The event dispatch may have resolved the dirty status.
 				if (packet.attributes_size() == 0 && packet.properties_size() == 0)
 					continue;
+
+				// If we don't own this scene object, don't send.
+				// Non-replicated objects skip this check.
+				if (auto op = object->GetOwningPlayer().lock(); op != m_player && !object->NonReplicated)
+				{
+					// If we don't own this object and this object has an owner, don't process changes.
+					// If the scene object isn't owned and we are the host, we'll take care of the events.
+					if (!IsHost() || !object->GetOwningPlayer().expired())
+						continue;
+				}
 
 				packet.set_id(id);
 				packet.set_non_replicated(object->NonReplicated);
@@ -958,8 +963,13 @@ void Server::network_connect(const uint16_t id)
 
 void Server::network_disconnect(const uint16_t id)
 {
-	// Call the OnPlayerLeave script function.
 	auto player = GetPlayerById(id);
+	if (!player) return;
+
+	// Erase the player from the player list so packets don't get sent to them.
+	m_player_list.erase(id);
+
+	// Call the OnPlayerLeave script function.
 	OnPlayerLeave.RunAll(player);
 
 	// Save account.
@@ -969,7 +979,6 @@ void Server::network_disconnect(const uint16_t id)
 	log::PrintLine("<- Disconnection from player {}.", id);
 
 	SCRIPT_THEM_ERASE(player);
-	m_player_list.erase(id);
 }
 
 void Server::network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
@@ -1009,12 +1018,15 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 		// TODO: Properly handle account verification for servers that use it.
 		// Load the account.
 		if (method == packet::Login_Method_DEDICATED)
+		{
 			player->Account.Load(account);
+			log::PrintLine(":: Loading account {}.", account);
+		}
 		else
 		{
-			if (IsHost())
-				player->Account.Load("host");
-			else player->Account.Load("guest" + std::to_string(id));
+			std::string acc = (id == network::HOSTID && IsHost()) ? "host" : "guest" + std::to_string(id);
+			player->Account.Load(acc);
+			log::PrintLine(":: Loading account {}.", acc);
 		}
 
 		// Login successful.

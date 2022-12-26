@@ -35,13 +35,25 @@ Game::Game()
 	Script = script_manager->CreateScriptInstance("Game");
 
 	using namespace std::placeholders;
-	//Server.SetClientNetworkReceiveCallback(std::bind(handlers::network_receive, std::ref(*this), _1, _2, _3, _4));
 	Server.GetNetwork().AddReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
 
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	std::string package{ settings->Get("game.package", "login") };
 
-	if (!Server.Initialize(package, server::ServerType::HOST, FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING)))
+	// Calculate the type of server to initialize.
+	auto server_type = server::ServerType::HOST;
+	uint16_t flags = 0;
+	if (settings->GetAs<bool>("game.networked"))
+	{
+		if (settings->GetAs<bool>("game.hosting", false))
+			flags = FLAGS<uint16_t>(server::ServerFlags::PRELOAD_EVERYTHING);
+		else
+			server_type = server::ServerType::GUEST;
+	}
+	else flags = FLAGS<uint16_t>(server::ServerFlags::SINGLEPLAYER);
+
+	// Initialize the server.
+	if (!Server.Initialize(package, server_type, flags))
 		throw std::runtime_error("Unable to start the server.");
 }
 
@@ -59,16 +71,20 @@ void Game::Initialize()
 
 	// Load settings.
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
-	if (settings->Exists("game.starthosting"))
+	if (settings->Exists("game.networked"))
 	{
-		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		Server.Host(port);
-	}
-	else if (settings->Exists("network.server"))
-	{
-		std::string host{ settings->Get("network.server") };
-		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		Server.Connect(host, port);
+		if (settings->Exists("game.hosting"))
+		{
+			uint16_t port = settings->GetAs<uint16_t>("network.port");
+			Server.Host(port);
+		}
+		else if (settings->Exists("network.server"))
+		{
+			std::string host{ settings->Get("network.server") };
+			uint16_t port = settings->GetAs<uint16_t>("network.port");
+			Server.Connect(host, port);
+		}
+		else throw "** ERROR: Networked game but cannot determine if host or guest.";
 	}
 	else
 	{
@@ -132,17 +148,18 @@ void Game::Update()
 			OnConnected.RunAll();
 		}
 	}
-	else if (State == GameState::PLAYING)
+
+	if (State == GameState::PLAYING)
 	{
 		// Run the client frame tick script.
 		OnClientFrame.RunAll(tick_in_ms.count());
 	}
 
 	// Update the server last so attributes are sent after all scripts are done.
-	Server.Update(GetTick());
+	Server.Update(tick_in_ms);
 
 	// Update camera after everything has been drawn.
-	Camera.Update(GetTick());
+	Camera.Update(tick_in_ms);
 
 	// Remove any sounds that have finished playing.
 	std::erase_if(PlayingSounds,

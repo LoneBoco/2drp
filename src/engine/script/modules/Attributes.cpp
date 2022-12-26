@@ -20,9 +20,7 @@ void bind_attributes(sol::state& lua)
 {
 	lua.new_enum("AttributeType",
 		"INVALID", AttributeType::INVALID,
-		"SIGNED", AttributeType::SIGNED,
-		"UNSIGNED", AttributeType::UNSIGNED,
-		"FLOAT", AttributeType::FLOAT,
+		"INTEGER", AttributeType::INTEGER,
 		"DOUBLE", AttributeType::DOUBLE,
 		"STRING", AttributeType::STRING
 	);
@@ -52,22 +50,18 @@ void bind_attributes(sol::state& lua)
 	using AttributeDispatcher = EventDispatcher<uint16_t>;
 
 	lua.new_usertype<Attribute>("Attribute", sol::no_constructor,
-		"ID", sol::readonly_property(&Attribute::GetId),
+		"ID", sol::readonly_property(&Attribute::ID),
 		"Type", sol::readonly_property(&Attribute::GetType),
-		"AsString", &Attribute::GetString,
-		"AsSigned", &Attribute::GetSigned,
-		"AsUnsigned", &Attribute::GetUnsigned,
-		"AsFloat", &Attribute::GetFloat,
-		"AsDouble", &Attribute::GetDouble,
+		"AsString", [](Attribute& self) -> std::string { return self.GetAs<std::string>(); },
+		"AsInteger", [](Attribute& self) -> int64_t { return self.GetAs<int64_t>(); },
+		"AsDouble", [](Attribute& self) -> double { return self.GetAs<double>(); },
 
 		"Get", &helpers::asObject,
 		"Set", &helpers::fromObject,
 
-		"SetString", sol::resolve<Attribute& (const std::string&)>(&Attribute::Set),
-		"SetSigned", sol::resolve<Attribute& (const int64_t)>(&Attribute::Set),
-		"SetUnsigned", sol::resolve<Attribute& (const uint64_t)>(&Attribute::Set),
-		"SetFloat", sol::resolve<Attribute& (const float)>(&Attribute::Set),
-		"SetDouble", sol::resolve<Attribute& (const double)>(&Attribute::Set),
+		"SetString", [](Attribute& self, const std::string& value) { self.Set(value); },
+		"SetInteger", [](Attribute& self, const int64_t value) { self.Set(value); },
+		"SetDouble", [](Attribute& self, const double value) { self.Set(value); },
 
 		/*
 		sol::meta_function::index, [](Attribute& self, sol::this_state s) { return asObject(self, s); },
@@ -82,14 +76,14 @@ void bind_attributes(sol::state& lua)
 		*/
 
 		"Subscribe", &helpers::subscribe,
-		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
+		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.ClientUpdate.UpdateDispatch.Unsubscribe(ev); }
 	);
 
 	lua.new_usertype<ObjectAttributes>("ObjectAttributes", sol::no_constructor,
 		"Add", sol::overload(
-			sol::resolve<std::weak_ptr<Attribute>(const std::string&, int64_t, uint16_t)>(&ObjectAttributes::AddAttribute),
-			sol::resolve<std::weak_ptr<Attribute>(const std::string&, double, uint16_t)>(&ObjectAttributes::AddAttribute),
-			sol::resolve<std::weak_ptr<Attribute>(const std::string&, const std::string&, uint16_t)>(&ObjectAttributes::AddAttribute)
+			[](ObjectAttributes& self, const std::string& name, int64_t value, uint16_t id) { return self.AddAttribute(name, value, id); },
+			[](ObjectAttributes& self, const std::string& name, double value, uint16_t id) { return self.AddAttribute(name, value, id); },
+			[](ObjectAttributes& self, const std::string& name, const std::string& value, uint16_t id) { return self.AddAttribute(name, value, id); }
 		),
 
 		"Get", sol::overload(
@@ -120,7 +114,7 @@ void bind_attributes(sol::state& lua)
 	lua.new_usertype<ObjectProperties>("ObjectProperties", sol::no_constructor,
 		"Get", sol::overload(
 			sol::resolve<AttributePtr(const std::string&)>(&ObjectProperties::Get),
-			sol::resolve<AttributePtr (const Property)>(&ObjectProperties::Get)
+			sol::resolve<AttributePtr(const Property)>(&ObjectProperties::Get)
 		),
 
 		sol::meta_function::index, sol::overload(

@@ -42,8 +42,6 @@ enum class SceneObjectType
 	COUNT
 };
 
-using SceneObjectID = uint32_t;
-
 /*
 namespace physics
 {
@@ -234,8 +232,8 @@ public:
 	virtual float GetRotation() const;
 	virtual void SetRotation(float rotation);
 
-	virtual uint64_t GetDirection() const;
-	virtual void SetDirection(uint64_t dir);
+	virtual int64_t GetDirection() const;
+	virtual void SetDirection(int64_t dir);
 
 	virtual std::string GetImage() const;
 	virtual void SetImage(const std::string& image);
@@ -446,133 +444,5 @@ protected:
 };
 
 ///////////////////////////////////////////////////////////////////////////////
-
-template <typename T>
-T getPropsPacket(ObjectAttributes& attributes, auto adder)
-{
-	T packet;
-
-	// Loop through all dirty attributes and add them to the packet.
-	for (auto& attribute : ObjectAttributes::Dirty(attributes))
-	{
-		attribute.UpdateDispatch.Post(attribute.GetId());
-		attributes.DirtyUpdateDispatch.Post(attribute.GetId());
-
-		// If our dispatch removed the dirty flag, skip this attribute.
-		if (!attribute.GetIsDirty())
-			continue;
-
-		attribute.SetIsDirty(false);
-
-		auto attr = std::invoke(adder, packet);
-		attr->set_id(attribute.GetId());
-		attr->set_name(attribute.GetName());
-
-		switch (attribute.GetType())
-		{
-		case AttributeType::SIGNED:
-			attr->set_as_int(attribute.GetSigned());
-			break;
-		case AttributeType::UNSIGNED:
-			attr->set_as_uint(attribute.GetUnsigned());
-			break;
-		case AttributeType::FLOAT:
-			attr->set_as_float(attribute.GetFloat());
-			break;
-		case AttributeType::DOUBLE:
-			attr->set_as_double(attribute.GetDouble());
-			break;
-		default:
-		case AttributeType::STRING:
-			attr->set_as_string(attribute.GetString());
-			break;
-		}
-	}
-
-	return packet;
-}
-
-template <typename T>
-T getPropsPacket(SceneObject& so)
-{
-	T packet;
-
-	// Loop through all dirty attributes and add them to the packet.
-	for (auto& attribute : ObjectAttributes::Dirty(so.Attributes))
-	{
-		attribute.UpdateDispatch.Post(attribute.GetId());
-		so.Attributes.DirtyUpdateDispatch.Post(attribute.GetId());
-
-		// If our dispatch removed the dirty flag, skip this attribute.
-		if (!attribute.GetIsDirty())
-			continue;
-
-		attribute.SetIsDirty(false);
-
-		auto attr = packet.add_attributes();
-		attr->set_id(attribute.GetId());
-		attr->set_name(attribute.GetName());
-
-		switch (attribute.GetType())
-		{
-		case AttributeType::SIGNED:
-			attr->set_as_int(attribute.GetSigned());
-			break;
-		case AttributeType::UNSIGNED:
-			attr->set_as_uint(attribute.GetUnsigned());
-			break;
-		case AttributeType::FLOAT:
-			attr->set_as_float(attribute.GetFloat());
-			break;
-		case AttributeType::DOUBLE:
-			attr->set_as_double(attribute.GetDouble());
-			break;
-		default:
-		case AttributeType::STRING:
-			attr->set_as_string(attribute.GetString());
-			break;
-		}
-	}
-
-	for (auto& [id, property] : so.Properties)
-	{
-		if (!property->GetIsDirty())
-			continue;
-
-		property->UpdateDispatch.Post(id);
-
-		// If our dispatch removed the dirty flag, skip this property.
-		if (!property->GetIsDirty())
-			continue;
-
-		property->SetIsDirty(false);
-
-		auto prop = packet.add_properties();
-		prop->set_id(id);
-		// prop->set_name(property->GetName());
-
-		switch (property->GetType())
-		{
-		case AttributeType::SIGNED:
-			prop->set_as_int(property->GetSigned());
-			break;
-		case AttributeType::UNSIGNED:
-			prop->set_as_uint(property->GetUnsigned());
-			break;
-		case AttributeType::FLOAT:
-			prop->set_as_float(property->GetFloat());
-			break;
-		case AttributeType::DOUBLE:
-			prop->set_as_double(property->GetDouble());
-			break;
-		default:
-		case AttributeType::STRING:
-			prop->set_as_string(property->GetString());
-			break;
-		}
-	}
-
-	return packet;
-}
 
 } // end namespace tdrp

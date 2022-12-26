@@ -39,6 +39,28 @@ namespace chrono
 }
 using namespace std::chrono_literals;
 
+namespace tdrp
+{
+
+template <typename T>
+concept is_numeric = std::integral<T> || std::floating_point<T>;
+
+template <class T>
+concept is_string = std::convertible_to<T, std::string>;
+
+template <class T>
+concept is_not_pointer = !std::is_pointer_v<T>;
+
+} // end namespace tdrp
+
+namespace tdrp
+{
+
+using SceneObjectID = uint32_t;
+using AttributeID = uint16_t;
+
+} // end namespace tdrp
+
 /*
 namespace tdrp
 {

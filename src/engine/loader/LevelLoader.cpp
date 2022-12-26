@@ -101,10 +101,19 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
+						bool replicated = prop.attribute("replicated").as_bool(true);
+						int32_t update_rate = prop.attribute("updaterate").as_int();
+
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)
 							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, id, name);
-						else so->Properties.Get(name)->SetAsType(attrtype, value);
+						else
+						{
+							auto soprop = so->Properties.Get(name);
+							soprop->SetAsType(attrtype, value);
+							soprop->Replicated = replicated;
+							soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
+						}
 					}
 
 					// Load all attributes.
@@ -113,10 +122,18 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
+						bool replicated = prop.attribute("replicated").as_bool(true);
+						int32_t update_rate = prop.attribute("updaterate").as_int();
+
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)
 							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, id, name);
-						else (void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
+						else
+						{
+							auto soattrib = so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
+							soattrib->Replicated = replicated;
+							soattrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
+						}
 					}
 
 					// Load scripts.

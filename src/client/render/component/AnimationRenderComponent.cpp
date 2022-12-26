@@ -44,9 +44,9 @@ void AnimationRenderComponent::OnAttached(ComponentEntity& owner)
 			return;
 
 		// Set up the event watchers.
-		m_handle_image = so->Properties.Get(Property::IMAGE)->UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_image, this, std::placeholders::_1));
-		m_handle_entity = so->Properties.Get(Property::ENTITY)->UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_entity, this, std::placeholders::_1));
-		m_handle_animation = so->Properties.Get(Property::ANIMATION)->UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_animation, this, std::placeholders::_1));
+		m_handle_image = so->Properties.Get(Property::IMAGE)->ClientUpdate.UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_image, this, std::placeholders::_1));
+		m_handle_entity = so->Properties.Get(Property::ENTITY)->ClientUpdate.UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_entity, this, std::placeholders::_1));
+		m_handle_animation = so->Properties.Get(Property::ANIMATION)->ClientUpdate.UpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::property_update_animation, this, std::placeholders::_1));
 		m_handle_attributes = so->Attributes.DirtyUpdateDispatch.Subscribe(std::bind(&AnimationRenderComponent::attributes_update, this, std::placeholders::_1));
 
 		load_animation();

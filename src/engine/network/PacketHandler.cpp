@@ -36,6 +36,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectDelete& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnership& packet);
+void handle(Server& server, const uint16_t id, const packet::SceneObjectControl& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet);
 void handle(Server& server, const uint16_t id, const packet::SendEvent& packet);
 void handle(Server& server, const uint16_t id, const packet::FlagSet& packet);
@@ -97,6 +98,9 @@ void network_receive_server(Server& server, const uint16_t id, const uint16_t pa
 		break;
 	case Packets::SCENEOBJECTOWNERSHIP:
 		HANDLE(packet::SceneObjectOwnership);
+		break;
+	case Packets::SCENEOBJECTCONTROL:
+		HANDLE(packet::SceneObjectControl);
 		break;
 	case Packets::SCENEOBJECTUNFOLLOW:
 		HANDLE(packet::SceneObjectUnfollow);
@@ -299,7 +303,7 @@ void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
 	const auto& script_client = packet.scriptclient();
 	const auto& script_server = packet.scriptserver();
 
-	log::PrintLine(":: Adding class {}", name);
+	log::PrintLine(":: Adding class {}.", name);
 
 	auto c = server.GetObjectClass(name);
 	c->ScriptClient = script_client;
@@ -311,24 +315,25 @@ void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
 		const auto& attr = packet.attributes(i);
 		const auto& id = attr.id();
 		const auto& name = attr.name();
+		const auto& replicated = attr.replicated();
+		const auto& update_rate = attr.update_rate();
+
+		AttributePtr attribute;
 		switch (attr.value_case())
 		{
 		case packet::ClassAdd_Attribute::ValueCase::kAsInt:
-			c->Attributes.AddAttribute(name, attr.as_int(), static_cast<uint16_t>(id));
-			break;
-		case packet::ClassAdd_Attribute::ValueCase::kAsUint:
-			c->Attributes.AddAttribute(name, attr.as_uint(), static_cast<uint16_t>(id));
-			break;
-		case packet::ClassAdd_Attribute::ValueCase::kAsFloat:
-			c->Attributes.AddAttribute(name, attr.as_float(), static_cast<uint16_t>(id));
+			attribute = c->Attributes.AddAttribute(name, attr.as_int(), static_cast<uint16_t>(id));
 			break;
 		case packet::ClassAdd_Attribute::ValueCase::kAsDouble:
-			c->Attributes.AddAttribute(name, attr.as_double(), static_cast<uint16_t>(id));
+			attribute = c->Attributes.AddAttribute(name, attr.as_double(), static_cast<uint16_t>(id));
 			break;
 		case packet::ClassAdd_Attribute::ValueCase::kAsString:
-			c->Attributes.AddAttribute(name, attr.as_string(), static_cast<uint16_t>(id));
+			attribute = c->Attributes.AddAttribute(name, attr.as_string(), static_cast<uint16_t>(id));
 			break;
 		}
+
+		attribute->Replicated = replicated;
+		attribute->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
 	}
 }
 
@@ -363,11 +368,11 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	std::shared_ptr<SceneObject> so = server.GetSceneObjectById(pid);
 	if (so != nullptr)
 	{
-		log::PrintLine("!! Scene object {} already exists, skipping add.", pid);
+		log::PrintLine("!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
 	}
 	else
 	{
-		log::PrintLine(":: Adding scene object {}.", pid);
+		log::PrintLine(":: Adding scene object {} ({}).", pid, pclass);
 
 		// Create our new scene object.
 		switch (type)
@@ -405,24 +410,23 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 		for (int i = 0; i < packet.attributes_size(); ++i)
 		{
 			const auto& attribute = packet.attributes(i);
+			AttributePtr attr;
+
 			switch (attribute.value_case())
 			{
 			case packet::SceneObjectNew_Attribute::kAsInt:
-				so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
-				break;
-			case packet::SceneObjectNew_Attribute::kAsUint:
-				so->Attributes.AddAttribute(attribute.name(), attribute.as_uint(), attribute.id());
-				break;
-			case packet::SceneObjectNew_Attribute::kAsFloat:
-				so->Attributes.AddAttribute(attribute.name(), attribute.as_float(), attribute.id());
+				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsDouble:
-				so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
+				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
 				break;
 			case packet::SceneObjectNew_Attribute::kAsString:
-				so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
+				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
 				break;
 			}
+
+			attr->Replicated = attribute.replicated();
+			attr->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
 		}
 
 		for (int i = 0; i < packet.properties_size(); ++i)
@@ -436,12 +440,6 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 				case packet::SceneObjectNew_Attribute::kAsInt:
 					soprop->Set(prop.as_int());
 					break;
-				case packet::SceneObjectNew_Attribute::kAsUint:
-					soprop->Set(prop.as_uint());
-					break;
-				case packet::SceneObjectNew_Attribute::kAsFloat:
-					soprop->Set(prop.as_float());
-					break;
 				case packet::SceneObjectNew_Attribute::kAsDouble:
 					soprop->Set(prop.as_double());
 					break;
@@ -449,15 +447,14 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 					soprop->Set(prop.as_string());
 					break;
 				}
+
+				soprop->Replicated = prop.replicated();
+				soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ prop.update_rate() };
 			}
 		}
 
 		// Add it to the appropriate scene.
 		scene->AddObject(so);
-
-		// Clear the dirty flag.
-		so->Attributes.ClearDirty();
-		so->Properties.ClearDirty();
 	}
 
 	// Handle the script.
@@ -483,8 +480,8 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 	auto so = server.GetSceneObjectById(pid);
 	if (!so) return;
 
-	auto player = server.GetPlayerById(id);
-	if (!so->GetOwningPlayer().expired() && so->GetOwningPlayer().lock() != player)
+	// If we own this scene object, don't allow changes.
+	if (auto op = so->GetOwningPlayer().lock(); op == server.GetPlayer())
 		return;
 
 	// Set attached to.
@@ -513,12 +510,6 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 		case packet::SceneObjectChange_Attribute::kAsInt:
 			soattrib->Set(attribute.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsUint:
-			soattrib->Set(attribute.as_uint());
-			break;
-		case packet::SceneObjectChange_Attribute::kAsFloat:
-			soattrib->Set(attribute.as_float());
-			break;
 		case packet::SceneObjectChange_Attribute::kAsDouble:
 			soattrib->Set(attribute.as_double());
 			break;
@@ -527,8 +518,11 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 			break;
 		}
 
+		soattrib->Replicated = attribute.replicated();
+		soattrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+
 		// Force dirty flag.
-		soattrib->SetIsDirty(true);
+		soattrib->SetDirty(true, AttributeDirty::CLIENT);
 	}
 
 	for (int i = 0; i < packet.properties_size(); ++i)
@@ -544,12 +538,6 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 		case packet::SceneObjectChange_Attribute::kAsInt:
 			soprop->Set(prop.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsUint:
-			soprop->Set(prop.as_uint());
-			break;
-		case packet::SceneObjectChange_Attribute::kAsFloat:
-			soprop->Set(prop.as_float());
-			break;
 		case packet::SceneObjectChange_Attribute::kAsDouble:
 			soprop->Set(prop.as_double());
 			break;
@@ -558,15 +546,14 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 			break;
 		}
 
+		soprop->Replicated = prop.replicated();
+		soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ prop.update_rate() };
+
 		// Force dirty flag.
 		// If something came across in this packet, it should force an update.  It might be an animation change.
 		// Some animation systems (gani) will restart the animation if the animation prop was set to itself.
-		soprop->SetIsDirty(true);
+		soprop->SetDirty(true, AttributeDirty::CLIENT);
 	}
-
-	// Run updates on the dirty props.
-	so->Attributes.ClearDirty();
-	so->Properties.ClearDirty();
 
 	// Send changes to other players.
 	auto scene = so->GetCurrentScene().lock();
@@ -609,6 +596,24 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnershi
 
 		so->OnOwnershipChange.RunAll(new_player, old_player);
 	}
+}
+
+void handle(Server& server, const uint16_t id, const packet::SceneObjectControl& packet)
+{
+	const auto& player_id = packet.player_id();
+	const auto& sceneobject_id = packet.sceneobject_id();
+
+	auto player = server.GetPlayerById(player_id);
+	auto so = server.GetSceneObjectById(sceneobject_id);
+	if (!player || !so) return;
+
+	// If the player doesn't own the scene object, don't accept this change.
+	if (auto owner = so->GetOwningPlayer().lock(); owner != player)
+		return;
+
+	log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
+
+	player->SwitchControlledSceneObject(so);
 }
 
 void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet)
@@ -695,12 +700,6 @@ void handle(Server& server, const uint16_t id, const packet::FlagSet& packet)
 		case packet::SceneObjectChange_Attribute::kAsInt:
 			flag->Set(attribute.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsUint:
-			flag->Set(attribute.as_uint());
-			break;
-		case packet::SceneObjectChange_Attribute::kAsFloat:
-			flag->Set(attribute.as_float());
-			break;
 		case packet::SceneObjectChange_Attribute::kAsDouble:
 			flag->Set(attribute.as_double());
 			break;
@@ -709,7 +708,11 @@ void handle(Server& server, const uint16_t id, const packet::FlagSet& packet)
 			break;
 		}
 
-		flag->SetIsDirty(true);
+		flag->Replicated = attribute.replicated();
+		flag->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+
+		flag->SetDirty(true, AttributeDirty::CLIENT);
+		flag->ProcessDirty(AttributeDirty::CLIENT);
 	}
 }
 

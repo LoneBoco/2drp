@@ -212,21 +212,19 @@ void SpriterAnimation::UpdateAttribute(const uint16_t attribute_id)
 			return;
 
 		auto attribute = so->Attributes.Get(attribute_id);
-		auto variable = m_animation->getVariable(attribute->GetName());
+		auto variable = m_animation->getVariable(attribute->Name);
 		if (variable)
 		{
 			switch (attribute->GetType())
 			{
 			case AttributeType::STRING:
-				variable->setStringValue(attribute->GetString());
+				variable->setStringValue(attribute->GetAs<std::string>());
 				break;
-			case AttributeType::FLOAT:
 			case AttributeType::DOUBLE:
-				variable->setRealValue(static_cast<SpriterEngine::real>(attribute->GetDouble()));
+				variable->setRealValue(static_cast<SpriterEngine::real>(attribute->GetAs<double>()));
 				break;
-			case AttributeType::SIGNED:
-			case AttributeType::UNSIGNED:
-				variable->setIntValue(static_cast<int>(attribute->GetSigned()));
+			case AttributeType::INTEGER:
+				variable->setIntValue(static_cast<int>(attribute->GetAs<int>()));
 				break;
 			}
 		}

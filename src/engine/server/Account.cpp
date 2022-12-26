@@ -73,9 +73,9 @@ void Account::Save()
 		auto attrname = node_attribute.append_attribute("name");
 		auto attrtype = node_attribute.append_attribute("type");
 		auto attrvalue = node_attribute.append_attribute("value");
-		attrname.set_value(attribute.second->GetName().c_str());
+		attrname.set_value(attribute.second->Name.c_str());
 		attrtype.set_value(attribute.second->TypeAsString().data());
-		attrvalue.set_value(attribute.second->GetString().c_str());
+		attrvalue.set_value(attribute.second->GetAs<std::string>().c_str());
 	}
 	auto node_scripts = doc.append_child("scripts");
 	for (const auto& script : ClientScripts)

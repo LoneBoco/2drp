@@ -67,7 +67,7 @@ public:
 
 public:
 	void PreUpdate();
-	void Update(chrono::clock::duration tick);
+	void Update(const std::chrono::milliseconds& tick);
 
 public:
 	void SetUniqueId(const std::string& id);
@@ -245,7 +245,10 @@ inline const ServerType Server::GetServerType() const
 
 inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
 {
-	return m_player_list[id];
+	auto iter = m_player_list.find(id);
+	if (iter == std::end(m_player_list))
+		return nullptr;
+	return iter->second;
 }
 
 inline network::Network& Server::GetNetwork()

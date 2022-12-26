@@ -216,14 +216,12 @@ void Network::Update()
 		{
 			case ENET_EVENT_TYPE_CONNECT:
 				_executeCallbacks(m_connect_cb, id);
-
 				m_peers[id] = event.peer;
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
-				_executeCallbacks(m_disconnect_cb, id);
-
 				m_peers.erase(id);
+				_executeCallbacks(m_disconnect_cb, id);
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
@@ -274,7 +272,7 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	if (success != 0)
 	{
 		enet_packet_destroy(packet);
-		log::Print("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
+		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
 	}
 }
 
@@ -304,7 +302,7 @@ void Network::Send(const uint16_t peer_id, const uint16_t packet_id, const Chann
 	if (success != 0)
 	{
 		enet_packet_destroy(packet);
-		log::Print("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
+		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, peer_id);
 	}
 }
 
@@ -489,7 +487,7 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 					if (success != 0)
 					{
 						enet_packet_destroy(packet);
-						log::Print("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
+						log::PrintLine("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
 					}
 				}
 			}
@@ -524,7 +522,7 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 				if (success != 0)
 				{
 					enet_packet_destroy(packet);
-					log::Print("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
+					log::PrintLine("** ERROR: Failure to send packet {} to scene \"{}\".", packet_id, scene->GetName());
 				}
 			}
 		}

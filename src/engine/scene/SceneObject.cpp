@@ -145,18 +145,18 @@ Vector2df SceneObject::GetPosition() const
 	if (m_attached_to.expired())
 	{
 		return Vector2df{
-			Properties[Property::X].GetFloat(),
-			Properties[Property::Y].GetFloat()
+			Properties[Property::X].GetAs<float>(),
+			Properties[Property::Y].GetAs<float>()
 		};
 	}
 	else
 	{
 		auto attached = m_attached_to.lock();
 		if (!attached)
-			return Vector2df{ Properties[Property::X].GetFloat(), Properties[Property::Y].GetFloat() };
+			return Vector2df{ Properties[Property::X].GetAs<float>(), Properties[Property::Y].GetAs<float>() };
 		else
 		{
-			Vector2df pos{ Properties[Property::X].GetFloat(), Properties[Property::Y].GetFloat() };
+			Vector2df pos{ Properties[Property::X].GetAs<float>(), Properties[Property::Y].GetAs<float>() };
 			return attached->GetPosition() + pos;
 		}
 	}
@@ -171,7 +171,7 @@ void SceneObject::SetPosition(const Vector2df& position)
 
 int64_t SceneObject::GetDepth() const
 {
-	return Properties[Property::Z].GetSigned();
+	return Properties[Property::Z].GetAs<int64_t>();
 }
 
 void SceneObject::SetDepth(int64_t z)
@@ -182,8 +182,8 @@ void SceneObject::SetDepth(int64_t z)
 Vector2df SceneObject::GetScale() const
 {
 	return Vector2df{
-		Properties[Property::SCALE_X].GetFloat(),
-		Properties[Property::SCALE_Y].GetFloat()
+		Properties[Property::SCALE_X].GetAs<float>(),
+		Properties[Property::SCALE_Y].GetAs<float>()
 	};
 }
 
@@ -298,7 +298,7 @@ void SceneObject::SetScale(const Vector2df& scale)
 
 float SceneObject::GetRotation() const
 {
-	return Properties[Property::ROTATION].GetFloat();
+	return Properties[Property::ROTATION].GetAs<float>();
 }
 
 void SceneObject::SetRotation(float rotation)
@@ -306,19 +306,19 @@ void SceneObject::SetRotation(float rotation)
 	Properties[Property::ROTATION] = rotation;
 }
 
-uint64_t SceneObject::GetDirection() const
+int64_t SceneObject::GetDirection() const
 {
-	return Properties[Property::DIRECTION].GetUnsigned();
+	return Properties[Property::DIRECTION].GetAs<int64_t>();
 }
 
-void SceneObject::SetDirection(uint64_t dir)
+void SceneObject::SetDirection(int64_t dir)
 {
 	Properties[Property::DIRECTION] = dir;
 }
 
 std::string SceneObject::GetImage() const
 {
-	return Properties.Get(Property::IMAGE)->GetString();
+	return Properties.Get(Property::IMAGE)->GetAs<std::string>();
 }
 
 void SceneObject::SetImage(const std::string& image)
@@ -328,7 +328,7 @@ void SceneObject::SetImage(const std::string& image)
 
 std::string SceneObject::GetEntity() const
 {
-	return Properties.Get(Property::ENTITY)->GetString();
+	return Properties.Get(Property::ENTITY)->GetAs<std::string>();
 }
 
 void SceneObject::SetEntity(const std::string& image)
@@ -338,7 +338,7 @@ void SceneObject::SetEntity(const std::string& image)
 
 std::string SceneObject::GetAnimation() const
 {
-	return Properties.Get(Property::ANIMATION)->GetString();
+	return Properties.Get(Property::ANIMATION)->GetAs<std::string>();
 }
 
 void SceneObject::SetAnimation(const std::string& image)
@@ -348,7 +348,7 @@ void SceneObject::SetAnimation(const std::string& image)
 
 std::string SceneObject::GetText() const
 {
-	return Properties.Get(Property::TEXT)->GetString();
+	return Properties.Get(Property::TEXT)->GetAs<std::string>();
 }
 
 void SceneObject::SetText(const std::string& text)
@@ -526,24 +526,25 @@ AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& o
 
 void AnimatedSceneObject::SetAnimation(const std::string& image)
 {
-	auto dirty = Properties[Property::ANIMATION].GetIsDirty();
+	auto dirty = Properties[Property::ANIMATION].IsDirty(AttributeDirty::CLIENT);
 	if (dirty)
 	{
 		// We've already been set to dirty and we are setting the animation again.
 		// We are probably in a script loop.  Post again to try to clear it.
 		auto anim = Properties.Get(Property::ANIMATION);
 		anim->Set(image);
-		anim->UpdateDispatch.Post(anim->GetId());
+		anim->ClientUpdate.UpdateDispatch.Post(anim->ID);
 	}
 	else
 	{
 		// Hack to make continuous animations work.
 		// If an animation is not set to continuous, then setting it to the same animation restarts it.
 		const char* debugStr = image.c_str();
-		if (boost::iends_with(image, ".gani") && Properties[Property::ANIMATION].GetString() == image)
+		if (boost::iends_with(image, ".gani") && Properties[Property::ANIMATION].GetAs<std::string>() == image)
 		{
 			// Set to dirty.  Gani animations can be restarted by re-setting the animation.
-			Properties[Property::ANIMATION].SetIsDirty(true);
+			auto anim = Properties.Get(Property::ANIMATION);
+			anim->SetAllDirty(true);
 		}
 
 		Properties[Property::ANIMATION] = image;
@@ -586,7 +587,7 @@ void TextSceneObject::SetFont(const std::string& font)
 
 	// Dispatch text so the render component can get our font changes.
 	auto text = Properties.Get(Property::TEXT);
-	text->UpdateDispatch.Post(text->GetId());
+	text->ClientUpdate.UpdateDispatch.Post(text->ID);
 }
 
 uint32_t TextSceneObject::GetFontSize() const
@@ -600,7 +601,7 @@ void TextSceneObject::SetFontSize(uint32_t size)
 
 	// Dispatch text so the render component can get our font changes.
 	auto text = Properties.Get(Property::TEXT);
-	text->UpdateDispatch.Post(text->GetId());
+	text->ClientUpdate.UpdateDispatch.Post(text->ID);
 }
 
 bool TextSceneObject::GetCentered() const

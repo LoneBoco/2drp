@@ -67,10 +67,18 @@ void LoadObjectClasses(server::Server& server, std::map<std::string, std::shared
 					std::string attrname = node_attribute.attribute("name").as_string();
 					std::string attrtype = node_attribute.attribute("type").as_string();
 					std::string attrvalue = node_attribute.attribute("value").as_string();
+					bool attrreplicated = node_attribute.attribute("replicated").as_bool(true);
+					int32_t attrupdaterate = node_attribute.attribute("updaterate").as_int();
+
 					auto type = Attribute::TypeFromString(attrtype);
 					if (type == AttributeType::INVALID)
 						log::PrintLine("!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
-					else pc->Attributes.AddAttribute(attrname, type, attrvalue);
+					else
+					{
+						auto attrib = pc->Attributes.AddAttribute(attrname, type, attrvalue);
+						attrib->Replicated = attrreplicated;
+						attrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attrupdaterate };
+					}
 				}
 
 				object_classes.insert(std::make_pair(classname, pc));

@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message SceneObjectControl {
+	fixed32 player_id = 1;
+	fixed32 sceneobject_id = 2;
+}

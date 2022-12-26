@@ -74,7 +74,7 @@ std::shared_ptr<Attribute> ObjectProperties::Get(const std::string& prop)
 void ObjectProperties::create()
 {
 // Add 10 to move the pointer past 'Property::' because I am horrible.
-#define _PROP(x, y) m_properties.AddAttribute(#x + 10, y, (int32_t)x);
+#define _PROP(x, y) m_properties.AddAttribute(#x + 10, y, (AttributeID)x);
 
 	_PROP(Property::LEVEL, "");
 	_PROP(Property::X, 0.0f);
@@ -89,7 +89,7 @@ void ObjectProperties::create()
 	_PROP(Property::TORQUE, 0.0f);
 	_PROP(Property::ROTATION, 0.0f);
 	//_PROP(Property::ROTATION_VELOCITY, 0.0f);
-	_PROP(Property::DIRECTION, (uint64_t)0);
+	_PROP(Property::DIRECTION, (int64_t)0);
 	_PROP(Property::IMAGE, "");
 	_PROP(Property::ENTITY, "");
 	_PROP(Property::ANIMATION, "");
@@ -103,15 +103,11 @@ void ObjectProperties::clone(const ObjectProperties& properties)
 	m_properties = properties.m_properties;
 }
 
-void ObjectProperties::ClearDirty()
+void ObjectProperties::ClearAllDirty()
 {
-	for (auto& [key, value] : m_properties)
+	for (auto& [id, attribute] : m_properties)
 	{
-		if (value->GetIsDirty())
-		{
-			value->SetIsDirty(false);
-			value->UpdateDispatch.Post(key);
-		}
+		attribute->ResetAllDirty();
 	}
 }
 

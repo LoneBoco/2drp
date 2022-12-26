@@ -41,7 +41,7 @@ void TextRenderComponent::OnAttached(ComponentEntity& owner)
 				load_font(font);
 		}
 
-		m_handle_text_change = so->Properties.Get(Property::TEXT)->UpdateDispatch.Subscribe(std::bind(&TextRenderComponent::property_update, this, std::placeholders::_1));
+		m_handle_text_change = so->Properties.Get(Property::TEXT)->ClientUpdate.UpdateDispatch.Subscribe(std::bind(&TextRenderComponent::property_update, this, std::placeholders::_1));
 	}
 }
 

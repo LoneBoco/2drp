@@ -79,7 +79,8 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 
 	if (vm.count("host"))
 	{
-		Set("game.starthosting", true);
+		Set("game.networked", true);
+		Set("game.hosting", true);
 		Set("server.peers", 32);
 		Set("network.port", vm["host"].as<uint16_t>());
 	}
@@ -98,6 +99,7 @@ bool ProgramSettings::LoadFromCommandLine(int argc, char** argv)
 				ss >> port;
 			}
 
+			Set("game.networked", true);
 			Set("network.server", server);
 			Set("network.port", port);
 		}
