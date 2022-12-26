@@ -101,7 +101,10 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
-						so->Properties.Get(name)->SetAsType(Attribute::TypeFromString(type), value);
+						auto attrtype = Attribute::TypeFromString(type);
+						if (attrtype == AttributeType::INVALID)
+							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, id, name);
+						else so->Properties.Get(name)->SetAsType(attrtype, value);
 					}
 
 					// Load all attributes.
@@ -110,7 +113,10 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string name = prop.attribute("name").as_string();
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
-						(void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
+						auto attrtype = Attribute::TypeFromString(type);
+						if (attrtype == AttributeType::INVALID)
+							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, id, name);
+						else (void)so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
 					}
 
 					// Load scripts.

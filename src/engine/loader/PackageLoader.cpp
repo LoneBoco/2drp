@@ -67,7 +67,10 @@ void LoadObjectClasses(server::Server& server, std::map<std::string, std::shared
 					std::string attrname = node_attribute.attribute("name").as_string();
 					std::string attrtype = node_attribute.attribute("type").as_string();
 					std::string attrvalue = node_attribute.attribute("value").as_string();
-					pc->Attributes.AddAttribute(attrname, Attribute::TypeFromString(attrtype), attrvalue);
+					auto type = Attribute::TypeFromString(attrtype);
+					if (type == AttributeType::INVALID)
+						log::PrintLine("!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
+					else pc->Attributes.AddAttribute(attrname, type, attrvalue);
 				}
 
 				object_classes.insert(std::make_pair(classname, pc));

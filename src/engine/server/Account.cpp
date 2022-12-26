@@ -37,7 +37,10 @@ void Account::Load(const std::string& name)
 		std::string attrname = node_attribute.attribute("name").as_string();
 		std::string attrtype = node_attribute.attribute("type").as_string();
 		std::string attrvalue = node_attribute.attribute("value").as_string();
-		Flags.AddAttribute(attrname, Attribute::TypeFromString(attrtype), attrvalue);
+		auto type = Attribute::TypeFromString(attrtype);
+		if (type == AttributeType::INVALID)
+			log::PrintLine("!! Account flag was invalid: {}.{}", name, attrname);
+		Flags.AddAttribute(attrname, type, attrvalue);
 	}
 
 	// Scripts.
