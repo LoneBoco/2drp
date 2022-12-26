@@ -42,7 +42,7 @@ template <typename T>
 T ProgramSettings::GetAs(const std::string& setting, const T def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
@@ -58,13 +58,13 @@ inline
 bool ProgramSettings::GetAs<bool>(const std::string& setting, const bool def) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return def;
 
 	std::string lowervalue{ i->second };
-	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lowervalue.begin(), lowervalue.end(), lowervalue.begin(), ::tolower);
 
 	if (lowervalue == "on")
 		return true;

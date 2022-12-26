@@ -153,7 +153,8 @@ bool ProgramSettings::WriteToFile(const io::path& filename, io::IFileSystem* Fil
 bool ProgramSettings::Exists(const std::string& setting) const
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+	//std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end()) return false;
@@ -168,7 +169,7 @@ std::string ProgramSettings::Get(const std::string& setting, const std::string& 
 void ProgramSettings::Set(const std::string& setting, const std::string& value)
 {
 	std::string lower{ setting };
-	std::transform(lower.begin(), lower.end(), lower.begin(), [](auto ch) { return std::tolower(ch, std::locale("")); });
+	std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
 
 	auto i = m_settings.find(lower);
 	if (i == m_settings.end())
