@@ -647,8 +647,13 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectCollisio
 	if (packet.collision_size() == 0) return;
 
 	const auto sceneobject = packet.id();
+	auto player = server.GetPlayerById(id);
 	auto so = server.GetSceneObjectById(sceneobject);
-	if (!so) return;
+	if (!player || !so) return;
+
+	// If the player doesn't own the scene object, don't accept this change.
+	if (auto owner = so->GetOwningPlayer().lock(); owner != player)
+		return;
 
 	readCollisionFromPacket(so, packet);
 }

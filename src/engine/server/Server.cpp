@@ -380,7 +380,7 @@ void Server::Update(const std::chrono::milliseconds& tick)
 			if (object->PhysicsChanged)
 			{
 				object->PhysicsChanged = false;
-				if (object->PhysicsBody.has_value())
+				if (!IsSinglePlayer() && object->PhysicsBody.has_value())
 				{
 					packet::SceneObjectCollision packet;
 					packet.set_id(object->ID);
