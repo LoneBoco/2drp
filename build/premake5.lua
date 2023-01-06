@@ -101,9 +101,10 @@ project "2drp"
 		"../dependencies/RmlUi/include/",
 		"../dependencies/RmlSolLua/include/",
 		"../dependencies/freetype-windows-binaries/include/",
+		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "ziplib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua" }
+	dependson { "SFML", "PlayRho", "bzip2", "ziplib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua", "Clipper2" }
 
 	-- Libraries.
 	links {
@@ -120,6 +121,7 @@ project "2drp"
 		"lua51",
 		"SpriterPlusPlus",
 		"tmxlite",
+		"Clipper2",
 	}
 
 	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
@@ -219,9 +221,10 @@ project "2drp_server"
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
 		"../dependencies/ziplib/Source/ZipLib/",
+		"../dependencies/Clipper2/CPP/Clipper2Lib/include/**",
 	}
 
-	dependson { "PlayRho", "bzip2", "zlib", "enet" }
+	dependson { "PlayRho", "bzip2", "zlib", "enet", "Clipper2" }
 
 	defines { "NOMINMAX", "PUGIXML_HEADER_ONLY" }
 
@@ -632,3 +635,17 @@ project "RmlSolLua"
 	}
 
 	dependson { "RmlUi" }
+
+project "Clipper2"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+
+	-- Add files.
+	files {
+		"../dependencies/Clipper2/CPP/Clipper2Lib/include/**",
+		"../dependencies/Clipper2/CPP/Clipper2Lib/src/**",
+	}
+	includedirs {
+		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
+	}

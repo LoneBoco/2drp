@@ -1,5 +1,6 @@
 #include <charconv>
 #include <concepts>
+#include <ranges>
 
 #include "engine/loader/LevelLoader.h"
 
@@ -11,7 +12,12 @@
 
 #include <pugixml.hpp>
 #include <boost/range/algorithm_ext.hpp>
+
 #include <PlayRho/PlayRho.hpp>
+#include <tmxlite/Map.hpp>
+#include <tmxlite/TileLayer.hpp>
+#include <clipper2/clipper.h>
+
 
 using namespace tdrp::scene;
 
@@ -31,6 +37,51 @@ namespace tdrp::loader::helper
 			T value{};
 			std::from_chars(split.data(), split.data() + split.size(), value);
 			result.push_back(value);
+		}
+
+		return result;
+	}
+
+	playrho::BodyID getOrCreatePhysicsBody(playrho::d2::World& world, SceneObjectPtr so, playrho::BodyType bodytype, uint8_t ppu)
+	{
+		if (so->PhysicsBody.has_value())
+			return so->PhysicsBody.value();
+
+		auto position = so->GetPosition();
+
+		playrho::d2::BodyConf config;
+		config
+			.UseType(bodytype)
+			.UseLocation({ position.x / ppu, position.y / ppu })
+			.UseFixedRotation(true);
+
+		auto body = playrho::d2::CreateBody(world, config);
+		so->PhysicsBody = body;
+		return body;
+	}
+
+	std::pair<int32_t, int32_t> getTilePosition(tmx::RenderOrder render_order, const tmx::Vector2i& chunk_size, uint32_t index)
+	{
+		std::pair<int32_t, int32_t> result;
+
+		switch (render_order)
+		{
+		case tmx::RenderOrder::RightDown:
+			result.first = (chunk_size.x - 1) - (index % chunk_size.x);
+			result.second = index / chunk_size.y;
+			break;
+		case tmx::RenderOrder::RightUp:
+			result.first = (chunk_size.x - 1) - (index % chunk_size.x);
+			result.second = (chunk_size.y - 1) - (index / chunk_size.y);
+			break;
+		case tmx::RenderOrder::LeftDown:
+			result.first = index % chunk_size.x;
+			result.second = index / chunk_size.y;
+			break;
+		case tmx::RenderOrder::LeftUp:
+			result.first = index % chunk_size.x;
+			result.second = (chunk_size.y - 1) - (index / chunk_size.y);
+			break;
 		}
 
 		return result;
@@ -209,17 +260,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 							bodytype = playrho::BodyType::Dynamic;
 
 						// Create the body.
-						{
-							auto position = so->GetPosition();
-
-							playrho::d2::BodyConf config;
-							config
-								.UseType(bodytype)
-								.UseLocation({ position.x / ppu, position.y / ppu })
-								.UseFixedRotation(true);
-
-							so->PhysicsBody = playrho::d2::CreateBody(world, config);
-						}
+						auto body = helper::getOrCreatePhysicsBody(world, so, bodytype, ppu);
 
 						for (auto& shape : physics.children())
 						{
@@ -444,6 +485,114 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 
 							// Add it to the scene.
 							scene->AddObject(layer_so);
+						}
+
+						// Generate tile collision meshes.
+						{
+							auto& tmx = tmx_so->TmxMap;
+							const auto& tilesets = tmx->getTilesets();
+							const auto& tile_count = tmx->getTileCount();
+							const auto& tile_size = tmx->getTileSize();
+
+							// Search all the tilesets to find the details on a tile.
+							auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
+							{
+								for (const auto& tileset : tilesets)
+								{
+									const auto* tile = tileset.getTile(layer_tile.ID);
+									return tile;
+								}
+								return nullptr;
+							};
+
+							auto& world = scene->Physics.GetWorld();
+							auto ppu = scene->Physics.GetPixelsPerUnit();
+							auto body = helper::getOrCreatePhysicsBody(world, so, playrho::BodyType::Static, ppu);
+
+							// Collection collision polygons.
+							{
+								Clipper2Lib::Paths64 collision_polys;
+
+								// Look through all of our layers.
+								for (const auto& layer : tmx->getLayers())
+								{
+									// Only look at tile layers.
+									if (layer->getType() != tmx::Layer::Type::Tile)
+										continue;
+
+									// Go through all of the chunks.
+									const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+									for (const auto& chunk : tilelayer.getChunks())
+									{
+										// Look through all the tiles in the chunk.
+										auto tile_count = chunk.size.x * chunk.size.y;
+										for (int i = 0; i < tile_count; ++i)
+										{
+											// Find our tileset tile entry.
+											// If we have no entry, we have no collision so skip.
+											const auto& layer_tile = chunk.tiles[i];
+											const auto* tile = find_tile_in_tileset(layer_tile);
+											if (tile == nullptr)
+												continue;
+
+											// Calculate the tile position.
+											auto [x, y] = helper::getTilePosition(tmx->getRenderOrder(), chunk.size, i);
+											x += chunk.position.x;
+											y += chunk.position.y;
+
+											// Check if we have a polygon collision specified.
+											auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
+											if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
+											{
+												Clipper2Lib::Path64 poly;
+												const auto& points = has_points->getPoints();
+												for (const auto& point : points)
+													poly.emplace_back(Clipper2Lib::Point64{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
+												// poly.emplace_back(Clipper2Lib::Point64{ (x * tile_size.x) + points[0].x, (y * tile_size.y) + points[0].y});
+												collision_polys.push_back(std::move(poly));
+											}
+											// Otherwise, we may have a box collision.
+											else if (tile->objectGroup.getObjects().size() == 1)
+											{
+												const auto& object = tile->objectGroup.getObjects().at(0);
+												const auto& aabb = object.getAABB();
+												if (aabb.width != 0)
+												{
+													Clipper2Lib::Path64 poly;
+													float px = x * tile_size.x + aabb.left;
+													float py = y * tile_size.y + aabb.top;
+
+													poly.emplace_back(Clipper2Lib::Point64{ px, py });
+													poly.emplace_back(Clipper2Lib::Point64{ px + aabb.width, py });
+													poly.emplace_back(Clipper2Lib::Point64{ px + aabb.width, py + aabb.height });
+													poly.emplace_back(Clipper2Lib::Point64{ px, py + aabb.height });
+													// poly.emplace_back(Clipper2Lib::Point64{ px, py });
+													collision_polys.push_back(std::move(poly));
+												}
+											}
+										}
+									}
+								}
+
+								if (!collision_polys.empty())
+								{
+									auto paths = Clipper2Lib::Union(collision_polys, Clipper2Lib::FillRule::NonZero);
+
+									// Construct the collision polys.
+									for (const auto& poly : paths)
+									{
+										std::vector<playrho::Length2> vertices;
+										for (const auto& vertex : poly)
+											vertices.emplace_back(playrho::Length2{ static_cast<float>(vertex.x) / ppu, static_cast<float>(vertex.y) / ppu });
+
+										playrho::d2::PolygonShapeConf conf{};
+										conf.UseVertices(vertices);
+
+										const auto& shape = playrho::d2::CreateShape(world, conf);
+										playrho::d2::Attach(world, body, shape);
+									}
+								}
+							}
 						}
 					}
 

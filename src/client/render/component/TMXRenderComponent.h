@@ -9,6 +9,7 @@
 #include "engine/component/Component.h"
 #include "engine/resources/Resource.h"
 #include "engine/scene/SceneObject.h"
+#include "engine/filesystem/ProgramSettings.h"
 
 namespace tmx
 {
@@ -46,6 +47,9 @@ protected:
 	// const tmx::Tileset::Tile* getTileFromTilesets(uint32_t ID) const;
 	Vector2di getTilePosition(const tmx::Vector2i& chunk_size, uint32_t index) const;
 	void renderChunkToTexture(size_t chunk);
+
+protected:
+	INJECT(settings::ProgramSettings, Settings);
 
 protected:
 	std::weak_ptr<TMXSceneObject> m_owner;

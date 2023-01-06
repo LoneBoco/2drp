@@ -47,3 +47,6 @@
 [submodule "dependencies/freetype-windows-binaries"]
 	path = dependencies/freetype-windows-binaries
 	url = https://github.com/ubawurinna/freetype-windows-binaries.git
+[submodule "dependencies/Clipper2"]
+	path = dependencies/Clipper2
+	url = https://github.com/AngusJohnson/Clipper2.git

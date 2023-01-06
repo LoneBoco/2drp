@@ -73,8 +73,8 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 
 		// Create vertex array.
 		{
-			auto tile_size = so->TmxMap->getTileSize();
-			auto chunk_size = tilelayer.getChunks().at(0).size;
+			const auto& tile_size = so->TmxMap->getTileSize();
+			const auto& chunk_size = tilelayer.getChunks().at(0).size;
 			auto tile_count = chunk_size.x * chunk_size.y;
 
 			m_chunk_vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
@@ -155,6 +155,11 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseco
 				window.draw(m_sprites.at(chunk), state);
 			else
 				renderChunkToTexture(chunk);
+		}
+
+		if (Settings->GetAs<bool>("Debug.drawtmxbbox"))
+		{
+			Window::RenderPhysics(window, so);
 		}
 	}
 }
