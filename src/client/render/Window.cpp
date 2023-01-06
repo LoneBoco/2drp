@@ -184,4 +184,55 @@ void Window::EventLoop()
 	}
 }
 
+void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
+{
+	if (so->PhysicsBody.has_value())
+	{
+		auto scene = so->GetCurrentScene().lock();
+		auto& world = scene->Physics.GetWorld();
+		auto ppu = scene->Physics.GetPixelsPerUnit();
+
+		const auto& body = playrho::d2::GetBody(world, so->PhysicsBody.value());
+		const auto& transformation = body.GetTransformation();
+
+		auto shapes = playrho::d2::GetShapes(world, so->PhysicsBody.value());
+		for (const auto& shapeid : shapes)
+		{
+			const auto& shape = playrho::d2::GetShape(world, shapeid);
+			auto disk = playrho::d2::TypeCast<const playrho::d2::DiskShapeConf>(&shape);
+			auto polygon = playrho::d2::TypeCast<const playrho::d2::PolygonShapeConf>(&shape);
+			if (disk != nullptr)
+			{
+				auto radius = disk->GetRadius();
+				auto location = disk->GetLocation();
+
+				sf::CircleShape circle;
+				circle.setFillColor(sf::Color::Transparent);
+				circle.setOutlineColor(sf::Color::Yellow);
+				circle.setOutlineThickness(1.0f);
+				circle.setPosition({ (transformation.p[0] - radius + location[0]) * ppu, (transformation.p[1] - radius + location[1]) * ppu});
+				circle.setRadius(radius * ppu);
+
+				window.draw(circle);
+			}
+			else if (polygon != nullptr)
+			{
+				sf::ConvexShape poly;
+				poly.setFillColor(sf::Color::Transparent);
+				poly.setOutlineColor(sf::Color::Yellow);
+				poly.setOutlineThickness(1.0f);
+
+				poly.setPointCount(polygon->GetVertexCount());
+				for (auto i = 0; i < polygon->GetVertexCount(); ++i)
+				{
+					auto vertex = polygon->GetVertex(i);
+					poly.setPoint(i, { (transformation.p[0] + vertex[0]) * ppu, (transformation.p[1] + vertex[1]) * ppu });
+				}
+
+				window.draw(poly);
+			}
+		}
+	}
+}
+
 } // end namespace tdrp::render

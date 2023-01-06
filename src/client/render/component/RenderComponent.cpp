@@ -6,6 +6,8 @@
 #include "engine/filesystem/File.h"
 #include "engine/scene/SceneObject.h"
 
+#include <PlayRho/PlayRho.hpp>
+
 
 namespace tdrp::render::component
 {
@@ -107,6 +109,8 @@ void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds
 			shape.setPosition({ bbox.pos.x, bbox.pos.y });
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
+
+			Window::RenderPhysics(window, so);
 		}
 
 		window.draw(m_sprite);

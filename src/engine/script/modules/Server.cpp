@@ -19,18 +19,22 @@ void bind_server(sol::state& lua)
 		"OnEvent", sol::writeonly_property(&server::Server::SetOnEvent),
 
 		"GetScene", &server::Server::GetScene,
-		"GetDefaultScene", [](server::Server& server) -> std::shared_ptr<scene::Scene> { return server.GetScene(server.GetPackage()->GetStartingScene()); },
+		"GetDefaultScene", [](server::Server& server) -> scene::ScenePtr { return server.GetScene(server.GetPackage()->GetStartingScene()); },
 
 		"GiveClientScript", &server::Server::AddPlayerClientScript,
 		"RemoveClientScript", &server::Server::RemovePlayerClientScript,
 
-		"CreateSceneObject", &server::Server::CreateSceneObject,
+		"CreateSceneObject", sol::overload(
+			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&)>(&server::Server::CreateSceneObject),
+			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&, scene::ScenePtr)>(&server::Server::CreateSceneObject)
+		),
 		"DeleteSceneObject", sol::resolve<bool(uint32_t)>(&server::Server::DeleteSceneObject),
-		"DeleteSceneObject", sol::resolve<bool(std::shared_ptr<SceneObject>)>(&server::Server::DeleteSceneObject),
+		"DeleteSceneObject", sol::resolve<bool(SceneObjectPtr)>(&server::Server::DeleteSceneObject),
 		"DeletePlayerOwnedSceneObjects", &server::Server::DeletePlayerOwnedSceneObjects,
 
 		"GetSceneObject", &server::Server::GetSceneObjectById,
 
+		"SwitchSceneObjectScene", &server::Server::SwitchSceneObjectScene,
 		"SwitchPlayerScene", &server::Server::SwitchPlayerScene,
 		"SwitchSceneObjectOwnership", &server::Server::SwitchSceneObjectOwnership,
 

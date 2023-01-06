@@ -1,19 +1,8 @@
 syntax = "proto3";
-
 package tdrp.packet;
 
-message FlagSet {
-	message Attribute {
-		uint32 id = 1;
-		string name = 2;
-		bool replicated = 3;
-		uint32 update_rate = 4;
-		oneof value {
-			int64 as_int = 5;
-			double as_double = 6;
-			string as_string = 7;
-		}
-	}
+import "_attributes.proto";
 
+message FlagSet {
 	repeated Attribute attributes = 1;
 }

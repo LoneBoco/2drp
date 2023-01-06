@@ -83,7 +83,7 @@ public:
 public:
 	std::shared_ptr<ObjectClass> GetObjectClass(const std::string& name);
 	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name) const;
-	std::shared_ptr<scene::Scene> GetScene(const std::string& name) const;
+	scene::ScenePtr GetScene(const std::string& name) const;
 
 public:
 	void LoadClientScript(const filesystem::path& file);
@@ -98,10 +98,12 @@ public:
 	AttributePtr GetAccountFlag(const server::PlayerPtr player, const std::string& flag) const;
 
 public:
-	std::shared_ptr<tdrp::SceneObject> CreateSceneObject(SceneObjectType type, const std::string& object_class, std::shared_ptr<scene::Scene> scene);
+	SceneObjectPtr CreateSceneObject(SceneObjectType type, const std::string& object_class);
+	SceneObjectPtr CreateSceneObject(SceneObjectType type, const std::string& object_class, scene::ScenePtr scene);
 	bool DeleteSceneObject(SceneObjectID id);
-	bool DeleteSceneObject(std::shared_ptr<SceneObject> sceneobject);
+	bool DeleteSceneObject(SceneObjectPtr sceneobject);
 	size_t DeletePlayerOwnedSceneObjects(PlayerPtr player);
+	bool SwitchSceneObjectScene(SceneObjectPtr sceneobject, scene::ScenePtr scene);
 	bool SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player);
 
 public:
@@ -109,11 +111,10 @@ public:
 	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
 
 public:
-	bool SwitchPlayerScene(std::shared_ptr<server::Player>& player, std::shared_ptr<scene::Scene>& new_scene);
-	//bool SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object);
+	bool SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene);
 
 public:
-	int SendEvent(std::shared_ptr<scene::Scene> scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	int SendEvent(scene::ScenePtr scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
 	const SceneObjectID GetNextSceneObjectID();
@@ -121,18 +122,18 @@ public:
 	const bool IsHost() const;
 	const bool IsGuest() const;
 	const ServerType GetServerType() const;
-	std::shared_ptr<server::Player> GetPlayerById(uint16_t id);
-	std::shared_ptr<tdrp::SceneObject> GetSceneObjectById(SceneObjectID id);
+	PlayerPtr GetPlayerById(uint16_t id);
+	SceneObjectPtr GetSceneObjectById(SceneObjectID id);
 
 public:
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);
 	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const network::Channel channel);
 	void Broadcast(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
-	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
-	int BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
+	std::vector<server::PlayerPtr> SendToScene(const scene::ScenePtr scene, const Vector2df location, uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
+	std::vector<server::PlayerPtr> SendToScene(const scene::ScenePtr scene, const Vector2df location, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
+	int BroadcastToScene(const scene::ScenePtr scene, const uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
+	int BroadcastToScene(const scene::ScenePtr scene, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message, const std::set<PlayerPtr>& exclude = {});
 
 public:
 	//void SetClientNetworkReceiveCallback(network::enet_receive_cb callback);
@@ -165,7 +166,7 @@ protected:
 	std::shared_ptr<package::Package> m_package;
 	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
-	std::map<std::string, std::shared_ptr<scene::Scene>> m_scenes;
+	std::map<std::string, scene::ScenePtr> m_scenes;
 	std::map<std::string, std::string> m_client_scripts;
 	std::string m_server_control_script;
 	std::string m_client_control_script;
@@ -243,7 +244,7 @@ inline const ServerType Server::GetServerType() const
 	return m_server_type;
 }
 
-inline std::shared_ptr<server::Player> Server::GetPlayerById(uint16_t id)
+inline PlayerPtr Server::GetPlayerById(uint16_t id)
 {
 	auto iter = m_player_list.find(id);
 	if (iter == std::end(m_player_list))

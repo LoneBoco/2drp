@@ -5,6 +5,7 @@
 #include "engine/common.h"
 
 #include "engine/scene/SceneObject.h"
+#include "engine/physics/Physics.h"
 
 // Declare so we can friend these.
 namespace tdrp::server
@@ -38,38 +39,41 @@ public:
 public:
 	const std::string& GetName() const;
 
-	uint32_t AddObject(std::shared_ptr<SceneObject> so);
-	bool RemoveObject(std::shared_ptr<SceneObject> so);
+	bool AddObject(SceneObjectPtr so);
+	bool RemoveObject(SceneObjectPtr so);
 	
 	// uint32_t AddZone();
 	// bool RemoveZone();
 
-	std::shared_ptr<SceneObject> FindObject(SceneObjectID id) const;
-	std::shared_ptr<SceneObject> FindObject(const std::string& name) const;
+	SceneObjectPtr FindObject(SceneObjectID id) const;
+	SceneObjectPtr FindObject(const std::string& name) const;
 
-	std::map<SceneObjectID, std::shared_ptr<SceneObject>>& GetGraph();
+	std::unordered_map<SceneObjectID, SceneObjectPtr>& GetGraph();
 
-	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRangeOf(const Vector2df& position, float radius);
-	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
-	std::vector<std::shared_ptr<SceneObject>> FindObjectsInRectangle(const Recti& rectangle);
-	std::vector<std::shared_ptr<SceneObject>> FindObjectsBoundInRectangle(const Rectf& rectangle);
+	std::vector<SceneObjectPtr> FindObjectsInRangeOf(const Vector2df& position, float radius);
+	std::vector<SceneObjectPtr> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
+	std::vector<SceneObjectPtr> FindObjectsInRectangle(const Recti& rectangle);
+	std::vector<SceneObjectPtr> FindObjectsBoundInRectangle(const Rectf& rectangle);
 
 	const uint32_t GetTransmissionDistance() const;
+
+	physics::Physics Physics;
 
 	std::atomic_bool IsLoading;
 
 protected:
 	std::string m_name;
-	std::map<SceneObjectID, std::shared_ptr<SceneObject>> m_graph;
+	std::unordered_map<SceneObjectID, SceneObjectPtr> m_graph;
 	uint32_t m_transmission_distance = 6000;
 };
+using ScenePtr = std::shared_ptr<Scene>;
 
 inline const std::string& Scene::GetName() const
 {
 	return m_name;
 }
 
-inline std::map<uint32_t, std::shared_ptr<SceneObject>>& Scene::GetGraph()
+inline std::unordered_map<uint32_t, SceneObjectPtr>& Scene::GetGraph()
 {
 	return m_graph;
 }

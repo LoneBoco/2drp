@@ -10,6 +10,9 @@
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/Log.h"
 
+#include <PlayRho/PlayRho.hpp>
+
+
 using tdrp::server::Server;
 using tdrp::server::Player;
 using tdrp::network::Packets;
@@ -38,6 +41,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectDelete& 
 void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnership& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectControl& packet);
 void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet);
+void handle(Server& server, const uint16_t id, const packet::SceneObjectCollision& packet);
 void handle(Server& server, const uint16_t id, const packet::SendEvent& packet);
 void handle(Server& server, const uint16_t id, const packet::FlagSet& packet);
 
@@ -104,6 +108,9 @@ void network_receive_server(Server& server, const uint16_t id, const uint16_t pa
 		break;
 	case Packets::SCENEOBJECTUNFOLLOW:
 		HANDLE(packet::SceneObjectUnfollow);
+		break;
+	case Packets::SCENEOBJECTCOLLISION:
+		HANDLE(packet::SceneObjectCollision);
 		break;
 	case Packets::SENDEVENT:
 		HANDLE(packet::SendEvent);
@@ -196,9 +203,9 @@ void handle(Server& server, const uint16_t id, const packet::ServerInfo& packet)
 				const auto& file_entry = packet_copy->files(i);
 
 				const auto& name = file_entry.name();
-				const auto& size = file_entry.size();
-				const auto& date = file_entry.date();
-				const auto& crc32 = file_entry.crc32();
+				const auto size = file_entry.size();
+				const auto date = file_entry.date();
+				const auto crc32 = file_entry.crc32();
 
 				// Check to see if we have this file.
 				bool request_file = true;
@@ -251,7 +258,7 @@ void handle(Server& server, const uint16_t id, const packet::FileTransfer& packe
 		return;
 
 	const auto& name = packet.name();
-	const auto& date = packet.date();
+	const auto date = packet.date();
 	const auto& file = packet.file();
 
 	if (server.DefaultDownloadPath.empty())
@@ -313,21 +320,21 @@ void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
 	for (int i = 0; i < packet.attributes_size(); ++i)
 	{
 		const auto& attr = packet.attributes(i);
-		const auto& id = attr.id();
+		const auto id = attr.id();
 		const auto& name = attr.name();
-		const auto& replicated = attr.replicated();
-		const auto& update_rate = attr.update_rate();
+		const auto replicated = attr.replicated();
+		const auto update_rate = attr.update_rate();
 
 		AttributePtr attribute;
 		switch (attr.value_case())
 		{
-		case packet::ClassAdd_Attribute::ValueCase::kAsInt:
+		case packet::Attribute::ValueCase::kAsInt:
 			attribute = c->Attributes.AddAttribute(name, attr.as_int(), static_cast<uint16_t>(id));
 			break;
-		case packet::ClassAdd_Attribute::ValueCase::kAsDouble:
+		case packet::Attribute::ValueCase::kAsDouble:
 			attribute = c->Attributes.AddAttribute(name, attr.as_double(), static_cast<uint16_t>(id));
 			break;
-		case packet::ClassAdd_Attribute::ValueCase::kAsString:
+		case packet::Attribute::ValueCase::kAsString:
 			attribute = c->Attributes.AddAttribute(name, attr.as_string(), static_cast<uint16_t>(id));
 			break;
 		}
@@ -414,13 +421,13 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 
 			switch (attribute.value_case())
 			{
-			case packet::SceneObjectNew_Attribute::kAsInt:
+			case packet::Attribute::kAsInt:
 				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
 				break;
-			case packet::SceneObjectNew_Attribute::kAsDouble:
+			case packet::Attribute::kAsDouble:
 				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
 				break;
-			case packet::SceneObjectNew_Attribute::kAsString:
+			case packet::Attribute::kAsString:
 				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
 				break;
 			}
@@ -437,13 +444,13 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 			{
 				switch (prop.value_case())
 				{
-				case packet::SceneObjectNew_Attribute::kAsInt:
+				case packet::Attribute::kAsInt:
 					soprop->Set(prop.as_int());
 					break;
-				case packet::SceneObjectNew_Attribute::kAsDouble:
+				case packet::Attribute::kAsDouble:
 					soprop->Set(prop.as_double());
 					break;
-				case packet::SceneObjectNew_Attribute::kAsString:
+				case packet::Attribute::kAsString:
 					soprop->Set(prop.as_string());
 					break;
 				}
@@ -455,6 +462,9 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 
 		// Add it to the appropriate scene.
 		scene->AddObject(so);
+
+		// Collisions.
+		readCollisionFromPacket(so, packet);
 	}
 
 	// Handle the script.
@@ -507,13 +517,13 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 
 		switch (attribute.value_case())
 		{
-		case packet::SceneObjectChange_Attribute::kAsInt:
+		case packet::Attribute::kAsInt:
 			soattrib->Set(attribute.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsDouble:
+		case packet::Attribute::kAsDouble:
 			soattrib->Set(attribute.as_double());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsString:
+		case packet::Attribute::kAsString:
 			soattrib->Set(attribute.as_string());
 			break;
 		}
@@ -535,13 +545,13 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 
 		switch (prop.value_case())
 		{
-		case packet::SceneObjectChange_Attribute::kAsInt:
+		case packet::Attribute::kAsInt:
 			soprop->Set(prop.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsDouble:
+		case packet::Attribute::kAsDouble:
 			soprop->Set(prop.as_double());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsString:
+		case packet::Attribute::kAsString:
 			soprop->Set(prop.as_string());
 			break;
 		}
@@ -554,6 +564,9 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 		// Some animation systems (gani) will restart the animation if the animation prop was set to itself.
 		soprop->SetDirty(true, AttributeDirty::CLIENT);
 	}
+
+	// Physics updates.
+	so->SynchronizePhysics();
 
 	// Send changes to other players.
 	auto scene = so->GetCurrentScene().lock();
@@ -629,15 +642,26 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow
 	}
 }
 
+void handle(Server& server, const uint16_t id, const packet::SceneObjectCollision& packet)
+{
+	if (packet.collision_size() == 0) return;
+
+	const auto sceneobject = packet.id();
+	auto so = server.GetSceneObjectById(sceneobject);
+	if (!so) return;
+
+	readCollisionFromPacket(so, packet);
+}
+
 void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
 {
-	const auto& sender = packet.sender();
+	const auto sender = packet.sender();
 	const auto& pscene = packet.scene();
 	const auto& name = packet.name();
 	const auto& data = packet.data();
-	const auto& x = packet.x();
-	const auto& y = packet.y();
-	const auto& radius = packet.radius();
+	const auto x = packet.x();
+	const auto y = packet.y();
+	const auto radius = packet.radius();
 
 	auto sender_so = server.GetSceneObjectById(sender);
 	auto scene = server.GetScene(pscene);
@@ -697,13 +721,13 @@ void handle(Server& server, const uint16_t id, const packet::FlagSet& packet)
 
 		switch (attribute.value_case())
 		{
-		case packet::SceneObjectChange_Attribute::kAsInt:
+		case packet::Attribute::kAsInt:
 			flag->Set(attribute.as_int());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsDouble:
+		case packet::Attribute::kAsDouble:
 			flag->Set(attribute.as_double());
 			break;
-		case packet::SceneObjectChange_Attribute::kAsString:
+		case packet::Attribute::kAsString:
 			flag->Set(attribute.as_string());
 			break;
 		}

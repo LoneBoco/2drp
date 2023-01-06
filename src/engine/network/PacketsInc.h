@@ -21,6 +21,7 @@
 #include "engine/network/packets/SceneObjectOwnership.pb.h"
 #include "engine/network/packets/SceneObjectControl.pb.h"
 #include "engine/network/packets/SceneObjectUnfollow.pb.h"
+#include "engine/network/packets/SceneObjectCollision.pb.h"
 #include "engine/network/packets/SendEvent.pb.h"
 #include "engine/network/packets/ServerInfo.pb.h"
 #include "engine/network/packets/SwitchScene.pb.h"

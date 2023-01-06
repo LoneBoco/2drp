@@ -117,6 +117,8 @@ void AnimationRenderComponent::Render(sf::RenderTarget& window, std::chrono::mil
 			shape.setPosition({ bbox.pos.x, bbox.pos.y });
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
+
+			Window::RenderPhysics(window, so);
 		}
 
 		if (m_animation)

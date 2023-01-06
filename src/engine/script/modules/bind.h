@@ -12,5 +12,6 @@ void bind_scene(sol::state& lua);
 void bind_sceneobject(sol::state& lua);
 void bind_server(sol::state& lua);
 void bind_vector(sol::state& lua);
+void bind_physics(sol::state& lua);
 
 } // end namespace tdrp::script::modules

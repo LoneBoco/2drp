@@ -3,15 +3,19 @@
 namespace tdrp::scene
 {
 
-uint32_t Scene::AddObject(std::shared_ptr<SceneObject> so)
+bool Scene::AddObject(SceneObjectPtr so)
 {
-	//auto p = m_graph.insert_or_assign(std::make_pair(so->ID, so));
-	auto p = m_graph.insert_or_assign(so->ID, so);
-	so->SetCurrentScene(shared_from_this());
-	return p.second;
+	if (so->SetCurrentScene(shared_from_this()))
+	{
+		auto p = m_graph.insert_or_assign(so->ID, so);
+		Physics.AddSceneObject(so);
+		return true;
+	}
+
+	return false;
 }
 
-bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
+bool Scene::RemoveObject(SceneObjectPtr so)
 {
 	auto p = m_graph.find(so->ID);
 	if (p == m_graph.end())
@@ -23,19 +27,21 @@ bool Scene::RemoveObject(std::shared_ptr<SceneObject> so)
 	m_graph.erase(p);
 	p->second->SetCurrentScene(nullptr);
 
+	Physics.RemoveSceneObject(so);
+
 	return true;
 }
 
-std::shared_ptr<SceneObject> Scene::FindObject(SceneObjectID id) const
+SceneObjectPtr Scene::FindObject(SceneObjectID id) const
 {
 	auto p = m_graph.find(id);
 	if (p == m_graph.end())
-		return std::shared_ptr<SceneObject>();
+		return {};
 
 	return p->second;
 }
 
-std::shared_ptr<SceneObject> Scene::FindObject(const std::string& name) const
+SceneObjectPtr Scene::FindObject(const std::string& name) const
 {
 	for (auto& p : m_graph)
 	{
@@ -43,12 +49,12 @@ std::shared_ptr<SceneObject> Scene::FindObject(const std::string& name) const
 			return p.second;
 	}
 
-	return std::shared_ptr<SceneObject>();
+	return {};
 }
 
-std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vector2df& position, float radius)
+std::vector<SceneObjectPtr> Scene::FindObjectsInRangeOf(const Vector2df& position, float radius)
 {
-	std::vector<std::shared_ptr<SceneObject>> result;
+	std::vector<SceneObjectPtr> result;
 
 	for (auto& p : m_graph)
 	{
@@ -59,9 +65,9 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRangeOf(const Vect
 	return result;
 }
 
-std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRangeOf(const Vector2df& position, float radius)
+std::vector<SceneObjectPtr> Scene::FindObjectsBoundInRangeOf(const Vector2df& position, float radius)
 {
-	std::vector<std::shared_ptr<SceneObject>> result;
+	std::vector<SceneObjectPtr> result;
 
 	for (auto& p : m_graph)
 	{
@@ -72,9 +78,9 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRangeOf(const
 	return result;
 }
 
-std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Recti& rectangle)
+std::vector<SceneObjectPtr> Scene::FindObjectsInRectangle(const Recti& rectangle)
 {
-	std::vector<std::shared_ptr<SceneObject>> result;
+	std::vector<SceneObjectPtr> result;
 
 	for (auto& p : m_graph)
 	{
@@ -85,9 +91,9 @@ std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsInRectangle(const Re
 	return result;
 }
 
-std::vector<std::shared_ptr<SceneObject>> Scene::FindObjectsBoundInRectangle(const Rectf& rectangle)
+std::vector<SceneObjectPtr> Scene::FindObjectsBoundInRectangle(const Rectf& rectangle)
 {
-	std::vector<std::shared_ptr<SceneObject>> result;
+	std::vector<SceneObjectPtr> result;
 
 	for (auto& p : m_graph)
 	{

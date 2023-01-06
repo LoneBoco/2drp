@@ -1,0 +1,10 @@
+syntax = "proto3";
+package tdrp.packet;
+
+import "_physics.proto";
+
+message SceneObjectCollision {
+	fixed32 id = 1;
+	optional Body body = 2;
+	repeated Shape collision = 3;
+}

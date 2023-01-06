@@ -4,12 +4,12 @@
 #include <set>
 #include <any>
 
-//#include <Box2D/Box2D.h>
 #include <tmxlite/Map.hpp>
 
 #include "engine/common.h"
 
 #include "engine/component/Component.h"
+#include "engine/physics/Physics.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/ObjectAttributes.h"
 #include "engine/scene/ObjectProperties.h"
@@ -173,6 +173,11 @@ namespace physics
 } // end namespace physics
 */
 
+#define _PROPDEF(name, type) \
+virtual type Get##name() const; \
+virtual void Set##name(const type&);
+
+
 constexpr SceneObjectID GlobalSceneObjectIDFlag = 0x80'00'00'00;
 
 class SceneObject : public ComponentEntity
@@ -182,10 +187,13 @@ class SceneObject : public ComponentEntity
 	SCRIPT_FUNCTION(OnUpdate);
 	SCRIPT_FUNCTION(OnEvent);
 	SCRIPT_FUNCTION(OnOwnershipChange);
-	SCRIPT_FUNCTION(OnCollision);
 	SCRIPT_FUNCTION(OnAnimationEnd);
 	SCRIPT_FUNCTION(OnAttributeChange);
 	SCRIPT_FUNCTION(OnAttached);
+	SCRIPT_FUNCTION(OnCreatePhysics);
+	SCRIPT_FUNCTION(OnCollision);
+	SCRIPT_FUNCTION(OnCollisionEnd);
+	SCRIPT_FUNCTION(OnSolveContact);
 
 public:
 	SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id);
@@ -205,10 +213,28 @@ public:
 	std::weak_ptr<scene::Scene> GetCurrentScene() const;
 
 	void SetOwningPlayer(std::shared_ptr<server::Player> player);
-	void SetCurrentScene(std::shared_ptr<scene::Scene> scene);
+	bool SetCurrentScene(std::shared_ptr<scene::Scene> scene);
 
 	void AttachTo(std::shared_ptr<SceneObject> other);
 	SceneObjectID GetAttachedId();
+
+	std::optional<playrho::BodyID> GetInitializedPhysicsBody();
+	void SynchronizePhysics();
+
+public:
+	_PROPDEF(Position, Vector2df);
+	_PROPDEF(Depth, int64_t);
+	_PROPDEF(Angle, float);
+	_PROPDEF(Scale, Vector2df);
+	_PROPDEF(Velocity, Vector2df);
+	_PROPDEF(Acceleration, Vector2df);
+	_PROPDEF(VelocityAngle, float);
+	_PROPDEF(AccelerationAngle, float);
+	_PROPDEF(Direction, int64_t);
+	_PROPDEF(Image, std::string);
+	_PROPDEF(Entity, std::string);
+	_PROPDEF(Animation, std::string);
+	_PROPDEF(Text, std::string);
 
 public:
 	virtual SceneObjectType GetType() const
@@ -216,74 +242,14 @@ public:
 		return SceneObjectType::DEFAULT;
 	}
 
-	virtual Vector2df GetPosition() const;
-	virtual void SetPosition(const Vector2df& position);
-
-	virtual int64_t GetDepth() const;
-	virtual void SetDepth(int64_t z);
-
-	virtual Vector2df GetScale() const;
-	virtual void SetScale(const Vector2df& scale);
-
-	// Velocity
-	// Force
-	// Torque
-
-	virtual float GetRotation() const;
-	virtual void SetRotation(float rotation);
-
-	virtual int64_t GetDirection() const;
-	virtual void SetDirection(int64_t dir);
-
-	virtual std::string GetImage() const;
-	virtual void SetImage(const std::string& image);
-
-	virtual std::string GetEntity() const;
-	virtual void SetEntity(const std::string& image);
-
-	virtual std::string GetAnimation() const;
-	virtual void SetAnimation(const std::string& image);
-
-	virtual std::string GetText() const;
-	virtual void SetText(const std::string& text);
-
 	virtual Rectf GetBounds() const;
 
-/*
-	//! Sets the callback function used when update() is called.
-	//! \param callback The callback function to call.
-	void set_update_callback(FSceneObjectUpdate callback)
-	{
-		UpdateCallback = callback;
-	}
-
-	//! Sets the callback function used when update_physics() is called.
-	//! \param callback The callback function to call.
-	void set_physics_update_callback(FSceneObjectUpdate callback)
-	{
-		PhysicsUpdateCallback = callback;
-	}
-*/
-
-	//! Updates the object and clears the list of changed attributes and properties.
-	// void Update();
-
-	//! Updates the object after the physics system modifies it.
-	// void update_physics();
-
-	//! Clears the scene object of data accumulated this frame.
-/*
-	void clear_frame_data()
-	{
-		ChangedAttributes.clear();
-		ChangedProperties.clear();
-	}
-*/
 	bool IsGlobal()
 	{
 		return (ID & GlobalSceneObjectIDFlag) != 0;
 	}
 
+public:
 	const SceneObjectID ID;
 	std::string Name;
 	bool Visible = true;
@@ -295,8 +261,8 @@ public:
 	std::string ClientScript;
 	std::string ServerScript;
 
-	//! Physics.
-	// physics::Physics Physics;
+	std::optional<playrho::BodyID> PhysicsBody;
+	bool PhysicsChanged = false;
 
 protected:
 	const std::shared_ptr<ObjectClass> m_object_class;
@@ -304,9 +270,6 @@ protected:
 	std::weak_ptr<scene::Scene> m_current_scene;
 	std::weak_ptr<SceneObject> m_attached_to;
 	std::vector<std::weak_ptr<SceneObject>> m_attached;
-	// FSceneObjectUpdate UpdateCallback;
-	// FSceneObjectUpdate PhysicsUpdateCallback;
-	// b2Vec2 PreviousPhysicsPosition;
 };
 
 using SceneObjectPtr = std::shared_ptr<SceneObject>;

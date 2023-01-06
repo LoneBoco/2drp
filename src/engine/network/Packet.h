@@ -45,22 +45,9 @@ enum class Packets
 	SCENEOBJECTOWNERSHIP,
 	SCENEOBJECTCONTROL,
 	SCENEOBJECTUNFOLLOW,
+	SCENEOBJECTCOLLISION,
 	SENDEVENT,
 	FLAGSET,
-
-	SERVERTYPE,				// [type]
-	//CLASSADD,				// [name]
-	CLASSATTRIBUTEADD,		// [INT1 class length][class][INT2 id][name]
-	CLASSSCRIPT,			// [STRING class name][script]
-	SERVERATTRIBUTEADD,		// [INT2 id][name]
-	SERVERATTRIBUTES,		// {[INT2 id][value], ...}
-	OBJECTADD,				// [INT4 id][INT1 type][class]
-	OBJECTDELETE,			// [INT4 id]
-	OBJECTATTRIBUTES,		// [INT4 id] {[INT2 id][value], ...}
-	OBJECTPROPERTIES,		// [INT4 id] {[INT1 id][value], ...}
-	OBJECTSCRIPT,			// [INT4 id][script]
-	PLAYEROBJECT,			// [INT4 id]
-	PHYSICS_ADD_POLYGON,	// [INT4 id] ([INT1 0][FLOAT width][FLOAT height] / [INT1 1]{[FLOAT x1][FLOAT y1], ...})
 
 	COUNT
 };

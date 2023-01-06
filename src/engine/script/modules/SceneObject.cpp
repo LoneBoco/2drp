@@ -47,7 +47,7 @@ void bind_sceneobject(sol::state& lua)
 		"TEXT", SceneObjectType::TEXT
 	);
 
-	auto so_as = lua.create_named_table("_SceneObjectAs");
+	auto so_as = lua.create_table();
 	so_as["TEXT"] = CONVERSION(TextSceneObject);
 
 
@@ -58,11 +58,12 @@ void bind_sceneobject(sol::state& lua)
 
 		"Position", sol::property(&SceneObject::GetPosition, &SceneObject::SetPosition),
 		"Layer", sol::property(&SceneObject::GetDepth, &SceneObject::SetDepth),
+		"Angle", sol::property(&SceneObject::GetAngle, &SceneObject::SetAngle),
 		"Scale", sol::property(&SceneObject::GetScale, &SceneObject::SetScale),
-		// Velocity
-		// Force
-		// Torque
-		"Rotation", sol::property(&SceneObject::GetRotation, &SceneObject::SetRotation),
+		"Velocity", sol::property(&SceneObject::GetVelocity, &SceneObject::SetVelocity),
+		"Acceleration", sol::property(&SceneObject::GetAcceleration, &SceneObject::SetAcceleration),
+		"VelocityAngle", sol::property(&SceneObject::GetVelocityAngle, &SceneObject::SetVelocityAngle),
+		"AccelerationAngle", sol::property(&SceneObject::GetAccelerationAngle, &SceneObject::SetAccelerationAngle),
 		"Direction", sol::property(&SceneObject::GetDirection, &SceneObject::SetDirection),
 		"Image", sol::property(&SceneObject::GetImage, &SceneObject::SetImage),
 		"Entity", sol::property(&SceneObject::GetEntity, &SceneObject::SetEntity),
@@ -81,10 +82,15 @@ void bind_sceneobject(sol::state& lua)
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
 		"OnEvent", sol::writeonly_property(&SceneObject::SetOnEvent),
 		"OnOwnershipChange", sol::writeonly_property(&SceneObject::SetOnOwnershipChange),
-		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision),
 		"OnAnimationEnd", sol::writeonly_property(&SceneObject::SetOnAnimationEnd),
+		"OnAttributeChange", sol::writeonly_property(&SceneObject::SetOnAttributeChange),
+		"OnAttached", sol::writeonly_property(&SceneObject::SetOnAttached),
+		"OnCreatePhysics", sol::writeonly_property(&SceneObject::SetOnCreatePhysics),
+		"OnCollision", sol::writeonly_property(&SceneObject::SetOnCollision),
+		"OnCollisionEnd", sol::writeonly_property(&SceneObject::SetOnCollisionEnd),
+		"OnSolveContact", sol::writeonly_property(&SceneObject::SetOnSolveContact),
 
-		"As", sol::readonly_property([&lua]() { return lua["_SceneObjectAs"]; })
+		"As", so_as
 	);
 
 	lua.new_usertype<TextSceneObject>("TextSceneObject", sol::no_constructor,

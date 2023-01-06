@@ -12,97 +12,6 @@
 
 namespace tdrp
 {
-/*
-namespace physics
-{
-
-void Physics::add_collision_circle(float radius, const core::vector2df& center, float density, float friction, float restitution)
-{
-	b2CircleShape circle;
-	circle.m_radius = radius;
-	circle.m_p = b2Vec2(center.X, center.Y);
-
-	b2FixtureDef fixture;
-	fixture.density = density;
-	fixture.friction = friction;
-	fixture.restitution = restitution;
-	fixture.shape = &circle;
-
-	Body->CreateFixture(&fixture);
-}
-
-void Physics::add_collision_box(const core::vector2df& dimension, const core::vector2df& center, float angle, float density, float friction, float restitution)
-{
-	b2PolygonShape poly;
-	poly.SetAsBox(dimension.X, dimension.Y, b2Vec2(center.X, center.Y), angle);
-
-	b2FixtureDef fixture;
-	fixture.density = density;
-	fixture.friction = friction;
-	fixture.restitution = restitution;
-	fixture.shape = &poly;
-
-	Body->CreateFixture(&fixture);
-}
-
-void Physics::add_collision_poly(const std::vector<core::vector2df>& vertices, float density, float friction, float restitution)
-{
-	b2PolygonShape poly;
-	std::vector<b2Vec2> v;
-	for (unsigned int i = 0; i < vertices.size(); ++i)
-		v.push_back(b2Vec2(vertices[i].X, vertices[i].Y));
-	poly.Set(v.data(), v.size());
-
-	b2FixtureDef fixture;
-	fixture.density = density;
-	fixture.friction = friction;
-	fixture.restitution = restitution;
-	fixture.shape = &poly;
-
-	Body->CreateFixture(&fixture);
-}
-
-void Physics::add_collision_poly(const std::vector<b2Vec2>& vertices, float density, float friction, float restitution)
-{
-	b2PolygonShape poly;
-	poly.Set(vertices.data(), vertices.size());
-
-	b2FixtureDef fixture;
-	fixture.density = density;
-	fixture.friction = friction;
-	fixture.restitution = restitution;
-	fixture.shape = &poly;
-
-	Body->CreateFixture(&fixture);
-}
-
-void Physics::add_collision_edge(const core::vector2df& v1, const core::vector2df& v2, bool hasVertex0, const core::vector2df& v0, bool hasVertex3, const core::vector2df& v3, float density, float friction, float restitution)
-{
-	b2EdgeShape edge;
-	edge.m_vertex1.Set(v1.X, v1.Y);
-	edge.m_vertex2.Set(v2.X, v2.Y);
-	if (hasVertex0)
-	{
-		edge.m_hasVertex0 = true;
-		edge.m_vertex0.Set(v0.X, v0.Y);
-	}
-	if (hasVertex3)
-	{
-		edge.m_hasVertex3 = true;
-		edge.m_vertex3.Set(v3.X, v3.Y);
-	}
-
-	b2FixtureDef fixture;
-	fixture.density = density;
-	fixture.friction = friction;
-	fixture.restitution = restitution;
-	fixture.shape = &edge;
-
-	Body->CreateFixture(&fixture);
-}
-
-} // end namespace physics
-*/
 
 SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id)
 : ID(id), Visible(true), m_object_class(c)
@@ -111,22 +20,10 @@ SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObject
 	{
 		Attributes = c->Attributes;
 	}
-
-	// Create our physics body.
-	/*
-	b2BodyDef def;
-	def.userData = this;
-	Physics.Body = CPhysicsManager::Instance().PhysicsWorld().CreateBody(&def);
-	*/
 }
 
 SceneObject::~SceneObject()
 {
-	/*
-	CPhysicsManager::Instance().PhysicsWorld().DestroyBody(Physics.Body);
-	Physics.Body = nullptr;
-	UpdateCallback = nullptr;
-	*/
 }
 
 SceneObject& SceneObject::operator=(const SceneObject& other)
@@ -164,9 +61,18 @@ Vector2df SceneObject::GetPosition() const
 
 void SceneObject::SetPosition(const Vector2df& position)
 {
-	// if (!Physics.Owner) return;
-	Properties[Property::X] = position.x;
+ 	Properties[Property::X] = position.x;
 	Properties[Property::Y] = position.y;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto ppu = scene->Physics.GetPixelsPerUnit();
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetLocation(world, PhysicsBody.value(), { position.x / ppu, position.y / ppu });
+		}
+	}
 }
 
 int64_t SceneObject::GetDepth() const
@@ -174,9 +80,28 @@ int64_t SceneObject::GetDepth() const
 	return Properties[Property::Z].GetAs<int64_t>();
 }
 
-void SceneObject::SetDepth(int64_t z)
+void SceneObject::SetDepth(const int64_t& z)
 {
 	Properties[Property::Z] = z;
+}
+
+float SceneObject::GetAngle() const
+{
+	return Properties[Property::ANGLE].GetAs<float>();
+}
+
+void SceneObject::SetAngle(const float& angle)
+{
+	Properties[Property::ANGLE] = angle;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetAngle(world, PhysicsBody.value(), angle);
+		}
+	}
 }
 
 Vector2df SceneObject::GetScale() const
@@ -191,6 +116,15 @@ void SceneObject::SetScale(const Vector2df& scale)
 {
 	Properties[Property::SCALE_X] = scale.x;
 	Properties[Property::SCALE_Y] = scale.y;
+
+	// TODO: Physics scale.
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+		}
+	}
 
 /*
 	// Scale the physics objects.
@@ -292,18 +226,88 @@ void SceneObject::SetScale(const Vector2df& scale)
 */
 }
 
-// Velocity
-// Force
-// Torque
-
-float SceneObject::GetRotation() const
+Vector2df SceneObject::GetVelocity() const
 {
-	return Properties[Property::ROTATION].GetAs<float>();
+	return Vector2df{
+		Properties[Property::VELOCITY_X].GetAs<float>(),
+		Properties[Property::VELOCITY_Y].GetAs<float>()
+	};
 }
 
-void SceneObject::SetRotation(float rotation)
+void SceneObject::SetVelocity(const Vector2df& velocity)
 {
-	Properties[Property::ROTATION] = rotation;
+	Properties[Property::VELOCITY_X] = velocity.x;
+	Properties[Property::VELOCITY_Y] = velocity.y;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetVelocity(world, PhysicsBody.value(), { velocity.x, velocity.y });
+		}
+	}
+}
+
+Vector2df SceneObject::GetAcceleration() const
+{
+	return Vector2df{
+		Properties[Property::ACCELERATION_X].GetAs<float>(),
+		Properties[Property::ACCELERATION_Y].GetAs<float>()
+	};
+}
+
+void SceneObject::SetAcceleration(const Vector2df& acceleration)
+{
+	Properties[Property::ACCELERATION_X] = acceleration.x;
+	Properties[Property::ACCELERATION_Y] = acceleration.y;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetAcceleration(world, PhysicsBody.value(), { acceleration.x, acceleration.y });
+		}
+	}
+}
+
+float SceneObject::GetVelocityAngle() const
+{
+	return Properties[Property::VELOCITY_ANGLE].GetAs<float>();
+}
+
+void SceneObject::SetVelocityAngle(const float& velocity)
+{
+	Properties[Property::VELOCITY_ANGLE] = velocity;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetVelocity(world, PhysicsBody.value(), velocity);
+		}
+	}
+}
+
+float SceneObject::GetAccelerationAngle() const
+{
+	return Properties[Property::ACCELERATION_ANGLE].GetAs<float>();
+}
+
+void SceneObject::SetAccelerationAngle(const float& acceleration)
+{
+	Properties[Property::ACCELERATION_ANGLE] = acceleration;
+
+	if (PhysicsBody.has_value())
+	{
+		if (auto scene = m_current_scene.lock(); scene)
+		{
+			auto& world = scene->Physics.GetWorld();
+			playrho::d2::SetAcceleration(world, PhysicsBody.value(), acceleration);
+		}
+	}
 }
 
 int64_t SceneObject::GetDirection() const
@@ -311,7 +315,7 @@ int64_t SceneObject::GetDirection() const
 	return Properties[Property::DIRECTION].GetAs<int64_t>();
 }
 
-void SceneObject::SetDirection(int64_t dir)
+void SceneObject::SetDirection(const int64_t& dir)
 {
 	Properties[Property::DIRECTION] = dir;
 }
@@ -356,6 +360,8 @@ void SceneObject::SetText(const std::string& text)
 	Properties[Property::TEXT] = text;
 }
 
+///////////////////////////////////////////////////////////////////////////////
+
 Rectf SceneObject::GetBounds() const
 {
 	auto bbox = this->RetrieveFromProvider("BoundingBox");
@@ -379,9 +385,15 @@ void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
 	m_owning_player = player;
 }
 
-void SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
+bool SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
 {
-	m_current_scene = scene;
+	if (IsGlobal() || m_current_scene.expired())
+	{
+		m_current_scene = scene;
+		return true;
+	}
+
+	return false;
 }
 
 void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
@@ -416,100 +428,61 @@ SceneObjectID SceneObject::GetAttachedId()
 	return attached->ID;
 }
 
-//void SceneObject::Update()
-//{
-	/*
-	// Update our physics engine if we own this object.
-	if (Physics.Owner)
-	{
-		uint8_t ppu = CPhysicsManager::Instance().get_pixels_per_unit();
-
-		// Check for manual X/Y changes.
-		float x = Properties.get(EP_X)->get_as_float();
-		float y = Properties.get(EP_Y)->get_as_float();
-		bool x_changed = (ChangedProperties.find(EP_X) != ChangedProperties.end());
-		bool y_changed = (ChangedProperties.find(EP_Y) != ChangedProperties.end());
-		if (x_changed || y_changed)
-			Physics.Body->SetTransform(b2Vec2(Properties.get(EP_X)->get_as_float() / (float)ppu, Properties.get(EP_Y)->get_as_float() / (float)ppu), Physics.Body->GetAngle());
-
-		// Check for velocity changes.
-		float velocity[] = { Properties.get(EP_VELOCITY_X)->get_as_float(), Properties.get(EP_VELOCITY_Y)->get_as_float() };
-		b2Vec2 v = Physics.Body->GetLinearVelocity();
-		if (v.x != velocity[0])
-		{
-			Properties.get(EP_VELOCITY_X)->set(velocity[0]);
-			ChangedProperties.insert(EP_VELOCITY_X);
-		}
-		if (v.y != velocity[1])
-		{
-			Properties.get(EP_VELOCITY_Y)->set(velocity[1]);
-			ChangedProperties.insert(EP_VELOCITY_Y);
-		}
-
-		// Check for force changes.
-		float force[] = { Properties.get(EP_FORCE_X)->get_as_float(), Properties.get(EP_FORCE_Y)->get_as_float() };
-		b2Vec2 f = Physics.Body->GetForce();
-		if (f.x != force[0])
-		{
-			Properties.get(EP_FORCE_X)->set(force[0]);
-			ChangedProperties.insert(EP_FORCE_X);
-		}
-		if (f.y != force[1])
-		{
-			Properties.get(EP_FORCE_Y)->set(force[1]);
-			ChangedProperties.insert(EP_FORCE_Y);
-		}
-
-		// Check for torque changes.
-		float torque = Properties.get(EP_TORQUE)->get_as_float();
-		float t = Physics.Body->GetTorque();
-		if (t != torque)
-		{
-			Properties.get(EP_TORQUE)->set(t);
-			ChangedProperties.insert(EP_TORQUE);
-		}
-
-		// Check for rotation changes.
-		float rotation = Properties.get(EP_ROTATION)->get_as_float();
-		float r = -Physics.Body->GetAngle() * core::RADTODEG;
-		if (r != rotation)
-		{
-			Properties.get(EP_ROTATION)->set(r);
-			ChangedProperties.insert(EP_ROTATION);
-		}
-	}
-
-	// Call our callback function.
-	if (UpdateCallback != nullptr)
-		(*UpdateCallback)(this);
-	*/
-//}
-
-/*
-void SceneObject::update_physics()
+std::optional<playrho::BodyID> SceneObject::GetInitializedPhysicsBody()
 {
-	// Update our position if the physics engine changed our location.
-	uint8_t ppu = CPhysicsManager::Instance().get_pixels_per_unit();
-	b2Vec2 pos = Physics.Body->GetPosition();
-	if (pos.x != PreviousPhysicsPosition.x)
-	{
-		Properties.get(EP_X)->set(pos.x * ppu);
-		ChangedProperties.insert(EP_X);
-	}
-	if (pos.y != PreviousPhysicsPosition.y)
-	{
-		Properties.get(EP_Y)->set(pos.y * ppu);
-		ChangedProperties.insert(EP_Y);
-	}
-	PreviousPhysicsPosition = pos;
+	if (PhysicsBody.has_value())
+		return PhysicsBody.value();
 
-	// Call our callback function.
-	if (PhysicsUpdateCallback != nullptr)
-		(*PhysicsUpdateCallback)(this);
+	auto scene = m_current_scene.lock();
+	if (!scene) return std::nullopt;
+
+	auto& world = scene->Physics.GetWorld();
+	auto ppu = scene->Physics.GetPixelsPerUnit();
+	auto position = GetPosition();
+
+	playrho::d2::BodyConf config;
+	config
+		.UseType(playrho::BodyType::Kinematic)
+		.UseLocation({ position.x / ppu, position.y / ppu })
+		.UseFixedRotation(true);
+
+	auto body = playrho::d2::CreateBody(world, config);
+	PhysicsBody = body;
+
+	return body;
 }
-*/
 
-///////////////////////////////////////////////////////////////////////////////
+void SceneObject::SynchronizePhysics()
+{
+	if (!PhysicsBody.has_value()) return;
+
+	bool x_dirty = Properties[Property::X].IsDirty(AttributeDirty::CLIENT);
+	bool y_dirty = Properties[Property::Y].IsDirty(AttributeDirty::CLIENT);
+	if (x_dirty || y_dirty)
+		SetPosition(GetPosition());
+
+	bool angle = Properties[Property::ANGLE].IsDirty(AttributeDirty::CLIENT);
+	if (angle)
+		SetAngle(GetAngle());
+
+	bool x_velocity = Properties[Property::VELOCITY_X].IsDirty(AttributeDirty::CLIENT);
+	bool y_velocity = Properties[Property::VELOCITY_Y].IsDirty(AttributeDirty::CLIENT);
+	if (x_velocity || y_velocity)
+		SetVelocity(GetVelocity());
+
+	bool x_acceleration = Properties[Property::ACCELERATION_X].IsDirty(AttributeDirty::CLIENT);
+	bool y_acceleration = Properties[Property::ACCELERATION_Y].IsDirty(AttributeDirty::CLIENT);
+	if (x_acceleration || y_acceleration)
+		SetAcceleration(GetAcceleration());
+
+	bool angle_velocity = Properties[Property::VELOCITY_ANGLE].IsDirty(AttributeDirty::CLIENT);
+	if (angle_velocity)
+		SetVelocityAngle(GetVelocityAngle());
+
+	bool angle_acceleration = Properties[Property::ACCELERATION_ANGLE].IsDirty(AttributeDirty::CLIENT);
+	if (angle_acceleration)
+		SetAccelerationAngle(GetAccelerationAngle());
+}
 
 ///////////////////////////////////////////////////////////////////////////////
 

@@ -23,6 +23,7 @@ Script::Script()
 	script::modules::bind_sceneobject(*lua);
 	script::modules::bind_server(*lua);
 	script::modules::bind_vector(*lua);
+	script::modules::bind_physics(*lua);
 
 	lua->set_function("log", &log);
 }

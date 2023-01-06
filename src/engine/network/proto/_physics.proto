@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+enum BodyType {
+	STATIC = 0;
+	KINEMATIC = 1;
+	DYNAMIC = 2;
+}
+enum ShapeType {
+	POLYGON = 0;
+	CIRCLE = 1;
+}
+
+message Point {
+	float x = 1;
+	float y = 2;
+}
+message Body {
+	BodyType type = 1;
+	bool fixed_rotation = 2;
+}
+message Shape {
+	ShapeType type = 1;
+	optional float radius = 2;
+	repeated Point points = 3;
+}

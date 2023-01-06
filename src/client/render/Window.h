@@ -6,6 +6,7 @@
 
 #include "BabyDI.hpp"
 
+#include "engine/scene/SceneObject.h"
 #include "engine/filesystem/ProgramSettings.h"
 
 
@@ -30,6 +31,9 @@ public:
 	bool IsActive() const;
 
 	void EventLoop();
+
+public:
+	static void RenderPhysics(sf::RenderTarget&, SceneObjectPtr);
 
 private:
 	INJECT(::tdrp::Game, Game);

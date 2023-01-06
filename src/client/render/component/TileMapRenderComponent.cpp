@@ -178,7 +178,7 @@ void TileMapRenderComponent::Render(sf::RenderTarget& window, std::chrono::milli
 
 		auto pos = so->GetPosition();
 		auto scale = so->GetScale();
-		auto rotate = so->GetRotation();
+		auto rotate = so->GetAngle();
 
 		sf::RenderStates state;
 		state.transform
