@@ -76,7 +76,7 @@ void bind_sceneobject(sol::state& lua)
 		"Properties", &SceneObject::Properties,
 
 		"Visible", &SceneObject::Visible,
-		"NonReplicated", sol::readonly_property(&SceneObject::NonReplicated),
+		"Replicated", sol::readonly_property(&SceneObject::Replicated),
 
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),

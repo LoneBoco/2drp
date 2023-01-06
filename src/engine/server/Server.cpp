@@ -351,7 +351,7 @@ void Server::Update(const std::chrono::milliseconds& tick)
 
 				// If we don't own this scene object, don't send.
 				// Non-replicated objects skip this check.
-				if (auto op = object->GetOwningPlayer().lock(); op != m_player && !object->NonReplicated)
+				if (auto op = object->GetOwningPlayer().lock(); op != m_player && object->Replicated)
 				{
 					// If we don't own this object and this object has an owner, don't process changes.
 					// If the scene object isn't owned and we are the host, we'll take care of the events.
@@ -360,10 +360,10 @@ void Server::Update(const std::chrono::milliseconds& tick)
 				}
 
 				packet.set_id(id);
-				packet.set_non_replicated(object->NonReplicated);
+				packet.set_replicated(object->Replicated);
 				packet.set_attached_to(object->GetAttachedId());
 
-				if (!IsSinglePlayer() && !object->NonReplicated)
+				if (!IsSinglePlayer() && object->Replicated)
 				{
 					// log::PrintLine("-> Sending prop updates for scene object {}.", id);
 
@@ -820,7 +820,7 @@ bool Server::SwitchSceneObjectScene(SceneObjectPtr sceneobject, scene::ScenePtr 
 bool Server::SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player)
 {
 	// Non-replicated objects can't be owned.
-	if (sceneobject->NonReplicated)
+	if (!sceneobject->Replicated)
 		return false;
 
 	// Check for ownership of this scene object before we give it away.

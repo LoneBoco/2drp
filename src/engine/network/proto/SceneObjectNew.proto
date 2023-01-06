@@ -9,7 +9,7 @@ message SceneObjectNew {
 	uint32 type = 2;
 	string class = 3;
 	string script = 4;
-	bool non_replicated = 5;
+	bool replicated = 5;
 	optional fixed32 attached_to = 6;
 	string scene = 7;
 	optional Body body = 8;

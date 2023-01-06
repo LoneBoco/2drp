@@ -253,7 +253,7 @@ public:
 	const SceneObjectID ID;
 	std::string Name;
 	bool Visible = true;
-	bool NonReplicated = false;
+	bool Replicated = true;
 
 	ObjectAttributes Attributes;
 	ObjectProperties Properties;

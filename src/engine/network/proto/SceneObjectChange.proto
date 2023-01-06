@@ -5,7 +5,7 @@ import "_attributes.proto";
 
 message SceneObjectChange {
 	fixed32 id = 1;
-	bool non_replicated = 2;
+	bool replicated = 2;
 	optional fixed32 attached_to = 3;
 	repeated Attribute properties = 4;
 	repeated Attribute attributes = 5;

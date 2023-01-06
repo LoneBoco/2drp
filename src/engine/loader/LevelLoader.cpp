@@ -119,7 +119,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 					}
 
 					// Check if it is a non-replicated scene object.
-					so->NonReplicated = object.attribute("nonreplicated").as_bool(false);
+					so->Replicated = object.attribute("replicated").as_bool(true);
 
 					// Load all properties.
 					for (auto& prop : object.children("property"))

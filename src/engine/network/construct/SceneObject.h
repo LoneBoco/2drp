@@ -118,7 +118,7 @@ inline packet::SceneObjectNew constructSceneObjectPacket(SceneObjectPtr sceneobj
 	object.set_id(sceneobject->ID);
 	object.set_type(static_cast<google::protobuf::uint32>(sceneobject->GetType()));
 	object.set_class_(sceneobject->GetClass()->GetName());
-	object.set_non_replicated(sceneobject->NonReplicated);
+	object.set_replicated(sceneobject->Replicated);
 	object.set_attached_to(sceneobject->GetAttachedId());
 
 	auto scenep = sceneobject->GetCurrentScene().lock();
