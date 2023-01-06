@@ -46,6 +46,9 @@ Server::Server()
 {
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
 	Script = script_manager->CreateScriptInstance("Server");
+	Script->BindIntoMe([this](sol::state& lua) {
+		lua["Server"] = this;
+	});
 
 	// Make up unique id.
 	m_unique_id = tdrp::os::CalculateComputerName();
@@ -476,6 +479,10 @@ bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
 
 		auto object = network::constructSceneObjectPacket(sceneobject);
 		Send(player->GetPlayerId(), network::PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
+
+		// If there is no owning player, take ownership.
+		if (sceneobject->GetOwningPlayer().expired())
+			SwitchSceneObjectOwnership(sceneobject, player);
 	}
 
 	return true;

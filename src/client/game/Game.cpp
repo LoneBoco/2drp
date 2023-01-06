@@ -61,7 +61,8 @@ void Game::Initialize()
 {
 	// Bind game script classes.
 	Script->BindIntoMe(
-		&bind_client
+		&bind_client,
+		[this](sol::state& lua) { lua["Server"] = &this->Server; }
 	);
 
 	// Load the UI.

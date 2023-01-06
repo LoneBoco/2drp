@@ -1,6 +1,7 @@
 #include "engine/script/modules/bind.h"
 
 #include "engine/scene/SceneObject.h"
+#include "engine/server/Player.h"
 
 namespace sol
 {
@@ -33,6 +34,11 @@ namespace functions
 		auto c = self.GetClass().lock();
 		if (c) return c->GetName();
 		else return {};
+	}
+
+	server::PlayerPtr get_owner(const SceneObject& self)
+	{
+		return self.GetOwningPlayer().lock();
 	}
 }
 
@@ -77,6 +83,7 @@ void bind_sceneobject(sol::state& lua)
 
 		"Visible", &SceneObject::Visible,
 		"Replicated", sol::readonly_property(&SceneObject::Replicated),
+		"Owner", sol::readonly_property(&functions::get_owner),
 
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
 		"OnUpdate", sol::writeonly_property(&SceneObject::SetOnUpdate),
