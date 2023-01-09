@@ -59,9 +59,15 @@ Rectf TextRenderComponent::GetBoundingBox() const
 		if (so->GetType() != SceneObjectType::TEXT)
 			return Rectf{};
 
-		auto bounds = m_text.getGlobalBounds();
+		auto pos = so->GetPosition();
+		auto textpos = m_text.getPosition();
 
-		return Rectf{ bounds.left, bounds.top, bounds.width, bounds.height };
+		auto bounds = m_text.getLocalBounds();
+		auto global = m_text.getGlobalBounds();
+
+		if (Vector2df::Distance(pos, { textpos.x, textpos.y }) > 100)
+			return Rectf{ pos.x + bounds.left, pos.y + bounds.top, bounds.width, bounds.height };
+		else return Rectf{ global.left, global.top, global.width, global.height };
 	}
 
 	return Rectf{};
@@ -88,6 +94,10 @@ void TextRenderComponent::Render(sf::RenderTarget& window, std::chrono::millisec
 
 		m_text.setPosition({ pos.x, pos.y });
 		m_text.setScale({ scale.x, scale.y });
+		m_text.setStyle(sf::Text::Bold);
+		m_text.setFillColor(sf::Color::White);
+		m_text.setOutlineColor(sf::Color::Black);
+		m_text.setOutlineThickness(1.0f);
 
 		if (text_so->GetCentered())
 		{

@@ -70,7 +70,15 @@ void SceneObject::SetPosition(const Vector2df& position)
 		{
 			auto ppu = scene->Physics.GetPixelsPerUnit();
 			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetLocation(world, PhysicsBody.value(), { position.x / ppu, position.y / ppu });
+			auto attached_to = m_attached_to.lock();
+
+			if (!attached_to)
+				playrho::d2::SetLocation(world, PhysicsBody.value(), { position.x / ppu, position.y / ppu });
+			else
+			{
+				Vector2df attached_pos{ attached_to->GetPosition() + position };
+				playrho::d2::SetLocation(world, PhysicsBody.value(), { attached_pos.x / ppu, attached_pos.y / ppu });
+			}
 		}
 	}
 }
@@ -403,6 +411,8 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 	if (old && old == other)
 		return;
 
+	m_attached_to = other;
+
 	// If we are detaching, set our position to our current location.
 	// If we are attaching, set our position offset to 0,0.
 	if (other == nullptr)
@@ -416,7 +426,6 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 		SetPosition({ 0, 0 });
 	}
 
-	m_attached_to = other;
 	OnAttached.RunAll(m_attached_to, old);
 }
 
