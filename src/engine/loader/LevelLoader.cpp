@@ -17,6 +17,7 @@
 #include <tmxlite/Map.hpp>
 #include <tmxlite/TileLayer.hpp>
 #include <clipper2/clipper.h>
+#include <ConcavePolygon.h>
 
 
 using namespace tdrp::scene;
@@ -85,6 +86,36 @@ namespace tdrp::loader::helper
 		}
 
 		return result;
+	}
+
+	void createPhysicsShape(playrho::d2::World& world, const playrho::BodyID& body, const uint8_t& ppu, const cxd::ConcavePolygon<Clipper2Lib::PointD>& polygon)
+	{
+		// Check if we have sub-polys.
+		// If we do, create shapes off those instead.
+		auto sub_polys = polygon.getNumberSubPolys();
+		if (sub_polys != 0)
+		{
+			// Recursively walk down the sub-divided polygons.
+			for (auto i = 0; i < polygon.getNumberSubPolys(); ++i)
+				createPhysicsShape(world, body, ppu, polygon.getSubPolygon(i));
+		}
+		else
+		{
+			// Convert to PlayRho vertices.
+			std::vector<playrho::Length2> vertices;
+			for (const auto& vertex : polygon.getVertices())
+			{
+				auto& [x, y] = vertex.position;
+				vertices.emplace_back(playrho::Length2{ static_cast<float>(x) / ppu, static_cast<float>(y) / ppu });
+			}
+
+			playrho::d2::PolygonShapeConf conf{};
+			conf.UseVertices(vertices);
+
+			// Build the shape.
+			const auto& shape = playrho::d2::CreateShape(world, conf);
+			playrho::d2::Attach(world, body, shape);
+		}
 	}
 
 } // end namespace tdrp::loader::helper
@@ -511,7 +542,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 
 							// Collection collision polygons.
 							{
-								Clipper2Lib::Paths64 collision_polys;
+								Clipper2Lib::PathsD collision_polys;
 
 								// Look through all of our layers.
 								for (const auto& layer : tmx->getLayers())
@@ -544,11 +575,11 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 											auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
 											if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
 											{
-												Clipper2Lib::Path64 poly;
+												Clipper2Lib::PathD poly;
 												const auto& points = has_points->getPoints();
 												for (const auto& point : points)
-													poly.emplace_back(Clipper2Lib::Point64{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
-												// poly.emplace_back(Clipper2Lib::Point64{ (x * tile_size.x) + points[0].x, (y * tile_size.y) + points[0].y});
+													poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
+
 												collision_polys.push_back(std::move(poly));
 											}
 											// Otherwise, we may have a box collision.
@@ -558,15 +589,14 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 												const auto& aabb = object.getAABB();
 												if (aabb.width != 0)
 												{
-													Clipper2Lib::Path64 poly;
+													Clipper2Lib::PathD poly;
 													float px = x * tile_size.x + aabb.left;
 													float py = y * tile_size.y + aabb.top;
 
-													poly.emplace_back(Clipper2Lib::Point64{ px, py });
-													poly.emplace_back(Clipper2Lib::Point64{ px + aabb.width, py });
-													poly.emplace_back(Clipper2Lib::Point64{ px + aabb.width, py + aabb.height });
-													poly.emplace_back(Clipper2Lib::Point64{ px, py + aabb.height });
-													// poly.emplace_back(Clipper2Lib::Point64{ px, py });
+													poly.emplace_back(Clipper2Lib::PointD{ px, py });
+													poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
+													poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
+													poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
 													collision_polys.push_back(std::move(poly));
 												}
 											}
@@ -576,20 +606,19 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 
 								if (!collision_polys.empty())
 								{
+									// Union all the polygons.
 									auto paths = Clipper2Lib::Union(collision_polys, Clipper2Lib::FillRule::NonZero);
 
 									// Construct the collision polys.
 									for (const auto& poly : paths)
 									{
-										std::vector<playrho::Length2> vertices;
-										for (const auto& vertex : poly)
-											vertices.emplace_back(playrho::Length2{ static_cast<float>(vertex.x) / ppu, static_cast<float>(vertex.y) / ppu });
+										// Perform polygon partitioning.
+										// PlayRho can only handle convex polygons.
+										cxd::ConcavePolygon<Clipper2Lib::PointD> concavePoly(poly);
+										concavePoly.convexDecomp();
 
-										playrho::d2::PolygonShapeConf conf{};
-										conf.UseVertices(vertices);
-
-										const auto& shape = playrho::d2::CreateShape(world, conf);
-										playrho::d2::Attach(world, body, shape);
+										// Create physics shapes on the vertices.
+										helper::createPhysicsShape(world, body, ppu, concavePoly);
 									}
 								}
 							}

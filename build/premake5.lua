@@ -83,24 +83,29 @@ project "2drp"
 
 	-- Library includes.
 	includedirs {
-		"../dependencies/SFML/include/",
-		"../dependencies/PlayRho/",
-		"../dependencies/bzip2/",
-		"../dependencies/zlib/",
-		"../dependencies/enet/include/",
+		-- Header only.
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/BabyDI/include/",
+		"../dependencies/ConvexDecomposition/src/",
 		"../dependencies/pugixml/src/",
-		"../dependencies/protobuf/src/",
-		"../dependencies/sol2/include/",
-		"../dependencies/luajit-2.0/src/",
+
+		"../dependencies/bzip2/",
+		"../dependencies/zlib/",
+
+		-- Libs.
 		"../dependencies/ziplib/Source/ZipLib/",
-		"../dependencies/SpriterPlusPlus/",
-		"../dependencies/tmxlite/tmxlite/include/",
+		"../dependencies/enet/include/",
+		"../dependencies/protobuf/src/",
+		"../dependencies/SFML/include/",
+		"../dependencies/freetype-windows-binaries/include/",
+		"../dependencies/PlayRho/",
 		"../dependencies/RmlUi/include/",
 		"../dependencies/RmlSolLua/include/",
-		"../dependencies/freetype-windows-binaries/include/",
+		"../dependencies/sol2/include/",
+		"../dependencies/luajit-2.0/src/",
+		"../dependencies/SpriterPlusPlus/",
+		"../dependencies/tmxlite/tmxlite/include/",
 		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
 	}
 
