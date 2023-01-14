@@ -13,6 +13,12 @@
 namespace tdrp::script
 {
 
+#ifdef __INTELLISENSE__
+
+template <typename T> concept ValidScriptObject = true;
+
+#else
+
 template <typename T>
 concept ValidScriptObject = requires (T t)
 {
@@ -20,6 +26,7 @@ concept ValidScriptObject = requires (T t)
 	t.LuaEnvironment;
 };
 
+#endif
 
 class Script
 {
@@ -55,8 +62,9 @@ public:
 	}
 
 public:
-	template <typename T> requires ValidScriptObject<T> && is_not_pointer<T>
-	void RunScript(const std::string_view& module_name, const std::string& script, std::shared_ptr<T> me)
+
+	template <typename T> requires ValidScriptObject<T>
+	void RunScript(const std::string_view& module_name, const std::string& script, std::shared_ptr<T>& me)
 	{
 		if (script.empty())
 			return;
