@@ -21,7 +21,7 @@ public:
 
 	//! Gets the name of the object class.
 	//! \return The name of the object class.
-	std::string GetName() const		{ return m_name; }
+	const std::string& GetName() const		{ return m_name; }
 
 	//! Object properties.
 	ObjectAttributes Attributes;

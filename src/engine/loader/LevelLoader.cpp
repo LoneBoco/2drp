@@ -25,6 +25,12 @@ using namespace tdrp::scene;
 namespace tdrp::loader::helper
 {
 
+	constexpr auto allowPhysicsNode = std::to_array<SceneObjectType>({
+		SceneObjectType::STATIC,
+		SceneObjectType::ANIMATED,
+		SceneObjectType::TEXT
+	});
+
 	template <typename T>
 	requires std::integral<T> || std::floating_point<T>
 	std::vector<T> string_split_to_numbers(const std::string_view& sv)
@@ -93,7 +99,7 @@ namespace tdrp::loader::helper
 		const auto& poly = polypath->Polygon();
 
 		TPPLPoly polygon;
-		polygon.Init(poly.size());
+		polygon.Init(static_cast<long>(poly.size()));
 		polygon.SetHole(polypath->IsHole());
 
 		if (polypath->IsHole())
@@ -131,6 +137,371 @@ namespace tdrp::loader::helper
 		// Add the shape to the world.
 		const auto& shape = playrho::d2::CreateShape(world, conf);
 		playrho::d2::Attach(world, body, shape);
+	}
+
+	void loadPhysics(scene::ScenePtr& scene, SceneObjectPtr& so, const pugi::xml_node& physics)
+	{
+		if (physics.empty())
+			return;
+
+		const auto& scriptclass = so->GetClass()->GetName();
+		const auto& id = so->ID;
+
+		playrho::BodyType bodytype{ playrho::BodyType::Kinematic };
+		auto& world = scene->Physics.GetWorld();
+		auto ppu = scene->Physics.GetPixelsPerUnit();
+
+		std::string type = physics.attribute("type").as_string();
+		if (boost::iequals(type, "static"))
+			bodytype = playrho::BodyType::Static;
+		else if (boost::iequals(type, "kinematic"))
+			bodytype = playrho::BodyType::Kinematic;
+		else if (boost::iequals(type, "dynamic"))
+			bodytype = playrho::BodyType::Dynamic;
+
+		// Create the body.
+		auto body = helper::getOrCreatePhysicsBody(world, so, bodytype, ppu);
+
+		for (auto& shape : physics.children())
+		{
+			std::string_view name{ shape.name() };
+			if (name == "box")
+			{
+				Vector2df v_topleft{ 0, 0 };
+				Vector2df v_bottomright{ 0, 0 };
+
+				auto center = shape.attribute("center");
+				auto radius = shape.attribute("radius");
+				auto left = shape.attribute("left");
+				auto right = shape.attribute("right");
+				auto top = shape.attribute("top");
+				auto bottom = shape.attribute("bottom");
+				auto topleft = shape.attribute("topleft");
+				auto bottomright = shape.attribute("bottomright");
+				auto dimension = shape.attribute("dimension");
+
+				if (!center.empty() || !radius.empty())
+				{
+					auto centers = helper::string_split_to_numbers<float>(center.as_string());
+					if (centers.size() < 2)
+					{
+						log::PrintLine("!! Collision box requires two values for center, skipping shape. ({}){}", scriptclass, id);
+						continue;
+					}
+
+					auto radii = helper::string_split_to_numbers<float>(radius.as_string());
+					if (radii.empty())
+					{
+						log::PrintLine("!! Collision box requires at least one value for radius, skipping shape. ({}){}", scriptclass, id);
+						continue;
+					}
+
+					if (radii.size() == 1)
+						radii.push_back(radii[0]);
+
+					v_topleft.x = centers[0] - radii[0];
+					v_topleft.y = centers[1] - radii[1];
+					v_bottomright.x = centers[0] + radii[0];
+					v_bottomright.y = centers[1] + radii[1];
+				}
+				else
+				{
+					if (!left.empty()) v_topleft.x = left.as_float();
+					if (!right.empty()) v_bottomright.x = right.as_float();
+					if (!top.empty()) v_topleft.y = top.as_float();
+					if (!bottom.empty()) v_bottomright.y = bottom.as_float();
+					if (!topleft.empty())
+					{
+						auto toplefts = helper::string_split_to_numbers<float>(topleft.as_string());
+						if (toplefts.size() >= 2)
+						{
+							v_topleft.x = toplefts[0];
+							v_topleft.y = toplefts[1];
+						}
+					}
+					if (!bottomright.empty())
+					{
+						auto bottomrights = helper::string_split_to_numbers<float>(bottomright.as_string());
+						if (bottomrights.size() >= 2)
+						{
+							v_bottomright.x = bottomrights[0];
+							v_bottomright.y = bottomrights[1];
+						}
+					}
+					if (!dimension.empty())
+					{
+						auto dimensions = helper::string_split_to_numbers<float>(dimension.as_string());
+						if (dimensions.size() >= 2)
+						{
+							if (v_bottomright.x != 0.f)
+								v_topleft.x = v_bottomright.x - dimensions[0];
+							else v_bottomright.x = v_topleft.x + dimensions[0];
+
+							if (v_bottomright.y != 0.f)
+								v_topleft.y = v_bottomright.y - dimensions[1];
+							else v_bottomright.y = v_topleft.y + dimensions[1];
+						}
+					}
+				}
+
+				// Add to the physics engine.
+				playrho::Length hx = (v_bottomright.x - v_topleft.x) / 2.f;
+				playrho::Length hy = (v_bottomright.y - v_topleft.y) / 2.f;
+				if (hx != 0.0f && hy != 0.0f)
+				{
+					auto shape = playrho::d2::CreateShape(world, playrho::d2::PolygonShapeConf{ hx, hy }.Translate({ v_topleft.x + hx, v_topleft.y + hy }));
+					playrho::d2::Attach(world, so->PhysicsBody.value(), shape);
+				}
+			}
+			else if (name == "circle")
+			{
+				auto center = shape.attribute("center");
+				auto radius = shape.attribute("radius");
+
+				Vector2df v_center{ 0.f, 0.f };
+				float v_radius = 0.f;
+
+				if (!center.empty() && !radius.empty())
+				{
+					auto centers = helper::string_split_to_numbers<float>(center.as_string());
+					if (centers.size() < 2)
+					{
+						log::PrintLine("!! Collision circle requires two values for center, skipping shape. ({}){}", scriptclass, id);
+						continue;
+					}
+
+					v_center.x = centers[0];
+					v_center.y = centers[1];
+					v_radius = radius.as_float();
+				}
+
+				// Add to the physics engine.
+				if (v_radius != 0.0f)
+				{
+					auto shape = playrho::d2::CreateShape(world, playrho::d2::DiskShapeConf{ v_radius }.UseLocation({ v_center.x, v_center.y }));
+					playrho::d2::Attach(world, so->PhysicsBody.value(), shape);
+				}
+			}
+		}
+	}
+
+	bool loadTileMap(server::Server& server, scene::ScenePtr& scene, SceneObjectPtr& so, const pugi::xml_node& object)
+	{
+		auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so);
+		const auto& tileset = object.child("tileset");
+		const auto& tiledata = object.child("tiledata");
+
+		// TODO: Throw error.
+		if (tileset.empty() || tiledata.empty())
+		{
+			log::PrintLine("** TileMap object requires a <tileset> or <tiledata> node, skipping. ({}){}", so->GetClass()->GetName(), so->ID);
+			return false;
+		}
+
+		// Tileset
+		{
+			std::string file = tileset.attribute("file").as_string();
+			tiled_so->Tileset = server.GetTileset(file);
+		}
+
+		// Tiles
+		{
+			int width = tiledata.attribute("width").as_int();
+			int height = tiledata.attribute("height").as_int();
+			std::string format = tiledata.attribute("format").as_string();
+
+			tiled_so->TileData.clear();
+			tiled_so->Dimension.x = width;
+			tiled_so->Dimension.y = height;
+
+			bool tdrp_format = true;
+			if (boost::iequals(format, "graalnw"))
+				tdrp_format = false;
+
+			if (tdrp_format)
+			{
+				std::vector<uint8_t> tiles = base64::from(tiledata.text().get());
+				if (tiles.size() == (width * height * 2))
+				{
+					for (size_t i = 0; i < tiles.size(); i += 2)
+					{
+						tiled_so->TileData.push_back(tiles[i]);
+						tiled_so->TileData.push_back(tiles[i + 1]);
+					}
+				}
+			}
+			else
+			{
+				const std::string base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+				std::string tiles{ tiledata.text().get() };
+				boost::remove_erase_if(tiles, boost::is_space());
+
+				if (tiles.size() == (width * height * 2))
+				{
+					tiled_so->TileData.reserve(width * height * 2);
+					for (size_t i = 0; i < tiles.size(); i += 2)
+					{
+						uint16_t tile = (uint16_t)((base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]));
+						uint8_t x = ((tile / 512) * 16) + tile % 16;
+						uint8_t y = (tile % 512) / 16;
+
+						tiled_so->TileData.push_back(x);
+						tiled_so->TileData.push_back(y);
+					}
+				}
+			}
+		}
+
+		return true;
+	}
+
+	bool loadTMX(server::Server& server, scene::ScenePtr& scene, const filesystem::path& level, SceneObjectPtr& so, const pugi::xml_node& tmx)
+	{
+		auto tmx_so = std::dynamic_pointer_cast<TMXSceneObject>(so);
+		if (tmx_so == nullptr)
+			return false;
+
+		// Map
+		{
+			std::string file = tmx.attribute("file").as_string();
+
+			// TODO: Log error if failed.
+			tmx_so->TmxMap = std::make_shared<tmx::Map>();
+			tmx_so->TmxMap->load((level / file).string());
+		}
+
+		// Make scene objects for every layer.
+		for (size_t i = 1; i < tmx_so->TmxMap->getLayers().size(); ++i)
+		{
+			auto c = so->GetClass();
+			auto layer_id = server.GetNextSceneObjectID();
+			auto layer_so = std::make_shared<TMXSceneObject>(c, layer_id);
+
+			// Copy the scene object.
+			*layer_so = *tmx_so;
+
+			// Set the new properties of it.
+			layer_so->Layer = static_cast<uint8_t>(i);
+			layer_so->Properties[Property::Z] = static_cast<int64_t>(i);
+
+			// Add it to the scene.
+			scene->AddObject(layer_so);
+		}
+
+		// Generate tile collision meshes.
+		{
+			auto& tmx = tmx_so->TmxMap;
+			const auto& tilesets = tmx->getTilesets();
+			const auto& tile_count = tmx->getTileCount();
+			const auto& tile_size = tmx->getTileSize();
+
+			// Search all the tilesets to find the details on a tile.
+			auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
+			{
+				for (const auto& tileset : tilesets)
+				{
+					const auto* tile = tileset.getTile(layer_tile.ID);
+					return tile;
+				}
+				return nullptr;
+			};
+
+			auto& world = scene->Physics.GetWorld();
+			auto ppu = scene->Physics.GetPixelsPerUnit();
+			auto body = helper::getOrCreatePhysicsBody(world, so, playrho::BodyType::Static, ppu);
+
+			// Collection collision polygons.
+			{
+				Clipper2Lib::PathsD collision_polys;
+
+				// Look through all of our layers.
+				for (const auto& layer : tmx->getLayers())
+				{
+					// Only look at tile layers.
+					if (layer->getType() != tmx::Layer::Type::Tile)
+						continue;
+
+					// Go through all of the chunks.
+					const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+					for (const auto& chunk : tilelayer.getChunks())
+					{
+						// Look through all the tiles in the chunk.
+						auto tile_count = chunk.size.x * chunk.size.y;
+						for (int i = 0; i < tile_count; ++i)
+						{
+							// Find our tileset tile entry.
+							// If we have no entry, we have no collision so skip.
+							const auto& layer_tile = chunk.tiles[i];
+							const auto* tile = find_tile_in_tileset(layer_tile);
+							if (tile == nullptr)
+								continue;
+
+							// Calculate the tile position.
+							auto [x, y] = helper::getTilePosition(tmx->getRenderOrder(), chunk.size, i);
+							x += chunk.position.x;
+							y += chunk.position.y;
+
+							// Check if we have a polygon collision specified.
+							auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
+							if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
+							{
+								Clipper2Lib::PathD poly;
+								const auto& points = has_points->getPoints();
+								for (const auto& point : points)
+									poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
+
+								collision_polys.push_back(std::move(poly));
+							}
+							// Otherwise, we may have a box collision.
+							else if (tile->objectGroup.getObjects().size() == 1)
+							{
+								const auto& object = tile->objectGroup.getObjects().at(0);
+								const auto& aabb = object.getAABB();
+								if (aabb.width != 0)
+								{
+									Clipper2Lib::PathD poly;
+									float px = x * tile_size.x + aabb.left;
+									float py = y * tile_size.y + aabb.top;
+
+									poly.emplace_back(Clipper2Lib::PointD{ px, py });
+									poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
+									poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
+									poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
+									collision_polys.push_back(std::move(poly));
+								}
+							}
+						}
+					}
+				}
+
+				if (!collision_polys.empty())
+				{
+					Clipper2Lib::ClipperD clip;
+					clip.PreserveCollinear = false;
+					clip.AddSubject(collision_polys);
+
+					// Union all the polygons.
+					Clipper2Lib::PolyTreeD polytree;
+					clip.Execute(Clipper2Lib::ClipType::Union, Clipper2Lib::FillRule::NonZero, polytree);
+
+					// Construct the collision polys.
+					TPPLPolyList polygons;
+					for (const auto& polychild : polytree)
+						helper::collectPolygons(polychild, polygons);
+
+					// Partition the polygons into convex shapes.
+					TPPLPartition partition;
+					TPPLPolyList partitioned_polys;
+					partition.ConvexPartition_HM(&polygons, &partitioned_polys);
+
+					// Create physics shapes on the vertices.
+					for (const auto& polychild : partitioned_polys)
+						helper::createPhysicsShape(world, body, ppu, polychild);
+				}
+			}
+		}
+
+		return true;
 	}
 
 } // end namespace tdrp::loader::helper
@@ -291,360 +662,29 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 
 					// Load physics information.
 					// Make sure this is done after properties are loaded.
-					if (auto physics = object.child("physics"); !physics.empty())
+					if (std::ranges::any_of(helper::allowPhysicsNode, [&sotype](const auto& type) { return type == sotype; }))
 					{
-						playrho::BodyType bodytype{ playrho::BodyType::Kinematic };
-						auto& world = scene->Physics.GetWorld();
-						auto ppu = scene->Physics.GetPixelsPerUnit();
-
-						std::string type = physics.attribute("type").as_string();
-						if (boost::iequals(type, "static"))
-							bodytype = playrho::BodyType::Static;
-						else if (boost::iequals(type, "kinematic"))
-							bodytype = playrho::BodyType::Kinematic;
-						else if (boost::iequals(type, "dynamic"))
-							bodytype = playrho::BodyType::Dynamic;
-
-						// Create the body.
-						auto body = helper::getOrCreatePhysicsBody(world, so, bodytype, ppu);
-
-						for (auto& shape : physics.children())
-						{
-							std::string_view name{ shape.name() };
-							if (name == "box")
-							{
-								Vector2df v_topleft{ 0, 0 };
-								Vector2df v_bottomright{ 0, 0 };
-
-								auto center = shape.attribute("center");
-								auto radius = shape.attribute("radius");
-								auto left = shape.attribute("left");
-								auto right = shape.attribute("right");
-								auto top = shape.attribute("top");
-								auto bottom = shape.attribute("bottom");
-								auto topleft = shape.attribute("topleft");
-								auto bottomright = shape.attribute("bottomright");
-								auto dimension = shape.attribute("dimension");
-
-								if (!center.empty() || !radius.empty())
-								{
-									auto centers = helper::string_split_to_numbers<float>(center.as_string());
-									if (centers.size() < 2)
-									{
-										log::PrintLine("!! Collision box requires two values for center. ({}){}", scriptclass, id);
-										continue;
-									}
-
-									auto radii = helper::string_split_to_numbers<float>(radius.as_string());
-									if (radii.empty())
-									{
-										log::PrintLine("!! Collision box requires at least one value for radius. ({}){}", scriptclass, id);
-										continue;
-									}
-
-									if (radii.size() == 1)
-										radii.push_back(radii[0]);
-
-									v_topleft.x = centers[0] - radii[0];
-									v_topleft.y = centers[1] - radii[1];
-									v_bottomright.x = centers[0] + radii[0];
-									v_bottomright.y = centers[1] + radii[1];
-								}
-								else
-								{
-									if (!left.empty()) v_topleft.x = left.as_float();
-									if (!right.empty()) v_bottomright.x = right.as_float();
-									if (!top.empty()) v_topleft.y = top.as_float();
-									if (!bottom.empty()) v_bottomright.y = bottom.as_float();
-									if (!topleft.empty())
-									{
-										auto toplefts = helper::string_split_to_numbers<float>(topleft.as_string());
-										if (toplefts.size() >= 2)
-										{
-											v_topleft.x = toplefts[0];
-											v_topleft.y = toplefts[1];
-										}
-									}
-									if (!bottomright.empty())
-									{
-										auto bottomrights = helper::string_split_to_numbers<float>(bottomright.as_string());
-										if (bottomrights.size() >= 2)
-										{
-											v_bottomright.x = bottomrights[0];
-											v_bottomright.y = bottomrights[1];
-										}
-									}
-									if (!dimension.empty())
-									{
-										auto dimensions = helper::string_split_to_numbers<float>(dimension.as_string());
-										if (dimensions.size() >= 2)
-										{
-											if (v_bottomright.x != 0.f)
-												v_topleft.x = v_bottomright.x - dimensions[0];
-											else v_bottomright.x = v_topleft.x + dimensions[0];
-
-											if (v_bottomright.y != 0.f)
-												v_topleft.y = v_bottomright.y - dimensions[1];
-											else v_bottomright.y = v_topleft.y + dimensions[1];
-										}
-									}
-								}
-
-								// Add to the physics engine.
-								playrho::Length hx = (v_bottomright.x - v_topleft.x) / 2.f;
-								playrho::Length hy = (v_bottomright.y - v_topleft.y) / 2.f;
-								if (hx != 0.0f && hy != 0.0f)
-								{
-									auto shape = playrho::d2::CreateShape(world, playrho::d2::PolygonShapeConf{ hx, hy }.Translate({ v_topleft.x + hx, v_topleft.y + hy }));
-									playrho::d2::Attach(world, so->PhysicsBody.value(), shape);
-								}
-							}
-							else if (name == "circle")
-							{
-								auto center = shape.attribute("center");
-								auto radius = shape.attribute("radius");
-
-								Vector2df v_center{ 0.f, 0.f };
-								float v_radius = 0.f;
-
-								if (!center.empty() && !radius.empty())
-								{
-									auto centers = helper::string_split_to_numbers<float>(center.as_string());
-									if (centers.size() < 2)
-									{
-										log::PrintLine("!! Collision circle requires two values for center. ({}){}", scriptclass, id);
-										continue;
-									}
-
-									v_center.x = centers[0];
-									v_center.y = centers[1];
-									v_radius = radius.as_float();
-								}
-
-								// Add to the physics engine.
-								if (v_radius != 0.0f)
-								{
-									auto shape = playrho::d2::CreateShape(world, playrho::d2::DiskShapeConf{ v_radius }.UseLocation({ v_center.x, v_center.y }));
-									playrho::d2::Attach(world, so->PhysicsBody.value(), shape);
-								}
-							}
-						}
+						helper::loadPhysics(scene, so, object.child("physics"));
 					}
 
 					// Load tilemap features.
 					if (sotype == SceneObjectType::TILEMAP)
 					{
-						auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so);
-						const auto& tileset = object.child("tileset");
-						const auto& tiledata = object.child("tiledata");
-
-						// TODO: Throw error.
-						if (tileset.empty() || tiledata.empty())
-							continue;
-
-						// Tileset
-						{
-							std::string file = tileset.attribute("file").as_string();
-							tiled_so->Tileset = server.GetTileset(file);
-						}
-
-						// Tiles
-						{
-							int width = tiledata.attribute("width").as_int();
-							int height = tiledata.attribute("height").as_int();
-							std::string format = tiledata.attribute("format").as_string();
-
-							tiled_so->TileData.clear();
-							tiled_so->Dimension.x = width;
-							tiled_so->Dimension.y = height;
-
-							bool tdrp_format = true;
-							if (boost::iequals(format, "graalnw"))
-								tdrp_format = false;
-
-							if (tdrp_format)
-							{
-								std::vector<uint8_t> tiles = base64::from(tiledata.text().get());
-								if (tiles.size() == (width * height * 2))
-								{
-									for (size_t i = 0; i < tiles.size(); i += 2)
-									{
-										tiled_so->TileData.push_back(tiles[i]);
-										tiled_so->TileData.push_back(tiles[i + 1]);
-									}
-								}
-							}
-							else
-							{
-								const std::string base64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-								std::string tiles{ tiledata.text().get() };
-								boost::remove_erase_if(tiles, boost::is_space());
-
-								if (tiles.size() == (width * height * 2))
-								{
-									tiled_so->TileData.reserve(width * height * 2);
-									for (size_t i = 0; i < tiles.size(); i += 2)
-									{
-										uint16_t tile = (uint16_t)((base64.find(tiles[i]) << 6) + base64.find(tiles[i + 1]));
-										uint8_t x = ((tile / 512) * 16) + tile % 16;
-										uint8_t y = (tile % 512) / 16;
-
-										tiled_so->TileData.push_back(x);
-										tiled_so->TileData.push_back(y);
-									}
-								}
-							}
-						}
+						helper::loadTileMap(server, scene, so, object);
 					}
 
 					// Load tmx features.
 					if (sotype == SceneObjectType::TMX)
 					{
-						auto tmx_so = std::dynamic_pointer_cast<TMXSceneObject>(so);
 						const auto& tmx = object.child("tmx");
-
-						// TODO: Throw error.
 						if (tmx.empty())
+						{
+							log::PrintLine("** ERROR: TMX object requires a <tmx> node, skipping sceneobject. ({}){}", scriptclass, id);
 							continue;
-
-						// Map
-						{
-							std::string file = tmx.attribute("file").as_string();
-
-							// TODO: Log error if failed.
-							tmx_so->TmxMap = std::make_shared<tmx::Map>();
-							tmx_so->TmxMap->load((level / file).string());
 						}
 
-						// Make scene objects for every layer.
-						for (size_t i = 1; i < tmx_so->TmxMap->getLayers().size(); ++i)
-						{
-							auto layer_id = server.GetNextSceneObjectID();
-							auto layer_so = std::make_shared<TMXSceneObject>(c, layer_id);
-
-							// Copy the scene object.
-							*layer_so = *tmx_so;
-
-							// Set the new properties of it.
-							layer_so->Layer = static_cast<uint8_t>(i);
-							layer_so->Properties[Property::Z] = static_cast<int64_t>(i);
-
-							// Add it to the scene.
-							scene->AddObject(layer_so);
-						}
-
-						// Generate tile collision meshes.
-						{
-							auto& tmx = tmx_so->TmxMap;
-							const auto& tilesets = tmx->getTilesets();
-							const auto& tile_count = tmx->getTileCount();
-							const auto& tile_size = tmx->getTileSize();
-
-							// Search all the tilesets to find the details on a tile.
-							auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
-							{
-								for (const auto& tileset : tilesets)
-								{
-									const auto* tile = tileset.getTile(layer_tile.ID);
-									return tile;
-								}
-								return nullptr;
-							};
-
-							auto& world = scene->Physics.GetWorld();
-							auto ppu = scene->Physics.GetPixelsPerUnit();
-							auto body = helper::getOrCreatePhysicsBody(world, so, playrho::BodyType::Static, ppu);
-
-							// Collection collision polygons.
-							{
-								Clipper2Lib::PathsD collision_polys;
-
-								// Look through all of our layers.
-								for (const auto& layer : tmx->getLayers())
-								{
-									// Only look at tile layers.
-									if (layer->getType() != tmx::Layer::Type::Tile)
-										continue;
-
-									// Go through all of the chunks.
-									const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
-									for (const auto& chunk : tilelayer.getChunks())
-									{
-										// Look through all the tiles in the chunk.
-										auto tile_count = chunk.size.x * chunk.size.y;
-										for (int i = 0; i < tile_count; ++i)
-										{
-											// Find our tileset tile entry.
-											// If we have no entry, we have no collision so skip.
-											const auto& layer_tile = chunk.tiles[i];
-											const auto* tile = find_tile_in_tileset(layer_tile);
-											if (tile == nullptr)
-												continue;
-
-											// Calculate the tile position.
-											auto [x, y] = helper::getTilePosition(tmx->getRenderOrder(), chunk.size, i);
-											x += chunk.position.x;
-											y += chunk.position.y;
-
-											// Check if we have a polygon collision specified.
-											auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
-											if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
-											{
-												Clipper2Lib::PathD poly;
-												const auto& points = has_points->getPoints();
-												for (const auto& point : points)
-													poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
-
-												collision_polys.push_back(std::move(poly));
-											}
-											// Otherwise, we may have a box collision.
-											else if (tile->objectGroup.getObjects().size() == 1)
-											{
-												const auto& object = tile->objectGroup.getObjects().at(0);
-												const auto& aabb = object.getAABB();
-												if (aabb.width != 0)
-												{
-													Clipper2Lib::PathD poly;
-													float px = x * tile_size.x + aabb.left;
-													float py = y * tile_size.y + aabb.top;
-
-													poly.emplace_back(Clipper2Lib::PointD{ px, py });
-													poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
-													poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
-													poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
-													collision_polys.push_back(std::move(poly));
-												}
-											}
-										}
-									}
-								}
-
-								if (!collision_polys.empty())
-								{
-									Clipper2Lib::ClipperD clip;
-									clip.PreserveCollinear = false;
-									clip.AddSubject(collision_polys);
-
-									// Union all the polygons.
-									Clipper2Lib::PolyTreeD polytree;
-									clip.Execute(Clipper2Lib::ClipType::Union, Clipper2Lib::FillRule::NonZero, polytree);
-
-									// Construct the collision polys.
-									TPPLPolyList polygons;
-									for (const auto& polychild : polytree)
-										helper::collectPolygons(polychild, polygons);
-
-									// Partition the polygons into convex shapes.
-									TPPLPartition partition;
-									TPPLPolyList partitioned_polys;
-									partition.ConvexPartition_HM(&polygons, &partitioned_polys);
-
-									// Create physics shapes on the vertices.
-									for (const auto& polychild : partitioned_polys)
-										helper::createPhysicsShape(world, body, ppu, polychild);
-								}
-							}
-						}
+						if (!helper::loadTMX(server, scene, level, so, tmx))
+							continue;
 					}
 
 					// Handle the script.
