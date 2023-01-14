@@ -17,7 +17,7 @@
 #include <tmxlite/Map.hpp>
 #include <tmxlite/TileLayer.hpp>
 #include <clipper2/clipper.h>
-#include <ConcavePolygon.h>
+#include <polypartition.h>
 
 
 using namespace tdrp::scene;
@@ -88,34 +88,49 @@ namespace tdrp::loader::helper
 		return result;
 	}
 
-	void createPhysicsShape(playrho::d2::World& world, const playrho::BodyID& body, const uint8_t& ppu, const cxd::ConcavePolygon<Clipper2Lib::PointD>& polygon)
+	void collectPolygons(const std::unique_ptr<Clipper2Lib::PolyPathD>& polypath, TPPLPolyList& polylist)
 	{
-		// Check if we have sub-polys.
-		// If we do, create shapes off those instead.
-		auto sub_polys = polygon.getNumberSubPolys();
-		if (sub_polys != 0)
-		{
-			// Recursively walk down the sub-divided polygons.
-			for (auto i = 0; i < polygon.getNumberSubPolys(); ++i)
-				createPhysicsShape(world, body, ppu, polygon.getSubPolygon(i));
-		}
-		else
-		{
-			// Convert to PlayRho vertices.
-			std::vector<playrho::Length2> vertices;
-			for (const auto& vertex : polygon.getVertices())
-			{
-				auto& [x, y] = vertex.position;
-				vertices.emplace_back(playrho::Length2{ static_cast<float>(x) / ppu, static_cast<float>(y) / ppu });
-			}
+		const auto& poly = polypath->Polygon();
 
-			playrho::d2::PolygonShapeConf conf{};
-			conf.UseVertices(vertices);
+		TPPLPoly polygon;
+		polygon.Init(poly.size());
+		polygon.SetHole(polypath->IsHole());
 
-			// Build the shape.
-			const auto& shape = playrho::d2::CreateShape(world, conf);
-			playrho::d2::Attach(world, body, shape);
+		if (polypath->IsHole())
+			polygon.SetOrientation(TPPL_ORIENTATION_CCW);
+		else polygon.SetOrientation(TPPL_ORIENTATION_CW);
+
+		for (auto i = 0; i < poly.size(); ++i)
+		{
+			polygon[i].x = poly[i].x;
+			polygon[i].y = poly[i].y;
 		}
+
+		polylist.emplace_back(std::move(polygon));
+
+		for (const auto& child : *polypath)
+			collectPolygons(child, polylist);
+	}
+
+	void createPhysicsShape(playrho::d2::World& world, const playrho::BodyID& body, const uint8_t& ppu, const TPPLPoly& polygon)
+	{
+		if (polygon.IsHole()) return;
+
+		// Convert to PlayRho vertices.
+		std::vector<playrho::Length2> vertices;
+		for (auto i = 0; i < polygon.GetNumPoints(); ++i)
+		{
+			const auto& point = polygon[i];
+			vertices.emplace_back(playrho::Length2{ static_cast<float>(point.x) / ppu, static_cast<float>(point.y) / ppu });
+		}
+
+		// Set the shape config.
+		playrho::d2::PolygonShapeConf conf{};
+		conf.UseVertices(vertices);
+
+		// Add the shape to the world.
+		const auto& shape = playrho::d2::CreateShape(world, conf);
+		playrho::d2::Attach(world, body, shape);
 	}
 
 } // end namespace tdrp::loader::helper
@@ -606,20 +621,27 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 
 								if (!collision_polys.empty())
 								{
+									Clipper2Lib::ClipperD clip;
+									clip.PreserveCollinear = false;
+									clip.AddSubject(collision_polys);
+
 									// Union all the polygons.
-									auto paths = Clipper2Lib::Union(collision_polys, Clipper2Lib::FillRule::NonZero);
+									Clipper2Lib::PolyTreeD polytree;
+									clip.Execute(Clipper2Lib::ClipType::Union, Clipper2Lib::FillRule::NonZero, polytree);
 
 									// Construct the collision polys.
-									for (const auto& poly : paths)
-									{
-										// Perform polygon partitioning.
-										// PlayRho can only handle convex polygons.
-										cxd::ConcavePolygon<Clipper2Lib::PointD> concavePoly(poly);
-										concavePoly.convexDecomp();
+									TPPLPolyList polygons;
+									for (const auto& polychild : polytree)
+										helper::collectPolygons(polychild, polygons);
 
-										// Create physics shapes on the vertices.
-										helper::createPhysicsShape(world, body, ppu, concavePoly);
-									}
+									// Partition the polygons into convex shapes.
+									TPPLPartition partition;
+									TPPLPolyList partitioned_polys;
+									partition.ConvexPartition_HM(&polygons, &partitioned_polys);
+
+									// Create physics shapes on the vertices.
+									for (const auto& polychild : partitioned_polys)
+										helper::createPhysicsShape(world, body, ppu, polychild);
 								}
 							}
 						}

@@ -50,6 +50,6 @@
 [submodule "dependencies/Clipper2"]
 	path = dependencies/Clipper2
 	url = https://github.com/AngusJohnson/Clipper2.git
-[submodule "dependencies/ConvexDecomposition"]
-	path = dependencies/ConvexDecomposition
-	url = https://github.com/LoneBoco/ConvexDecomposition.git
+[submodule "dependencies/polypartition"]
+	path = dependencies/polypartition
+	url = https://github.com/LoneBoco/polypartition.git

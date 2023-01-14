@@ -87,7 +87,6 @@ project "2drp"
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
 		"../dependencies/BabyDI/include/",
-		"../dependencies/ConvexDecomposition/src/",
 		"../dependencies/pugixml/src/",
 
 		"../dependencies/bzip2/",
@@ -107,9 +106,10 @@ project "2drp"
 		"../dependencies/SpriterPlusPlus/",
 		"../dependencies/tmxlite/tmxlite/include/",
 		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
+		"../dependencies/polypartition/src/",
 	}
 
-	dependson { "SFML", "PlayRho", "bzip2", "ziplib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua", "Clipper2" }
+	dependson { "SFML", "PlayRho", "bzip2", "ziplib", "enet", "SpriterPlusPlus", "tmxlite", "RmlUi", "RmlSolLua", "Clipper2", "polypartition" }
 
 	-- Libraries.
 	links {
@@ -127,6 +127,7 @@ project "2drp"
 		"SpriterPlusPlus",
 		"tmxlite",
 		"Clipper2",
+		"polypartition",
 	}
 
 	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
@@ -654,3 +655,11 @@ project "Clipper2"
 	includedirs {
 		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
 	}
+
+project "polypartition"
+	kind "StaticLib"
+	language "C++"
+	location "projects"
+
+	files { "../dependencies/polypartition/src/**" }
+	includedirs { "../dependencies/polypartition/src/" }
