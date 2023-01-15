@@ -111,6 +111,29 @@ namespace functions::sceneobject
 
 		so.PhysicsChanged = true;
 	}
+
+	bool get_enabled(SceneObject& so)
+	{
+		auto scene = helpers::sceneobject::check_body(so);
+		if (!scene) return false;
+
+		auto& world = scene->Physics.GetWorld();
+		const auto& body = so.PhysicsBody.value();
+
+		auto b = playrho::d2::GetBody(world, body);
+		return b.IsEnabled();
+	}
+
+	void set_enabled(SceneObject& so, bool value)
+	{
+		auto scene = helpers::sceneobject::check_body(so);
+		if (!scene) return;
+
+		auto& world = scene->Physics.GetWorld();
+		const auto& body = so.PhysicsBody.value();
+
+		playrho::d2::SetEnabled(world, body, value);
+	}
 } // end namespace functions::sceneobject
 
 
@@ -135,6 +158,8 @@ void bind_physics(sol::state& lua)
 	sceneobject.set_function("SetFixedRotation", &functions::sceneobject::set_fixedrotation);
 	sceneobject.set_function("AddCollisionCircle", &functions::sceneobject::add_collision_circle);
 	sceneobject.set_function("AddCollisionBox", &functions::sceneobject::add_collision_box);
+	sceneobject.set_function("IsEnabled", &functions::sceneobject::get_enabled);
+	sceneobject.set_function("SetEnabled", &functions::sceneobject::set_enabled);
 
 	physics["SceneObject"] = sceneobject;
 }

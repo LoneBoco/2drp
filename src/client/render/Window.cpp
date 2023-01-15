@@ -193,6 +193,8 @@ void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 		auto ppu = scene->Physics.GetPixelsPerUnit();
 
 		const auto& body = playrho::d2::GetBody(world, so->PhysicsBody.value());
+		if (!body.IsEnabled()) return;
+
 		const auto& transformation = body.GetTransformation();
 
 		auto shapes = playrho::d2::GetShapes(world, so->PhysicsBody.value());
