@@ -741,7 +741,9 @@ bool Server::DeleteSceneObject(SceneObjectID id)
 
 bool Server::DeleteSceneObject(SceneObjectPtr sceneobject)
 {
-	if (sceneobject == nullptr || !sceneobject->IsGlobal())
+	if (sceneobject == nullptr)
+		return false;
+	if (!sceneobject->IsGlobal() && !IsHost())
 		return false;
 	if (sceneobject->GetOwningPlayer().lock() != m_player)
 		return false;

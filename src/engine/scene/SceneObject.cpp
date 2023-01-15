@@ -14,7 +14,7 @@ namespace tdrp
 {
 
 SceneObject::SceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id)
-: ID(id), Visible(true), m_object_class(c)
+	: ID{ id }, Visible{ true }, m_object_class{ c }
 {
 	if (c)
 	{
@@ -34,6 +34,7 @@ SceneObject& SceneObject::operator=(const SceneObject& other)
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
+	Replicated = other.Replicated;
 	return *this;
 }
 
