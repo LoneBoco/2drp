@@ -554,7 +554,7 @@ Rectf TMXSceneObject::GetBounds() const
 	if (TmxMap == nullptr)
 		return Rectf(GetPosition(), Vector2df(0.0f));
 
-	return Rectf(GetPosition() + Bounds.pos, Bounds.size);
+	return Rectf(GetPosition(), ChunkSize);
 }
 
 ///////////////////////////////////////////////////////////////////////////////

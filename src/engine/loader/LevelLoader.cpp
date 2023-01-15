@@ -49,7 +49,7 @@ namespace tdrp::loader::helper
 		return result;
 	}
 
-	playrho::BodyID getOrCreatePhysicsBody(playrho::d2::World& world, SceneObjectPtr so, playrho::BodyType bodytype, uint8_t ppu)
+	playrho::BodyID getOrCreatePhysicsBody(playrho::d2::World& world, SceneObject* so, playrho::BodyType bodytype, uint8_t ppu)
 	{
 		if (so->PhysicsBody.has_value())
 			return so->PhysicsBody.value();
@@ -65,6 +65,11 @@ namespace tdrp::loader::helper
 		auto body = playrho::d2::CreateBody(world, config);
 		so->PhysicsBody = body;
 		return body;
+	}
+
+	playrho::BodyID getOrCreatePhysicsBody(playrho::d2::World& world, SceneObjectPtr so, playrho::BodyType bodytype, uint8_t ppu)
+	{
+		return getOrCreatePhysicsBody(world, so.get(), bodytype, ppu);
 	}
 
 	std::pair<int32_t, int32_t> getTilePosition(tmx::RenderOrder render_order, const tmx::Vector2i& chunk_size, uint32_t index)
@@ -285,6 +290,24 @@ namespace tdrp::loader::helper
 		}
 	}
 
+	void addToScene(server::Server& server, scene::ScenePtr& scene, SceneObjectPtr& so)
+	{
+		const auto& c = so->GetClass();
+		const auto& id = so->ID;
+
+		// Handle the script.
+		if (server.IsHost())
+		{
+			server.Script->RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptServer, so);
+			server.Script->RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
+		}
+		server.Script->RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptClient, so);
+		server.Script->RunScript("sceneobject_cl_" + std::to_string(id), so->ClientScript, so);
+
+		// Add the object to the scene.
+		scene->AddObject(so);
+	}
+
 	bool loadTileMap(server::Server& server, scene::ScenePtr& scene, SceneObjectPtr& so, const pugi::xml_node& object)
 	{
 		auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so);
@@ -355,7 +378,7 @@ namespace tdrp::loader::helper
 		return true;
 	}
 
-	bool loadTMX(server::Server& server, scene::ScenePtr& scene, const filesystem::path& level, SceneObjectPtr& so, const pugi::xml_node& tmx)
+	bool loadTMX(server::Server& server, scene::ScenePtr& scene, const filesystem::path& level, SceneObjectPtr& so, const pugi::xml_node& xml)
 	{
 		auto tmx_so = std::dynamic_pointer_cast<TMXSceneObject>(so);
 		if (tmx_so == nullptr)
@@ -363,117 +386,108 @@ namespace tdrp::loader::helper
 
 		// Map
 		{
-			std::string file = tmx.attribute("file").as_string();
+			std::string file = xml.attribute("file").as_string();
 
-			// TODO: Log error if failed.
 			tmx_so->TmxMap = std::make_shared<tmx::Map>();
-			tmx_so->TmxMap->load((level / file).string());
+			if (!tmx_so->TmxMap->load((level / file).string()))
+			{
+				log::PrintLine("** ERROR: Failed to load .tmx file. ({}){}", so->GetClass()->GetName(), so->ID);
+				return false;
+			}
 		}
 
-		// Make scene objects for every layer.
-		for (size_t i = 1; i < tmx_so->TmxMap->getLayers().size(); ++i)
+		auto& tmx = tmx_so->TmxMap;
+		const auto& tilesets = tmx->getTilesets();
+		const auto& tile_count = tmx->getTileCount();
+		const auto& tile_size = tmx->getTileSize();
+
+		// Search all the tilesets to find the details on a tile.
+		auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
 		{
-			auto c = so->GetClass();
-			auto layer_id = server.GetNextSceneObjectID();
-			auto layer_so = std::make_shared<TMXSceneObject>(c, layer_id);
+			for (const auto& tileset : tilesets)
+			{
+				const auto* tile = tileset.getTile(layer_tile.ID);
+				return tile;
+			}
+			return nullptr;
+		};
 
-			// Copy the scene object.
-			*layer_so = *tmx_so;
+		auto& world = scene->Physics.GetWorld();
+		auto ppu = scene->Physics.GetPixelsPerUnit();
+		auto current_so = std::dynamic_pointer_cast<TMXSceneObject>(so);
 
-			// Set the new properties of it.
-			layer_so->Layer = static_cast<uint8_t>(i);
-			layer_so->Properties[Property::Z] = static_cast<int64_t>(i);
-
-			// Add it to the scene.
-			scene->AddObject(layer_so);
-		}
-
-		// Generate tile collision meshes.
+		// Look through all of our layers.
+		const auto& layers = tmx->getLayers();
+		for (auto layer_num = 0; layer_num < layers.size(); ++layer_num)
 		{
-			auto& tmx = tmx_so->TmxMap;
-			const auto& tilesets = tmx->getTilesets();
-			const auto& tile_count = tmx->getTileCount();
-			const auto& tile_size = tmx->getTileSize();
+			const auto& layer = layers.at(layer_num);
 
-			// Search all the tilesets to find the details on a tile.
-			auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
+			// Only look at tile layers.
+			if (layer->getType() != tmx::Layer::Type::Tile)
+				continue;
+
+			// Go through all of the chunks.
+			const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+			const auto& chunks = tilelayer.getChunks();
+			for (auto chunk_num = 0; chunk_num < chunks.size(); ++chunk_num)
 			{
-				for (const auto& tileset : tilesets)
-				{
-					const auto* tile = tileset.getTile(layer_tile.ID);
-					return tile;
-				}
-				return nullptr;
-			};
+				const auto& chunk = chunks.at(chunk_num);
 
-			auto& world = scene->Physics.GetWorld();
-			auto ppu = scene->Physics.GetPixelsPerUnit();
-			auto body = helper::getOrCreatePhysicsBody(world, so, playrho::BodyType::Static, ppu);
+				// Save the chunk properties.
+				current_so->SetPosition({ static_cast<float>(chunk.position.x) * ppu, static_cast<float>(chunk.position.y) * ppu });
+				current_so->Properties[Property::Z] = static_cast<int64_t>(layer_num);
+				current_so->Layer = layer_num;
+				current_so->Chunk = chunk_num;
+				current_so->ChunkSize = { static_cast<float>(chunk.size.x) * ppu, static_cast<float>(chunk.size.y) * ppu };
 
-			// Collection collision polygons.
-			{
 				Clipper2Lib::PathsD collision_polys;
 
-				// Look through all of our layers.
-				for (const auto& layer : tmx->getLayers())
+				// Look through all the tiles in the chunk.
+				auto tile_count = chunk.size.x * chunk.size.y;
+				for (int i = 0; i < tile_count; ++i)
 				{
-					// Only look at tile layers.
-					if (layer->getType() != tmx::Layer::Type::Tile)
+					// Find our tileset tile entry.
+					// If we have no entry, we have no collision so skip.
+					const auto& layer_tile = chunk.tiles[i];
+					const auto* tile = find_tile_in_tileset(layer_tile);
+					if (tile == nullptr)
 						continue;
 
-					// Go through all of the chunks.
-					const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
-					for (const auto& chunk : tilelayer.getChunks())
+					// Calculate the tile position.
+					auto [x, y] = helper::getTilePosition(tmx->getRenderOrder(), chunk.size, i);
+
+					// Check if we have a polygon collision specified.
+					auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
+					if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
 					{
-						// Look through all the tiles in the chunk.
-						auto tile_count = chunk.size.x * chunk.size.y;
-						for (int i = 0; i < tile_count; ++i)
+						Clipper2Lib::PathD poly;
+						const auto& points = has_points->getPoints();
+						for (const auto& point : points)
+							poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
+
+						collision_polys.push_back(std::move(poly));
+					}
+					// Otherwise, we may have a box collision.
+					else if (tile->objectGroup.getObjects().size() == 1)
+					{
+						const auto& object = tile->objectGroup.getObjects().at(0);
+						const auto& aabb = object.getAABB();
+						if (aabb.width != 0)
 						{
-							// Find our tileset tile entry.
-							// If we have no entry, we have no collision so skip.
-							const auto& layer_tile = chunk.tiles[i];
-							const auto* tile = find_tile_in_tileset(layer_tile);
-							if (tile == nullptr)
-								continue;
+							Clipper2Lib::PathD poly;
+							float px = x * tile_size.x + aabb.left;
+							float py = y * tile_size.y + aabb.top;
 
-							// Calculate the tile position.
-							auto [x, y] = helper::getTilePosition(tmx->getRenderOrder(), chunk.size, i);
-							x += chunk.position.x;
-							y += chunk.position.y;
-
-							// Check if we have a polygon collision specified.
-							auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
-							if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
-							{
-								Clipper2Lib::PathD poly;
-								const auto& points = has_points->getPoints();
-								for (const auto& point : points)
-									poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
-
-								collision_polys.push_back(std::move(poly));
-							}
-							// Otherwise, we may have a box collision.
-							else if (tile->objectGroup.getObjects().size() == 1)
-							{
-								const auto& object = tile->objectGroup.getObjects().at(0);
-								const auto& aabb = object.getAABB();
-								if (aabb.width != 0)
-								{
-									Clipper2Lib::PathD poly;
-									float px = x * tile_size.x + aabb.left;
-									float py = y * tile_size.y + aabb.top;
-
-									poly.emplace_back(Clipper2Lib::PointD{ px, py });
-									poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
-									poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
-									poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
-									collision_polys.push_back(std::move(poly));
-								}
-							}
+							poly.emplace_back(Clipper2Lib::PointD{ px, py });
+							poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
+							poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
+							poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
+							collision_polys.push_back(std::move(poly));
 						}
 					}
 				}
 
+				// If we have collision data, process it.
 				if (!collision_polys.empty())
 				{
 					Clipper2Lib::ClipperD clip;
@@ -495,9 +509,26 @@ namespace tdrp::loader::helper
 					partition.ConvexPartition_HM(&polygons, &partitioned_polys);
 
 					// Create physics shapes on the vertices.
+					auto body = helper::getOrCreatePhysicsBody(world, current_so, playrho::BodyType::Static, ppu);
 					for (const auto& polychild : partitioned_polys)
 						helper::createPhysicsShape(world, body, ppu, polychild);
 				}
+
+				// Add our scene object to the scene.
+				auto current_so_base = std::dynamic_pointer_cast<SceneObject>(current_so);
+				helper::addToScene(server, scene, current_so_base);
+				//log::PrintLine(":: Added TMX ({}), layer {}, chunk {}.", current_so->ID, current_so->Layer, current_so->Chunk);
+
+				// Assemble a new scene object for the next chunk.
+				if (layer_num != layers.size() && chunk_num != chunks.size())
+				{
+					auto old_so = current_so;
+					current_so = std::make_shared<TMXSceneObject>(old_so->GetClass(), server.GetNextSceneObjectID());
+
+					// Copy everything over.
+					*current_so = *old_so;
+				}
+				else current_so = nullptr;
 			}
 		}
 
@@ -687,17 +718,9 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 							continue;
 					}
 
-					// Handle the script.
-					if (server.IsHost())
-					{
-						server.Script->RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptServer, so);
-						server.Script->RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
-					}
-					server.Script->RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + c->GetName(), c->ScriptClient, so);
-					server.Script->RunScript("sceneobject_cl_" + std::to_string(id), so->ClientScript, so);
-
-					// Add the object to the scene.
-					scene->AddObject(so);
+					// Execute the script and add it to the scene.
+					if (so->GetCurrentScene().expired())
+						helper::addToScene(server, scene, so);
 				}
 			}
 		}

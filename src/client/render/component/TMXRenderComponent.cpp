@@ -15,7 +15,6 @@ namespace tdrp::render::component
 
 TMXRenderComponent::~TMXRenderComponent()
 {
-	m_render_textures.clear();
 }
 
 void TMXRenderComponent::Initialize(ComponentEntity& owner)
@@ -65,16 +64,22 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			}
 		}
 
-		const auto& layer = so->TmxMap->getLayers().at(so->Layer);
-		if (!layer || layer->getType() != tmx::Layer::Type::Tile)
+		if (so->Layer > so->TmxMap->getLayers().size())
 			return;
 
+		// Get the tile layer.
+		const auto& layer = so->TmxMap->getLayers().at(so->Layer);
+		if (!layer || layer->getType() != tmx::Layer::Type::Tile) return;
 		const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+
+		// Get the chunk.
+		if (so->Chunk > tilelayer.getChunks().size()) return;
+		const auto& chunk = tilelayer.getChunks().at(so->Chunk);
 
 		// Create vertex array.
 		{
 			const auto& tile_size = so->TmxMap->getTileSize();
-			const auto& chunk_size = tilelayer.getChunks().at(0).size;
+			const auto& chunk_size = chunk.size;
 			auto tile_count = chunk_size.x * chunk_size.y;
 
 			m_chunk_vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
@@ -100,12 +105,7 @@ void TMXRenderComponent::OnAttached(ComponentEntity& owner)
 			}
 		}
 
-		// Render initial chunks.
-		auto chunks = getVisibleChunks(game->Camera.GetViewRect());
-		for (const auto& chunk : chunks)
-		{
-			renderChunkToTexture(chunk);
-		}
+		renderToTexture();
 	}
 }
 
@@ -121,9 +121,9 @@ Rectf TMXRenderComponent::GetBoundingBox() const
 	if (auto so = m_owner.lock())
 	{
 		auto pos = so->GetPosition();
-		auto bounds = m_tmx->getBounds();
+		const auto& chunksize = so->ChunkSize;
 
-		return Rectf{ pos.x - bounds.left, pos.y - bounds.top, bounds.width, bounds.height };
+		return Rectf{ pos.x , pos.y, chunksize.x, chunksize.y };
 	}
 
 	return Rectf{};
@@ -147,15 +147,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseco
 			.scale({ scale.x, scale.y });
 
 		auto game = BabyDI::Get<tdrp::Game>();
-		auto chunks = getVisibleChunks(game->Camera.GetViewRect());
-
-		for (const auto& chunk : chunks)
-		{
-			if (m_sprites.contains(chunk))
-				window.draw(m_sprites.at(chunk), state);
-			else
-				renderChunkToTexture(chunk);
-		}
+		window.draw(m_sprite, state);
 
 		if (Settings->GetAs<bool>("Debug.drawtmxbbox"))
 		{
@@ -163,51 +155,6 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseco
 		}
 	}
 }
-
-std::vector<size_t> TMXRenderComponent::getVisibleChunks(const Rectf& view) const
-{
-	std::vector<size_t> result;
-
-	if (auto so = m_owner.lock())
-	{
-		const auto& layer = m_tmx->getLayers().at(so->Layer);
-		if (!layer || layer->getType() != tmx::Layer::Type::Tile)
-			return result;
-
-		const auto& tilesize = so->TmxMap->getTileSize();
-		const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
-
-		auto pos = so->GetPosition();
-
-		// Iterate through the chunks and test if they are within our view rect.
-		for (size_t i = 0; i < tilelayer.getChunks().size(); ++i)
-		{
-			const auto& chunk = tilelayer.getChunks().at(i);
-
-			Rectf rect{ pos.x + static_cast<float>(chunk.position.x) * tilesize.x, pos.y + chunk.position.y * tilesize.y
-				, chunk.size.x * static_cast<float>(tilesize.x), chunk.size.y * static_cast<float>(tilesize.y) };
-			if (math::containsOrIntersects(rect, view))
-				result.push_back(i);
-		}
-	}
-
-	return result;
-}
-
-/*
-const tmx::Tileset::Tile* TMXRenderComponent::getTileFromTilesets(uint32_t ID) const
-{
-	const auto& tilesets = m_tmx->getTilesets();
-	for (const auto& tileset : tilesets)
-	{
-		const auto* tile = tileset.getTile(ID);
-		if (tile != nullptr)
-			return tile;
-	}
-
-	return nullptr;
-}
-*/
 
 inline Vector2di TMXRenderComponent::getTilePosition(const tmx::Vector2i& chunk_size, uint32_t index) const
 {
@@ -236,7 +183,7 @@ inline Vector2di TMXRenderComponent::getTilePosition(const tmx::Vector2i& chunk_
 	return result;
 }
 
-void TMXRenderComponent::renderChunkToTexture(size_t index)
+void TMXRenderComponent::renderToTexture()
 {
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
@@ -247,26 +194,16 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 			return;
 
 		const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
-		if (tilelayer.getChunks().size() <= index)
+		if (tilelayer.getChunks().size() <= so->Chunk)
 			return;
 
-		const auto& chunk = tilelayer.getChunks().at(index);
+		const auto& chunk = tilelayer.getChunks().at(so->Chunk);
 		if (chunk.size.x * chunk.size.y * 6 != m_chunk_vertices.getVertexCount())
 			return;
 
 		const auto tilesize = m_tmx->getTileSize();
 		const auto& tilesets = m_tmx->getTilesets();
 		Vector2di size_in_pixels{ chunk.size.x * static_cast<int>(tilesize.x), chunk.size.y * static_cast<int>(tilesize.y) };
-
-		// Check if this chunk pushes our bounds out.
-		if (chunk.position.x < so->Bounds.pos.x)
-			so->Bounds.pos.x = static_cast<float>(chunk.position.x);
-		if (chunk.position.y < so->Bounds.pos.y)
-			so->Bounds.pos.y = static_cast<float>(chunk.position.y);
-		if (chunk.position.x + size_in_pixels.x > so->Bounds.pos.x + so->Bounds.size.x)
-			so->Bounds.size.x = chunk.position.x + size_in_pixels.x - so->Bounds.pos.x;
-		if (chunk.position.y + size_in_pixels.y > so->Bounds.pos.y + so->Bounds.size.y)
-			so->Bounds.size.y = chunk.position.y + size_in_pixels.y - so->Bounds.pos.y;
 
 		// Set our render state.
 		sf::RenderStates state;
@@ -360,11 +297,10 @@ void TMXRenderComponent::renderChunkToTexture(size_t index)
 
 		// Create the sprite for this chunk and position it.
 		sf::Sprite sprite{ texture->getTexture() };
-		sprite.setPosition({ static_cast<float>(chunk.position.x), static_cast<float>(chunk.position.y) });
 
 		// Save our sprite and texture via the chunk index.
-		m_sprites.insert({ index, std::move(sprite) });
-		m_render_textures.insert({ index, texture });
+		m_sprite = std::move(sprite);
+		m_render_texture = texture;
 	}
 }
 

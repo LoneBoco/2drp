@@ -43,21 +43,18 @@ public:
 	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
 
 protected:
-	std::vector<size_t> getVisibleChunks(const Rectf& view) const;
-	// const tmx::Tileset::Tile* getTileFromTilesets(uint32_t ID) const;
 	Vector2di getTilePosition(const tmx::Vector2i& chunk_size, uint32_t index) const;
-	void renderChunkToTexture(size_t chunk);
+	void renderToTexture();
 
 protected:
 	INJECT(settings::ProgramSettings, Settings);
 
 protected:
 	std::weak_ptr<TMXSceneObject> m_owner;
-	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	// std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
-	std::map<size_t, std::shared_ptr<sf::RenderTexture>> m_render_textures;
-	std::map<size_t, sf::Sprite> m_sprites;
+	std::unordered_map<size_t, std::weak_ptr<sf::Texture>> m_textures;
+	std::shared_ptr<sf::RenderTexture> m_render_texture;
 	std::shared_ptr<tmx::Map> m_tmx;
+	sf::Sprite m_sprite;
 	sf::VertexArray m_chunk_vertices;
 };
 

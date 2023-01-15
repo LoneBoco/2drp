@@ -373,8 +373,9 @@ public:
 
 public:
 	std::shared_ptr<tmx::Map> TmxMap;
-	uint8_t Layer = 0;
-	Rectf Bounds;
+	size_t Layer = 0;
+	size_t Chunk = 0;
+	Vector2df ChunkSize;
 };
 
 /////////////////////////////
