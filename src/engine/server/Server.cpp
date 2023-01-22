@@ -690,6 +690,9 @@ SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string
 	case SceneObjectType::TEXT:
 		so = std::make_shared<tdrp::TextSceneObject>(oc, id);
 		break;
+	default:
+		log::PrintLine("!! CreateSceneObject requires a valid scene object type.");
+		return nullptr;
 	}
 
 	// Claim ownership.
@@ -912,7 +915,7 @@ int Server::SendEvent(scene::ScenePtr scene, SceneObject* sender, const std::str
 
 	// Run events on all objects in range.
 	int count = 0;
-	if (scene)
+	if (scene) [[likely]]
 	{
 		packet.set_scene(scene->GetName());
 

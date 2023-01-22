@@ -88,6 +88,7 @@ void GaniAnimation::Load(const filesystem::path& image)
 						else m_sprites.emplace(std::make_pair(index, sf::Sprite{ *t, { { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } } }));
 					}
 				}
+				else log::PrintLine("!! Could not load texture {} for gani {}.", sprite.Image, image.filename().string());
 			}
 		}
 

@@ -64,7 +64,7 @@ public:
 public:
 
 	template <typename T> requires ValidScriptObject<T>
-	void RunScript(const std::string_view& module_name, const std::string& script, std::shared_ptr<T>& me)
+	void RunScript(std::string_view module_name, const std::string& script, std::shared_ptr<T>& me)
 	{
 		if (script.empty())
 			return;
@@ -78,7 +78,7 @@ public:
 	}
 
 	template <typename T> requires ValidScriptObject<T>
-	void RunScript(const std::string_view& module_name, const std::string& script, T* me)
+	void RunScript(std::string_view module_name, const std::string& script, T* me)
 	{
 		if (script.empty())
 			return;
