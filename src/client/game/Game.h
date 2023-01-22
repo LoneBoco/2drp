@@ -69,10 +69,6 @@ public:
 	chrono::clock::duration GetTick() const;
 
 public:
-	void SetRenderWindow(sf::RenderWindow* render_window);
-	sf::RenderWindow* GetRenderWindow() const;
-
-public:
 	void SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
 	useable::UseablePtr CreateUseable(const std::string& name, const std::string& image, const std::string& description);
 	void DeleteUseable(const std::string& name);
@@ -106,21 +102,6 @@ private:
 inline chrono::clock::duration Game::GetTick() const
 {
 	return m_tick_current - m_tick_previous;
-}
-
-inline void Game::SetRenderWindow(sf::RenderWindow* render_window)
-{
-	m_render_window = render_window;
-	if (UI)
-	{
-		UI->RenderInterface->SetWindow(render_window);
-		UI->ScreenSizeUpdate();
-	}
-}
-
-inline sf::RenderWindow* Game::GetRenderWindow() const
-{
-	return m_render_window;
 }
 
 inline server::PlayerPtr Game::GetCurrentPlayer()

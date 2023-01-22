@@ -67,7 +67,6 @@ void Game::Initialize()
 
 	// Load the UI.
 	UI = loader::UILoader::CreateUIManager();
-	UI->RenderInterface->SetWindow(m_render_window);
 	UI->ScreenSizeUpdate();
 
 	// Load settings.

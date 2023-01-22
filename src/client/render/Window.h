@@ -26,9 +26,10 @@ public:
 
 	Window& operator=(const Window& other) = delete;
 
-	int32_t GetWidth() const;
-	int32_t GetHeight() const;
-	bool IsActive() const;
+	sf::RenderWindow* GetRenderWindow() const;
+	int32_t GetWidth() const noexcept;
+	int32_t GetHeight() const noexcept;
+	bool IsActive() const noexcept;
 
 	void EventLoop();
 
@@ -43,17 +44,22 @@ private:
 	bool m_window_active;
 };
 
-inline int32_t Window::GetWidth() const
+inline sf::RenderWindow* Window::GetRenderWindow() const
+{
+	return m_window.get();
+}
+
+inline int32_t Window::GetWidth() const noexcept
 {
 	return m_window->getSize().x;
 }
 
-inline int32_t Window::GetHeight() const
+inline int32_t Window::GetHeight() const noexcept
 {
 	return m_window->getSize().y;
 }
 
-inline bool Window::IsActive() const
+inline bool Window::IsActive() const noexcept
 {
 	return m_window_active;
 }

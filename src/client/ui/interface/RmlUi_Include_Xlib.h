@@ -3,7 +3,7 @@
  *
  * For the latest information, see http://github.com/mikke89/RmlUi
  *
- * Copyright (c) 2008-2010 Nuno Silva
+ * Copyright (c) 2008-2010 CodePoint Ltd, Shift Technology Ltd
  * Copyright (c) 2019 The RmlUi Team, and contributors
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -25,28 +25,25 @@
  * THE SOFTWARE.
  *
  */
-#pragma once
 
-#include <RmlUi/Core/SystemInterface.h>
-#include <RmlUi/Core/Input.h>
-#include <SFML/Graphics.hpp>
+#ifndef RMLUI_BACKENDS_INCLUDE_XLIB_H
+#define RMLUI_BACKENDS_INCLUDE_XLIB_H
 
+#ifndef RMLUI_DISABLE_INCLUDE_XLIB
 
-namespace tdrp::ui
-{
+	#include <X11/Xlib.h>
 
-class RmlUiSFMLSystemInterface : public Rml::SystemInterface
-{
-public:
-	Rml::Input::KeyIdentifier TranslateKey(sf::Keyboard::Key Key);
-	int GetKeyModifiers();
+	// The None and Always defines from X.h conflicts with RmlUi code base,
+	// use their underlying constants where necessary.
+	#ifdef None
+		// Value 0L
+		#undef None
+	#endif
+	#ifdef Always
+		// Value 2
+		#undef Always
+	#endif
 
-	double GetElapsedTime() override;
-	bool LogMessage(Rml::Log::Type type, const Rml::String& message) override;
+#endif
 
-private:
-	sf::Clock timer;
-};
-
-}
-
+#endif

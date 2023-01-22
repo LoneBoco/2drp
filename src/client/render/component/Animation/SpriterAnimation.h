@@ -4,6 +4,7 @@
 
 #include "engine/common.h"
 
+#include "client/render/Window.h"
 #include "client/render/component/Animation/IAnimationSystem.h"
 
 namespace tdrp::render::component::animation
@@ -35,6 +36,9 @@ public:
 	void UpdateEntity(const std::string& entity) override;
 	void UpdateAnimation(const std::string& animation) override;
 	void UpdateAttribute(const uint16_t attribute_id) override;
+
+protected:
+	INJECT(::tdrp::render::Window, window);
 
 protected:
 	std::unique_ptr<SpriterEngine::EntityInstance> m_animation;

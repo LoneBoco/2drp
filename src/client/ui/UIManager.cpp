@@ -5,13 +5,10 @@
 #include "client/useable/Useable.h"
 
 #include "client/ui/UIManager.h"
+#include "client/ui/interface/RmlUi_Backend.h"
 
 #include "client/game/Game.h"
 #include "client/render/Window.h"
-
-#include "client/ui/interface/RenderInterfaceSFML.h"
-#include "client/ui/interface/ShellFileInterface.h"
-#include "client/ui/interface/SystemInterfaceSFML.h"
 
 #include "client/script/Script.h"
 #include "engine/script/modules/bind.h"
@@ -24,13 +21,15 @@ UIManager::UIManager()
 {
 	// Bind Rml.
 	{
+		Backend::Initialize(window->GetRenderWindow());
+
 		FileInterface = std::make_unique<ShellFileInterface>();
-		RenderInterface = std::make_unique<RmlUiSFMLRenderer>();
-		SystemInterface = std::make_unique<RmlUiSFMLSystemInterface>();
+		SystemInterface = Backend::GetSystemInterface();
+		RenderInterface = dynamic_cast<RenderInterface_GL2*>(Backend::GetRenderInterface());
 
 		Rml::SetFileInterface(FileInterface.get());
-		Rml::SetRenderInterface(RenderInterface.get());
-		Rml::SetSystemInterface(SystemInterface.get());
+		Rml::SetSystemInterface(Backend::GetSystemInterface());
+		Rml::SetRenderInterface(Backend::GetRenderInterface());
 
 		Rml::Initialise();
 	}
@@ -62,7 +61,7 @@ UIManager::UIManager()
 	{
 		m_visible_contexts.emplace("debugger");
 		Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
-		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface.get());
+		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface);
 		Rml::Debugger::Initialise(m_debugger_host);
 	}
 }
@@ -71,6 +70,7 @@ UIManager::~UIManager()
 {
 	// Pray.
 	Rml::Shutdown();
+	Backend::Shutdown();
 
 	// Erase script instance.
 	script_manager->EraseScriptInstance("UI");
@@ -81,7 +81,7 @@ Rml::Context* UIManager::CreateContext(const std::string& name)
 	// Convert to RmlUi size.
 	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
 
-	auto context = Rml::CreateContext(name, size, RenderInterface.get());
+	auto context = Rml::CreateContext(name, size, RenderInterface);
 	if (!context) return nullptr;
 
 	// Bind Useables.
@@ -179,6 +179,8 @@ void UIManager::ScreenSizeUpdate()
 
 	for (int i = 0; i < Rml::GetNumContexts(); ++i)
 		Rml::GetContext(i)->SetDimensions(size);
+
+	RenderInterface->SetViewport(size.x, size.y);
 }
 
 void UIManager::Update()
@@ -195,6 +197,10 @@ void UIManager::Update()
 
 void UIManager::Render()
 {
+	assert(RenderInterface);
+
+	RenderInterface->BeginFrame();
+
 	// Render back to front.
 	// We want the debugger to render last.
 	for (int i = Rml::GetNumContexts(); i > 0; --i)
@@ -205,6 +211,8 @@ void UIManager::Render()
 		if (m_visible_contexts.contains(context->GetName()))
 			context->Render();
 	}
+
+	RenderInterface->EndFrame();
 }
 
 bool UIManager::ForEachVisible(ContextIterationFunc func)

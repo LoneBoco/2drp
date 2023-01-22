@@ -15,7 +15,7 @@
  *
  * The above copyright notice and this permission notice shall be included in
  * all copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -26,16 +26,26 @@
  *
  */
 
-#ifndef RMLUI_SHELL_WIN32_INCLUDEWINDOWS_H
-#define RMLUI_SHELL_WIN32_INCLUDEWINDOWS_H
+#ifndef RMLUI_BACKENDS_INCLUDE_WINDOWS_H
+#define RMLUI_BACKENDS_INCLUDE_WINDOWS_H
 
-#if !defined _WIN32_WINNT || _WIN32_WINNT < 0x0601
-	#undef _WIN32_WINNT
-	// Target Windows 7
-	#define _WIN32_WINNT 0x0601
+#ifndef RMLUI_DISABLE_INCLUDE_WINDOWS
+
+	#if !defined _WIN32_WINNT || _WIN32_WINNT < 0x0601
+		#undef _WIN32_WINNT
+		// Target Windows 7
+		#define _WIN32_WINNT 0x0601
+	#endif
+
+	#define UNICODE
+	#define _UNICODE
+	#define WIN32_LEAN_AND_MEAN
+	#ifndef NOMINMAX
+		#define NOMINMAX
+	#endif
+
+	#include <windows.h>
+
 #endif
-
-#define WIN32_LEAN_AND_MEAN
-#include <windows.h>
 
 #endif

@@ -69,9 +69,9 @@ public:
 	~MyClass() = default;
 
 	MyClass(const MyClass&) = delete;
-	MyClass(MyClass&&) = delete;
+	MyClass(MyClass&&) noexcept = delete;
 	MyClass& operator=(const MyClass&) = delete;
-	MyClass& operator=(MyClass&&) = delete;
+	MyClass& operator=(MyClass&&) noexcept = delete;
 	bool operator==(const MyClass&) = delete;
 };
 

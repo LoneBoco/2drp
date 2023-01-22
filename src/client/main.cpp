@@ -35,12 +35,12 @@ int main(int argc, char* argv[])
 		return 1;
 	}
 
-	// Initialize the Game.
+	// Create the Game and the Window.
 	auto game = BabyDI::Get<tdrp::Game>();
-	game->Initialize();
-
-	// Pull out the injected window and start the event loop.
 	auto window = BabyDI::Get<tdrp::render::Window>();
+
+	// Initialize the game and begin the event loop.
+	game->Initialize();
 	window->EventLoop();
 
 	// Clean up in order.

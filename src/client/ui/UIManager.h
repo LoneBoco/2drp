@@ -9,9 +9,9 @@
 #include <RmlUi/Core.h>
 #include <sol/sol.hpp>
 
-#include "client/ui/interface/RenderInterfaceSFML.h"
+#include "client/ui/interface/RmlUi_Platform_SFML.h"
+#include "client/ui/interface/RmlUi_Renderer_GL2.h"
 #include "client/ui/interface/ShellFileInterface.h"
-#include "client/ui/interface/SystemInterfaceSFML.h"
 
 #include "engine/script/Script.h"
 
@@ -53,9 +53,9 @@ public:
 
 public:
 	script::ScriptPtr Script;
-	std::unique_ptr<ShellFileInterface> FileInterface = nullptr;
-	std::unique_ptr<RmlUiSFMLRenderer> RenderInterface = nullptr;
-	std::unique_ptr<RmlUiSFMLSystemInterface> SystemInterface = nullptr;
+	std::unique_ptr<Rml::FileInterface> FileInterface = nullptr;
+	Rml::SystemInterface* SystemInterface = nullptr;
+	RenderInterface_GL2* RenderInterface = nullptr;
 
 protected:
 	INJECT(::tdrp::render::Window, window);

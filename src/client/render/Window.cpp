@@ -11,6 +11,8 @@
 #include "client/render/Window.h"
 #include "client/game/Game.h"
 
+#include "client/ui/interface/RmlUi_Platform_SFML.h"
+
 namespace tdrp::render
 {
 
@@ -29,14 +31,25 @@ Window::Window(const char* title)
 	sf::FloatRect visibleArea({ 0.f, 0.f }, { static_cast<float>(width), static_cast<float>(height) });
 	m_window->setView(sf::View(visibleArea));
 	Game->Camera.SetSize({ static_cast<int32_t>(width), static_cast<int32_t>(height) });
-	
-	Game->SetRenderWindow(m_window.get());
 }
 
 Window::~Window()
 {
 	log::PrintLine(":: Closing window.");
 }
+
+constinit auto rml_events = std::to_array<sf::Event::EventType>(
+	{
+		sf::Event::MouseMoved,
+		sf::Event::MouseButtonPressed,
+		sf::Event::MouseButtonReleased,
+		sf::Event::MouseWheelScrolled,
+		sf::Event::MouseLeft,
+		sf::Event::TextEntered,
+		sf::Event::KeyPressed,
+		sf::Event::KeyReleased,
+	}
+);
 
 void Window::EventLoop()
 {
@@ -63,90 +76,33 @@ void Window::EventLoop()
 				m_window_active = true;
 			}
 
-			else if (event.type == sf::Event::KeyPressed)
+			else if (std::ranges::any_of(rml_events, [&event](auto& ev) { return ev == event.type; }))
 			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
-				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessKeyDown(si->TranslateKey(event.key.code), si->GetKeyModifiers());
-				});
+				auto eat = Game->UI->ForEachVisible([&event](auto& context) { return RmlSFML::InputHandler(&context, event); });
 				if (eat) continue;
 
-				if (event.key.code == sf::Keyboard::F8)
-					Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
-
-				Game->OnKeyPress.RunAll(event.key.code);
-			}
-
-			else if (event.type == sf::Event::KeyReleased)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
+				if (event.type == sf::Event::KeyPressed)
 				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessKeyUp(si->TranslateKey(event.key.code), si->GetKeyModifiers());
-				});
-				if (eat) continue;
-			}
+					if (event.key.code == sf::Keyboard::F8)
+						Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
 
-			else if (event.type == sf::Event::TextEntered)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
+					Game->OnKeyPress.RunAll(event.key.code);
+				}
+				else if (event.type == sf::Event::MouseWheelScrolled)
 				{
-					auto& si = Game->UI->SystemInterface;
-					if (event.text.unicode >= 32)
-						return context.ProcessTextInput(Rml::Character(event.text.unicode));
-					return false;
-				});
-				if (eat) continue;
-			}
-
-			else if (event.type == sf::Event::MouseMoved)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
+					Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
+					Game->OnMouseWheel.RunAll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
+				}
+				else if (event.type == sf::Event::MouseButtonPressed)
 				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessMouseMove(event.mouseMove.x, event.mouseMove.y, si->GetKeyModifiers());
-				});
-				if (eat) continue;
-			}
-
-			else if (event.type == sf::Event::MouseWheelScrolled)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
+					Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
+					Game->OnMouseDown.RunAll(event.mouseButton.button, pos);
+				}
+				else if (event.type == sf::Event::MouseButtonReleased)
 				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessMouseWheel(event.mouseWheelScroll.delta, si->GetKeyModifiers());
-				});
-				if (eat) continue;
-
-				Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
-				Game->OnMouseWheel.RunAll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
-			}
-
-			else if (event.type == sf::Event::MouseButtonPressed)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
-				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessMouseButtonDown(event.mouseButton.button, si->GetKeyModifiers());
-				});
-				if (eat) continue;
-
-				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-				Game->OnMouseDown.RunAll(event.mouseButton.button, pos);
-			}
-
-			else if (event.type == sf::Event::MouseButtonReleased)
-			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context)
-				{
-					auto& si = Game->UI->SystemInterface;
-					return context.ProcessMouseButtonUp(event.mouseButton.button, si->GetKeyModifiers());
-				});
-				if (eat) continue;
-
-				Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-				Game->OnMouseUp.RunAll(event.mouseButton.button, pos);
+					Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
+					Game->OnMouseUp.RunAll(event.mouseButton.button, pos);
+				}
 			}
 		}
 
@@ -158,6 +114,7 @@ void Window::EventLoop()
 		}
 		
 		// Render start.
+		m_window->resetGLStates();
 		m_window->clear(sf::Color::Black);
 
 		// Update the game / server.
