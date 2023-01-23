@@ -1,4 +1,5 @@
 # Media
-/media/
-!/media/packages/login/
+/media/packages/*
+#!/media/packages/login/
+!/media/packages/adventure/
 /src/engine/network/packets/
