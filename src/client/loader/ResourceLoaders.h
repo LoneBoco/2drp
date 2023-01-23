@@ -29,9 +29,11 @@ std::size_t LoadSound(const filesystem::path& file)
 		if (f)
 		{
 			auto buffer = std::make_shared<sf::SoundBuffer>();
+			auto contents = f->Read();
 
 			SFMListream stream(*f);
-			auto success = buffer->loadFromStream(stream);
+			//auto success = buffer->loadFromStream(stream);
+			auto success = buffer->loadFromMemory(contents.data(), contents.size());
 			if (success)
 			{
 				id = resources->Add(filename, std::move(buffer));
