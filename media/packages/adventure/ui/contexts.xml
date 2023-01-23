@@ -1,0 +1,13 @@
+<contexts version="1">
+	<font file="DejaVuSansCondensed.ttf" />
+
+	<context name="loading">
+		<document file="loading.rml" />
+	</context>
+	<context name="hud">
+		<document file="health.rml" show="true" />
+		<document file="actions.rml" show="true" />
+		<document file="inventory.rml" />
+		<document file="chat.rml" />
+	</context>
+</contexts>

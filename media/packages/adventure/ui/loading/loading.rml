@@ -1,0 +1,16 @@
+<rml>
+<head>
+	<title>Loading</title>
+	<style>
+		body
+		{
+			width: 300dp;
+			height: 75dp;
+			margin: auto;
+		}
+	</style>
+</head>
+<body>
+	<p>Loading...</p>
+</body>
+</rml>

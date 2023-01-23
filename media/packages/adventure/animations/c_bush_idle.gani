@@ -1,0 +1,8 @@
+GANI0001
+SPRITE    1        BUSHIMAGE    0    0   64   64 bush (0)
+
+SINGLEDIRECTION
+
+ANI
+   1 -16 -16
+ANIEND

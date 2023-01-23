@@ -1,0 +1,63 @@
+<rml>
+<head>
+	<link type="text/css" href="rml.rcss"/>
+	<title>Inventory</title>
+	<style>
+		#inventory {
+			width: 80%;
+			height: 80%;
+			margin: auto;
+		}
+		#inventory-container {
+			width: 100%;
+			height: 100%;
+			background-color: rgba(255, 231, 144, 255);
+			border-color: rgba(255, 176, 144, 255);
+			border-width: 4dp;
+			border-radius: 15dp;
+		}
+		.inventory-item {
+			display: inline-block;
+			margin: 15dp;
+		}
+		.inventory-item div {
+			display: block;
+			text-align: center;
+		}
+		.inventory-item:hover {
+			background-color: rgba(225, 201, 114, 255);
+		}
+	</style>
+	<script>
+
+		-- Create the data model before we call onload.
+		--[[if dmInventory == nil then
+			dmInventory = rmlui.GetContext('hud'):OpenDataModel('inventory', {
+				test = 'testing',
+				testbool = true,
+				items = {
+					{name = 'Item1', image = 'block_sword.png'},
+					{name = 'Item2', image = 'block_sword.png'},
+					{name = 'Item3', image = 'block_sword.png'}
+				}
+			})
+		end--]]
+
+		function Select(element)
+			Game.Flags.CurrentUseable = element.attributes.name
+			element.owner_document:Hide()
+		end
+
+	</script>
+</head>
+<body id="inventory">
+	<div id="inventory-container" data-model="useables">
+		<div class="inventory-item" data-for="item : useables" data-attr-name="item.name" onclick="Select(element)" >
+			<div>
+				<img data-attr-src="item.image"/>
+			</div>
+			<p>{{item.name}}</p>
+		</div>
+	</div>
+</body>
+</rml>

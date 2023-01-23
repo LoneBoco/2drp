@@ -1,0 +1,64 @@
+GANI0001
+SPRITE    0         SPRITES    0    0   24   16 shadow
+SPRITE    1            BODY    0   96   32   32 body_sword (0, 0)
+SPRITE    2            BODY   32   96   32   32 body_sword (1, 0)
+SPRITE    3            BODY   64   96   32   32 body_sword (2, 0)
+SPRITE    4            BODY   96   96   32   32 body_sword (3, 0)
+SPRITE    5            BODY    0  128   32   32 body_sword (0, 1)
+SPRITE    6            BODY   32  128   32   32 body_sword (1, 1)
+SPRITE    7            BODY   64  128   32   32 body_sword (2, 1)
+SPRITE    8            BODY   96  128   32   32 body_sword (3, 1)
+SPRITE    9            BODY    0  160   32   32 body_sword (0, 2)
+SPRITE   10            BODY   32  160   32   32 body_sword (1, 2)
+SPRITE   11            BODY   64  160   32   32 body_sword (2, 2)
+SPRITE   12            BODY   96  160   32   32 body_sword (3, 2)
+SPRITE   20            HEAD    0    0   32   32 head (0, 0)
+SPRITE   21            HEAD   32    0   32   32 head (1, 0)
+SPRITE   22            HEAD   64    0   32   32 head (2, 0)
+SPRITE   23            HEAD   96    0   32   32 head (3, 0)
+SPRITE   24            HEAD    0   32   32   32 head (0, 1)
+SPRITE   25            HEAD   32   32   32   32 head (1, 1)
+SPRITE   26            HEAD   64   32   32   32 head (2, 1)
+SPRITE   27            HEAD   96   32   32   32 head (3, 1)
+SPRITE   30           SWORD    0    0   32   32 sword (0, 0)
+SPRITE   31           SWORD   32    0   32   32 sword (1, 0)
+SPRITE   32           SWORD   64    0   32   32 sword (2, 0)
+SPRITE   33           SWORD   96    0   32   32 sword (3, 0)
+SPRITE   34           SWORD    0   32   32   32 sword (0, 1)
+SPRITE   35           SWORD   32   32   32   32 sword (1, 1)
+SPRITE   36           SWORD   64   32   32   32 sword (2, 1)
+SPRITE   37           SWORD   96   32   32   32 sword (3, 1)
+
+SETBACKTO hero_idle
+DEFAULTSWORD sword_hero1.png
+DEFAULTHEAD head_hero1.png
+DEFAULTBODY body_hero1.png
+
+ANI
+   0  12  34,   36  29  19,    1   8  13,   20   9  -4
+   0  12  34,   37  14   1,    2   8  13,   21   8  -4
+   0  12  34,    3   8  15,   22   7  -2,   34  -5   4
+   0  12  34,    4   9  13,   23   9  -4,   35  -1  26
+PLAYSOUND sword.ogg 1.5 2
+
+   0  12  34,   37  25  -3,    5   8  13,   20   8  -3
+   0  12  34,   34 -12  -2,    2   7  13,   21   7  -4
+   0  12  34,    3   8  15,   22   8   0,   35  -3  28
+   0  12  34,    8  10  13,   23  10  -3,   36  30  26
+
+   0  12  34,   30  -3  -3,    9   8  14,   20   8  -5
+   0  12  34,   31 -17  11,    6   6  13,   21   6  -4
+   0  12  34,    7   8  16,   22   8   1,   32  14  37
+   0  12  34,   12  10  13,   33  29   8,   23  10  -4
+
+   0  12  34,   34 -16   1,    9   8  13,   20   7  -6
+   0  12  34,   10   7  14,   35   4  26,   21   7  -3
+   0  12  34,   11   9  18,   22   9   3,   36  30  37
+   0  12  34,   12  11  13,   37  26  -8,   23  11  -4
+
+   0  12  34,    9   8  13,   35 -15  27,   20   7  -6
+   0  12  34,   10   8  14,   36  31  24,   21   8  -3
+   0  12  34,    7   9  16,   22   9   1,   33  30  20
+   0  12  34,   12  10  13,   34  -3  -5,   23   8  -4
+WAIT 1
+ANIEND

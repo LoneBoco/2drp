@@ -1,0 +1,27 @@
+<levelchunk version="1" x="0" y="0" />
+<sceneobjects>
+	<object type="tmx" class="level" replicated="false">
+		<property name="x" type="float" value="0.0" />
+		<property name="y" type="float" value="0.0" />
+		<property name="z" type="float" value="0.0" />
+		<tmx file="startlevel.tmx" />
+	</object>
+	<object type="animated" class="bush" replicated="false">
+		<property name="x" type="float" value="256.0" />
+		<property name="y" type="float" value="196.0" />
+		<property name="z" type="float" value="0.0" />
+		<property name="animation" type="string" value="c_bush_idle.gani" />
+		<physics type="static">
+			<box radius="1.0 1.0" center="1.0 1.0" />
+		</physics>
+	</object>
+	<object type="animated" class="bush">
+		<property name="x" type="float" value="352.0" />
+		<property name="y" type="float" value="196.0" />
+		<property name="z" type="float" value="0.0" />
+		<property name="animation" type="string" value="c_bush_idle.gani" />
+		<physics type="static">
+			<box left="0" top="0" right="2" bottom="2" />
+		</physics>
+	</object>
+</sceneobjects>

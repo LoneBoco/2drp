@@ -1,0 +1,16 @@
+<package name="Adventure" version="1.0">
+	<logo file="logo.png" />
+	<description>Adventure game.</description>
+	<startingscene>startlevel</startingscene>
+	<loadingscene>loading</loadingscene>
+	<objectclasses file="classes.xml" />
+	<servercontrolscripts>
+		<script file="server.lua" />
+	</servercontrolscripts>
+	<clientcontrolscripts>
+		<script file="client.lua" />
+	</clientcontrolscripts>
+	<loaduseables>
+		<directory>scripts/weapons/</directory>
+	</loaduseables>
+</package>

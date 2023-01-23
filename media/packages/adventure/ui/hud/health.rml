@@ -1,0 +1,190 @@
+<rml>
+<head>
+	<link type="text/css" href="rml.rcss"/>
+	<title>Health</title>
+	<style>
+		#health
+		{
+			width: 400dp;
+			height: 300dp;
+			margin-top: 30px;
+			margin-right: 30px;
+			margin-left: auto;
+			margin-bottom: auto;
+		}
+		@spritesheet health
+		{
+			src: state.png;
+			resolution: 1x;
+
+			heart-bg: 0px 0px 48px 48px;
+			heart-full: 48px 0px 48px 48px;
+			heart-half: 48px 0px 24px 48px;
+		}
+		#heart-container {
+			width: 100%;
+			height: 100%;
+			display: flex;
+			flex-flow: row wrap;
+			justify-content: flex-end;
+			align-items: flex-start;
+			align-content: flex-start;
+		}
+
+		.heart-block {
+			flex: 0 1 auto;
+			display: inline-block;
+			position: relative;
+			width: 40dp;
+			height: 46dp;
+		}
+		.heart-block img {
+			position: absolute;
+			left: 0dp;
+			top: 0dp;
+			text-align: center;
+		}
+
+		.fullheart {
+			width: 48dp;
+		}
+		.halfheart {
+			width: 24dp;
+			padding-right: 24dp;
+		}
+		.show {
+			display: inline-block;
+		}
+		.hide {
+			display: none;
+		}
+		img {
+			transform: scale(0.8);
+		}
+	</style>
+	<script>
+		heart_listener = nil
+		max_heart_listener = nil
+
+		_document = nil
+		_sceneobject = nil
+
+		function Init(document)
+			_document = document
+
+			if Game.Player == nil then
+				Game.OnConnected = Connected
+			else
+				Connected()
+			end
+		end
+
+		function Connected()
+			Game.Player.OnSwitchedControl = ControlSwitch
+			_sceneobject = Game.Player:GetCurrentControlledSceneObject()
+			if _sceneobject ~= nil then
+				ControlSwitch(_sceneobject, _sceneobject)
+			end
+		end
+
+		function ControlSwitch(so, old)
+			_sceneobject = so
+			Subscribe()
+		end
+
+		function Subscribe()
+			if heart_listener ~= nil then
+				old.Attributes:Get("hearts"):Unsubscribe(heart_listener)
+			end
+			if max_heart_listener ~= nil then
+				old.Attributes:Get("maxhearts"):Unsubscribe(max_heart_listener)
+			end
+
+			heart_listener = _sceneobject.Attributes:Get("hearts"):Subscribe(UpdateHearts)
+			max_heart_listener = _sceneobject.Attributes:Get("maxhearts"):Subscribe(UpdateMaxHearts)
+
+			UpdateMaxHearts(_sceneobject.Attributes.maxhearts)
+			UpdateHearts(_sceneobject.Attributes.hearts)
+		end
+
+		function UpdateHearts(attribute)
+			local container = _document:GetElementById('heart-container')
+
+			local hearts = attribute:AsInteger()
+			local maxhearts = _sceneobject.Attributes.maxhearts
+			hearts = math.min(hearts, maxhearts * 2)
+
+			local fullhearts = math.floor(hearts / 2)
+			local halfhearts = hearts % 2
+			local emptyhearts = math.ceil(hearts / 2) + 1
+
+			local images = container.first_child
+			for i=1,fullhearts,1 do
+				if images ~= nil then
+					local fg = images:QuerySelector('.heart-foreground')
+					fg:SetClass('hide', false)
+					fg:SetClass('show', true)
+					fg:SetClass('fullheart', true)
+					fg:SetClass('halfheart', false)
+					fg:SetAttribute('sprite', 'heart-full')
+					images = images.next_sibling
+				end
+			end
+			if halfhearts == 1 and images ~= nil then
+				local fg = images:QuerySelector('.heart-foreground')
+				fg:SetClass('hide', false)
+				fg:SetClass('show', true)
+				fg:SetClass('fullheart', false)
+				fg:SetClass('halfheart', true)
+				fg:SetAttribute('sprite', 'heart-half')
+				images = images.next_sibling
+			end
+			for i=1,emptyhearts,1 do
+				if images ~= nil then
+					local fg = images:QuerySelector('.heart-foreground')
+					fg:SetClass('hide', true)
+					fg:SetClass('show', false)
+					images = images.next_sibling
+				end
+			end
+		end
+
+		function UpdateMaxHearts(attribute)
+			local container = _document:GetElementById('heart-container')
+
+			local maxhearts = attribute:AsInteger()
+			local currhearts = #container.child_nodes
+
+			if maxhearts < currhearts then
+				for i = maxhearts,currhearts-1,1 do
+					container:RemoveChild(container.last_child)
+				end
+			elseif maxhearts > currhearts then
+				for i = currhearts,maxhearts-1,1 do
+					local group = _document:CreateElement('div')
+					group:SetClass('heart-block', true)
+
+					local hBG = _document:CreateElement('img')
+					hBG:SetAttribute('sprite', 'heart-bg')
+					group:AppendChild(hBG)
+
+					local hFG = _document:CreateElement('img')
+					hFG:SetClass('heart-foreground', true)
+					hFG:SetClass('hide', true)
+					hFG:SetClass('fullheart', true)
+					hFG:SetAttribute('sprite', 'heart-full')
+					group:AppendChild(hFG)
+
+					container:AppendChild(group)
+				end
+			end
+
+			UpdateHearts(_sceneobject.Attributes.hearts)
+		end
+	</script>
+</head>
+<body id="health" onload="log('onload health') Init(document)">
+	<div id="heart-container">
+	</div>
+</body>
+</rml>

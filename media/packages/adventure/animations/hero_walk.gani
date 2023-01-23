@@ -1,0 +1,55 @@
+GANI0001
+SPRITE    0       SPRITES    0    0   24   16 shadow
+SPRITE    1          BODY    0    0   32   32 walk (0, 0)
+SPRITE    2          BODY   32    0   32   32 walk (1, 0)
+SPRITE    3          BODY   64    0   32   32 walk (2, 0)
+SPRITE    4          BODY   96    0   32   32 walk (3, 0)
+SPRITE    5          BODY    0   32   32   32 walk (0, 1)
+SPRITE    6          BODY   32   32   32   32 walk (1, 1)
+SPRITE    7          BODY   64   32   32   32 walk (2, 1)
+SPRITE    8          BODY   96   32   32   32 walk (3, 1)
+SPRITE    9          BODY    0   64   32   32 walk (0, 2)
+SPRITE   10          BODY   32   64   32   32 walk (1, 2)
+SPRITE   11          BODY   64   64   32   32 walk (2, 2)
+SPRITE   12          BODY   96   64   32   32 walk (3, 2)
+SPRITE   20          HEAD    0    0   32   32 head (0, 0)
+SPRITE   21          HEAD   32    0   32   32 head (1, 0)
+SPRITE   22          HEAD   64    0   32   32 head (2, 0)
+SPRITE   23          HEAD   96    0   32   32 head (3, 0)
+SPRITE   24          HEAD    0   32   32   32 head (0, 1)
+SPRITE   25          HEAD   32   32   32   32 head (1, 1)
+SPRITE   26          HEAD   64   32   32   32 head (2, 1)
+SPRITE   27          HEAD   96   32   32   32 head (3, 1)
+
+LOOP
+CONTINUOUS
+DEFAULTBODY body_hero1.png
+DEFAULTHEAD head_hero1.png
+
+ANI
+   0  12  34,    1   8  13,   20   8  -4
+   0  12  34,    2   8  13,   21   8  -4
+   0  12  34,    3   8  13,   22   8  -4
+   0  12  34,    4   8  13,   23   8  -4
+WAIT 1
+
+   0  12  34,    5   8  13,   20   8  -2
+   0  12  34,    6   8  13,   21   8  -3
+   0  12  34,    7   8  13,   22   8  -2
+   0  12  34,    8   8  13,   23   8  -3
+PLAYSOUND mud02.ogg 1.5 2
+WAIT 1
+
+   0  12  34,    1   8  13,   20   8  -4
+   0  12  34,    2   8  13,   21   8  -4
+   0  12  34,    3   8  13,   22   8  -4
+   0  12  34,    4   8  13,   23   8  -4
+WAIT 1
+
+   0  12  34,    9   8  13,   20   8  -2
+   0  12  34,   10   8  13,   21   8  -3
+   0  12  34,   11   8  13,   22   8  -2
+   0  12  34,   12   8  13,   23   8  -3
+PLAYSOUND mud02.ogg 1.5 2
+WAIT 1
+ANIEND
