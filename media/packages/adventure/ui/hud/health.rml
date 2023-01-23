@@ -94,17 +94,17 @@
 
 		function Subscribe()
 			if heart_listener ~= nil then
-				old.Attributes:Get("hearts"):Unsubscribe(heart_listener)
+				old.Attributes:Get('hearts'):Unsubscribe(heart_listener)
 			end
 			if max_heart_listener ~= nil then
-				old.Attributes:Get("maxhearts"):Unsubscribe(max_heart_listener)
+				old.Attributes:Get('maxhearts'):Unsubscribe(max_heart_listener)
 			end
 
-			heart_listener = _sceneobject.Attributes:Get("hearts"):Subscribe(UpdateHearts)
-			max_heart_listener = _sceneobject.Attributes:Get("maxhearts"):Subscribe(UpdateMaxHearts)
+			heart_listener = _sceneobject.Attributes:Get('hearts'):Subscribe(UpdateHearts)
+			max_heart_listener = _sceneobject.Attributes:Get('maxhearts'):Subscribe(UpdateMaxHearts)
 
-			UpdateMaxHearts(_sceneobject.Attributes.maxhearts)
-			UpdateHearts(_sceneobject.Attributes.hearts)
+			UpdateMaxHearts(_sceneobject.Attributes:Get('maxhearts'))
+			UpdateHearts(_sceneobject.Attributes:Get('hearts'))
 		end
 
 		function UpdateHearts(attribute)
@@ -179,7 +179,7 @@
 				end
 			end
 
-			UpdateHearts(_sceneobject.Attributes.hearts)
+			UpdateHearts(_sceneobject.Attributes:Get('hearts'))
 		end
 	</script>
 </head>
