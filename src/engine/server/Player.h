@@ -38,8 +38,8 @@ public:
 	std::weak_ptr<scene::Scene> SwitchScene(std::shared_ptr<scene::Scene>& new_scene);
 	std::weak_ptr<SceneObject> SwitchControlledSceneObject(std::shared_ptr<SceneObject>& new_scene_object);
 
-	std::weak_ptr<scene::Scene> GetCurrentScene();
-	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject();
+	std::weak_ptr<scene::Scene> GetCurrentScene() const;
+	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject() const;
 
 	std::shared_ptr<scene::Scene> LuaGetCurrentScene();
 	std::shared_ptr<SceneObject> LuaGetCurrentControlledSceneObject();
@@ -63,12 +63,12 @@ using PlayerPtr = std::shared_ptr<Player>;
 
 /////////////////////////////
 
-inline std::weak_ptr<scene::Scene> Player::GetCurrentScene()
+inline std::weak_ptr<scene::Scene> Player::GetCurrentScene() const
 {
 	return m_current_scene;
 }
 
-inline std::weak_ptr<SceneObject> Player::GetCurrentControlledSceneObject()
+inline std::weak_ptr<SceneObject> Player::GetCurrentControlledSceneObject() const
 {
 	return m_current_sceneobject;
 }

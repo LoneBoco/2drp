@@ -38,8 +38,8 @@ public:
 
 protected:
 	std::weak_ptr<SceneObject> m_owner;
-	std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
+	std::unordered_map<size_t, std::weak_ptr<sf::Texture>> m_textures;
+	std::unordered_map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
 	std::vector<std::shared_ptr<sf::RenderTexture>> m_render_textures;
 	std::vector<sf::Sprite> m_sprites;
 	//sf::VertexArray m_vertices;

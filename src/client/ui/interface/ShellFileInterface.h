@@ -28,6 +28,8 @@
 
 #pragma once
 
+#include "engine/common.h"
+
 #include <BabyDI.hpp>
 #include "engine/filesystem/File.h"
 
@@ -67,7 +69,7 @@ public:
 
 private:
 	INJECT(::tdrp::Game, Game);
-	std::map<Rml::FileHandle, tdrp::fs::FilePtr> m_files;
+	std::unordered_map<Rml::FileHandle, tdrp::fs::FilePtr> m_files;
 };
 
 } // end namespace tdrp::ui

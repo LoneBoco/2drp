@@ -246,7 +246,7 @@ public:
 
 public:
 	static AttributeType TypeFromString(const std::string& type);
-	std::string_view TypeAsString();
+	std::string_view TypeAsString() const;
 	friend std::ostream& operator<<(std::ostream& os, const Attribute& attribute)
 	{
 		return os << attribute.GetAs<std::string>();
@@ -263,7 +263,7 @@ using AttributePtr = std::shared_ptr<Attribute>;
 class ObjectAttributes
 {
 	friend class ObjectProperties;
-	using attribute_map = std::map<AttributeID, std::shared_ptr<Attribute>>;
+	using attribute_map = std::unordered_map<AttributeID, std::shared_ptr<Attribute>>;
 
 public:
 
@@ -356,7 +356,7 @@ public:
 
 	//! Returns the attribute map.
 	//! \return The attribute map.
-	std::map<AttributeID, std::shared_ptr<Attribute>>& GetMap()		{ return m_attributes; }
+	std::unordered_map<AttributeID, std::shared_ptr<Attribute>>& GetMap()		{ return m_attributes; }
 
 	//! Returns an iterator to iterate over dirty attributes.
 	IteratorDirty GetDirtyBegin() { return IteratorDirty(*this, m_attributes.begin()); }
@@ -398,7 +398,7 @@ private:
 	//! Gets or creates an attribute.
 	std::shared_ptr<Attribute> getOrCreateAttribute(const std::string& name, AttributeID id = -1);
 
-	std::map<AttributeID, std::shared_ptr<Attribute>> m_attributes;
+	std::unordered_map<AttributeID, std::shared_ptr<Attribute>> m_attributes;
 	AttributeID m_cid;
 
 public:

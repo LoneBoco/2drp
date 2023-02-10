@@ -24,7 +24,7 @@ enum class ServerType
 	DEDICATED
 };
 
-enum class ServerFlags : uint16_t
+enum class ServerFlags : uint8_t
 {
 	//! Loads all resources at the start instead of on-demand.
 	PRELOAD_EVERYTHING = 0b0000'0001,
@@ -92,7 +92,7 @@ public:
 	void EraseClientScript(const std::string& name);
 	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
 	void RemovePlayerClientScript(const std::string& name, PlayerPtr player);
-	std::map<std::string, std::string>& GetClientScriptMap();
+	std::unordered_map<std::string, std::string>& GetClientScriptMap();
 
 public:
 	void SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value);
@@ -166,14 +166,14 @@ protected:
 	SceneObjectID m_sceneobject_counter;
 
 	std::shared_ptr<package::Package> m_package;
-	std::map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
-	std::map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
-	std::map<std::string, scene::ScenePtr> m_scenes;
-	std::map<std::string, std::string> m_client_scripts;
+	std::unordered_map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
+	std::unordered_map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
+	std::unordered_map<std::string, scene::ScenePtr> m_scenes;
+	std::unordered_map<std::string, std::string> m_client_scripts;
 	std::string m_server_control_script;
 	std::string m_client_control_script;
 
-	std::map<uint16_t, PlayerPtr> m_player_list;
+	std::unordered_map<uint16_t, PlayerPtr> m_player_list;
 
 	std::string m_unique_id;
 	std::string m_server_name;
@@ -264,7 +264,7 @@ inline network::Network& Server::GetNetwork()
 	return m_network;
 }
 
-inline std::map<std::string, std::string>& Server::GetClientScriptMap()
+inline std::unordered_map<std::string, std::string>& Server::GetClientScriptMap()
 {
 	return m_client_scripts;
 }

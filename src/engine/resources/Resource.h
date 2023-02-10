@@ -70,9 +70,7 @@ protected:
 // Manager.
 class ResourceManager
 {
-	using ResourceMap = std::map<size_t, std::any>;
-	//template <typename T>
-	//using ResourceMap = std::map<size_t, Resource<T>>;
+	using ResourceMap = std::unordered_map<size_t, std::any>;
 
 public:
 	ResourceManager() = default;

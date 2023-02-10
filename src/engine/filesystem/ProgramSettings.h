@@ -33,7 +33,7 @@ public:
 	void Set(const std::string& setting, const bool value);
 
 private:
-	std::map<std::string, std::string> m_settings;
+	std::unordered_map<std::string, std::string> m_settings;
 	std::vector<std::string> m_settings_order;
 };
 

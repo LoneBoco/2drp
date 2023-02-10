@@ -158,7 +158,7 @@ AttributeType Attribute::TypeFromString(const std::string& type)
 	return AttributeType::INVALID;
 }
 
-std::string_view Attribute::TypeAsString()
+std::string_view Attribute::TypeAsString() const
 {
 	const auto type = GetType();
 	if (type == AttributeType::INTEGER)

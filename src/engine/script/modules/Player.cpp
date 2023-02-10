@@ -16,6 +16,22 @@ namespace sol
 namespace tdrp::script::modules
 {
 
+namespace functions
+{
+
+	scene::ScenePtr get_current_scene(const server::Player& player)
+	{
+		return player.GetCurrentScene().lock();
+	}
+
+	SceneObjectPtr get_current_controlled_scene_object(const server::Player& player)
+	{
+		return player.GetCurrentControlledSceneObject().lock();
+	}
+
+} // end namespace functions
+
+
 void bind_player(sol::state& lua)
 {
 	lua.new_usertype<server::Account>("Account", sol::no_constructor,
@@ -25,8 +41,8 @@ void bind_player(sol::state& lua)
 	lua.new_usertype<server::Player>("Player", sol::no_constructor,
 		//"SwitchScene", &server::Player::SwitchScene,
 		"SwitchControlledSceneObject", &server::Player::SwitchControlledSceneObject,
-		"GetCurrentScene", &server::Player::LuaGetCurrentScene,
-		"GetCurrentControlledSceneObject", &server::Player::LuaGetCurrentControlledSceneObject,
+		"GetCurrentScene", &functions::get_current_scene,
+		"GetCurrentControlledSceneObject", &functions::get_current_controlled_scene_object,
 		"GetPlayerId", &server::Player::GetPlayerId,
 
 		"Account", &server::Player::Account,
