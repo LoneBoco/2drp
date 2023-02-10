@@ -181,7 +181,7 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet)
 
 	if (new_player == game.GetCurrentPlayer())
 	{
-		log::PrintLine("<- SceneObjectOwnership [C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
+		// log::PrintLine("<- SceneObjectOwnership [C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
 		game.OnGainedOwnership.RunAll(so);
 	}
 }

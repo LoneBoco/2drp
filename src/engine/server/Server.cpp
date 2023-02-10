@@ -196,6 +196,8 @@ bool Server::SinglePlayer()
 
 void Server::Shutdown()
 {
+	m_shutting_down = true;
+
 	if (!network::Network::IsStarted())
 		return;
 
@@ -475,7 +477,8 @@ bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
 
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 
-		log::PrintLine("-> Sending scene object {} via scene switch.", sceneobject->ID);
+		if (!(IsHost() && m_player == player && old_scene.expired()))
+			log::PrintLine("-> Sending scene object {} via scene switch.", sceneobject->ID);
 
 		auto object = network::constructSceneObjectPacket(sceneobject);
 		Send(player->GetPlayerId(), network::PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
@@ -853,7 +856,8 @@ bool Server::SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr pl
 	// If the player isn't following this scene object, send it over first.
 	if (!player->FollowedSceneObjects.contains(sceneobject->ID))
 	{
-		log::PrintLine("-> Sending scene object {} via ownership change.", sceneobject->ID);
+		if (m_player != player)
+			log::PrintLine("-> Sending scene object {} via ownership change.", sceneobject->ID);
 
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 		auto packet_newso = network::constructSceneObjectPacket(sceneobject);

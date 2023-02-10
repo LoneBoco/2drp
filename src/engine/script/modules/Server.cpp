@@ -18,6 +18,10 @@ void bind_server(sol::state& lua)
 		"OnServerEvent", sol::writeonly_property(&server::Server::SetOnServerEvent),
 		"OnEvent", sol::writeonly_property(&server::Server::SetOnEvent),
 
+		"IsHost", sol::readonly_property(&server::Server::IsHost),
+		"IsGuest", sol::readonly_property(&server::Server::IsGuest),
+		"IsSinglePlayer", sol::readonly_property(&server::Server::IsSinglePlayer),
+
 		"GetScene", &server::Server::GetScene,
 		"GetDefaultScene", [](server::Server& server) -> scene::ScenePtr { return server.GetScene(server.GetPackage()->GetStartingScene()); },
 

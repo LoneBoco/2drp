@@ -64,6 +64,7 @@ public:
 
 public:
 	void Shutdown();
+	bool IsShuttingDown() const noexcept;
 
 public:
 	void PreUpdate();
@@ -155,6 +156,7 @@ protected:
 protected:
 	network::Network m_network;
 
+	bool m_shutting_down = false;
 	bool m_connecting;
 	std::future<bool> m_connecting_future;
 
@@ -178,6 +180,11 @@ protected:
 	uint16_t m_max_players;
 	PlayerPtr m_player;
 };
+
+inline bool Server::IsShuttingDown() const noexcept
+{
+	return m_shutting_down;
+}
 
 inline void Server::SetUniqueId(const std::string& id)
 {
