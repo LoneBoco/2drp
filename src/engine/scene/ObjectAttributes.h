@@ -59,7 +59,9 @@ public:
 			bool was_dirty = m_isDirty;
 
 			m_isDirty = dirty;
-			m_showDirty = (UpdateRate == std::chrono::milliseconds::zero());
+			m_showDirty = (m_updateCooldown == std::chrono::milliseconds::zero());
+
+			m_updateCooldown = UpdateRate;
 
 			return was_dirty;
 		}
@@ -67,19 +69,14 @@ public:
 		void Update(const std::chrono::milliseconds& elapsed)
 		{
 			if (!m_isDirty) return;
-			if (UpdateRate == std::chrono::milliseconds::zero())
+			if (m_updateCooldown <= std::chrono::milliseconds::zero())
 			{
 				m_showDirty = true;
+				m_updateCooldown = std::chrono::milliseconds::zero();
 				return;
 			}
 
-			m_lastUpdate += elapsed;
-			if (m_lastUpdate >= UpdateRate)
-			{
-				m_showDirty = true;
-				m_lastUpdate = 0ms;
-				//m_lastUpdate = UpdateRate % m_lastUpdate;
-			}
+			m_updateCooldown -= elapsed;
 		}
 
 	public:
@@ -89,7 +86,7 @@ public:
 	private:
 		bool m_isDirty = false;
 		bool m_showDirty = false;
-		std::chrono::milliseconds m_lastUpdate = 0ms;
+		std::chrono::milliseconds m_updateCooldown = 0ms;
 	};
 
 public:

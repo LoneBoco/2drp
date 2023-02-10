@@ -74,26 +74,26 @@ std::shared_ptr<Attribute> ObjectProperties::Get(const std::string& prop)
 void ObjectProperties::create()
 {
 // Add 10 to move the pointer past 'Property::' because I am horrible.
-#define _PROP(x, y) m_properties.AddAttribute(#x + 10, y, (AttributeID)x);
+#define _PROP(x, y, z) m_properties.AddAttribute(#x + 10, y, (AttributeID)x); Get(x)->NetworkUpdate.UpdateRate = z;
 
-	_PROP(Property::LEVEL, "");
-	_PROP(Property::X, 0.0f);
-	_PROP(Property::Y, 0.0f);
-	_PROP(Property::Z, 0.0f);
-	_PROP(Property::ANGLE, 0.0f);
-	_PROP(Property::SCALE_X, 1.0f);
-	_PROP(Property::SCALE_Y, 1.0f);
-	_PROP(Property::VELOCITY_X, 0.0f);
-	_PROP(Property::VELOCITY_Y, 0.0f);
-	_PROP(Property::VELOCITY_ANGLE, 0.0f);
-	_PROP(Property::ACCELERATION_X, 0.0f);
-	_PROP(Property::ACCELERATION_Y, 0.0f);
-	_PROP(Property::ACCELERATION_ANGLE, 0.0f);
-	_PROP(Property::DIRECTION, (int64_t)0);
-	_PROP(Property::IMAGE, "");
-	_PROP(Property::ENTITY, "");
-	_PROP(Property::ANIMATION, "");
-	_PROP(Property::TEXT, "");
+	_PROP(Property::LEVEL, "", 0ms);
+	_PROP(Property::X, 0.0f, 15ms);
+	_PROP(Property::Y, 0.0f, 15ms);
+	_PROP(Property::Z, 0.0f, 15ms);
+	_PROP(Property::ANGLE, 0.0f, 15ms);
+	_PROP(Property::SCALE_X, 1.0f, 0ms);
+	_PROP(Property::SCALE_Y, 1.0f, 0ms);
+	_PROP(Property::VELOCITY_X, 0.0f, 0ms);
+	_PROP(Property::VELOCITY_Y, 0.0f, 0ms);
+	_PROP(Property::VELOCITY_ANGLE, 0.0f, 0ms);
+	_PROP(Property::ACCELERATION_X, 0.0f, 0ms);
+	_PROP(Property::ACCELERATION_Y, 0.0f, 0ms);
+	_PROP(Property::ACCELERATION_ANGLE, 0.0f, 0ms);
+	_PROP(Property::DIRECTION, (int64_t)0, 0ms);
+	_PROP(Property::IMAGE, "", 0ms);
+	_PROP(Property::ENTITY, "", 0ms);
+	_PROP(Property::ANIMATION, "", 0ms);
+	_PROP(Property::TEXT, "", 0ms);
 
 #undef _PROP
 }
