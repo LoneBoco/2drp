@@ -142,6 +142,14 @@ UIManager::UIManager()
 		Rml::Initialise();
 	}
 
+	// Create debugger context.
+	{
+		m_visible_contexts.emplace("debugger");
+		Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
+		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface);
+		Rml::Debugger::Initialise(m_debugger_host);
+	}
+
 	// Bind Lua.
 	{
 		Script = script_manager->CreateScriptInstance("UI");
@@ -162,14 +170,6 @@ UIManager::UIManager()
 		// Load the UI bindings into the game's script state.
 		Rml::SolLua::RegisterLua(&game->Script->GetLuaState());
 		log::PrintLine("[UI] Loaded Lua into Game.");
-	}
-
-	// Create debugger context.
-	{
-		m_visible_contexts.emplace("debugger");
-		Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
-		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface);
-		Rml::Debugger::Initialise(m_debugger_host);
 	}
 }
 
@@ -246,7 +246,7 @@ void UIManager::BindDataModels(Rml::Context* context)
 
 			// Item instance.
 			{
-				auto* type_register = constructor.GetTypeRegister();
+				auto* type_register = constructor.GetDataTypeRegister();
 				auto iteminstancedef = std::make_unique<ItemInstanceVariableDefinition>(*type_register);
 				constructor.RegisterCustomDataVariableDefinition<item::ItemInstance>(std::move(iteminstancedef));
 			}
@@ -274,7 +274,7 @@ void UIManager::BindDataModels(Rml::Context* context)
 
 			// Item map.
 			{
-				auto* type_register = constructor.GetTypeRegister();
+				auto* type_register = constructor.GetDataTypeRegister();
 				auto* item_instance_def = type_register->GetDefinition<item::ItemInstance>();
 
 				auto mapvaluedef = std::make_unique<MapValueVariableDefinition>(item_instance_def);
