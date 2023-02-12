@@ -45,7 +45,7 @@ SceneObjectPtr Scene::FindObject(const std::string& name) const
 {
 	for (auto& p : m_graph)
 	{
-		if (p.second->Name == name)
+		if (boost::iequals(p.second->Name, name))
 			return p.second;
 	}
 
