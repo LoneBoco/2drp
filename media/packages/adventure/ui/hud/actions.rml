@@ -1,8 +1,12 @@
 <rml>
 <head>
-	<link type="text/css" href="rml.rcss"/>
 	<title>Actions</title>
+	<link type="text/css" href="rml.rcss"/>
 	<style>
+		body {
+			z-index: -1
+		}
+
 		@spritesheet actions {
 			src: state.png;
 			resolution: 1x;
@@ -13,8 +17,6 @@
 			display: none;
 		}
 
-		body {
-		}
 		#action-container {
 			padding: 30dp;
 			padding-top: 40dp;
@@ -64,43 +66,32 @@
 	</style>
 	<script>
 		_document = nil
-		_useable_listener = nil
+		_listener = nil
 
 		function Init(document)
 			_document = document
-			if Game.Player == nil then
-				Game.OnConnected = Connected
+
+			local ci = Game.Flags:Get('CurrentItem')
+			if ci == nil then
+				Game.Flags:Add('CurrentItem', '', NEW_ID)
+				ci = Game.Flags:Get('CurrentItem')
 			end
+			_listener = ci:Subscribe(UpdateItem)
+
+			UpdateItem(ci)
 		end
 
-		function Connected()
-			if _useable_listener ~= nil then
-				Game.Flags:Get("CurrentUseable"):Unsubscribe(_useable_listener)
-			end
-
-			local cu = Game.Flags:Get('CurrentUseable')
-			if cu == nil then
-				Game.Flags:Add('CurrentUseable', '', NEW_ID)
-				cu = Game.Flags:Get('CurrentUseable')
-			end
-			_useable_listener = cu:Subscribe(UpdateUseable)
-
-			UpdateUseable(cu)
-		end
-
-		function UpdateUseable(attribute)
-			log('Updating useable image')
+		function UpdateItem(attribute)
+			log('Updating item image')
 
 			local dbutton = _document:GetElementById("d-button")
 			local uimg = dbutton:GetElementsByClassName('useable')[1]
 
-			local useable = Game.Useables[attribute:AsString()]
-			if useable ~= nil then
-				-- uimg:SetClass('hide', false)
+			local item = Game.Player:GetItem(attribute:AsInteger())
+			if item ~= nil then
 				uimg.style.display = 'inline-block'
-				uimg:SetAttribute('src', useable.Image)
+				uimg:SetAttribute('src', item.Image)
 			else
-				-- uimg:SetClass('hide', true)
 				uimg.style.display = 'none'
 			end
 		end

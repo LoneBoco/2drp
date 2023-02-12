@@ -1,8 +1,12 @@
 <rml>
 <head>
-	<link type="text/css" href="rml.rcss"/>
 	<title>Health</title>
+	<link type="text/css" href="rml.rcss"/>
 	<style>
+		body {
+			z-index: -1
+		}
+
 		#health
 		{
 			width: 400dp;
@@ -63,24 +67,18 @@
 		}
 	</style>
 	<script>
-		heart_listener = nil
-		max_heart_listener = nil
+		_listener = {
+			heart = nil,
+			maxheart = nil
+		}
 
 		_document = nil
 		_sceneobject = nil
 
 		function Init(document)
-			_document = document
-
-			if Game.Player == nil then
-				Game.OnConnected = Connected
-			else
-				Connected()
-			end
-		end
-
-		function Connected()
 			Game.Player.OnSwitchedControl = ControlSwitch
+
+			_document = document
 			_sceneobject = Game.Player:GetCurrentControlledSceneObject()
 			if _sceneobject ~= nil then
 				ControlSwitch(_sceneobject, _sceneobject)
@@ -89,19 +87,16 @@
 
 		function ControlSwitch(so, old)
 			_sceneobject = so
-			Subscribe()
-		end
 
-		function Subscribe()
-			if heart_listener ~= nil then
-				old.Attributes:Get('hearts'):Unsubscribe(heart_listener)
+			if _listener.heart ~= nil then
+				old.Attributes:Get('hearts'):Unsubscribe(_listener.heart)
 			end
-			if max_heart_listener ~= nil then
-				old.Attributes:Get('maxhearts'):Unsubscribe(max_heart_listener)
+			if _listener.maxheart ~= nil then
+				old.Attributes:Get('maxhearts'):Unsubscribe(_listener.maxheart)
 			end
 
-			heart_listener = _sceneobject.Attributes:Get('hearts'):Subscribe(UpdateHearts)
-			max_heart_listener = _sceneobject.Attributes:Get('maxhearts'):Subscribe(UpdateMaxHearts)
+			_listener.heart = _sceneobject.Attributes:Get('hearts'):Subscribe(UpdateHearts)
+			_listener.maxheart = _sceneobject.Attributes:Get('maxhearts'):Subscribe(UpdateMaxHearts)
 
 			UpdateMaxHearts(_sceneobject.Attributes:Get('maxhearts'))
 			UpdateHearts(_sceneobject.Attributes:Get('hearts'))

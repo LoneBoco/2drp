@@ -5,12 +5,11 @@
 	<loadingscene>loading</loadingscene>
 	<objectclasses file="classes.xml" />
 	<servercontrolscripts>
-		<script file="server.lua" />
+		<file>server.lua</file>
 	</servercontrolscripts>
 	<clientcontrolscripts>
-		<script file="client.lua" />
+		<file>client.lua</file>
 	</clientcontrolscripts>
-	<loaduseables>
-		<directory>scripts/weapons/</directory>
-	</loaduseables>
+	<loadclientscripts />
+	<loaditems directory="items/" />
 </package>

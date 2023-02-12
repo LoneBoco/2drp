@@ -1,0 +1,11 @@
+syntax = "proto3";
+package tdrp.packet;
+
+message ItemDefinition {
+	uint32 baseid = 1;
+	string name = 2;
+	string description = 3;
+	string image = 4;
+	string clientscript = 5;
+	repeated string tags = 6;
+}

@@ -135,30 +135,79 @@ public:
 		return {};
 	}
 
-	template <is_string T>
-	std::string GetAs() const
-	{
-		std::stringstream str;
-		switch (GetType())
-		{
-		case AttributeType::STRING:
-			return std::get<std::string>(m_value);
-		case AttributeType::INTEGER:
-			str << std::get<int64_t>(m_value);
-			break;
-		case AttributeType::DOUBLE:
-			str << std::get<double>(m_value);
-			break;
-		}
-		return str.str();
-	}
-
 	template <typename T>
 	T GetAs() const
 	{
 		//static_assert(false, "Attribute::GetAs must be used with a number or a string.");
 		assert(false);
 		return {};
+	}
+
+	template <>
+	std::string GetAs<std::string>() const
+	{
+		std::stringstream str;
+		switch (GetType())
+		{
+			case AttributeType::STRING:
+				return std::get<std::string>(m_value);
+			case AttributeType::INTEGER:
+				str << std::get<int64_t>(m_value);
+				break;
+			case AttributeType::DOUBLE:
+				str << std::get<double>(m_value);
+				break;
+		}
+		return str.str();
+	}
+
+	// Non-const because RmlUi is dumb and requires non-const.
+	template <is_numeric T>
+	T GetAs()
+	{
+		switch (GetType())
+		{
+			case AttributeType::INTEGER:
+				return static_cast<T>(std::get<int64_t>(m_value));
+			case AttributeType::DOUBLE:
+				return static_cast<T>(std::get<double>(m_value));
+			case AttributeType::STRING:
+			{
+				std::istringstream str(std::get<std::string>(m_value));
+				T r{};
+				str >> r;
+				return r;
+			}
+		}
+
+		return {};
+	}
+
+	// Non-const because RmlUi is dumb and requires non-const.
+	template <typename T>
+	T GetAs()
+	{
+		assert(false);
+		return {};
+	}
+
+	// Non-const because RmlUi is dumb and requires non-const.
+	template <>
+	std::string GetAs<std::string>()
+	{
+		std::stringstream str;
+		switch (GetType())
+		{
+			case AttributeType::STRING:
+				return std::get<std::string>(m_value);
+			case AttributeType::INTEGER:
+				str << std::get<int64_t>(m_value);
+				break;
+			case AttributeType::DOUBLE:
+				str << std::get<double>(m_value);
+				break;
+		}
+		return str.str();
 	}
 
 	const AttributeType GetType() const;
@@ -383,10 +432,12 @@ public:
 	EventDispatcher<uint16_t> DirtyUpdateDispatch;
 
 public:
+	using value_type = Attribute;
 	attribute_map::iterator begin() { return m_attributes.begin(); };
 	attribute_map::iterator end() { return m_attributes.end(); }
 	attribute_map::const_iterator begin() const { return m_attributes.begin(); }
 	attribute_map::const_iterator end() const { return m_attributes.end(); }
+	size_t size() const { return m_attributes.size(); }
 
 private:
 	//! Assigns an id to the attribute.

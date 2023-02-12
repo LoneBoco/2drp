@@ -1,10 +1,17 @@
 #pragma once
 
 #include "engine/common.h"
+
 #include "engine/scene/ObjectAttributes.h"
 
 #include <unordered_set>
 
+
+namespace tdrp::item
+{
+	class ItemInstance;
+	using ItemInstancePtr = std::shared_ptr<ItemInstance>;
+}
 
 namespace tdrp::server
 {
@@ -15,7 +22,7 @@ class Account
 {
 public:
 	Account(Player* player) : m_player(player) {}
-	~Account() = default;
+	~Account();
 
 	Account(const Account& other) = delete;
 	Account(Account&& other) = delete;
@@ -31,8 +38,13 @@ public:
 	void RemoveClientScript(const std::string& name);
 
 public:
+	void AddItem(item::ItemInstancePtr item);
+	void RemoveItem(item::ItemInstancePtr item);
+
+public:
 	ObjectAttributes Flags;
 	std::unordered_set<std::string> ClientScripts;
+	std::map<ItemID, item::ItemInstancePtr> Items;
 
 protected:
 	Player* m_player;

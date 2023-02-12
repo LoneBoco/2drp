@@ -4,7 +4,6 @@
 
 #include "client/game/Camera.h"
 #include "client/ui/UIManager.h"
-#include "client/useable/Useable.h"
 
 #include "engine/common.h"
 
@@ -14,6 +13,7 @@
 #include "engine/server/Server.h"
 #include "engine/server/Player.h"
 #include "engine/script/Script.h"
+#include "engine/item/Item.h"
 
 namespace sf
 {
@@ -26,7 +26,7 @@ namespace tdrp
 {
 
 // constexpr std::chrono::milliseconds PROP_UPDATE_TIMER = 30ms;
-using UseablesList = std::vector<useable::UseablePtr>;
+using ItemList = std::set<item::ItemInstancePtr>;
 
 
 enum class GameState
@@ -70,10 +70,6 @@ public:
 
 public:
 	void SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
-	useable::UseablePtr CreateUseable(const std::string& name, const std::string& image, const std::string& description);
-	void DeleteUseable(const std::string& name);
-	void CallUseable(const std::string& name);
-	UseablesList& GetUseables();
 
 public:
 	GameState State = GameState::INITIALIZING;
@@ -89,12 +85,8 @@ public:
 	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
 
 private:
-	UseablesList m_useables;
-
-private:
 	chrono::clock::time_point m_tick_previous;
 	chrono::clock::time_point m_tick_current;
-	//std::chrono::milliseconds m_prop_update_timer = std::chrono::milliseconds::zero();
 
 	sf::RenderWindow* m_render_window = nullptr;
 };
@@ -107,11 +99,6 @@ inline chrono::clock::duration Game::GetTick() const
 inline server::PlayerPtr Game::GetCurrentPlayer()
 {
 	return Server.GetPlayer();
-}
-
-inline UseablesList& Game::GetUseables()
-{
-	return m_useables;
 }
 
 } // end namespace tdrp

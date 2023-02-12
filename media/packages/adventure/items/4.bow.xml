@@ -1,0 +1,10 @@
+<item version="1">
+	<id>4</id>
+	<name>Bow</name>
+	<description>Shoots an arrow.</description>
+	<image>block_sword.png</image>
+	<clientscript />
+	<tags>
+		<tag>weapon</tag>
+	</tags>
+</item>

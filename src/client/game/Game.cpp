@@ -12,8 +12,7 @@
 
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/ProgramSettings.h"
-#include "engine/loader/LevelLoader.h"
-#include "engine/loader/PackageLoader.h"
+#include "engine/loader/Loader.h"
 #include "engine/network/Packet.h"
 #include "engine/network/DownloadManager.h"
 
@@ -62,7 +61,8 @@ void Game::Initialize()
 	// Bind game script classes.
 	Script->BindIntoMe(
 		&bind_client,
-		[this](sol::state& lua) { lua["Server"] = &this->Server; }
+		[this](sol::state& lua) { lua["Server"] = &this->Server; },
+		[this](sol::state& lua) { lua["Game"] = this; }
 	);
 
 	// Load the UI.
@@ -138,9 +138,6 @@ void Game::Update()
 		{
 			State = GameState::PLAYING;
 			
-			// Set our player.
-			//Player = Server.GetPlayerById(0);
-
 			// Send the finished loading packet.
 			Server.Send(0, network::PACKETID(network::Packets::CLIENTREADY), network::Channel::RELIABLE);
 
@@ -217,47 +214,6 @@ void Game::Render(sf::RenderWindow* window)
 void Game::SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
 {
 	Server.SendEvent(GetCurrentPlayer()->GetCurrentScene().lock(), sender, name, data, origin, radius);
-}
-
-useable::UseablePtr Game::CreateUseable(const std::string& name, const std::string& image, const std::string& description)
-{
-	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
-	if (it != std::end(m_useables))
-	{
-		log::PrintLine("!! Useable {} already exists, overwriting.", name);
-		m_useables.erase(it);
-	}
-
-	auto& useable = m_useables.emplace_back(std::make_shared<useable::Useable>(name, image, description));
-
-	UI->MakeUseablesDirty();
-
-	return useable;
-}
-
-void Game::DeleteUseable(const std::string& name)
-{
-	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
-	if (it != std::end(m_useables))
-	{
-		log::PrintLine(":: Deleting useable {}.", name);
-		m_useables.erase(it);
-
-		UI->MakeUseablesDirty();
-	}
-	else
-	{
-		log::PrintLine(":: Could not find useable {} to delete.", name);
-	}
-}
-
-void Game::CallUseable(const std::string& name)
-{
-	auto it = std::ranges::find_if(m_useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
-	if (it != std::end(m_useables))
-	{
-		(*it)->OnUsed.RunAll();
-	}
 }
 
 /////////////////////////////

@@ -12,6 +12,12 @@
 #include "engine/server/Account.h"
 
 
+namespace tdrp::item
+{
+	class ItemDefinition;
+}
+
+
 namespace tdrp::server
 {
 
@@ -41,8 +47,15 @@ public:
 	std::weak_ptr<scene::Scene> GetCurrentScene() const;
 	std::weak_ptr<SceneObject> GetCurrentControlledSceneObject() const;
 
-	std::shared_ptr<scene::Scene> LuaGetCurrentScene();
-	std::shared_ptr<SceneObject> LuaGetCurrentControlledSceneObject();
+	void AddKnownItemDefinition(ItemID baseId);
+	bool KnowsItemDefinition(ItemID baseId) const;
+
+	bool HasItem(ItemID id) const;
+	bool HasItem(const std::string& name) const;
+	item::ItemInstancePtr GetItem(ItemID id) const;
+	std::set<item::ItemInstancePtr> GetItems(const item::ItemDefinition* const item_definition) const;
+	std::set<item::ItemInstancePtr> GetItems(const std::string& name) const;
+	std::set<std::string> GetAllItemTags() const;
 
 	uint16_t GetPlayerId() const;
 
@@ -57,6 +70,7 @@ protected:
 	uint16_t m_player_id;
 	std::weak_ptr<scene::Scene> m_current_scene;
 	std::weak_ptr<SceneObject> m_current_sceneobject;
+	std::unordered_set<ItemID> m_known_item_definitions;
 };
 
 using PlayerPtr = std::shared_ptr<Player>;
@@ -73,14 +87,14 @@ inline std::weak_ptr<SceneObject> Player::GetCurrentControlledSceneObject() cons
 	return m_current_sceneobject;
 }
 
-inline std::shared_ptr<scene::Scene> Player::LuaGetCurrentScene()
+inline void Player::AddKnownItemDefinition(ItemID baseId)
 {
-	return m_current_scene.lock();
+	m_known_item_definitions.insert(baseId);
 }
 
-inline std::shared_ptr<SceneObject> Player::LuaGetCurrentControlledSceneObject()
+inline bool Player::KnowsItemDefinition(ItemID baseId) const
 {
-	return m_current_sceneobject.lock();
+	return m_known_item_definitions.contains(baseId);
 }
 
 inline uint16_t Player::GetPlayerId() const

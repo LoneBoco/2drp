@@ -6,6 +6,85 @@
 namespace tdrp::script::modules
 {
 
+namespace functions
+{
+
+	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, ItemID baseId, item::ItemType itemType)
+	{
+		return server.GiveItemToPlayer(player, baseId, itemType);
+	}
+
+	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType, size_t count)
+	{
+		if (item != nullptr)
+			return server.GiveItemToPlayer(player, item->BaseID, itemType, count);
+		return nullptr;
+	}
+
+	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType, size_t count)
+	{
+		auto item = server.GetItemDefinition(itemName);
+		if (item == nullptr) return nullptr;
+
+		return server.GiveItemToPlayer(player, item->BaseID, itemType, count);
+	}
+
+	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType)
+	{
+		return give_item(server, player, itemName, itemType, 1);
+	}
+
+	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType)
+	{
+		return give_item(server, player, item, itemType, 1);
+	}
+
+
+	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, ItemID id)
+	{
+		return server.RemoveItemFromPlayer(player, id);
+	}
+
+	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item, size_t count)
+	{
+		if (item != nullptr)
+			return server.RemoveItemFromPlayer(player, item->ID, count);
+		return nullptr;
+	}
+
+	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item)
+	{
+		return remove_item(server, player, item, 1);
+	}
+
+	void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName, size_t count)
+	{
+		auto items = player->GetItems(itemName);
+		for (const auto& item : items)
+			server.RemoveItemFromPlayer(player, item->ID, count);
+	}
+
+	void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName)
+	{
+		remove_items(server, player, itemName, 1);
+	}
+
+	void send_server_event(server::Server& self, SceneObject* sender, const std::string& name, const std::string& data, sol::variadic_args args)
+	{
+		Vector2df origin{ 0, 0 };
+		float radius = 0.f;
+
+		if (args.size() == 1)
+			origin = args.get<Vector2df>(0);
+		if (args.size() == 2)
+			radius = args.get<float>(1);
+
+		self.SendEvent(nullptr, sender, name, data, origin, radius);
+	}
+
+} // end namespace functions
+
+
 void bind_server(sol::state& lua)
 {
 	lua.new_usertype<server::Server>("Server", sol::no_constructor,
@@ -28,6 +107,29 @@ void bind_server(sol::state& lua)
 		"GiveClientScript", &server::Server::AddPlayerClientScript,
 		"RemoveClientScript", &server::Server::RemovePlayerClientScript,
 
+		"GetItemDefinition", sol::overload(
+			sol::resolve<item::ItemDefinition*(ItemID)>(&server::Server::GetItemDefinition),
+			sol::resolve<item::ItemDefinition*(const std::string&)>(&server::Server::GetItemDefinition)
+		),
+		"GiveItemToPlayer", sol::overload(
+			sol::resolve<item::ItemInstancePtr(server::PlayerPtr, ItemID, item::ItemType, size_t)>(&server::Server::GiveItemToPlayer),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, ItemID, item::ItemType)>(&functions::give_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, item::ItemDefinition*, item::ItemType, size_t)>(&functions::give_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, item::ItemDefinition*, item::ItemType)>(&functions::give_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, const std::string&, item::ItemType, size_t)>(&functions::give_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, const std::string&, item::ItemType)>(&functions::give_item)
+		),
+		"RemoveItemFromPlayer", sol::overload(
+			sol::resolve<item::ItemInstancePtr(server::PlayerPtr, ItemID, size_t)>(&server::Server::RemoveItemFromPlayer),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, item::ItemInstancePtr, size_t)>(&functions::remove_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, ItemID)>(&functions::remove_item),
+			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, item::ItemInstancePtr)>(&functions::remove_item)
+		),
+		"RemoveItemsFromPlayer", sol::overload(
+			sol::resolve<void(server::Server&, server::PlayerPtr, const std::string&, size_t)>(&functions::remove_items),
+			sol::resolve<void(server::Server&, server::PlayerPtr, const std::string&)>(&functions::remove_items)
+		),
+
 		"CreateSceneObject", sol::overload(
 			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&)>(&server::Server::CreateSceneObject),
 			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&, scene::ScenePtr)>(&server::Server::CreateSceneObject)
@@ -42,7 +144,8 @@ void bind_server(sol::state& lua)
 		"SwitchPlayerScene", &server::Server::SwitchPlayerScene,
 		"SwitchSceneObjectOwnership", &server::Server::SwitchSceneObjectOwnership,
 
-		"SendEvent", &server::Server::SendEvent
+		"SendEvent", &server::Server::SendEvent,
+		"SendServerEvent", &functions::send_server_event
 	);
 }
 

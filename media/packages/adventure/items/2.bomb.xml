@@ -1,0 +1,11 @@
+<item version="1">
+	<id>2</id>
+	<name>Bomb</name>
+	<description>Place on the ground to blow things up.</description>
+	<clientscript file="weapon_bomb.lua" />
+	<image>block_3way.png</image>
+	<tags>
+		<tag>weapon</tag>
+		<tag>resource</tag>
+	</tags>
+</item>

@@ -1,5 +1,3 @@
-log("Test")
-
 Me.OnStarted = function()
 	log('Server started')
 end
@@ -69,6 +67,12 @@ Me.OnServerEvent = function(sender, name, data, origin, radius, player)
 		Me:RemoveClientScript(data, player)
 	elseif name == "bomb" then
 		log('boom')
+	elseif name == "AddItem" then
+		log('Adding bomb')
+		Me:GiveItemToPlayer(player, "bomb", ItemType.STACKABLE)
+	elseif name == "RemoveItem" then
+		log('Removing bomb')
+		Me:RemoveItemsFromPlayer(player, "bomb")
 	end
 end
 

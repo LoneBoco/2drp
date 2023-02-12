@@ -40,11 +40,14 @@ public:
 	Rml::Context* GetContext(const std::string& name);
 
 public:
+	void BindDataModels(Rml::Context* context);
+
+public:
 	void ToggleContextVisibility(const std::string& context, bool visible);
 	void ToggleDocumentVisibility(const std::string& context, const std::string& document);
 	void ReloadUI();
 	void AssignDebugger(const std::string& context);
-	void MakeUseablesDirty();
+	void MakeItemsDirty();
 	
 public:
 	void ScreenSizeUpdate();
@@ -60,8 +63,9 @@ public:
 protected:
 	INJECT(::tdrp::render::Window, window);
 	INJECT(::tdrp::script::ScriptManager, script_manager);
-	std::unordered_map<std::string, Rml::DataModelHandle> m_useable_handles;
+	std::unordered_map<std::string, Rml::DataModelHandle> m_item_handles;
 	std::unordered_set<std::string> m_visible_contexts;
+	std::vector<Rml::Context*> m_managed_contexts;
 	Rml::Context* m_debugger_host;
 	Rml::Context* m_debugger_context;
 

@@ -29,7 +29,6 @@ void bind_client(sol::state& lua)
 	bind_globals(lua);
 	bind_camera(lua);
 	bind_game(lua);
-	bind_useable(lua);
 }
 
 void bind_globals(sol::state& lua)
@@ -207,59 +206,8 @@ namespace functions
 	}
 }
 
-struct Useables {};
-
-namespace useables
-{
-	useable::UseablePtr Get(Useables& self, sol::object index)
-	{
-		auto game = BabyDI::Get<Game>();
-		if (index.get_type() == sol::type::number)
-			return game->GetUseables().at(index.as<int>());
-		else if (index.get_type() == sol::type::string)
-		{
-			auto& useables = game->GetUseables();
-			auto name = index.as<std::string>();
-			auto it = std::ranges::find_if(useables, [&name](useable::UseablePtr& u) { return u->Name == name; });
-			if (it == std::end(useables))
-				return nullptr;
-			return *it;
-		}
-
-		return nullptr;
-	}
-
-	auto GetIPairs()
-	{
-		auto game = BabyDI::Get<Game>();
-		return sol::as_table(game->GetUseables());
-	}
-
-	auto GetPairs()
-	{
-		auto game = BabyDI::Get<Game>();
-		auto& useables = game->GetUseables();
-
-		std::unordered_map<std::string, useable::UseablePtr> result;
-		std::ranges::for_each(useables, [&result](useable::UseablePtr& useable) { result.insert(std::make_pair(useable->Name, useable)); });
-		return sol::as_table(result);
-	}
-
-	auto GetLength()
-	{
-		auto game = BabyDI::Get<Game>();
-		return game->GetUseables().size();
-	}
-}
-
 void bind_game(sol::state& lua)
 {
-	auto useables = lua.new_usertype<Useables>("Useables", sol::no_constructor,
-		sol::meta_function::index, &useables::Get,
-		sol::meta_function::ipairs, &useables::GetIPairs,
-		sol::meta_function::pairs, &useables::GetPairs,
-		sol::meta_function::length, &useables::GetLength
-	);
 
 	lua.new_usertype<Game>("Game", sol::no_constructor,
 		"log", &logF,
@@ -269,10 +217,6 @@ void bind_game(sol::state& lua)
 		"SendEvent", &functions::SendEvent,
 		"SendServerEvent", &functions::SendServerEvent,
 
-		"CreateUseable", &Game::CreateUseable,
-		"DeleteUseable", &Game::DeleteUseable,
-		"CallUseable", &Game::CallUseable,
-
 		"ToggleUIContext", [](Game& self, const std::string& context, bool visible) { self.UI->ToggleContextVisibility(context, visible); },
 		"ToggleUIDocument", [](Game& self, const std::string& context, const std::string& document) { self.UI->ToggleDocumentVisibility(context, document); },
 		"ReloadUI", [](Game& self) { self.UI->ReloadUI(); },
@@ -281,7 +225,6 @@ void bind_game(sol::state& lua)
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
 		"Server", sol::readonly_property(&Game::Server),
-		"Useables", sol::readonly_property([]() { return std::make_shared<Useables>(); }),
 		"Flags", sol::readonly_property(&functions::GetFlags),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),
@@ -294,19 +237,6 @@ void bind_game(sol::state& lua)
 		"OnMouseUp", sol::writeonly_property(&Game::SetOnMouseUp),
 		"OnGainedOwnership", sol::writeonly_property(&Game::SetOnGainedOwnership),
 		"OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
-	);
-}
-
-void bind_useable(sol::state& lua)
-{
-	lua.new_usertype<useable::Useable>("Useable", sol::no_constructor,
-		"Name", &useable::Useable::Name,
-		"Image", &useable::Useable::Image,
-		"Description", &useable::Useable::Description,
-
-		"Use", [](useable::Useable& self) { self.OnUsed.RunAll(); },
-
-		"OnUsed", sol::writeonly_property(&useable::Useable::SetOnUsed)
 	);
 }
 

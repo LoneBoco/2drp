@@ -7,10 +7,12 @@
 #include "engine/network/PacketsInc.h"
 #include "engine/network/construct/SceneObject.h"
 
+#include "engine/item/Item.h"
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/Log.h"
 
 #include <PlayRho/PlayRho.hpp>
+#include <set>
 
 
 using tdrp::server::Server;
@@ -21,103 +23,115 @@ using tdrp::network::construct;
 namespace tdrp::network::handlers
 {
 
-void handle_ready(Server& server, const uint16_t id);
+void handle_ready(Server& server, const uint16_t playerId);
 
-void handle(Server& server, const uint16_t id, const packet::Error& packet);
-void handle(Server& server, const uint16_t id, const packet::Login& packet);
-void handle(Server& server, const uint16_t id, const packet::LoginStatus& packet);
-void handle(Server& server, const uint16_t id, const packet::ServerInfo& packet);
-void handle(Server& server, const uint16_t id, const packet::FileRequest& packet);
-void handle(Server& server, const uint16_t id, const packet::FileTransfer& packet);
-void handle(Server& server, const uint16_t id, const packet::SwitchScene& packet);
-void handle(Server& server, const uint16_t id, const packet::ClientControlScript& packet);
-void handle(Server& server, const uint16_t id, const packet::ClientScriptAdd& packet);
-void handle(Server& server, const uint16_t id, const packet::ClientScriptDelete& packet);
-void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet);
-void handle(Server& server, const uint16_t id, const packet::ClassDelete& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectDelete& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnership& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectControl& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet);
-void handle(Server& server, const uint16_t id, const packet::SceneObjectCollision& packet);
-void handle(Server& server, const uint16_t id, const packet::SendEvent& packet);
-void handle(Server& server, const uint16_t id, const packet::FlagSet& packet);
+void handle(Server& server, const uint16_t playerId, const packet::Error& packet);
+void handle(Server& server, const uint16_t playerId, const packet::Login& packet);
+void handle(Server& server, const uint16_t playerId, const packet::LoginStatus& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& packet);
+void handle(Server& server, const uint16_t playerId, const packet::FileRequest& packet);
+void handle(Server& server, const uint16_t playerId, const packet::FileTransfer& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SwitchScene& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ClientControlScript& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ClientScriptAdd& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ClientScriptDelete& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ClassAdd& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ClassDelete& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNew& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectChange& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectDelete& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectOwnership& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectControl& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectUnfollow& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCollision& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SendEvent& packet);
+void handle(Server& server, const uint16_t playerId, const packet::FlagSet& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ItemDefinition& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& packet);
 
 /////////////////////////////
 
-#define HANDLE(cl) handle(server, id, construct< cl >(packet_data, packet_length))
+#define HANDLE(cl) handle(server, playerId, construct< cl >(packet_data, packet_length))
 
-void network_receive_server(Server& server, const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
+void network_receive_server(Server& server, const uint16_t playerId, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
 {
 	// Grab our packet id.
 	Packets packet = static_cast<Packets>(packet_id);
 	switch (packet)
 	{
-	case Packets::CLIENTREADY:
-		handle_ready(server, id);
-		break;
-	case Packets::ERROR:
-		HANDLE(packet::Error);
-		break;
-	case Packets::LOGIN:
-		HANDLE(packet::Login);
-		break;
-	case Packets::LOGINSTATUS:
-		HANDLE(packet::LoginStatus);
-		break;
-	case Packets::SERVERINFO:
-		HANDLE(packet::ServerInfo);
-		break;
-	case Packets::FILEREQUEST:
-		HANDLE(packet::FileRequest);
-		break;
-	case Packets::FILETRANSFER:
-		HANDLE(packet::FileTransfer);
-		break;
-	case Packets::SWITCHSCENE:
-		HANDLE(packet::SwitchScene);
-		break;
-	case Packets::CLIENTCONTROLSCRIPT:
-		HANDLE(packet::ClientControlScript);
-		break;
-	case Packets::CLIENTSCRIPTADD:
-		HANDLE(packet::ClientScriptAdd);
-		break;
-	case Packets::CLIENTSCRIPTDELETE:
-		HANDLE(packet::ClientScriptDelete);
-		break;
-	case Packets::CLASSADD:
-		HANDLE(packet::ClassAdd);
-		break;
-	case Packets::SCENEOBJECTNEW:
-		HANDLE(packet::SceneObjectNew);
-		break;
-	case Packets::SCENEOBJECTCHANGE:
-		HANDLE(packet::SceneObjectChange);
-		break;
-	case Packets::SCENEOBJECTDELETE:
-		HANDLE(packet::SceneObjectDelete);
-		break;
-	case Packets::SCENEOBJECTOWNERSHIP:
-		HANDLE(packet::SceneObjectOwnership);
-		break;
-	case Packets::SCENEOBJECTCONTROL:
-		HANDLE(packet::SceneObjectControl);
-		break;
-	case Packets::SCENEOBJECTUNFOLLOW:
-		HANDLE(packet::SceneObjectUnfollow);
-		break;
-	case Packets::SCENEOBJECTCOLLISION:
-		HANDLE(packet::SceneObjectCollision);
-		break;
-	case Packets::SENDEVENT:
-		HANDLE(packet::SendEvent);
-		break;
-	case Packets::FLAGSET:
-		HANDLE(packet::FlagSet);
-		break;
+		case Packets::CLIENTREADY:
+			handle_ready(server, playerId);
+			break;
+		case Packets::ERROR:
+			HANDLE(packet::Error);
+			break;
+		case Packets::LOGIN:
+			HANDLE(packet::Login);
+			break;
+		case Packets::LOGINSTATUS:
+			HANDLE(packet::LoginStatus);
+			break;
+		case Packets::SERVERINFO:
+			HANDLE(packet::ServerInfo);
+			break;
+		case Packets::FILEREQUEST:
+			HANDLE(packet::FileRequest);
+			break;
+		case Packets::FILETRANSFER:
+			HANDLE(packet::FileTransfer);
+			break;
+		case Packets::SWITCHSCENE:
+			HANDLE(packet::SwitchScene);
+			break;
+		case Packets::CLIENTCONTROLSCRIPT:
+			HANDLE(packet::ClientControlScript);
+			break;
+		case Packets::CLIENTSCRIPTADD:
+			HANDLE(packet::ClientScriptAdd);
+			break;
+		case Packets::CLIENTSCRIPTDELETE:
+			HANDLE(packet::ClientScriptDelete);
+			break;
+		case Packets::CLASSADD:
+			HANDLE(packet::ClassAdd);
+			break;
+		case Packets::SCENEOBJECTNEW:
+			HANDLE(packet::SceneObjectNew);
+			break;
+		case Packets::SCENEOBJECTCHANGE:
+			HANDLE(packet::SceneObjectChange);
+			break;
+		case Packets::SCENEOBJECTDELETE:
+			HANDLE(packet::SceneObjectDelete);
+			break;
+		case Packets::SCENEOBJECTOWNERSHIP:
+			HANDLE(packet::SceneObjectOwnership);
+			break;
+		case Packets::SCENEOBJECTCONTROL:
+			HANDLE(packet::SceneObjectControl);
+			break;
+		case Packets::SCENEOBJECTUNFOLLOW:
+			HANDLE(packet::SceneObjectUnfollow);
+			break;
+		case Packets::SCENEOBJECTCOLLISION:
+			HANDLE(packet::SceneObjectCollision);
+			break;
+		case Packets::SENDEVENT:
+			HANDLE(packet::SendEvent);
+			break;
+		case Packets::FLAGSET:
+			HANDLE(packet::FlagSet);
+			break;
+		case Packets::ITEMDEFINITION:
+			HANDLE(packet::ItemDefinition);
+			break;
+		case Packets::ITEMADD:
+			HANDLE(packet::ItemAdd);
+			break;
+		case Packets::ITEMDELETE:
+			HANDLE(packet::ItemDelete);
+			break;
 	}
 }
 
@@ -125,9 +139,40 @@ void network_receive_server(Server& server, const uint16_t id, const uint16_t pa
 
 /////////////////////////////
 
-void handle_ready(Server& server, const uint16_t id)
+AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribute, ObjectAttributes& container)
 {
-	auto player = server.GetPlayerById(id);
+	const auto attribute_id = static_cast<uint16_t>(packet_attribute.id());
+	auto attribute = container.Get(attribute_id);
+	if (!attribute)
+	{
+		const auto& name = packet_attribute.name();
+		attribute = container.GetOrCreate(name);
+	}
+	if (!attribute) return nullptr;
+
+	switch (packet_attribute.value_case())
+	{
+		case packet::Attribute::kAsInt:
+			attribute->Set(packet_attribute.as_int());
+			break;
+		case packet::Attribute::kAsDouble:
+			attribute->Set(packet_attribute.as_double());
+			break;
+		case packet::Attribute::kAsString:
+			attribute->Set(packet_attribute.as_string());
+			break;
+	}
+
+	attribute->Replicated = packet_attribute.replicated();
+	attribute->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ packet_attribute.update_rate() };
+	return attribute;
+}
+
+/////////////////////////////
+
+void handle_ready(Server& server, const uint16_t playerId)
+{
+	auto player = server.GetPlayerById(playerId);
 
 	// Switch to the starting scene.
 	auto scene = server.GetScene(server.GetPackage()->GetStartingScene());
@@ -139,18 +184,18 @@ void handle_ready(Server& server, const uint16_t id)
 
 /////////////////////////////
 
-void handle(Server& server, const uint16_t id, const packet::Error& packet)
+void handle(Server& server, const uint16_t playerId, const packet::Error& packet)
 {
 	auto& error = packet.message();
 	log::PrintLine("Error: {}", error);
 }
 
-void handle(Server& server, const uint16_t id, const packet::Login& packet)
+void handle(Server& server, const uint16_t playerId, const packet::Login& packet)
 {
 	assert(false);
 }
 
-void handle(Server& server, const uint16_t id, const packet::LoginStatus& packet)
+void handle(Server& server, const uint16_t playerId, const packet::LoginStatus& packet)
 {
 	const auto success = packet.success();
 	const auto& msg = packet.message();
@@ -168,7 +213,7 @@ void handle(Server& server, const uint16_t id, const packet::LoginStatus& packet
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::ServerInfo& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& packet)
 {
 	const auto& uniqueid = packet.uniqueid();
 	const auto& package = packet.package();
@@ -227,7 +272,7 @@ void handle(Server& server, const uint16_t id, const packet::ServerInfo& packet)
 	process_missing_files.detach();
 }
 
-void handle(Server& server, const uint16_t id, const packet::FileRequest& packet)
+void handle(Server& server, const uint16_t playerId, const packet::FileRequest& packet)
 {
 	if (server.IsSinglePlayer())
 		return;
@@ -247,12 +292,12 @@ void handle(Server& server, const uint16_t id, const packet::FileRequest& packet
 			message.set_date(static_cast<google::protobuf::int64>(file->ModifiedTime()));
 			message.set_file(file->ReadAsString());
 
-			server.GetNetwork().Send(id, network::PACKETID(Packets::FILETRANSFER), network::Channel::FILE, message);
+			server.GetNetwork().Send(playerId, network::PACKETID(Packets::FILETRANSFER), network::Channel::FILE, message);
 		}
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::FileTransfer& packet)
+void handle(Server& server, const uint16_t playerId, const packet::FileTransfer& packet)
 {
 	if (server.IsSinglePlayer())
 		return;
@@ -280,31 +325,31 @@ void handle(Server& server, const uint16_t id, const packet::FileTransfer& packe
 	server.DownloadManager.InformComplete(name);
 }
 
-void handle(Server& server, const uint16_t id, const packet::SwitchScene& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SwitchScene& packet)
 {
 	// Client handles.
 	//assert(false);
 }
 
-void handle(Server& server, const uint16_t id, const packet::ClientControlScript& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ClientControlScript& packet)
 {
 	// Client handles.
 	//assert(false);
 }
 
-void handle(Server& server, const uint16_t id, const packet::ClientScriptAdd& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ClientScriptAdd& packet)
 {
 	// Client handles.
 	//assert(false);
 }
 
-void handle(Server& server, const uint16_t id, const packet::ClientScriptDelete& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ClientScriptDelete& packet)
 {
 	// Client handles.
 	//assert(false);
 }
 
-void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ClassAdd& packet)
 {
 	const auto& name = packet.name();
 	const auto& script_client = packet.scriptclient();
@@ -328,15 +373,15 @@ void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
 		AttributePtr attribute;
 		switch (attr.value_case())
 		{
-		case packet::Attribute::ValueCase::kAsInt:
-			attribute = c->Attributes.AddAttribute(name, attr.as_int(), static_cast<uint16_t>(id));
-			break;
-		case packet::Attribute::ValueCase::kAsDouble:
-			attribute = c->Attributes.AddAttribute(name, attr.as_double(), static_cast<uint16_t>(id));
-			break;
-		case packet::Attribute::ValueCase::kAsString:
-			attribute = c->Attributes.AddAttribute(name, attr.as_string(), static_cast<uint16_t>(id));
-			break;
+			case packet::Attribute::ValueCase::kAsInt:
+				attribute = c->Attributes.AddAttribute(name, attr.as_int(), static_cast<uint16_t>(id));
+				break;
+			case packet::Attribute::ValueCase::kAsDouble:
+				attribute = c->Attributes.AddAttribute(name, attr.as_double(), static_cast<uint16_t>(id));
+				break;
+			case packet::Attribute::ValueCase::kAsString:
+				attribute = c->Attributes.AddAttribute(name, attr.as_string(), static_cast<uint16_t>(id));
+				break;
 		}
 
 		attribute->Replicated = replicated;
@@ -344,7 +389,7 @@ void handle(Server& server, const uint16_t id, const packet::ClassAdd& packet)
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::ClassDelete& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ClassDelete& packet)
 {
 	const auto& name = packet.name();
 
@@ -353,7 +398,7 @@ void handle(Server& server, const uint16_t id, const packet::ClassDelete& packet
 	server.DeleteObjectClass(name);
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNew& packet)
 {
 	const auto pid = packet.id();
 	const auto ptype = packet.type();
@@ -375,7 +420,8 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	std::shared_ptr<SceneObject> so = server.GetSceneObjectById(pid);
 	if (so != nullptr)
 	{
-		log::PrintLine("!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
+		if (!server.IsHost())
+			log::PrintLine("!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
 	}
 	else
 	{
@@ -384,24 +430,24 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 		// Create our new scene object.
 		switch (type)
 		{
-		case SceneObjectType::STATIC:
-			so = std::make_shared<StaticSceneObject>(class_, pid);
-			break;
-		case SceneObjectType::ANIMATED:
-			so = std::make_shared<AnimatedSceneObject>(class_, pid);
-			break;
-		case SceneObjectType::TILEMAP:
-			so = std::make_shared<TiledSceneObject>(class_, pid);
-			break;
-		case SceneObjectType::TMX:
-			so = std::make_shared<TMXSceneObject>(class_, pid);
-			break;
-		case SceneObjectType::TEXT:
-			so = std::make_shared<TextSceneObject>(class_, pid);
-			break;
-		default:
-			so = std::make_shared<SceneObject>(class_, pid);
-			break;
+			case SceneObjectType::STATIC:
+				so = std::make_shared<StaticSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::ANIMATED:
+				so = std::make_shared<AnimatedSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::TILEMAP:
+				so = std::make_shared<TiledSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::TMX:
+				so = std::make_shared<TMXSceneObject>(class_, pid);
+				break;
+			case SceneObjectType::TEXT:
+				so = std::make_shared<TextSceneObject>(class_, pid);
+				break;
+			default:
+				so = std::make_shared<SceneObject>(class_, pid);
+				break;
 		}
 
 		// Set attached to.
@@ -417,23 +463,26 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 		for (int i = 0; i < packet.attributes_size(); ++i)
 		{
 			const auto& attribute = packet.attributes(i);
-			AttributePtr attr;
+			AttributePtr attr = nullptr;
 
 			switch (attribute.value_case())
 			{
-			case packet::Attribute::kAsInt:
-				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
-				break;
-			case packet::Attribute::kAsDouble:
-				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
-				break;
-			case packet::Attribute::kAsString:
-				attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
-				break;
+				case packet::Attribute::kAsInt:
+					attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_int(), attribute.id());
+					break;
+				case packet::Attribute::kAsDouble:
+					attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_double(), attribute.id());
+					break;
+				case packet::Attribute::kAsString:
+					attr = so->Attributes.AddAttribute(attribute.name(), attribute.as_string(), attribute.id());
+					break;
 			}
 
-			attr->Replicated = attribute.replicated();
-			attr->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+			if (attr)
+			{
+				attr->Replicated = attribute.replicated();
+				attr->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+			}
 		}
 
 		for (int i = 0; i < packet.properties_size(); ++i)
@@ -444,15 +493,15 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 			{
 				switch (prop.value_case())
 				{
-				case packet::Attribute::kAsInt:
-					soprop->Set(prop.as_int());
-					break;
-				case packet::Attribute::kAsDouble:
-					soprop->Set(prop.as_double());
-					break;
-				case packet::Attribute::kAsString:
-					soprop->Set(prop.as_string());
-					break;
+					case packet::Attribute::kAsInt:
+						soprop->Set(prop.as_int());
+						break;
+					case packet::Attribute::kAsDouble:
+						soprop->Set(prop.as_double());
+						break;
+					case packet::Attribute::kAsString:
+						soprop->Set(prop.as_string());
+						break;
 				}
 
 				soprop->Replicated = prop.replicated();
@@ -482,7 +531,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectNew& pac
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectChange& packet)
 {
 	const auto pid = packet.id();
 	const auto pattached_to = packet.attached_to();
@@ -505,34 +554,12 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 
 	for (int i = 0; i < packet.attributes_size(); ++i)
 	{
-		const auto& attribute = packet.attributes(i);
-		const auto attribute_id = static_cast<uint16_t>(attribute.id());
-		auto soattrib = so->Attributes.Get(attribute_id);
-		if (!soattrib)
+		const auto& packet_attribute = packet.attributes(i);
+		if (auto attribute = load_attribute_from_packet(packet_attribute, so->Attributes); attribute)
 		{
-			const auto& name = attribute.name();
-			soattrib = so->Attributes.GetOrCreate(name);
+			// Force dirty flag.
+			attribute->SetDirty(true, AttributeDirty::CLIENT);
 		}
-		if (!soattrib) continue;
-
-		switch (attribute.value_case())
-		{
-		case packet::Attribute::kAsInt:
-			soattrib->Set(attribute.as_int());
-			break;
-		case packet::Attribute::kAsDouble:
-			soattrib->Set(attribute.as_double());
-			break;
-		case packet::Attribute::kAsString:
-			soattrib->Set(attribute.as_string());
-			break;
-		}
-
-		soattrib->Replicated = attribute.replicated();
-		soattrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
-
-		// Force dirty flag.
-		soattrib->SetDirty(true, AttributeDirty::CLIENT);
 	}
 
 	for (int i = 0; i < packet.properties_size(); ++i)
@@ -545,15 +572,15 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 
 		switch (prop.value_case())
 		{
-		case packet::Attribute::kAsInt:
-			soprop->Set(prop.as_int());
-			break;
-		case packet::Attribute::kAsDouble:
-			soprop->Set(prop.as_double());
-			break;
-		case packet::Attribute::kAsString:
-			soprop->Set(prop.as_string());
-			break;
+			case packet::Attribute::kAsInt:
+				soprop->Set(prop.as_int());
+				break;
+			case packet::Attribute::kAsDouble:
+				soprop->Set(prop.as_double());
+				break;
+			case packet::Attribute::kAsString:
+				soprop->Set(prop.as_string());
+				break;
 		}
 
 		soprop->Replicated = prop.replicated();
@@ -572,27 +599,28 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectChange& 
 	auto scene = so->GetCurrentScene().lock();
 	if (scene)
 	{
-		auto origin = server.GetPlayerById(id);
+		auto origin = server.GetPlayerById(playerId);
 		server.SendToScene(scene, so->GetPosition(), PACKETID(Packets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet, { server.GetPlayer(), origin });
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectDelete& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectDelete& packet)
 {
 	const auto pid = packet.id();
 
-	log::PrintLine("<- Deleting scene object {}", pid);
+	if (!server.IsShuttingDown())
+		log::PrintLine("<- Deleting scene object {}", pid);
 
 	server.DeleteSceneObject(pid);
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnership& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectOwnership& packet)
 {
 	const auto sceneobject_id = packet.sceneobject_id();
 	const auto old_player_id = packet.old_player_id();
 	const auto new_player_id = packet.new_player_id();
 
-	log::PrintLine("<- SceneObjectOwnership: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
+	// log::PrintLine("<- SceneObjectOwnership: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
 
 	auto so = server.GetSceneObjectById(sceneobject_id);
 	auto old_player = server.GetPlayerById(old_player_id);
@@ -611,7 +639,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectOwnershi
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectControl& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectControl& packet)
 {
 	const auto& player_id = packet.player_id();
 	const auto& sceneobject_id = packet.sceneobject_id();
@@ -624,30 +652,30 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectControl&
 	if (auto owner = so->GetOwningPlayer().lock(); owner != player)
 		return;
 
-	log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
+	// log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
 
 	player->SwitchControlledSceneObject(so);
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectUnfollow& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectUnfollow& packet)
 {
-	auto player = server.GetPlayerById(id);
+	auto player = server.GetPlayerById(playerId);
 
 	for (int i = 0; i < packet.id_size(); ++i)
 	{
 		const auto& oid = packet.id(i);
 		player->FollowedSceneObjects.erase(oid);
 
-		log::PrintLine("<- Removing scene object {} from player {}.", oid, id);
+		log::PrintLine("<- Removing scene object {} from player {}.", oid, playerId);
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::SceneObjectCollision& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCollision& packet)
 {
 	if (packet.collision_size() == 0) return;
 
 	const auto sceneobject = packet.id();
-	auto player = server.GetPlayerById(id);
+	auto player = server.GetPlayerById(playerId);
 	auto so = server.GetSceneObjectById(sceneobject);
 	if (!player || !so) return;
 
@@ -658,7 +686,7 @@ void handle(Server& server, const uint16_t id, const packet::SceneObjectCollisio
 	readCollisionFromPacket(so, packet);
 }
 
-void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SendEvent& packet)
 {
 	const auto sender = packet.sender();
 	const auto& pscene = packet.scene();
@@ -693,55 +721,142 @@ void handle(Server& server, const uint16_t id, const packet::SendEvent& packet)
 		std::for_each(std::begin(hits), std::end(hits), [&](const auto& target) { target->OnEvent.RunAll(sender_so, name, data, origin, radius); });
 
 		// Run event on the server.
-		auto player = server.GetPlayerById(id);
+		auto player = server.GetPlayerById(playerId);
 		server.OnEvent.RunAll(sender_so, name, data, origin, radius, player);
 	}
 	else
 	{
-		log::PrintLine("<- Received global event \"{}\" from player {} with data: {}", name, id, data);
+		log::PrintLine("<- Received global event \"{}\" from player {} with data: {}", name, playerId, data);
 
 		// Global events.
-		auto player = server.GetPlayerById(id);
+		auto player = server.GetPlayerById(playerId);
 		server.OnServerEvent.RunAll(sender_so, name, data, origin, radius, player);
 	}
 }
 
-void handle(Server& server, const uint16_t id, const packet::FlagSet& packet)
+void handle(Server& server, const uint16_t playerId, const packet::FlagSet& packet)
 {
-	auto player = server.GetPlayerById(id);
+	auto player = server.GetPlayerById(playerId);
 	if (player == nullptr) return;
 	if (player == server.GetPlayer()) return;
 
 	for (int i = 0; i < packet.attributes_size(); ++i)
 	{
-		const auto& attribute = packet.attributes(i);
-		const auto attribute_id = static_cast<uint16_t>(attribute.id());
-		auto flag = player->Account.Flags.Get(attribute_id);
-		if (!flag)
+		const auto& packet_attribute = packet.attributes(i);
+		if (auto flag = load_attribute_from_packet(packet_attribute, player->Account.Flags); flag)
 		{
-			const auto& name = attribute.name();
-			flag = player->Account.Flags.GetOrCreate(name);
+			flag->SetDirty(true, AttributeDirty::CLIENT);
+			flag->ProcessDirty(AttributeDirty::CLIENT);
 		}
-		if (!flag) continue;
+	}
+}
 
-		switch (attribute.value_case())
+void handle(Server& server, const uint16_t playerId, const packet::ItemDefinition& packet)
+{
+	if (server.IsHost() || server.IsSinglePlayer())
+		return;
+
+	ItemID baseId = static_cast<ItemID>(packet.baseid());
+	std::string name = packet.name();
+	std::string description = packet.description();
+	std::string image = packet.image();
+	std::string clientScript = packet.clientscript();
+
+	std::vector<std::string> tags;
+	for (int i = 0; i < packet.tags_size(); ++i)
+		tags.emplace_back(packet.tags(i));
+
+	auto item = std::make_unique<item::ItemDefinition>(std::move(baseId), std::move(name), std::move(description), std::move(image), std::move(clientScript), std::move(tags));
+	server.AddItemDefinition(std::move(item));
+}
+
+void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& packet)
+{
+	auto player = server.GetPlayer();
+	if (player == nullptr) return;
+
+	ItemID id = static_cast<ItemID>(packet.id());
+	ItemID baseId = static_cast<ItemID>(packet.baseid());
+	item::ItemType type = static_cast<item::ItemType>(packet.type());
+	size_t count = std::min(1ull, packet.stackable_count());
+
+	auto item_definition = server.GetItemDefinition(baseId);
+	if (item_definition == nullptr) return;
+
+	// Host/SinglePlayer already has the item loaded so just run the scripts.
+	// We would only get this packet on startup.
+	if (server.IsHost() || server.IsSinglePlayer())
+	{
+		if (auto item = player->GetItem(id); item)
 		{
-		case packet::Attribute::kAsInt:
-			flag->Set(attribute.as_int());
-			break;
-		case packet::Attribute::kAsDouble:
-			flag->Set(attribute.as_double());
-			break;
-		case packet::Attribute::kAsString:
-			flag->Set(attribute.as_string());
-			break;
+			server.Script->RunScript(std::format("item_{}", id), item_definition->ClientScript, item);
+			item->OnCreated.RunAll();
 		}
+		return;
+	}
 
-		flag->Replicated = attribute.replicated();
-		flag->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+	auto hasExisting = player->HasItem(id);
 
-		flag->SetDirty(true, AttributeDirty::CLIENT);
-		flag->ProcessDirty(AttributeDirty::CLIENT);
+	// Single items only have one instance.
+	// Don't accept another.
+	if (hasExisting && type == item::ItemType::SINGLE)
+		return;
+
+	// Get or create our item.
+	item::ItemInstancePtr item = nullptr;
+	if (hasExisting) item = player->GetItem(id);
+	else
+	{
+		switch (type)
+		{
+			case item::ItemType::SINGLE: item = std::make_shared<item::ItemInstance>(id, baseId); break;
+			case item::ItemType::STACKABLE: item = std::make_shared<item::ItemStackable>(id, baseId); break;
+			case item::ItemType::VARIANT: item = std::make_shared<item::ItemVariant>(id, baseId); break;
+		}
+		item->ItemBase = item_definition;
+		player->Account.AddItem(item);
+	}
+
+	// Load stackable.
+	if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+		stackable->Count = count;
+
+	// Load variant.
+	if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
+	{
+		for (int i = 0; i < packet.variant_attributes_size(); ++i)
+		{
+			const auto& variant_attribute = packet.variant_attributes(i);
+			if (auto attribute = load_attribute_from_packet(variant_attribute, variant->VariantAttributes); attribute)
+			{
+				attribute->SetAllDirty(false);
+			}
+		}
+	}
+
+	// Run OnCreated.
+	if (!hasExisting)
+	{
+		server.Script->RunScript(std::format("item_{}", id), item_definition->ClientScript, item);
+		item->OnCreated.RunAll();
+	}
+
+	// Run OnAdded.
+	item->OnAdded.RunAll();
+}
+
+void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& packet)
+{
+	if (server.IsHost() || server.IsSinglePlayer())
+		return;
+
+	ItemID id = static_cast<ItemID>(packet.id());
+	size_t count = static_cast<size_t>(packet.count());
+
+	if (auto item = server.GetPlayer()->GetItem(id); item)
+	{
+		server.RemoveItemFromPlayer(server.GetPlayer(), id, count);
+		item->OnRemoved.RunAll(count);
 	}
 }
 

@@ -17,6 +17,7 @@ Script::Script()
 	sol::set_default_exception_handler(*lua, &DefaultErrorHandler);
 
 	script::modules::bind_events(*lua);
+	script::modules::bind_item(*lua);
 	script::modules::bind_player(*lua);
 	script::modules::bind_scene(*lua);
 	script::modules::bind_attributes(*lua);
@@ -30,6 +31,7 @@ Script::Script()
 
 Script::~Script()
 {
+	lua->collect_garbage();
 	lua->stack_clear();
 
 	environments.clear();

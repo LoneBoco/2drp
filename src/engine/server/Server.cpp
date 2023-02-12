@@ -5,8 +5,7 @@
 
 #include "engine/server/Server.h"
 #include "engine/server/Account.h"
-#include "engine/loader/PackageLoader.h"
-#include "engine/loader/LevelLoader.h"
+#include "engine/loader/Loader.h"
 #include "engine/filesystem/File.h"
 #include "engine/network/Packet.h"
 #include "engine/network/PacketsInc.h"
@@ -46,9 +45,9 @@ Server::Server()
 {
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
 	Script = script_manager->CreateScriptInstance("Server");
-	Script->BindIntoMe([this](sol::state& lua) {
-		lua["Server"] = this;
-	});
+	Script->BindIntoMe(
+		[this](sol::state& lua) { lua["Server"] = this; }
+	);
 
 	// Make up unique id.
 	m_unique_id = tdrp::os::CalculateComputerName();
@@ -83,7 +82,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	log::PrintLine(":: Initializing server.");
 
 	// Load the package.
-	auto[load_success, package] = loader::PackageLoader::LoadIntoServer(*this, package_name);
+	auto[load_success, package] = Loader::LoadPackageIntoServer(*this, package_name);
 	m_package = package;
 
 	// Sanity check for starting scene.
@@ -101,7 +100,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 			if (!filesystem::is_directory(d.status()))
 				continue;
 
-			auto scene = loader::LevelLoader::CreateScene(*this, d);
+			auto scene = Loader::CreateScene(*this, d);
 			if (scene != nullptr)
 				m_scenes.insert(std::make_pair(d.path().filename().string(), scene));
 		}
@@ -112,7 +111,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 		log::PrintLine(":: Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
-		auto scene = loader::LevelLoader::CreateScene(*this, package->GetBasePath() / "levels" / package->GetStartingScene());
+		auto scene = Loader::CreateScene(*this, package->GetBasePath() / "levels" / package->GetStartingScene());
 		if (scene != nullptr)
 			m_scenes.insert(std::make_pair(package->GetStartingScene(), scene));
 	}
@@ -638,6 +637,219 @@ void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
 
 ///////////////////////////////////////////////////////////////////////////////
 
+bool Server::AddItemDefinition(item::ItemDefinitionUPtr&& item)
+{
+	if (!item) return false;
+	auto baseID = item->BaseID;
+	auto name = item->Name;
+
+	const auto&& [iter, success] = m_item_definitions.emplace(std::make_pair(item->BaseID, std::move(item)));
+	if (success) log::PrintLine(":: Loaded item {}.{}.", baseID, name);
+	else log::PrintLine("!! Failed to add item {}.{}. Item with the same ID already exists.", baseID, name);
+
+	return success;
+}
+
+void Server::SendItemDefinition(server::PlayerPtr player, ItemID baseId)
+{
+	// Don't send the item definition if the player already knows it.
+	if (player->KnowsItemDefinition(baseId))
+		return;
+
+	if (auto baseItem = GetItemDefinition(baseId); baseItem)
+	{
+		log::PrintLine("-> Sending item definition {}.{} to player {}.", baseId, baseItem->Name, player->GetPlayerId());
+		player->AddKnownItemDefinition(baseId);
+
+		// Only send item definitions if we are the host.
+		if (IsHost() && player != m_player)
+		{
+			packet::ItemDefinition packetDef;
+			packetDef.set_baseid(baseItem->BaseID);
+			packetDef.set_name(baseItem->Name);
+			packetDef.set_description(baseItem->Description);
+			packetDef.set_clientscript(baseItem->ClientScript);
+			for (const auto& tag : baseItem->Tags)
+				packetDef.add_tags(tag);
+
+			Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMDEFINITION), network::Channel::RELIABLE, packetDef);
+		}
+	}
+}
+
+item::ItemDefinition* Server::GetItemDefinition(ItemID baseId)
+{
+	auto iter = m_item_definitions.find(baseId);
+	if (iter == std::end(m_item_definitions))
+		return nullptr;
+
+	return iter->second.get();
+}
+
+item::ItemDefinition* Server::GetItemDefinition(const std::string& name)
+{
+	auto iter = std::ranges::find_if(m_item_definitions, [&name](decltype(m_item_definitions)::value_type& node) { return boost::iequals(node.second->Name, name); });
+	if (iter == std::ranges::end(m_item_definitions))
+		return nullptr;
+	return iter->second.get();
+}
+
+item::ItemInstancePtr Server::GiveItemToPlayer(server::PlayerPtr player, ItemID baseId, item::ItemType type, size_t count)
+{
+	if (IsGuest() || player == nullptr || count == 0)
+		return nullptr;
+
+	auto next_id = [&player]() -> ItemID
+	{
+		auto iter = player->Account.Items.rbegin();
+		if (iter == std::rend(player->Account.Items))
+			return 0;
+		return iter->first + 1;
+	};
+
+	auto match_single = [&player, &baseId, &type](decltype(player->Account.Items)::value_type& node)
+	{
+		auto& item = node.second;
+		if (item->ItemBaseID == baseId && item->Type == type)
+			return true;
+		return false;
+	};
+
+	auto host_script = [this](item::ItemInstancePtr& item, const PlayerPtr& player, size_t count = 1, bool is_new = true)
+	{
+		if (m_player != player) return;
+		if (is_new)
+		{
+			Script->RunScript(std::format("item_{}", item->ID), item->ItemBase->ClientScript, item);
+			//item->LuaEnvironment->set("Server", this);
+			item->OnCreated.RunAll();
+		}
+		item->OnAdded.RunAll(count);
+	};
+
+	auto send_item = [this, &host_script](item::ItemInstancePtr& item, const PlayerPtr& player, size_t count = 1, bool is_new = true)
+	{
+		host_script(item, player, count, is_new);
+		if (m_player == player) return;
+		
+		// Try to send the item definition.
+		SendItemDefinition(player, item->ItemBaseID);
+
+		// Send the item.
+		packet::ItemAdd packetAdd;
+		packetAdd.set_id(item->ID);
+		packetAdd.set_baseid(item->ItemBaseID);
+		packetAdd.set_type(static_cast<packet::ItemType>(item->Type));
+
+		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+			packetAdd.set_stackable_count(count);
+
+		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
+			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
+
+		Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMADD), network::Channel::RELIABLE, packetAdd);
+	};
+
+	// Create the item and bind it to the player's account.
+	// Item creation for clients happen in the ITEMADD packet.
+	// We have to handle scripts for the host here as the ITEMADD packet will be ignored.
+
+	switch (type)
+	{
+		// Single items that only have one instance.
+		case item::ItemType::SINGLE:
+		{
+			auto existing = std::ranges::find_if(player->Account.Items, match_single);
+			if (existing != std::ranges::end(player->Account.Items))
+				return existing->second;
+
+			auto instance = std::make_shared<item::ItemInstance>(next_id(), baseId);
+			instance->ItemBase = GetItemDefinition(baseId);
+
+			player->Account.AddItem(instance);
+			send_item(instance, player);
+			return instance;
+		}
+
+		case item::ItemType::STACKABLE:
+		{
+			auto iter = std::ranges::find_if(player->Account.Items, match_single);
+			if (iter != std::ranges::end(player->Account.Items))
+			{
+				auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(iter->second);
+				auto& instance = iter->second;
+				if (stackable) stackable->Count += count;
+				instance->ItemBase = GetItemDefinition(baseId);
+
+				send_item(instance, player, count, false);
+				return instance;
+			}
+			else
+			{
+				auto stackable = std::make_shared<item::ItemStackable>(next_id(), baseId);
+				auto instance = std::dynamic_pointer_cast<item::ItemInstance>(stackable);
+				stackable->Count = count;
+				stackable->ItemBase = GetItemDefinition(baseId);
+
+				player->Account.AddItem(instance);
+				send_item(instance, player, count);
+				return instance;
+			}
+			break;
+		}
+
+		case item::ItemType::VARIANT:
+		{
+			auto variant = std::make_shared<item::ItemVariant>(next_id(), baseId);
+			auto instance = std::dynamic_pointer_cast<item::ItemInstance>(variant);
+			instance->ItemBase = GetItemDefinition(baseId);
+
+			player->Account.AddItem(instance);
+			send_item(instance, player);
+			return instance;
+		}
+	}
+
+	return nullptr;
+}
+
+item::ItemInstancePtr Server::RemoveItemFromPlayer(server::PlayerPtr player, ItemID id, size_t count)
+{
+	if (IsGuest()) return nullptr;
+
+	if (player == nullptr) return nullptr;
+	auto iter = player->Account.Items.find(id);
+	if (iter == std::end(player->Account.Items))
+		return nullptr;
+
+	auto& item = iter->second;
+	if (item->Type == item::ItemType::SINGLE || item->Type == item::ItemType::VARIANT)
+		player->Account.RemoveItem(item);
+	else if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+	{
+		count = std::min(stackable->Count, count);
+		stackable->Count -= count;
+		if (stackable->Count == 0)
+			player->Account.RemoveItem(item);
+	}
+
+	// Host item add, just run the script and return.
+	if (player == m_player)
+	{
+		item->OnRemoved.RunAll(count);
+		return item;
+	}
+
+	packet::ItemDelete packet;
+	packet.set_id(item->ID);
+	packet.set_count(count);
+
+	Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMDELETE), network::Channel::RELIABLE, packet);
+	return item;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
 void Server::SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value)
 {
 	if (player == nullptr) return;
@@ -1143,6 +1355,28 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	for (const auto& name : player->Account.ClientScripts)
 	{
 		AddPlayerClientScript(name, player);
+	}
+
+	// Send owned items.
+	for (const auto& [itemId, item] : player->Account.Items)
+	{
+		// Send item definitions.
+		SendItemDefinition(m_player, item->ItemBaseID);
+
+		// Send the item.
+		packet::ItemAdd packetAdd;
+		packetAdd.set_id(item->ID);
+		packetAdd.set_baseid(item->ItemBaseID);
+		packetAdd.set_type(static_cast<packet::ItemType>(item->Type));
+
+		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+			packetAdd.set_stackable_count(stackable->Count);
+
+		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
+			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
+
+		log::PrintLine("-> Sending weapon {} (base {}, type {}) to player {}.", item->ID, item->ItemBaseID, static_cast<uint8_t>(item->Type), player->GetPlayerId());
+		Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMADD), network::Channel::RELIABLE, packetAdd);
 	}
 
 	// Send server info.

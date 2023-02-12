@@ -8,6 +8,7 @@
 #include "client/render/component/TMXRenderComponent.h"
 #include "client/render/component/AnimationRenderComponent.h"
 #include "client/render/component/TextRenderComponent.h"
+#include "client/loader/ui/UILoader.h"
 
 #include "engine/scene/SceneObject.h"
 #include "engine/network/Packet.h"
@@ -30,6 +31,8 @@ void handle(Game& game, const packet::ClientScriptDelete& packet);
 void handle(Game& game, const packet::SceneObjectNew& packet);
 void handle(Game& game, const packet::SceneObjectOwnership& packet);
 void handle(Game& game, const packet::SendEvent& packet);
+void handle(Game& game, const packet::ItemAdd& packet);
+void handle(Game& game, const packet::ItemDelete& packet);
 
 /////////////////////////////
 
@@ -68,6 +71,12 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 		case Packets::SENDEVENT:
 			HANDLE(packet::SendEvent);
 			break;
+		case Packets::ITEMADD:
+			HANDLE(packet::ItemAdd);
+			break;
+		case Packets::ITEMDELETE:
+			HANDLE(packet::ItemDelete);
+			break;
 	}
 }
 
@@ -79,6 +88,12 @@ void handle(Game& game, const packet::LoginStatus& packet)
 {
 	const auto success = packet.success();
 	const auto& msg = packet.message();
+
+	// Bind the UI data models.
+	if (success)
+	{
+		loader::UILoader::Load(game.UI.get(), "joined");
+	}
 }
 
 void handle(Game& game, const packet::ServerInfo& packet)
@@ -209,6 +224,16 @@ void handle(Game& game, const packet::SendEvent& packet)
 		*/
 
 	}
+}
+
+void handle(Game& game, const packet::ItemAdd& packet)
+{
+	game.UI->MakeItemsDirty();
+}
+
+void handle(Game& game, const packet::ItemDelete& packet)
+{
+	game.UI->MakeItemsDirty();
 }
 
 } // end namespace tdrp::handlers

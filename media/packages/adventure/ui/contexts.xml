@@ -4,7 +4,7 @@
 	<context name="loading">
 		<document file="loading.rml" />
 	</context>
-	<context name="hud">
+	<context name="hud" load-on="joined">
 		<document file="health.rml" show="true" />
 		<document file="actions.rml" show="true" />
 		<document file="inventory.rml" />

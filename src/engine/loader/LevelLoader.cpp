@@ -2,11 +2,13 @@
 #include <concepts>
 #include <ranges>
 
-#include "engine/loader/LevelLoader.h"
+#include "engine/loader/Loader.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/FileSystem.h"
 #include "engine/scene/SceneObject.h"
+#include "engine/scene/Scene.h"
+#include "engine/server/Server.h"
 
 #include "engine/helper/base64.h"
 
@@ -22,7 +24,7 @@
 
 using namespace tdrp::scene;
 
-namespace tdrp::loader::helper
+namespace tdrp::helper
 {
 
 	constexpr auto allowPhysicsNode = std::to_array<SceneObjectType>({
@@ -535,12 +537,12 @@ namespace tdrp::loader::helper
 		return true;
 	}
 
-} // end namespace tdrp::loader::helper
+} // end namespace tdrp::loader
 
-namespace tdrp::loader
+namespace tdrp
 {
 
-std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& server, const filesystem::path& level)
+std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, const filesystem::path& level)
 {
 	auto scene = std::make_shared<Scene>(level.filename().string());
 	int32_t version = 1;
@@ -627,7 +629,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
 						bool replicated = prop.attribute("replicated").as_bool(true);
-						int32_t update_rate = prop.attribute("updaterate").as_int();
+						int32_t update_rate = prop.attribute("updaterate").as_int(0);
 
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)
@@ -648,7 +650,7 @@ std::shared_ptr<tdrp::scene::Scene> LevelLoader::CreateScene(server::Server& ser
 						std::string type = prop.attribute("type").as_string();
 						std::string value = prop.attribute("value").as_string();
 						bool replicated = prop.attribute("replicated").as_bool(true);
-						int32_t update_rate = prop.attribute("updaterate").as_int();
+						int32_t update_rate = prop.attribute("updaterate").as_int(0);
 
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)

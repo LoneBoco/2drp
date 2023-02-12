@@ -7,6 +7,7 @@
 #include "engine/filesystem/FileSystem.h"
 #include "engine/network/Network.h"
 #include "engine/network/DownloadManager.h"
+#include "engine/item/Item.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
@@ -35,7 +36,7 @@ enum class ServerFlags : uint8_t
 
 class Server
 {
-	friend class loader::PackageLoader;
+	friend class tdrp::Loader;
 	friend class network::Network;
 
 	SCRIPT_SETUP;
@@ -93,6 +94,14 @@ public:
 	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
 	void RemovePlayerClientScript(const std::string& name, PlayerPtr player);
 	std::unordered_map<std::string, std::string>& GetClientScriptMap();
+
+public:
+	bool AddItemDefinition(item::ItemDefinitionUPtr&& item);
+	void SendItemDefinition(server::PlayerPtr player, ItemID baseId);
+	item::ItemDefinition* GetItemDefinition(ItemID baseId);
+	item::ItemDefinition* GetItemDefinition(const std::string& name);
+	item::ItemInstancePtr GiveItemToPlayer(server::PlayerPtr player, ItemID baseId, item::ItemType type, size_t count = 1);
+	item::ItemInstancePtr RemoveItemFromPlayer(server::PlayerPtr player, ItemID id, size_t count = 1);
 
 public:
 	void SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value);
@@ -170,6 +179,7 @@ protected:
 	std::unordered_map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::unordered_map<std::string, scene::ScenePtr> m_scenes;
 	std::unordered_map<std::string, std::string> m_client_scripts;
+	std::unordered_map<ItemID, item::ItemDefinitionUPtr> m_item_definitions;
 	std::string m_server_control_script;
 	std::string m_client_control_script;
 
@@ -178,6 +188,8 @@ protected:
 	std::string m_unique_id;
 	std::string m_server_name;
 	uint16_t m_max_players;
+
+	// Set by SetPlayerNumber.
 	PlayerPtr m_player;
 };
 

@@ -43,6 +43,7 @@ public:
 public:
 	sol::state& GetLuaState() { return *lua; }
 	const sol::state& GetLuaState() const { return *lua; }
+	void CollectGarbage() { if (lua) lua->collect_garbage(); }
 
 public:
 	static sol::protected_function_result ErrorHandler(lua_State*, sol::protected_function_result pfr)

@@ -5,9 +5,9 @@
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/Tileset.h"
 
-namespace tdrp::loader
+namespace tdrp
 {
-	class PackageLoader;
+	class Loader;
 }
 
 namespace tdrp::package
@@ -15,7 +15,7 @@ namespace tdrp::package
 
 class Package
 {
-	friend class loader::PackageLoader;
+	friend class tdrp::Loader;
 
 public:
 	Package(const std::string& name);

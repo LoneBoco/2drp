@@ -181,13 +181,9 @@ project "2drp"
 	filter {}
 		libdirs { "../dependencies/luajit-2.0/src/" }
 	filter { "system:windows", "platforms:x32" }
-		-- prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
-		-- prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}/../dependencies/luajit-2.0/src/\" && call msvcbuild.bat" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
-	-- filter { "system:windows" }
-	-- 	postbuildcommands { "{COPY} \"%{wks.location}/../dependencies/luajit-2.0/src/lua51.dll\" \"%{cfg.targetdir}\"" }
 
 
 project "2drp_server"
@@ -203,34 +199,42 @@ project "2drp_server"
 	removefiles { "../src/client/**" }
 	includedirs { "../src" }
 
-	-- Libraries.
-	links {
-		"PlayRho",
-		-- "bzip2",
-		-- "zlib",
-		"enet",
-		"protobuf",
-		"lua51",
-		"ziplib",
-	}
-
 	-- Library includes.
 	includedirs {
-		"../dependencies/PlayRho/",
-		"../dependencies/bzip2/",
-		"../dependencies/zlib/",
-		"../dependencies/enet/include/",
+		-- Header only.
 		"../dependencies/mathfu/include/",
 		"../dependencies/mathfu/dependencies/vectorial/include/",
+		"../dependencies/BabyDI/include/",
 		"../dependencies/pugixml/src/",
-		"../dependencies/protobuf-3.5.1/src/",
+
+		"../dependencies/bzip2/",
+		"../dependencies/zlib/",
+
+		-- Libs.
+		"../dependencies/ziplib/Source/ZipLib/",
+		"../dependencies/enet/include/",
+		"../dependencies/protobuf/src/",
+		"../dependencies/PlayRho/",
 		"../dependencies/sol2/include/",
 		"../dependencies/luajit-2.0/src/",
-		"../dependencies/ziplib/Source/ZipLib/",
-		"../dependencies/Clipper2/CPP/Clipper2Lib/include/**",
+		"../dependencies/tmxlite/tmxlite/include/",
+		"../dependencies/Clipper2/CPP/Clipper2Lib/include/",
+		"../dependencies/polypartition/src/",
 	}
 
-	dependson { "PlayRho", "bzip2", "zlib", "enet", "Clipper2" }
+	dependson { "PlayRho", "bzip2", "ziplib", "enet", "tmxlite", "Clipper2", "polypartition" }
+
+	-- Libraries.
+	links {
+		"ziplib",
+		"enet",
+		"protobuf",
+		"PlayRho",
+		"lua51",
+		"tmxlite",
+		"Clipper2",
+		"polypartition",
+	}
 
 	defines { "NOMINMAX", "PUGIXML_HEADER_ONLY" }
 
@@ -238,18 +242,20 @@ project "2drp_server"
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
 	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
 
+	-- Disable MSVC warnings because 3rd party libraries never update.
+	filter "toolset:msc*"
+		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING" }
+
+	-- Per-platform libraries.
+	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
+		links { "pthread", "dl" }
+
 	-- Pre-link LuaJIT building.
 	libdirs { "../dependencies/luajit-2.0/src/" }
 	filter { "system:windows", "platforms:x32" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
-	-- filter { "system:windows" }
-	-- 	postbuildcommands { "{COPY} %{wks.location}/../dependencies/luajit-2.0/src/lua51.dll %{cfg.targetdir}" }
-
-	-- Per-platform libraries.
-	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
-		links { "pthread", "dl" }
 
 
 project "SFML"

@@ -1,6 +1,7 @@
 <rml>
 <head>
 	<title>Loading</title>
+	<link type="text/css" href="rml.rcss"/>
 	<style>
 		body
 		{

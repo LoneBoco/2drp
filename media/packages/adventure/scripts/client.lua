@@ -156,12 +156,10 @@ end
 
 -- Useable.
 func.keys[Key.D] = function(key)
-	local curr = Me.Flags.CurrentUseable
-	if curr ~= nil then
-		local useable = Me.Useables[curr]
-		if useable ~= nil then
-			useable:Use()
-		end
+	local itemid = Me.Flags.CurrentItem
+	if itemid ~= nil then
+		local item = Me.Player:GetItem(tonumber(itemid))
+		if item ~= nil then item:Use() end
 	end
 end
 
@@ -195,11 +193,11 @@ end
 -- Testing
 
 func.keys[Key.O] = function(key)
-	Me:SendServerEvent(nil, "RemoveScript", "weapon_bomb")
+	Me:SendServerEvent(nil, "AddItem", "bomb")
 end
 
 func.keys[Key.P] = function(key)
-	Me:SendServerEvent(nil, "AddScript", "weapon_bomb")
+	Me:SendServerEvent(nil, "RemoveItem", "bomb")
 end
 
 -----------------------------

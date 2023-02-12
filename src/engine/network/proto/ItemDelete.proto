@@ -1,0 +1,7 @@
+syntax = "proto3";
+package tdrp.packet;
+
+message ItemDelete {
+	uint32 id = 1;
+	optional uint64 count = 2;
+}

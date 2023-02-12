@@ -1,31 +1,47 @@
 <rml>
 <head>
-	<link type="text/css" href="rml.rcss"/>
 	<title>Inventory</title>
+	<link type="text/css" href="rml.rcss"/>
 	<style>
+		body {
+			z-index: 10
+		}
+
 		#inventory {
 			width: 80%;
 			height: 80%;
 			margin: auto;
 		}
-		#inventory-container {
+		#container {
 			width: 100%;
 			height: 100%;
 			background-color: rgba(255, 231, 144, 255);
 			border-color: rgba(255, 176, 144, 255);
 			border-width: 4dp;
 			border-radius: 15dp;
+			display: flex;
+			flex-wrap: wrap;
+			align-content: flex-start;
+			/**/
 		}
-		.inventory-item {
-			display: inline-block;
-			margin: 15dp;
+		.item {
+			flex: 0 1 auto;
+			margin: 15dp 0 0 15dp;
 		}
-		.inventory-item div {
+		.item:hover {
+			background-color: rgba(225, 201, 114, 255);
+		}
+		.item table, .item tr {
+			min-width: 64dp;
+			min-height: 64dp;
+		}
+		.item td {
+			text-align: center;
+			vertical-align: middle;
+		}
+		.image-center {
 			display: block;
 			text-align: center;
-		}
-		.inventory-item:hover {
-			background-color: rgba(225, 201, 114, 255);
 		}
 	</style>
 	<script>
@@ -44,19 +60,23 @@
 		end--]]
 
 		function Select(element)
-			Game.Flags.CurrentUseable = element.attributes.name
+			Game.Flags.CurrentItem = element.attributes.id
 			element.owner_document:Hide()
 		end
 
 	</script>
 </head>
 <body id="inventory">
-	<div id="inventory-container" data-model="useables">
-		<div class="inventory-item" data-for="item : useables" data-attr-name="item.name" onclick="Select(element)" >
-			<div>
-				<img data-attr-src="item.image"/>
-			</div>
-			<p>{{item.name}}</p>
+	<div id="container" data-model="items">
+		<div class="item" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" onclick="Select(element)" >
+			<table>
+				<tr>
+					<td>
+						<div class="image-center"><img data-attr-src="item.image"/></div>
+						<span class="name">{{item.name}}</span>
+					</td>
+				</tr>
+			</table>
 		</div>
 	</div>
 </body>

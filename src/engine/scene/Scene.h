@@ -12,9 +12,9 @@ namespace tdrp::server
 {
 	class Server;
 }
-namespace tdrp::loader
+namespace tdrp
 {
-	class LevelLoader;
+	class Loader;
 }
 
 namespace tdrp::scene
@@ -23,7 +23,7 @@ namespace tdrp::scene
 class Scene : public std::enable_shared_from_this<Scene>
 {
 	friend class tdrp::server::Server;
-	friend class tdrp::loader::LevelLoader;
+	friend class tdrp::Loader;
 
 public:
 	Scene() = delete;
