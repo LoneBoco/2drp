@@ -54,7 +54,7 @@ void bind_sceneobject(sol::state& lua)
 	);
 
 	auto so_as = lua.create_table();
-	so_as["TEXT"] = CONVERSION(TextSceneObject);
+	so_as["Text"] = CONVERSION(TextSceneObject);
 
 
 	lua.new_usertype<SceneObject>("SceneObject", sol::no_constructor,
