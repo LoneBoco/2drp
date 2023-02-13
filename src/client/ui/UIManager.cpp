@@ -175,10 +175,6 @@ UIManager::UIManager()
 
 UIManager::~UIManager()
 {
-	// Garbage collect one final time to clean up any unique_ptrs sitting around.
-	// If we don't do this, Rml crashes during shutdown.
-	Script->CollectGarbage();
-
 	// Pray.
 	Rml::Shutdown();
 	Backend::Shutdown();
