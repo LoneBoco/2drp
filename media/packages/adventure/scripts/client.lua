@@ -45,6 +45,17 @@ Me.OnClientFrame = function(tick)
 		vars.timeout.movement = 0
 	end
 
+	if so == nil then return end
+
+	-- UI open.
+	if IsUIOpen() then
+		if so.Animation == "hero_walk.gani" then
+			so.Animation = "hero_idle.gani"
+		end
+		so.Velocity = Vector2df.new(0, 0)
+		return
+	end
+
 	local domove = false
 	local dir = 0
 	local move = Vector2df.new(0, 0)
@@ -60,17 +71,6 @@ Me.OnClientFrame = function(tick)
 		move.X = move.X - 1; dir = 1; domove = true;
 	elseif (Me.keydown(Key.Right)) then
 		move.X = move.X + 1; dir = 3; domove = true;
-	end
-
-	if so == nil then return end
-
-	-- Chat box open.
-	local chat = rmlui.GetContext('hud'):GetDocument('chat')
-	if chat.visible then
-		if so ~= nil and so.Animation == "hero_walk.gani" then
-			so.Animation = "hero_idle.gani"
-			domove = false
-		else return end
 	end
 
 	-- Update our position.
@@ -113,6 +113,19 @@ Me.OnGainedOwnership = function(sceneobject)
 	if sceneobject.ClassName == "chat" then
 		vars.so_text = sceneobject
 	end
+end
+
+function IsUIOpen()
+	local hud = rmlui.GetContext('hud')
+	if hud == nil then return false end
+
+	local chat = hud:GetDocument('chat')
+	if chat ~= nil and chat.visible then return true end
+
+	local inventory = hud:GetDocument('inventory')
+	if inventory ~= nil and inventory.visible then return true end
+
+	return false
 end
 
 -- Update our chat scene object with the value of our 'chat' attribute.

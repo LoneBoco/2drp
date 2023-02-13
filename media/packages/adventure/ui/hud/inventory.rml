@@ -28,7 +28,7 @@
 			flex: 0 1 auto;
 			margin: 15dp 0 0 15dp;
 		}
-		.item:hover {
+		.item:hover, .item:focus {
 			background-color: rgba(225, 201, 114, 255);
 		}
 		.item table, .item tr {
@@ -59,16 +59,43 @@
 			})
 		end--]]
 
+		function Show(element)
+			local curitem = Game.Flags.CurrentItem or 0
+			local select = element:GetElementById(curitem)
+			if select == nil then return end
+			select:Focus()
+		end
+
+		function KeyDown(event, element)
+			local cur_focus = element:QuerySelector('#container button:focus')
+			if cur_focus == nil then
+				cur_focus = element.QuerySelector('#container button:first-child')
+			end
+
+			local next_focus = nil
+			if event.parameters.key_identifier == RmlKeyIdentifier.LEFT then
+				next_focus = cur_focus.previous_sibling
+			elseif event.parameters.key_identifier == RmlKeyIdentifier.RIGHT then
+				next_focus = cur_focus.next_sibling
+			elseif event.parameters.key_identifier == RmlKeyIdentifier.RETURN then
+				Select(cur_focus)
+				return
+			end
+
+			if next_focus == nil or next_focus.visible == false then return end
+			next_focus:Focus()
+		end
+
 		function Select(element)
-			Game.Flags.CurrentItem = element.attributes.id
+			Game.Flags.CurrentItem = element.id
 			element.owner_document:Hide()
 		end
 
 	</script>
 </head>
-<body id="inventory">
+<body id="inventory" onshow="Show(element)" onkeydown="KeyDown(event, element)">
 	<div id="container" data-model="items">
-		<div class="item" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" onclick="Select(element)" >
+		<button type="button" class="item" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" onclick="Select(element)" >
 			<table>
 				<tr>
 					<td>
@@ -77,7 +104,7 @@
 					</td>
 				</tr>
 			</table>
-		</div>
+		</button>
 	</div>
 </body>
 </rml>
