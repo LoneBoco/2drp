@@ -66,7 +66,7 @@ Me.OnClientFrame = function(tick)
 
 	-- Chat box open.
 	local chat = rmlui.GetContext('hud'):GetDocument('chat')
-	if chat:IsVisible() then
+	if chat.visible then
 		if so ~= nil and so.Animation == "hero_walk.gani" then
 			so.Animation = "hero_idle.gani"
 			domove = false
@@ -171,7 +171,7 @@ end
 -- Activate our chat bar.
 func.keys[Key.Tab] = function(key)
 	local chat = rmlui.GetContext('hud'):GetDocument('chat')
-	if chat:IsVisible() then
+	if chat.visible then
 		chat:Hide()
 	else
 		chat:Show()
