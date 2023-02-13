@@ -185,7 +185,7 @@ project "2drp"
 	filter { "system:windows", "platforms:x64" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 
-
+--[[
 project "2drp_server"
 	kind "ConsoleApp"
 	language "C++"
@@ -256,7 +256,7 @@ project "2drp_server"
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars32.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
 	filter { "system:windows", "platforms:x64" }
 		prebuildcommands { "call \"$(DevEnvDir)../../VC/Auxiliary/Build/vcvars64.bat\" && cd \"%{wks.location}\" && call build_lua.bat static" }
-
+--]]
 
 project "SFML"
 	kind "StaticLib"
