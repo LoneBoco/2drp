@@ -12,7 +12,9 @@
 
 1. Install Boost.
 	- Set your BOOST_ROOT environment variable to the install location, or;
-	- Put Boost inside `./dependencies/boost`
+	- Put the contents of Boost inside `./dependencies/boost`
+1. Initialize the submodules.
+	- `git submodule update --init --recursive`
 1. Run `./build/generate_packets.bat`.
 1. Run `./build/generate_vs2022.bat`.
 1. Open up the resulting `./build/2drp.sln` solution.
