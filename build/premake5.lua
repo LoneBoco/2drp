@@ -50,6 +50,7 @@ workspace "2drp"
 			"/guard:cf",	-- Control Flow Guard
 			"/Qspectre",	-- Spectre Mitigation
 			"/Zc:preprocessor",	-- Use alternative preprocessor (like GCC/clang, required for BabyDI)
+			--"/Ob3",			-- Even more memory for inline expansion (this causes pugi_xml to crash?)
 		}
 
 	-- Windows defines.
@@ -74,7 +75,7 @@ project "2drp"
 	targetdir "../bin"
 	debugdir "../bin"
 
-	vectorextensions "SSE2"
+	vectorextensions "AVX"
 	rtti "On"
 
 	files { "../src/**" }
