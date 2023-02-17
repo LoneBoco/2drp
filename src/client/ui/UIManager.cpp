@@ -57,6 +57,27 @@ namespace tdrp::ui
 	};
 
 
+	struct StringVectorVariableDefinition : public Rml::VariableDefinition
+	{
+		StringVectorVariableDefinition()
+			: Rml::VariableDefinition(Rml::DataVariableType::Scalar) {}
+
+		bool Get(void* ptr, Rml::Variant& variant) override
+		{
+			item::tag_container* tags = reinterpret_cast<item::tag_container*>(ptr);
+			if (tags == nullptr) return false;
+
+			variant = boost::algorithm::join(*tags, " ");
+			return true;
+		}
+
+		bool Set(void* ptr, const Rml::Variant& variant)
+		{
+			return true;
+		}
+	};
+
+
 	struct ItemInstanceVariableDefinition : public Rml::VariableDefinition
 	{
 		ItemInstanceVariableDefinition(Rml::DataTypeRegister& type_register)
@@ -229,7 +250,9 @@ void UIManager::BindDataModels(Rml::Context* context)
 
 			// Item definitions.
 			{
-				constructor.RegisterArray<item::tag_container>();
+				auto tagdef = std::make_unique<StringVectorVariableDefinition>();
+				constructor.RegisterCustomDataVariableDefinition<item::tag_container>(std::move(tagdef));
+
 				if (auto sthandle = constructor.RegisterStruct<item::ItemDefinition>())
 				{
 					sthandle.RegisterMember("baseid", &item::ItemDefinition::BaseID);
@@ -249,22 +272,15 @@ void UIManager::BindDataModels(Rml::Context* context)
 
 			// Transforms.
 			{
-				constructor.RegisterTransformFunc("stackable", [](const Rml::VariantList& arguments) -> Rml::Variant
+				constructor.RegisterTransformFunc("concat", [](const Rml::VariantList& params) -> Rml::Variant
 					{
-						if (arguments.empty()) return {};
-						auto* instance = arguments[0].Get<item::ItemInstance*>();
-						if (const auto stackable = dynamic_cast<const item::ItemStackable*>(instance); stackable != nullptr)
-							return Rml::Variant(stackable);
-						return {};
-					});
-
-				constructor.RegisterTransformFunc("variant", [](const Rml::VariantList& arguments) -> Rml::Variant
-					{
-						if (arguments.empty()) return {};
-						auto* instance = arguments[0].Get<item::ItemInstance*>();
-						if (const auto variant = dynamic_cast<const item::ItemVariant*>(instance); variant != nullptr)
-							return Rml::Variant(variant);
-						return {};
+						std::vector<std::string> list;
+						list.reserve(params.size());
+						for (const auto& param : params)
+							list.push_back(param.Get<std::string>());
+						std::string result;
+						Rml::StringUtilities::JoinString(result, list, ' ');
+						return Rml::Variant(std::move(result));
 					});
 			}
 

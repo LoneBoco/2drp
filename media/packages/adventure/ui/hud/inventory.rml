@@ -19,14 +19,42 @@
 			border-color: rgba(255, 176, 144, 255);
 			border-width: 4dp;
 			border-radius: 15dp;
+		}
+
+		.filters {
+			display: block;
+			height: 2em;
+			padding: 1em;
+		}
+		.filters input[type='checkbox'] {
+			border-width: 1dp;
+			border-color: black;
+			margin-right: 5dp;
+		}
+		.filters input[type='checkbox']:checked {
+			background-color: rgba(96, 96, 96, 255);
+		}
+		.filters label {
+			margin-right: 2em;
+		}
+
+		#container-items {
+			width: 100%;
+/*			height: 100%;*/
 			display: flex;
 			flex-wrap: wrap;
 			align-content: flex-start;
-			/**/
+		}
+		#container-items.weapon .item.weapon {
+			display: block;
+		}
+		#container-items.resource .item.resource {
+			display: block;
 		}
 		.item {
 			flex: 0 1 auto;
 			margin: 15dp 0 0 15dp;
+			display: none;
 		}
 		.item:hover, .item:focus {
 			background-color: rgba(225, 201, 114, 255);
@@ -60,6 +88,9 @@
 		end--]]
 
 		function Show(element)
+			local filters = element.owner_document:GetElementById('filters')
+			Element.As.ElementForm(filters):Submit()
+
 			local curitem = Game.Flags.CurrentItem or 0
 			local select = element:GetElementById(curitem)
 			if select == nil then return end
@@ -67,9 +98,9 @@
 		end
 
 		function KeyDown(event, element)
-			local cur_focus = element:QuerySelector('#container button:focus')
+			local cur_focus = element:QuerySelector('#container-items button:focus')
 			if cur_focus == nil then
-				cur_focus = element.QuerySelector('#container button:first-child')
+				cur_focus = element.QuerySelector('#container-items button:first-child')
 			end
 
 			local next_focus = nil
@@ -91,20 +122,44 @@
 			element.owner_document:Hide()
 		end
 
+		function ChangeFilter(event, element)
+			element:ProcessDefaultAction(event)
+			Element.As.ElementForm(element.parent_node):Submit()
+			event:StopPropagation()
+		end
+
+		function SubmitFilter(event, document)
+			local container = document:GetElementById('container-items')
+			local filter = event.parameters.filter
+			container.class_name = ''
+			if filter ~= nil then
+				local classes = string.gsub(filter, ',', '')
+				container.class_name = classes
+			end
+		end
+
 	</script>
 </head>
 <body id="inventory" onshow="Show(element)" onkeydown="KeyDown(event, element)">
-	<div id="container" data-model="items">
-		<button type="button" class="item" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" onclick="Select(element)" >
-			<table>
-				<tr>
-					<td>
-						<div class="image-center"><img data-attr-src="item.image"/></div>
-						<span class="name">{{item.name}}</span>
-					</td>
-				</tr>
-			</table>
-		</button>
+	<div id="container">
+		<form id="filters" class="filters" onsubmit="SubmitFilter(event, document)">
+			<input type="checkbox" name="filter" value="weapon" checked onclick="ChangeFilter(event, element)"/>
+			<label for="weapon">Weapon</label>
+			<input type="checkbox" name="filter" value="resource" checked onclick="ChangeFilter(event, element)"/>
+			<label for="resource">Resource</label>
+		</form>
+		<div id="container-items" data-model="items">
+			<button type="button" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" data-attr-class="concat('item', item.tags)" onclick="Select(element)" >
+				<table>
+					<tr>
+						<td>
+							<div class="image-center"><img data-attr-src="item.image"/></div>
+							<span class="name">{{item.name}}</span>
+						</td>
+					</tr>
+				</table>
+			</button>
+		</div>
 	</div>
 </body>
 </rml>
