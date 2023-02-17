@@ -46,21 +46,8 @@ public:
 	void CollectGarbage() { if (lua) lua->collect_garbage(); }
 
 public:
-	static sol::protected_function_result ErrorHandler(lua_State*, sol::protected_function_result pfr)
-	{
-		if (!pfr.valid())
-		{
-			sol::error err = pfr;
-			log::PrintLine("[LUA][ERROR] {}", err.what());
-		}
-		return pfr;
-	}
-	static int DefaultErrorHandler(lua_State* state, sol::optional<const std::exception&> ex, sol::string_view what)
-	{
-		log::PrintLine("[LUA][ERROR] An exception has occured: {}", what);
-		lua_pushlstring(state, what.data(), what.size());
-		return 1;
-	}
+	static sol::protected_function_result ErrorHandler(lua_State* state, sol::protected_function_result pfr, std::string_view module_name);
+	static int DefaultExceptionHandler(lua_State* state, sol::optional<const std::exception&> ex, sol::string_view what);
 
 public:
 
@@ -70,12 +57,16 @@ public:
 		if (script.empty())
 			return;
 
+		scripts.insert(std::make_pair(std::string{ module_name }, script));
+
 		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
 		environments.insert(me->LuaEnvironment);
 
 		(*me->LuaEnvironment)["MODULENAME"] = module_name;
 		(*me->LuaEnvironment)["Me"] = me;
-		lua->safe_script(script, *me->LuaEnvironment, Script::ErrorHandler);
+		sol::protected_function_result pfr = lua->safe_script(script, *me->LuaEnvironment);
+		if (!pfr.valid())
+			ErrorHandler(pfr.lua_state(), std::move(pfr), module_name);
 	}
 
 	template <typename T> requires ValidScriptObject<T>
@@ -84,12 +75,16 @@ public:
 		if (script.empty())
 			return;
 
+		scripts.insert(std::make_pair(std::string{ module_name }, script));
+
 		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
 		environments.insert(me->LuaEnvironment);
 
 		(*me->LuaEnvironment)["MODULENAME"] = module_name;
 		(*me->LuaEnvironment)["Me"] = me;
-		lua->safe_script(script, *me->LuaEnvironment, Script::ErrorHandler);
+		sol::protected_function_result pfr = lua->safe_script(script, *me->LuaEnvironment);
+		if (!pfr.valid())
+			ErrorHandler(pfr.lua_state(), std::move(pfr), module_name);
 	}
 
 public:
@@ -124,6 +119,7 @@ public:
 protected:
 	std::unique_ptr<sol::state> lua;
 	std::unordered_set<std::shared_ptr<sol::environment>> environments;
+	static std::unordered_map<std::string, std::string> scripts;
 };
 
 using ScriptPtr = std::shared_ptr<Script>;

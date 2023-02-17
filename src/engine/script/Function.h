@@ -56,23 +56,8 @@ public:
 		auto entry = m_function.find(module_name);
 		if (entry != std::end(m_function))
 		{
-			if (!entry->second.valid())
-			{
+			if (!RunFunction(module_name, entry->second, std::forward<Args>(args)...))
 				m_function.erase(entry);
-				return;
-			}
-
-			sol::environment env{ sol::env_key, entry->second };
-			env["MODULENAME"] = entry->first;
-
-			auto result = entry->second.call(std::forward<Args>(args)...);
-			if (!result.valid())
-			{
-				log::PrintLine("** Lua error [MODULE {}]", entry->first);
-				script::Script::ErrorHandler(entry->second.lua_state(), std::move(result));
-
-				m_function.erase(entry);
-			}
 		}
 	}
 
@@ -81,25 +66,10 @@ public:
 	{
 		std::set<std::string> failed;
 
-		for (const auto& entry : m_function)
+		for (auto& entry : m_function)
 		{
-			if (!entry.second.valid())
-			{
+			if (!RunFunction(entry.first, entry.second, std::forward<Args>(args)...))
 				failed.insert(entry.first);
-				continue;
-			}
-
-			sol::environment env{ sol::env_key, entry.second };
-			env["MODULENAME"] = entry.first;
-
-			auto result = entry.second.call(std::forward<Args>(args)...);
-			if (!result.valid())
-			{
-				log::PrintLine("** Lua error [MODULE {}]", entry.first);
-				script::Script::ErrorHandler(entry.second.lua_state(), std::move(result));
-
-				failed.insert(entry.first);
-			}
 		}
 
 		auto erase_func = [this](auto& entry) { this->m_function.erase(entry); };
@@ -120,6 +90,25 @@ public:
 	void RemoveAll()
 	{
 		m_function.clear();
+	}
+
+private:
+	template <typename ...Args>
+	bool RunFunction(const std::string_view modulename, sol::protected_function& function, Args&&... args) const
+	{
+		if (!function.valid())
+			return false;
+
+		sol::environment env{ sol::env_key, function };
+		env["MODULENAME"] = modulename;
+
+		auto result = function.call(std::forward<Args>(args)...);
+		if (!result.valid())
+		{
+			script::Script::ErrorHandler(function.lua_state(), std::move(result), modulename);
+			return false;
+		}
+		return true;
 	}
 
 private:

@@ -131,7 +131,7 @@ project "2drp"
 		"polypartition",
 	}
 
-	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY" }
+	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY", "SOL_ALL_SAFETIES_ON", "SOL_LUAJIT" }
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }

@@ -4,17 +4,75 @@
 namespace tdrp::script
 {
 
+std::unordered_map<std::string, std::string> Script::scripts{};
+
+
 void log(const char* message)
 {
 	log::PrintLine("[LUA] {}", message);
 }
+
+sol::protected_function_result Script::ErrorHandler(lua_State* state, sol::protected_function_result pfr, std::string_view module_name)
+{
+	if (!pfr.valid())
+	{
+		sol::error err = pfr;
+
+		std::string error{ err.what() };
+
+		// Try to fix up the error string by using the actual lines of code the error occurred on.
+		if (auto script_iter = scripts.find(std::string{ module_name }); script_iter != scripts.end())
+		{
+			std::string& script = script_iter->second;
+			size_t beginning = std::string::npos;
+			while ((beginning = error.find("[string")) != std::string::npos)
+			{
+				auto end = error.find("]:", beginning);
+				if (end == std::string::npos)
+					break;
+				auto line_start = end + 2;
+				auto line_end = error.find(":", line_start);
+				if (line_end == std::string::npos)
+					line_end = error.find(">", line_start);
+				if (line_end == std::string::npos)
+					break;
+
+				try
+				{
+					auto line_number = std::stoi(error.substr(line_start, line_end - line_start));
+					std::span<char> split_range = (script | std::ranges::views::split('\n') | std::ranges::views::drop(line_number - 1) | std::ranges::views::take(1)).front();
+					std::string line{ split_range.begin(), split_range.end() };
+					boost::trim(line);
+
+					error.replace(error.begin() + beginning + 1, error.begin() + end, line);
+					beginning = end + 1;
+				}
+				catch (...)
+				{
+					break;
+				}
+			}
+		}
+
+		log::PrintLine("[LUA][ERROR][MODULE {}] {}", module_name, error);
+	}
+	return pfr;
+}
+
+int Script::DefaultExceptionHandler(lua_State* state, sol::optional<const std::exception&> ex, sol::string_view what)
+{
+	log::PrintLine("[LUA][ERROR] An exception has occured: {}", what);
+	lua_pushlstring(state, what.data(), what.size());
+	return 1;
+}
+
 
 Script::Script()
 {
 	lua = std::make_unique<sol::state>();
 
 	lua->open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
-	sol::set_default_exception_handler(*lua, &DefaultErrorHandler);
+	sol::set_default_exception_handler(*lua, &DefaultExceptionHandler);
 
 	script::modules::bind_events(*lua);
 	script::modules::bind_item(*lua);
