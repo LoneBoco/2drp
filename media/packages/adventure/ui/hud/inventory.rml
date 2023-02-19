@@ -26,6 +26,9 @@
 			height: 2em;
 			padding: 1em;
 		}
+		.filters div {
+			display: inline-block;
+		}
 		.filters input[type='checkbox'] {
 			border-width: 1dp;
 			border-color: black;
@@ -45,25 +48,22 @@
 			flex-wrap: wrap;
 			align-content: flex-start;
 		}
-		#container-items.weapon .item.weapon {
+		#container-items.all button {
 			display: block;
 		}
-		#container-items.resource .item.resource {
-			display: block;
-		}
-		.item {
+		button {
 			flex: 0 1 auto;
 			margin: 15dp 0 0 15dp;
 			display: none;
 		}
-		.item:hover, .item:focus {
+		button:hover, button:focus {
 			background-color: rgba(225, 201, 114, 255);
 		}
-		.item table, .item tr {
+		button table, button tr {
 			min-width: 64dp;
 			min-height: 64dp;
 		}
-		.item td {
+		button td {
 			text-align: center;
 			vertical-align: middle;
 		}
@@ -74,21 +74,44 @@
 	</style>
 	<script>
 
+		function splitstring(input, separator)
+			separator = separator or '%s'
+			local t = {}
+			for str in string.gmatch(input, '([^'..separator..']+)') do
+				table.insert(t, str)
+			end
+			return t
+		end
+
 		-- Create the data model before we call onload.
 		--[[if dmInventory == nil then
-			dmInventory = rmlui.GetContext('hud'):OpenDataModel('inventory', {
+			dmInventory = rmlui.GetContext('hud'):OpenDataModel('testmodel', {
 				test = 'testing',
 				testbool = true,
 				items = {
 					{name = 'Item1', image = 'block_sword.png'},
 					{name = 'Item2', image = 'block_sword.png'},
 					{name = 'Item3', image = 'block_sword.png'}
-				}
+				},
+				clickfunc = function(ev, str) log('clicked: '..str) end
 			})
 		end--]]
 
-		function Show(element)
-			local filters = element.owner_document:GetElementById('filters')
+		function collectTags(element)
+			local tags = {}
+			local items = element:QuerySelectorAll('#container-items button')
+			for k,v in pairs(items) do
+				local itemtags = splitstring(v.class_name)
+				for kt,kv in pairs(itemtags) do tags[kv] = true end
+			end
+			return tags
+		end
+
+		function ShowInventory(element)
+			local tags = collectTags(element)
+			RegisterTags(element.owner_document, tags)
+
+			local filters = element:GetElementById('filters')
 			Element.As.ElementForm(filters):Submit()
 
 			local curitem = Game.Flags.CurrentItem or 0
@@ -97,10 +120,44 @@
 			select:Focus()
 		end
 
+		-- function RegisterTags(event, tags)
+		function RegisterTags(document, tags)
+			--log('--- splitting '..tags)
+			-- local document = event.current_element.owner_document
+			local filters = document:GetElementById('filters')
+
+			local createFilter = function(tag)
+				local template = document:GetElementById('filter-template')
+				local clone = template:Clone()
+				clone.id = 'filter-'..tag
+
+				local checkbox = Element.As.ElementFormControlInput(clone:GetElementsByTagName('input')[1])
+				checkbox.id = 'filter-cb-'..tag
+				checkbox.value = tag
+				checkbox.checked = false
+
+				local label = clone:GetElementsByTagName('label')[1]
+				label.attributes['for'] = 'filter-cb-'..tag
+				label.inner_rml = tag:gsub('%a', string.upper, 1)
+
+				filters:AppendChild(clone)
+				clone = nil
+
+				document:AppendToStyleSheet('#container-items.'..tag..' button.'..tag..' {display: block;}')
+			end
+
+			-- local strings = splitstring(tags)
+			-- for k,str in pairs(strings) do
+			for str,k in pairs(tags) do
+				local filter = filters:GetElementById('filter-'..str)
+				if filter == nil then createFilter(str) end
+			end
+		end
+
 		function KeyDown(event, element)
 			local cur_focus = element:QuerySelector('#container-items button:focus')
 			if cur_focus == nil then
-				cur_focus = element.QuerySelector('#container-items button:first-child')
+				cur_focus = element:QuerySelector('#container-items button:first-child')
 			end
 
 			local next_focus = nil
@@ -123,8 +180,31 @@
 		end
 
 		function ChangeFilter(event, element)
+			-- Event gets called before the checkbox is checked, so process the action first.
 			element:ProcessDefaultAction(event)
-			Element.As.ElementForm(element.parent_node):Submit()
+
+			local input = Element.As.ElementFormControlInput(element)
+			if input.value == 'all' then
+				-- If selecting All, uncheck all others.
+				-- If already checked, just allow All to be unchecked.
+				if input.checked then
+					local not_all = input.owner_document:QuerySelectorAll('#filters input:not([value="all"])')
+					for k,v in pairs(not_all) do
+						Element.As.ElementFormControlInput(v).checked = false
+					end
+				end
+			else
+				-- We set a specific filter so unset All.
+				local all = input.owner_document:QuerySelector('#filter-template input')
+				Element.As.ElementFormControlInput(all).checked = false
+			end
+
+			-- Apply the filters.
+			Element.As.ElementForm(element.parent_node.parent_node):Submit()
+
+			-- Stop the event propagation.
+			-- We already propagated on the first line.
+			-- Doing it again will toggle the checkbox back to the original state.
 			event:StopPropagation()
 		end
 
@@ -140,16 +220,17 @@
 
 	</script>
 </head>
-<body id="inventory" onshow="Show(element)" onkeydown="KeyDown(event, element)">
+<body id="inventory" onshow="ShowInventory(element)" onkeydown="KeyDown(event, element)">
 	<div id="container">
 		<form id="filters" class="filters" onsubmit="SubmitFilter(event, document)">
-			<input type="checkbox" name="filter" value="weapon" checked onclick="ChangeFilter(event, element)"/>
-			<label for="weapon">Weapon</label>
-			<input type="checkbox" name="filter" value="resource" checked onclick="ChangeFilter(event, element)"/>
-			<label for="resource">Resource</label>
+			<div id="filter-template">
+				<input type="checkbox" name="filter" id="filter-cb-all" value="all" checked onclick="ChangeFilter(event, element)"/>
+				<label for="filter-cb-all">All</label>
+			</div>
 		</form>
 		<div id="container-items" data-model="items">
-			<button type="button" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" data-attr-class="concat('item', item.tags)" onclick="Select(element)" >
+			<button type="button" data-for="item : items" data-attr-id="item.id" data-attr-name="item.name" data-attr-class="item.tags" onclick="Select(element)">
+				<!-- data-attr-onshow="concat('RegisterTags(event,\'', item.tags, '\')')" -->
 				<table>
 					<tr>
 						<td>
