@@ -158,9 +158,9 @@ func.keys[Key.S] = function(key)
 	log("- sword: ("..so.Position.X..", "..so.Position.Y..") - ("..pos.X..", "..pos.Y..")")
 
 	if (so.Direction == 0) then pos.Y = pos.Y - (1.0 * 16.0) end
-	if (so.Direction == 2) then pos.Y = pos.Y + (0.0 * 16.0) end
-	if (so.Direction == 1) then pos.X = pos.X - (1.5 * 16.0) end
-	if (so.Direction == 3) then pos.X = pos.X + (1.5 * 16.0) end
+	if (so.Direction == 2) then pos.Y = pos.Y + (0.5 * 16.0) end
+	if (so.Direction == 1) then pos.X = pos.X - (0.5 * 16.0) end
+	if (so.Direction == 3) then pos.X = pos.X + (0.5 * 16.0) end
 
 	log("- w/ dir: ("..pos.X..", "..pos.Y..")")
 

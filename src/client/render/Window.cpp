@@ -55,6 +55,7 @@ void Window::EventLoop()
 {
 	while (m_window->isOpen())
 	{
+		// Handle events.
 		sf::Event event;
 		while (m_window->pollEvent(event))
 		{
@@ -134,6 +135,7 @@ void Window::EventLoop()
 
 		// Render the game.
 		Game->Render(m_window.get());
+		m_window->resetGLStates();
 		Game->UI->Render();
 
 		// Draw to the window.
@@ -172,6 +174,7 @@ void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 				circle.setPosition({ (transformation.p[0] - radius + location[0]) * ppu, (transformation.p[1] - radius + location[1]) * ppu});
 				circle.setRadius(radius * ppu);
 
+				//window.resetGLStates();
 				window.draw(circle);
 			}
 			else if (polygon != nullptr)
@@ -188,6 +191,7 @@ void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 					poly.setPoint(i, { (transformation.p[0] + vertex[0]) * ppu, (transformation.p[1] + vertex[1]) * ppu });
 				}
 
+				//window.resetGLStates();
 				window.draw(poly);
 			}
 		}

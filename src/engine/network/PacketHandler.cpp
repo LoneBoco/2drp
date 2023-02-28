@@ -705,7 +705,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SendEvent& pa
 		log::PrintLine("<- Event \"{}\" from {} to scene \"{}\" at ({}, {})-{} with data: {}", name, sender, pscene, x, y, radius, data);
 
 		// Get objects in range.
-		auto targets = scene->FindObjectsBoundInRangeOf(origin, radius);
+		auto targets = scene->FindObjectsByCollisionAndBoundInRange(origin, radius);
 
 		// Get hits.
 		log::Print("---- hit");

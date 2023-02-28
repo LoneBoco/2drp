@@ -1135,7 +1135,7 @@ int Server::SendEvent(scene::ScenePtr scene, SceneObject* sender, const std::str
 	{
 		packet.set_scene(scene->GetName());
 
-		auto targets = scene->FindObjectsBoundInRangeOf(origin, radius);
+		auto targets = scene->FindObjectsByCollisionAndBoundInRange(origin, radius);
 		for (const auto& target : targets)
 			target->OnEvent.RunAll(sender, name, data, origin, radius);
 

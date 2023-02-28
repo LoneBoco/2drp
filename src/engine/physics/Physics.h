@@ -53,6 +53,7 @@ public:
 public:
 	void AddSceneObject(const std::shared_ptr<SceneObject>& so);
 	void RemoveSceneObject(const std::shared_ptr<SceneObject>& so);
+	std::shared_ptr<SceneObject> FindSceneObjectByBodyId(playrho::BodyID bodyId);
 
 protected:
 	void contactBegin(playrho::ContactID);

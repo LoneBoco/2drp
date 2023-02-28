@@ -20,6 +20,8 @@ namespace tdrp
 namespace tdrp::scene
 {
 
+using SearchPredicate = std::function<bool(SceneObjectPtr&)>;
+
 class Scene : public std::enable_shared_from_this<Scene>
 {
 	friend class tdrp::server::Server;
@@ -27,35 +29,38 @@ class Scene : public std::enable_shared_from_this<Scene>
 
 public:
 	Scene() = delete;
-	Scene(const std::string& name) : m_name(name) {}
+	Scene(const std::string& name) noexcept : m_name(name) {}
 	~Scene() = default;
 
 	Scene(const Scene& other) = delete;
 	Scene(Scene&& other) = delete;
 	Scene& operator=(const Scene& other) = delete;
 	Scene& operator=(Scene&& other) = delete;
-	bool operator==(const Scene& other) { return m_name == other.m_name; }
+	bool operator==(const Scene& other) noexcept { return m_name == other.m_name; }
 
 public:
-	const std::string& GetName() const;
+	const std::string& GetName() const noexcept;
 
-	bool AddObject(SceneObjectPtr so);
-	bool RemoveObject(SceneObjectPtr so);
+	bool AddObject(SceneObjectPtr so) noexcept;
+	bool RemoveObject(SceneObjectPtr so) noexcept;
 	
 	// uint32_t AddZone();
 	// bool RemoveZone();
 
-	SceneObjectPtr FindObject(SceneObjectID id) const;
-	SceneObjectPtr FindObject(const std::string& name) const;
+	SceneObjectPtr FindObject(SceneObjectID id) const noexcept;
+	SceneObjectPtr FindObject(const std::string& name) const noexcept;
 
-	std::unordered_map<SceneObjectID, SceneObjectPtr>& GetGraph();
+	std::unordered_map<SceneObjectID, SceneObjectPtr>& GetGraph() noexcept;
 
-	std::vector<SceneObjectPtr> FindObjectsInRangeOf(const Vector2df& position, float radius);
-	std::vector<SceneObjectPtr> FindObjectsBoundInRangeOf(const Vector2df& position, float radius);
-	std::vector<SceneObjectPtr> FindObjectsInRectangle(const Recti& rectangle);
-	std::vector<SceneObjectPtr> FindObjectsBoundInRectangle(const Rectf& rectangle);
+	std::vector<SceneObjectPtr> FindObjectsInRangeOf(const Vector2df& position, float radius, SearchPredicate = {}) noexcept;
+	std::vector<SceneObjectPtr> FindObjectsBoundInRangeOf(const Vector2df& position, float radius, SearchPredicate = {}) noexcept;
+	std::vector<SceneObjectPtr> FindObjectsInRectangle(const Recti& rectangle, SearchPredicate = {}) noexcept;
+	std::vector<SceneObjectPtr> FindObjectsBoundInRectangle(const Rectf& rectangle, SearchPredicate = {}) noexcept;
+	
+	std::vector<SceneObjectPtr> FindObjectsByCollision(const Vector2df& position, float radius, SearchPredicate = {}) noexcept;
+	std::vector<SceneObjectPtr> FindObjectsByCollisionAndBoundInRange(const Vector2df& position, float radius, SearchPredicate = {}) noexcept;
 
-	const uint32_t GetTransmissionDistance() const;
+	const uint32_t GetTransmissionDistance() const noexcept;
 
 	physics::Physics Physics;
 
@@ -68,17 +73,17 @@ protected:
 };
 using ScenePtr = std::shared_ptr<Scene>;
 
-inline const std::string& Scene::GetName() const
+inline const std::string& Scene::GetName() const noexcept
 {
 	return m_name;
 }
 
-inline std::unordered_map<uint32_t, SceneObjectPtr>& Scene::GetGraph()
+inline std::unordered_map<uint32_t, SceneObjectPtr>& Scene::GetGraph() noexcept
 {
 	return m_graph;
 }
 
-inline const uint32_t Scene::GetTransmissionDistance() const
+inline const uint32_t Scene::GetTransmissionDistance() const noexcept
 {
 	return m_transmission_distance;
 }

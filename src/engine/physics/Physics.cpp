@@ -78,6 +78,13 @@ void Physics::RemoveSceneObject(const std::shared_ptr<SceneObject>& so)
 	so->PhysicsBody.reset();
 }
 
+std::shared_ptr<SceneObject> Physics::FindSceneObjectByBodyId(playrho::BodyID bodyId)
+{
+	auto iter = m_scene_objects.find(bodyId);
+	if (iter != std::end(m_scene_objects))
+		return iter->second.lock();
+	return nullptr;
+}
 
 ///////////////////////////////////////////////////////////
 

@@ -216,13 +216,18 @@ void handle(Game& game, const packet::SendEvent& packet)
 	if (player && scene && scene == player->GetCurrentScene().lock())
 	{
 		// Draw event.
-		/*
-		sf::CircleShape circle{ radius * 20 };
-		circle.setFillColor(sf::Color::Red);
-		circle.setPosition({ x, y });
-		game.GetRenderWindow()->draw(circle);
+		/* TODO: Keep a list of events in Game with a timeout to allow a couple frames of draw.
+		sf::CircleShape circle;
+		circle.setFillColor(sf::Color::Blue);
+		circle.setOutlineColor(sf::Color::Blue);
+		circle.setOutlineThickness(1.0f);
+		circle.setPosition({ x - radius, y - radius });
+		circle.setRadius(radius);
+		
+		auto window = BabyDI::Get<tdrp::render::Window>();
+		window->GetRenderWindow()->resetGLStates();
+		window->GetRenderWindow()->draw(circle);
 		*/
-
 	}
 }
 
