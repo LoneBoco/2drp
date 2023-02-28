@@ -1,5 +1,7 @@
 #pragma once
 
+#include "engine/common.h"
+
 #include <string_view>
 #include <unordered_map>
 #include <unordered_set>
@@ -7,26 +9,21 @@
 
 #include <sol/sol.hpp>
 
-#include "engine/common.h"
-
-
 namespace tdrp::script
 {
 
-#ifdef __INTELLISENSE__
-
-template <typename T> concept ValidScriptObject = true;
-
-#else
+template <typename T> struct decay_smart { typedef T type; };
+template <typename T> struct decay_smart<T*> { typedef T type; };
+template <typename T> struct decay_smart<std::shared_ptr<T>> { typedef T type; };
 
 template <typename T>
-concept ValidScriptObject = requires (T t)
+concept IsValidScriptObject = requires (T t)
 {
-	T::ValidScriptObject;
-	t.LuaEnvironment;
+	typename decay_smart<T>::type::ValidScriptObject;
+	t->LuaEnvironment;
+	*t;
 };
 
-#endif
 
 class Script
 {
@@ -51,26 +48,7 @@ public:
 
 public:
 
-	template <typename T> requires ValidScriptObject<T>
-	void RunScript(std::string_view module_name, const std::string& script, T* me)
-	{
-		if (script.empty())
-			return;
-
-		scripts.insert(std::make_pair(std::string{ module_name }, script));
-
-		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
-		environments.insert(me->LuaEnvironment);
-
-		(*me->LuaEnvironment)["MODULENAME"] = module_name;
-		(*me->LuaEnvironment)["Me"] = me;
-		sol::protected_function_result pfr = lua->safe_script(script, *me->LuaEnvironment);
-		if (!pfr.valid())
-			ErrorHandler(pfr.lua_state(), std::move(pfr), module_name);
-	}
-
-	template <typename T> requires ValidScriptObject<T>
-	void RunScript(std::string_view module_name, const std::string& script, std::shared_ptr<T>& me)
+	void RunScript(std::string_view module_name, const std::string& script, script::IsValidScriptObject auto me)
 	{
 		if (script.empty())
 			return;
