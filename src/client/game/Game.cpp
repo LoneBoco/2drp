@@ -211,9 +211,24 @@ void Game::Render(sf::RenderWindow* window)
 	}
 }
 
-void Game::SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+void Game::SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius)
 {
-	Server.SendEvent(GetCurrentPlayer()->GetCurrentScene().lock(), sender, name, data, origin, radius);
+	auto player = GetCurrentPlayer();
+	auto scene = player->GetCurrentScene().lock();
+	Server.SendEvent(scene, player, name, data, origin, radius);
+}
+
+void Game::SendLevelEvent(const std::string& name, const std::string& data)
+{
+	auto player = GetCurrentPlayer();
+	auto scene = player->GetCurrentScene().lock();
+	Server.SendEvent(scene, player, name, data);
+}
+
+void Game::SendServerEvent(const std::string& name, const std::string& data)
+{
+	auto player = GetCurrentPlayer();
+	Server.SendEvent(nullptr, player, name, data);
 }
 
 /////////////////////////////

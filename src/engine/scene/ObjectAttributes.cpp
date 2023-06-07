@@ -55,6 +55,7 @@ Attribute& Attribute::Set(const AttributeVariant& value)
 		setDirty = true;
 	else
 	{
+		// TODO: See what happens if the type changes.
 		switch (me_t)
 		{
 			case AttributeType::INTEGER:

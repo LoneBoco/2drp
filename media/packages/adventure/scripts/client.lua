@@ -105,7 +105,6 @@ Me.OnGainedOwnership = function(sceneobject)
 		Me.Player:SwitchControlledSceneObject(sceneobject)
 		Me.Camera:FollowSceneObject(sceneobject, 0)
 		Me.Camera.FollowOffset = Vector2di.new(24, 48)
-
 		vars.chat_listener = sceneobject.Attributes:Get("chat"):Subscribe(func.chat)
 	end
 
@@ -164,7 +163,7 @@ func.keys[Key.S] = function(key)
 
 	log("- w/ dir: ("..pos.X..", "..pos.Y..")")
 
-	Me:SendEvent(so, "sword", "", pos, 24)
+	Me:SendEvent("sword", "", pos, 24)
 end
 
 -- Useable.
@@ -206,11 +205,11 @@ end
 -- Testing
 
 func.keys[Key.O] = function(key)
-	Me:SendServerEvent(nil, "AddItem", "bomb")
+	Me:SendServerEvent("AddItem", "bomb")
 end
 
 func.keys[Key.P] = function(key)
-	Me:SendServerEvent(nil, "RemoveItem", "bomb")
+	Me:SendServerEvent("RemoveItem", "bomb")
 end
 
 -----------------------------

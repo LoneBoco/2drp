@@ -159,7 +159,7 @@ std::vector<SceneObjectPtr> Scene::FindObjectsByCollisionAndBoundInRange(const V
 	result.erase(ret.begin(), ret.end());
 
 	// Remove by predicate.
-	if (predicate) [[unlikely]]
+	if (predicate) [[likely]]
 	{
 		const auto ret2 = std::ranges::remove_if(result, [&predicate](SceneObjectPtr& so) { return !predicate(so); });
 		result.erase(ret2.begin(), ret2.end());

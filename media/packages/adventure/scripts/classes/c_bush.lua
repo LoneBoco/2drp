@@ -10,7 +10,7 @@ end
 Me.OnEvent = function(sender, name, data, position, radius)
 	if name ~= "sword" then return end
 
-	if (sender.Owner ~= Server.Player) then
+	if (sender ~= Server.Player) then
 		-- log("["..Me.ID.."] [Repl: "..tostring(Me.Replicated).."] Bush replication test - not event sender, ignoring event.")
 		return
 	end

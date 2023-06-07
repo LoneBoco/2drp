@@ -186,24 +186,6 @@ namespace functions
 
 		return &player->Account.Flags;
 	}
-
-	void SendEvent(Game& self, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
-	{
-		self.SendEvent(sender, name, data, origin, radius);
-	}
-
-	void SendServerEvent(Game& self, SceneObject* sender, const std::string& name, const std::string& data, sol::variadic_args args)
-	{
-		Vector2df origin{ 0, 0 };
-		float radius = 0.f;
-
-		if (args.size() == 1)
-			origin = args.get<Vector2df>(0);
-		if (args.size() == 2)
-			radius = args.get<float>(1);
-
-		self.Server.SendEvent(nullptr, sender, name, data, origin, radius);
-	}
 }
 
 void bind_game(sol::state& lua)
@@ -214,8 +196,9 @@ void bind_game(sol::state& lua)
 		"keydown", &keydown,
 		"keyup", &keyup,
 
-		"SendEvent", &functions::SendEvent,
-		"SendServerEvent", &functions::SendServerEvent,
+		"SendEvent", &Game::SendEvent,
+		"SendServerEvent", &Game::SendServerEvent,
+		"SendLevelEvent", &Game::SendLevelEvent,
 
 		"ToggleUIContext", [](Game& self, const std::string& context, bool visible) { self.UI->ToggleContextVisibility(context, visible); },
 		"ToggleUIDocument", [](Game& self, const std::string& context, const std::string& document) { self.UI->ToggleDocumentVisibility(context, document); },

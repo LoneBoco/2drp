@@ -156,8 +156,8 @@ void Physics::preSolveContact(playrho::ContactID id, const playrho::d2::Manifold
 	Collision collision{ m_world, id, world_manifold };
 
 	// Call Lua function for pre-solving the contact.
-	soA->OnSolveContact.RunAll(soB, collision);
-	soB->OnSolveContact.RunAll(soA, collision);
+	soA->OnSolveContact.RunAll(soB, &collision);
+	soB->OnSolveContact.RunAll(soA, &collision);
 }
 
 } // end namespace tdrp::physics

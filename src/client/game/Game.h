@@ -69,7 +69,9 @@ public:
 	chrono::clock::duration GetTick() const;
 
 public:
-	void SendEvent(SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	void SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius);
+	void SendLevelEvent(const std::string& name, const std::string& data);
+	void SendServerEvent(const std::string& name, const std::string& data);
 
 public:
 	GameState State = GameState::INITIALIZING;

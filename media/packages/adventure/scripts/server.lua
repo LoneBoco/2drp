@@ -60,21 +60,21 @@ Me.OnServerTick = function(tick)
 	--log('OnServerTick: '..tick.."ms")
 end
 
-Me.OnServerEvent = function(sender, name, data, origin, radius, player)
+Me.OnServerEvent = function(scene, sender, name, data)
 	if name == "AddScript" then
-		Me:GiveClientScript(data, player)
+		Me:GiveClientScript(data, sender)
 	elseif name == "RemoveScript" then
-		Me:RemoveClientScript(data, player)
+		Me:RemoveClientScript(data, sender)
 	elseif name == "bomb" then
 		log('boom')
 	elseif name == "AddItem" then
 		log('Adding bomb')
-		Me:GiveItemToPlayer(player, "bomb", ItemType.STACKABLE)
+		Me:GiveItemToPlayer(sender, "bomb", ItemType.STACKABLE)
 	elseif name == "RemoveItem" then
 		log('Removing bomb')
-		Me:RemoveItemsFromPlayer(player, "bomb")
+		Me:RemoveItemsFromPlayer(sender, "bomb")
 	end
 end
 
--- Me.OnEvent = function(sender, name, data, origin, radius, player)
+-- Me.OnEvent = function(sender, name, data, origin, radius)
 -- end

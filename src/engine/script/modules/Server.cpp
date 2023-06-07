@@ -69,17 +69,19 @@ namespace functions
 		remove_items(server, player, itemName, 1);
 	}
 
-	void send_server_event(server::Server& self, SceneObject* sender, const std::string& name, const std::string& data, sol::variadic_args args)
+	void send_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data, Vector2df origin, float radius)
 	{
-		Vector2df origin{ 0, 0 };
-		float radius = 0.f;
+		self.SendEvent(scene, self.GetPlayer(), name, data, origin, radius);
+	}
 
-		if (args.size() == 1)
-			origin = args.get<Vector2df>(0);
-		if (args.size() == 2)
-			radius = args.get<float>(1);
+	void send_level_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data)
+	{
+		self.SendEvent(scene, self.GetPlayer(), name, data);
+	}
 
-		self.SendEvent(nullptr, sender, name, data, origin, radius);
+	void send_server_event(server::Server& self, const std::string& name, const std::string& data)
+	{
+		self.SendEvent(nullptr, self.GetPlayer(), name, data);
 	}
 
 } // end namespace functions
@@ -144,7 +146,8 @@ void bind_server(sol::state& lua)
 		"SwitchPlayerScene", &server::Server::SwitchPlayerScene,
 		"SwitchSceneObjectOwnership", &server::Server::SwitchSceneObjectOwnership,
 
-		"SendEvent", &server::Server::SendEvent,
+		"SendEvent", &functions::send_event,
+		"SendLevelEvent", &functions::send_level_event,
 		"SendServerEvent", &functions::send_server_event
 	);
 }

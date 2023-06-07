@@ -56,6 +56,7 @@ namespace tdrp
 using SceneObjectID = uint32_t;
 using AttributeID = uint16_t;
 using ItemID = uint16_t;
+using PlayerID = uint16_t;
 
 } // end namespace tdrp
 

@@ -7,7 +7,7 @@ message SendEvent {
 	string scene = 2;
 	string name = 3;
 	string data = 4;
-	float x = 5;
-	float y = 6;
-	float radius = 7;
+	optional float x = 5;
+	optional float y = 6;
+	optional float radius = 7;
 }

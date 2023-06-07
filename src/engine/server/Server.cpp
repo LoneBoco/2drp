@@ -1119,40 +1119,81 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-int Server::SendEvent(scene::ScenePtr scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius)
+int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data)
 {
 	packet::SendEvent packet;
-	packet.set_sender(sender ? sender->ID : 0);
+	packet.set_sender(player ? player->GetPlayerId() : 0);
+	packet.set_name(name);
+	packet.set_data(data);
+
+	if (scene)
+	{
+		packet.set_scene(scene->GetName());
+	}
+
+	// Process the event.
+	int count = ProcessSendEvent(scene, player, name, data);
+
+	// Send the packet.
+	if (scene)
+	{
+		log::PrintLine("-> Sending level event '{}' to scene '{}' with data: {}", name, scene->GetName(), data);
+		BroadcastToScene(scene, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });
+	}
+	else
+	{
+		log::PrintLine("-> Sending server event '{}' with data: {}", name, data);
+		Broadcast(network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet);
+	}
+
+	return count;
+}
+
+int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius)
+{
+	if (!scene) [[unlikely]]
+		return 0;
+
+	packet::SendEvent packet;
+	packet.set_sender(player ? player->GetPlayerId() : 0);
+	packet.set_scene(scene->GetName());
 	packet.set_name(name);
 	packet.set_data(data);
 	packet.set_x(origin.x);
 	packet.set_y(origin.y);
 	packet.set_radius(radius);
 
-	// Run events on all objects in range.
-	int count = 0;
-	if (scene) [[likely]]
-	{
-		packet.set_scene(scene->GetName());
+	// Process the event.
+	int count = ProcessSendEvent(scene, player, name, data, origin, radius);
 
-		auto targets = scene->FindObjectsByCollisionAndBoundInRange(origin, radius);
-		for (const auto& target : targets)
-			target->OnEvent.RunAll(sender, name, data, origin, radius);
-
-		count = static_cast<int>(targets.size());
-	}
-	else
-	{
-		// TODO: All scene objects? Just the server?
-		count = 0;
-	}
+	log::PrintLine("-> Sending event '{}' to scene '{}' at ({}, {}):{} with data: {}", name, scene->GetName(), origin.x, origin.y, radius, data);
+	log::PrintLine("   -- hits: {}", count);
 
 	// Send the packet.
-	if (scene)
-		SendToScene(scene, origin, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });
-	else Broadcast(network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet);
+	SendToScene(scene, origin, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });
 
 	return count;
+}
+
+int Server::ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data)
+{
+	// Global events.
+	OnServerEvent.RunAll(scene, player, name, data);
+	return 0;
+}
+
+int Server::ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius)
+{
+	if (!scene) [[unlikely]]
+		return 0;
+
+	// Get objects in range.
+	auto targets = scene->FindObjectsByCollisionAndBoundInRange(origin, radius, [](SceneObjectPtr& so) { return !so->IgnoresEvents; });
+
+	// Run events on each one.
+	std::ranges::for_each(targets, [&](const auto& target) { target->OnEvent.RunAll(player, name, data, origin, radius); });
+
+	return static_cast<int>(targets.size());
 }
 
 ///////////////////////////////////////////////////////////////////////////////

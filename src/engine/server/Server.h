@@ -124,7 +124,10 @@ public:
 	bool SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene);
 
 public:
-	int SendEvent(scene::ScenePtr scene, SceneObject* sender, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	int SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data);
+	int SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius);
+	int ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data);
+	int ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
 	const SceneObjectID GetNextSceneObjectID();

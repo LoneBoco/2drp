@@ -688,49 +688,43 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCo
 
 void handle(Server& server, const uint16_t playerId, const packet::SendEvent& packet)
 {
+	if (server.IsSinglePlayer()) return;
+	if (server.IsHost() && playerId == server.GetPlayer()->GetPlayerId())
+		return;
+
 	const auto sender = packet.sender();
 	const auto& pscene = packet.scene();
 	const auto& name = packet.name();
 	const auto& data = packet.data();
-	const auto x = packet.x();
-	const auto y = packet.y();
-	const auto radius = packet.radius();
 
-	auto sender_so = server.GetSceneObjectById(sender);
+	auto player = server.GetPlayerById(sender);
 	auto scene = server.GetScene(pscene);
-	Vector2df origin{ x, y };
 
-	if (scene)
+	if (packet.has_x() && packet.has_y() && packet.has_radius())
 	{
-		log::PrintLine("<- Event \"{}\" from {} to scene \"{}\" at ({}, {})-{} with data: {}", name, sender, pscene, x, y, radius, data);
+		if (!scene)
+			return;
 
-		// Get objects in range.
-		auto targets = scene->FindObjectsByCollisionAndBoundInRange(origin, radius);
+		const auto x = packet.x();
+		const auto y = packet.y();
+		const auto radius = packet.radius();
+		Vector2df origin{ x, y };
 
-		// Get hits.
-		log::Print("---- hit");
-		std::set<SceneObjectPtr> hits;
-		for (const auto& target : targets)
-		{
-			log::Print(", {}", target->ID);
-			hits.insert(target);
-		}
-		log::Print("\n");
+		log::PrintLine("<- Event '{}' from player {} to scene '{}' at ({}, {}):{} with data: {}", name, sender, pscene, x, y, radius, data);
 
-		// Run events on each one.
-		std::for_each(std::begin(hits), std::end(hits), [&](const auto& target) { target->OnEvent.RunAll(sender_so, name, data, origin, radius); });
-
-		// Run event on the server.
-		auto player = server.GetPlayerById(playerId);
-		server.OnEvent.RunAll(sender_so, name, data, origin, radius, player);
+		// Perform the event.
+		auto hits = server.ProcessSendEvent(scene, player, name, data, origin, radius);
+		log::PrintLine("   -- hits: {}", hits);
 	}
 	else
 	{
-		log::PrintLine("<- Received global event \"{}\" from player {} with data: {}", name, playerId, data);
+		if (scene)
+			log::PrintLine("<- Level event '{}' from player {} to scene '{}' with data: {}", name, sender, pscene, data);
+		else log::PrintLine("<- Server event '{}' from player {} with data: {}", name, sender, data);
 
-		// Global events.
-		auto player = server.GetPlayerById(playerId);
-		server.OnServerEvent.RunAll(sender_so, name, data, origin, radius, player);
+		// Perform the event.
+		auto hits = server.ProcessSendEvent(scene, player, name, data);
+		log::PrintLine("   -- hits: {}", hits);
 	}
 }
 
