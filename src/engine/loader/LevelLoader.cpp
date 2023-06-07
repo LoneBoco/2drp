@@ -619,8 +619,9 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 						default: so = std::make_shared<SceneObject>(c, id); break;
 					}
 
-					// Check if it is a non-replicated scene object.
+					// Check flags.
 					so->Replicated = object.attribute("replicated").as_bool(true);
+					so->IgnoresEvents = object.attribute("ignoresevents").as_bool(false);
 
 					// Load all properties.
 					for (auto& prop : object.children("property"))

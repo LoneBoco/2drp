@@ -81,6 +81,7 @@ public:
 	std::shared_ptr<ObjectClass> GetClass();
 	std::weak_ptr<server::Player> GetOwningPlayer() const;
 	std::weak_ptr<scene::Scene> GetCurrentScene() const;
+	bool IsOwnedBy(PlayerID id) const noexcept;
 
 	void SetOwningPlayer(std::shared_ptr<server::Player> player);
 	bool SetCurrentScene(std::shared_ptr<scene::Scene> scene);
@@ -124,6 +125,7 @@ public:
 	std::string Name;
 	bool Visible = true;
 	bool Replicated = true;
+	bool IgnoresEvents = false;
 
 	ObjectAttributes Attributes;
 	ObjectProperties Properties;
@@ -160,7 +162,6 @@ inline std::weak_ptr<scene::Scene> SceneObject::GetCurrentScene() const
 {
 	return m_current_scene;
 }
-
 
 /////////////////////////////
 

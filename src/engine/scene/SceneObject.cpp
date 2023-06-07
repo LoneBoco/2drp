@@ -389,6 +389,14 @@ Rectf SceneObject::GetBounds() const
 	return Rectf(GetPosition(), Vector2df(0.0f));
 }
 
+bool SceneObject::IsOwnedBy(PlayerID id) const noexcept
+{
+	if (m_owning_player.expired()) return false;
+	if (auto owner = m_owning_player.lock(); owner)
+		return owner->GetPlayerId() == id;
+	return false;
+}
+
 void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
 {
 	m_owning_player = player;

@@ -82,6 +82,7 @@ void bind_sceneobject(sol::state& lua)
 		"Properties", &SceneObject::Properties,
 
 		"Visible", &SceneObject::Visible,
+		"IgnoresEvents", &SceneObject::IgnoresEvents,
 		"Replicated", sol::readonly_property(&SceneObject::Replicated),
 		"Owner", sol::readonly_property(&functions::get_owner),
 

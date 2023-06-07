@@ -1,6 +1,6 @@
 <levelchunk version="1" x="0" y="0" />
 <sceneobjects>
-	<object type="tmx" class="level" replicated="false">
+	<object type="tmx" class="level" replicated="false" ignoresevents="true">
 		<property name="x" type="float" value="0.0" />
 		<property name="y" type="float" value="0.0" />
 		<property name="z" type="float" value="0.0" />
