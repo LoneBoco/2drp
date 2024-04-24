@@ -397,6 +397,11 @@ bool SceneObject::IsOwnedBy(PlayerID id) const noexcept
 	return false;
 }
 
+bool SceneObject::IsOwnedBy(std::shared_ptr<server::Player> player) const noexcept
+{
+	return player != nullptr && IsOwnedBy(player->GetPlayerId());
+}
+
 void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
 {
 	m_owning_player = player;
@@ -438,7 +443,7 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 	OnAttached.RunAll(m_attached_to, old);
 }
 
-SceneObjectID SceneObject::GetAttachedId()
+SceneObjectID SceneObject::GetAttachedId() const noexcept
 {
 	if (m_attached_to.expired()) return 0;
 	auto attached = m_attached_to.lock();
@@ -557,7 +562,7 @@ TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 	return *this;
 }
 
-Rectf TMXSceneObject::GetBounds() const
+Rectf TMXSceneObject::GetBounds() const noexcept
 {
 	if (TmxMap == nullptr)
 		return Rectf(GetPosition(), Vector2df(0.0f));
@@ -567,7 +572,7 @@ Rectf TMXSceneObject::GetBounds() const
 
 ///////////////////////////////////////////////////////////////////////////////
 
-const std::string& TextSceneObject::GetFont() const
+const std::string& TextSceneObject::GetFont() const noexcept
 {
 	return m_font;
 }
@@ -581,7 +586,7 @@ void TextSceneObject::SetFont(const std::string& font)
 	text->ClientUpdate.UpdateDispatch.Post(text->ID);
 }
 
-uint32_t TextSceneObject::GetFontSize() const
+uint32_t TextSceneObject::GetFontSize() const noexcept
 {
 	return m_font_size;
 }
@@ -595,7 +600,7 @@ void TextSceneObject::SetFontSize(uint32_t size)
 	text->ClientUpdate.UpdateDispatch.Post(text->ID);
 }
 
-bool TextSceneObject::GetCentered() const
+bool TextSceneObject::GetCentered() const noexcept
 {
 	return m_centered;
 }

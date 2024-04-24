@@ -77,17 +77,18 @@ public:
 	SceneObject& operator=(SceneObject&& other) = delete;
 
 public:
-	std::weak_ptr<const ObjectClass> GetClass() const;
+	std::weak_ptr<const ObjectClass> GetClass() const noexcept;
 	std::shared_ptr<ObjectClass> GetClass();
-	std::weak_ptr<server::Player> GetOwningPlayer() const;
-	std::weak_ptr<scene::Scene> GetCurrentScene() const;
+	std::weak_ptr<server::Player> GetOwningPlayer() const noexcept;
+	std::weak_ptr<scene::Scene> GetCurrentScene() const noexcept;
 	bool IsOwnedBy(PlayerID id) const noexcept;
+	bool IsOwnedBy(std::shared_ptr<server::Player> player) const noexcept;
 
 	void SetOwningPlayer(std::shared_ptr<server::Player> player);
 	bool SetCurrentScene(std::shared_ptr<scene::Scene> scene);
 
 	void AttachTo(std::shared_ptr<SceneObject> other);
-	SceneObjectID GetAttachedId();
+	SceneObjectID GetAttachedId() const noexcept;
 
 	std::optional<playrho::BodyID> GetInitializedPhysicsBody();
 	void SynchronizePhysics();
@@ -108,12 +109,12 @@ public:
 	_PROPDEF(Text, std::string);
 
 public:
-	virtual SceneObjectType GetType() const
+	virtual SceneObjectType GetType() const noexcept
 	{
 		return SceneObjectType::DEFAULT;
 	}
 
-	virtual Rectf GetBounds() const;
+	virtual Rectf GetBounds() const noexcept;
 
 	bool IsGlobal()
 	{
@@ -146,7 +147,7 @@ protected:
 
 using SceneObjectPtr = std::shared_ptr<SceneObject>;
 
-inline std::weak_ptr<const ObjectClass> SceneObject::GetClass() const
+inline std::weak_ptr<const ObjectClass> SceneObject::GetClass() const noexcept
 {
 	return m_object_class;
 }
@@ -154,11 +155,11 @@ inline std::shared_ptr<ObjectClass> SceneObject::GetClass()
 {
 	return m_object_class;
 }
-inline std::weak_ptr<server::Player> SceneObject::GetOwningPlayer() const
+inline std::weak_ptr<server::Player> SceneObject::GetOwningPlayer() const noexcept
 {
 	return m_owning_player;
 }
-inline std::weak_ptr<scene::Scene> SceneObject::GetCurrentScene() const
+inline std::weak_ptr<scene::Scene> SceneObject::GetCurrentScene() const noexcept
 {
 	return m_current_scene;
 }
@@ -171,7 +172,7 @@ public:
 	StaticSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id)	{}
 	virtual ~StaticSceneObject() {}
 
-	SceneObjectType GetType() const override
+	SceneObjectType GetType() const noexcept override
 	{
 		return SceneObjectType::STATIC;
 	}
@@ -185,7 +186,7 @@ public:
 	AnimatedSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id) {}
 	virtual ~AnimatedSceneObject() {}
 
-	virtual SceneObjectType GetType() const override
+	virtual SceneObjectType GetType() const noexcept override
 	{
 		return SceneObjectType::ANIMATED;
 	}
@@ -205,13 +206,13 @@ public:
 	TiledSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id) {}
 	virtual ~TiledSceneObject() {}
 
-	virtual SceneObjectType GetType() const override
+	virtual SceneObjectType GetType() const noexcept override
 	{
 		return SceneObjectType::TILEMAP;
 	}
 
 public:
-	virtual Rectf GetBounds() const override
+	virtual Rectf GetBounds() const noexcept override
 	{
 		if (Tileset == nullptr)
 			return Rectf();
@@ -234,13 +235,13 @@ public:
 
 	TMXSceneObject& operator=(const TMXSceneObject& other);
 
-	virtual SceneObjectType GetType() const override
+	virtual SceneObjectType GetType() const noexcept override
 	{
 		return SceneObjectType::TMX;
 	}
 
 public:
-	virtual Rectf GetBounds() const override;
+	virtual Rectf GetBounds() const noexcept override;
 
 public:
 	std::shared_ptr<tmx::Map> TmxMap;
@@ -257,19 +258,19 @@ public:
 	TextSceneObject(const std::shared_ptr<ObjectClass> c, const SceneObjectID id) : SceneObject(c, id), m_font_size(12) {}
 	virtual ~TextSceneObject() {}
 
-	SceneObjectType GetType() const override
+	SceneObjectType GetType() const noexcept override
 	{
 		return SceneObjectType::TEXT;
 	}
 
 public:
-	const std::string& GetFont() const;
+	const std::string& GetFont() const noexcept;
 	void SetFont(const std::string& font);
 
-	uint32_t GetFontSize() const;
+	uint32_t GetFontSize() const noexcept;
 	void SetFontSize(uint32_t size);
 
-	bool GetCentered() const;
+	bool GetCentered() const noexcept;
 	void SetCentered(bool centered);
 
 protected:

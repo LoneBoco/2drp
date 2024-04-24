@@ -540,7 +540,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 	if (!so) return;
 
 	// If we own this scene object, don't allow changes.
-	if (auto op = so->GetOwningPlayer().lock(); op == server.GetPlayer())
+	if (so->IsOwnedBy(server.GetPlayer()))
 		return;
 
 	// Set attached to.
@@ -649,7 +649,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCo
 	if (!player || !so) return;
 
 	// If the player doesn't own the scene object, don't accept this change.
-	if (auto owner = so->GetOwningPlayer().lock(); owner != player)
+	if (!so->IsOwnedBy(server.GetPlayer()))
 		return;
 
 	// log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
@@ -680,7 +680,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCo
 	if (!player || !so) return;
 
 	// If the player doesn't own the scene object, don't accept this change.
-	if (auto owner = so->GetOwningPlayer().lock(); owner != player)
+	if (!so->IsOwnedBy(server.GetPlayer()))
 		return;
 
 	readCollisionFromPacket(so, packet);
