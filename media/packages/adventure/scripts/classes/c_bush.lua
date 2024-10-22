@@ -12,7 +12,7 @@ Me.OnEvent = function(sender, name, data, position, radius)
 
 	if (sender ~= Server.Player) then
 		-- log("["..Me.ID.."] [Repl: "..tostring(Me.Replicated).."] Bush replication test - not event sender, ignoring event.")
-		return
+		--return
 	end
 
 	local state = Me.Attributes["state"]
