@@ -207,6 +207,9 @@ void Server::Shutdown()
 	}
 	m_player = nullptr;
 
+	// Disconnect.
+	m_network.Disconnect();
+
 	// Shut down the network.
 	network::Network::Shutdown();
 

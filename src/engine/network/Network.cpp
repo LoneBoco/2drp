@@ -174,6 +174,9 @@ void Network::Disconnect()
 
 	enet_peer_disconnect(m_peers.at(0), 0);
 
+	// Make sure the disconnect gets sent.
+	Update();
+
 	// TODO: Flag that we are disconnecting.
 	// Don't handle packets when disconnecting.
 	// If we aren't disconnecting after a certain time, force with enet_peer_reset.
