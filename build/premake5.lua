@@ -3,6 +3,11 @@ function getAbsoluteFromSolution(p)
 	return path.getabsolute(path.join(sol.basedir, p))
 end
 
+function getBoostDir(p)
+	local boost = os.getenv("BOOST_ROOT") or "../dependencies/boost/"
+	return path.translate(path.join(boost, p))
+end
+
 workspace "2drp"
 	configurations { "Debug", "Release" }
 	platforms { "x32", "x64" }
@@ -134,8 +139,8 @@ project "2drp"
 	defines { "SFML_STATIC", "RMLUI_STATIC_LIB", "NOMINMAX", "PUGIXML_HEADER_ONLY", "SOL_ALL_SAFETIES_ON", "SOL_LUAJIT" }
 
 	-- Boost
-	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
-	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
+	includedirs { getBoostDir() }
+	libdirs { getBoostDir("stage/lib") }
 
 	-- Debug name.
 	filter "configurations:Debug"
@@ -143,7 +148,7 @@ project "2drp"
 
 	-- Disable MSVC warnings because 3rd party libraries never update.
 	filter "toolset:msc*"
-		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING" }
+		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING", "_SILENCE_CXX23_DENORM_DEPRECATION_WARNING" }
 
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
@@ -241,7 +246,7 @@ project "2drp_server"
 
 	-- Boost
 	includedirs { os.getenv("BOOST_ROOT") or "../dependencies/boost/" }
-	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "/stage/lib") }
+	libdirs { path.join(os.getenv("BOOST_ROOT") or "../dependencies/boost/", "stage/lib") }
 
 	-- Disable MSVC warnings because 3rd party libraries never update.
 	filter "toolset:msc*"
