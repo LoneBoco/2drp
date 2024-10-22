@@ -51,6 +51,8 @@ Me.OnPlayerLeave = function(player)
 		player.Account.Flags.x = so.Properties.X
 		player.Account.Flags.y = so.Properties.Y
 		player.Account.Flags.scene = player:GetCurrentScene():GetName()
+	else
+		log('Tried to save player position but they had no controlled scene object!')
 	end
 
 	Me:DeletePlayerOwnedSceneObjects(player)

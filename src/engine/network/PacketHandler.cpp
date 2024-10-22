@@ -645,7 +645,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCo
 	if (!player || !so) return;
 
 	// If the player doesn't own the scene object, don't accept this change.
-	if (!so->IsOwnedBy(server.GetPlayer()))
+	if (!so->IsOwnedBy(player))
 		return;
 
 	// log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);

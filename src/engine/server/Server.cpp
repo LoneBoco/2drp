@@ -1396,7 +1396,8 @@ void Server::network_disconnect(const uint16_t id)
 	OnPlayerLeave.RunAll(player);
 
 	// Save account.
-	player->Account.Save();
+	if (IsSinglePlayer() || IsHost())
+		player->Account.Save();
 
 	// TODO: Send disconnection packet to peers.
 	log::PrintLine("<- Disconnection from player {}.", id);
