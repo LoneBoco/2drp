@@ -77,7 +77,7 @@ void bind_attributes(sol::state& lua)
 		*/
 
 		"Subscribe", &helpers::subscribe,
-		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.ClientUpdate.UpdateDispatch.Unsubscribe(ev); }
+		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
 	);
 
 	lua.new_usertype<ObjectAttributes>("ObjectAttributes", sol::no_constructor,

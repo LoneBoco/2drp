@@ -371,7 +371,7 @@ void SceneObject::SetText(const std::string& text)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-Rectf SceneObject::GetBounds() const
+Rectf SceneObject::GetBounds() const noexcept
 {
 	auto bbox = this->RetrieveFromProvider("BoundingBox");
 	if (bbox.has_value() && bbox.type() == typeid(Rectf))
@@ -479,30 +479,30 @@ void SceneObject::SynchronizePhysics()
 {
 	if (!PhysicsBody.has_value()) return;
 
-	bool x_dirty = Properties[Property::X].IsDirty(AttributeDirty::CLIENT);
-	bool y_dirty = Properties[Property::Y].IsDirty(AttributeDirty::CLIENT);
+	bool x_dirty = Properties[Property::X].Dirty;
+	bool y_dirty = Properties[Property::Y].Dirty;
 	if (x_dirty || y_dirty)
 		SetPosition(GetPosition());
 
-	bool angle = Properties[Property::ANGLE].IsDirty(AttributeDirty::CLIENT);
+	bool angle = Properties[Property::ANGLE].Dirty;
 	if (angle)
 		SetAngle(GetAngle());
 
-	bool x_velocity = Properties[Property::VELOCITY_X].IsDirty(AttributeDirty::CLIENT);
-	bool y_velocity = Properties[Property::VELOCITY_Y].IsDirty(AttributeDirty::CLIENT);
+	bool x_velocity = Properties[Property::VELOCITY_X].Dirty;
+	bool y_velocity = Properties[Property::VELOCITY_Y].Dirty;
 	if (x_velocity || y_velocity)
 		SetVelocity(GetVelocity());
 
-	bool x_acceleration = Properties[Property::ACCELERATION_X].IsDirty(AttributeDirty::CLIENT);
-	bool y_acceleration = Properties[Property::ACCELERATION_Y].IsDirty(AttributeDirty::CLIENT);
+	bool x_acceleration = Properties[Property::ACCELERATION_X].Dirty;
+	bool y_acceleration = Properties[Property::ACCELERATION_Y].Dirty;
 	if (x_acceleration || y_acceleration)
 		SetAcceleration(GetAcceleration());
 
-	bool angle_velocity = Properties[Property::VELOCITY_ANGLE].IsDirty(AttributeDirty::CLIENT);
+	bool angle_velocity = Properties[Property::VELOCITY_ANGLE].Dirty;
 	if (angle_velocity)
 		SetVelocityAngle(GetVelocityAngle());
 
-	bool angle_acceleration = Properties[Property::ACCELERATION_ANGLE].IsDirty(AttributeDirty::CLIENT);
+	bool angle_acceleration = Properties[Property::ACCELERATION_ANGLE].Dirty;
 	if (angle_acceleration)
 		SetAccelerationAngle(GetAccelerationAngle());
 }
@@ -522,14 +522,14 @@ AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& o
 
 void AnimatedSceneObject::SetAnimation(const std::string& image)
 {
-	auto dirty = Properties[Property::ANIMATION].IsDirty(AttributeDirty::CLIENT);
+	auto dirty = Properties[Property::ANIMATION].Dirty;
 	if (dirty)
 	{
 		// We've already been set to dirty and we are setting the animation again.
 		// We are probably in a script loop.  Post again to try to clear it.
 		auto anim = Properties.Get(Property::ANIMATION);
 		anim->Set(image);
-		anim->ClientUpdate.UpdateDispatch.Post(anim->ID);
+		anim->UpdateDispatch.Post(anim->ID);
 	}
 	else
 	{
@@ -540,7 +540,7 @@ void AnimatedSceneObject::SetAnimation(const std::string& image)
 		{
 			// Set to dirty.  Gani animations can be restarted by re-setting the animation.
 			auto anim = Properties.Get(Property::ANIMATION);
-			anim->SetAllDirty(true);
+			anim->Dirty = true;
 		}
 
 		Properties[Property::ANIMATION] = image;
@@ -583,7 +583,7 @@ void TextSceneObject::SetFont(const std::string& font)
 
 	// Dispatch text so the render component can get our font changes.
 	auto text = Properties.Get(Property::TEXT);
-	text->ClientUpdate.UpdateDispatch.Post(text->ID);
+	text->UpdateDispatch.Post(text->ID);
 }
 
 uint32_t TextSceneObject::GetFontSize() const noexcept
@@ -597,7 +597,7 @@ void TextSceneObject::SetFontSize(uint32_t size)
 
 	// Dispatch text so the render component can get our font changes.
 	auto text = Properties.Get(Property::TEXT);
-	text->ClientUpdate.UpdateDispatch.Post(text->ID);
+	text->UpdateDispatch.Post(text->ID);
 }
 
 bool TextSceneObject::GetCentered() const noexcept

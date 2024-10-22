@@ -164,7 +164,7 @@ AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribut
 	}
 
 	attribute->Replicated = packet_attribute.replicated();
-	attribute->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ packet_attribute.update_rate() };
+	attribute->NetworkUpdateRate = std::chrono::milliseconds{ packet_attribute.update_rate() };
 	return attribute;
 }
 
@@ -172,14 +172,7 @@ AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribut
 
 void handle_ready(Server& server, const uint16_t playerId)
 {
-	auto player = server.GetPlayerById(playerId);
-
-	// Switch to the starting scene.
-	auto scene = server.GetScene(server.GetPackage()->GetStartingScene());
-	player->SwitchScene(scene);
-
-	// Call the OnPlayerJoin script function.
-	server.OnPlayerJoin.RunAll(player);
+	server.ProcessPlayerJoin(playerId);
 }
 
 /////////////////////////////
@@ -385,7 +378,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ClassAdd& pac
 		}
 
 		attribute->Replicated = replicated;
-		attribute->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
+		attribute->NetworkUpdateRate = std::chrono::milliseconds{ update_rate };
 	}
 }
 
@@ -422,6 +415,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 	{
 		if (!server.IsHost())
 			log::PrintLine("!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
+		else log::PrintLine("!! Scene object {} ({}) already exists when it shouldn't!", pid, pclass);
 	}
 	else
 	{
@@ -481,7 +475,8 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 			if (attr)
 			{
 				attr->Replicated = attribute.replicated();
-				attr->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+				attr->NetworkUpdateRate = std::chrono::milliseconds{ attribute.update_rate() };
+				attr->Dirty = true;
 			}
 		}
 
@@ -505,7 +500,8 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 				}
 
 				soprop->Replicated = prop.replicated();
-				soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ prop.update_rate() };
+				soprop->NetworkUpdateRate = std::chrono::milliseconds{ prop.update_rate() };
+				soprop->Dirty = true;
 			}
 		}
 
@@ -558,7 +554,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 		if (auto attribute = load_attribute_from_packet(packet_attribute, so->Attributes); attribute)
 		{
 			// Force dirty flag.
-			attribute->SetDirty(true, AttributeDirty::CLIENT);
+			attribute->Dirty = true;
 		}
 	}
 
@@ -584,12 +580,12 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 		}
 
 		soprop->Replicated = prop.replicated();
-		soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ prop.update_rate() };
+		soprop->NetworkUpdateRate = std::chrono::milliseconds{ prop.update_rate() };
 
 		// Force dirty flag.
 		// If something came across in this packet, it should force an update.  It might be an animation change.
 		// Some animation systems (gani) will restart the animation if the animation prop was set to itself.
-		soprop->SetDirty(true, AttributeDirty::CLIENT);
+		soprop->Dirty = true;
 	}
 
 	// Physics updates.
@@ -739,8 +735,8 @@ void handle(Server& server, const uint16_t playerId, const packet::FlagSet& pack
 		const auto& packet_attribute = packet.attributes(i);
 		if (auto flag = load_attribute_from_packet(packet_attribute, player->Account.Flags); flag)
 		{
-			flag->SetDirty(true, AttributeDirty::CLIENT);
-			flag->ProcessDirty(AttributeDirty::CLIENT);
+			flag->Dirty = true;
+			flag->ProcessDirty();
 		}
 	}
 }
@@ -823,7 +819,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 			const auto& variant_attribute = packet.variant_attributes(i);
 			if (auto attribute = load_attribute_from_packet(variant_attribute, variant->VariantAttributes); attribute)
 			{
-				attribute->SetAllDirty(false);
+				attribute->Dirty = false;
 			}
 		}
 	}

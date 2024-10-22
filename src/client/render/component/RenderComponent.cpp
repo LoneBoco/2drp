@@ -39,7 +39,7 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 			load_image(so->GetImage());
 		}
 
-		m_handle_image_change = so->Properties.Get(Property::IMAGE)->ClientUpdate.UpdateDispatch.Subscribe(std::bind(&RenderComponent::image_property_update, this, std::placeholders::_1));
+		m_handle_image_change = so->Properties.Get(Property::IMAGE)->UpdateDispatch.Subscribe(std::bind(&RenderComponent::image_property_update, this, std::placeholders::_1));
 	}
 }
 

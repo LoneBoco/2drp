@@ -72,6 +72,10 @@ public:
 	void Update(const std::chrono::milliseconds& tick);
 
 public:
+	void ProcessPlayerJoin(const uint16_t player_id);
+	void ProcessPlayerLogin(const uint16_t player_id, const std::string& account);
+
+public:
 	void SetUniqueId(const std::string& id);
 	void SetServerName(const std::string& name);
 	void SetMaxPlayers(const uint32_t max_players);

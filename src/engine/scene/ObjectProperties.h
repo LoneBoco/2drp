@@ -79,23 +79,15 @@ public:
 	{
 		return std::any_of(m_properties.begin(), m_properties.end(), [](const auto& v) -> bool
 		{
-			return v.second->IsAnyDirty();
+			return v.second->Dirty;
 		});
 	}
 	
-	//! Returns if we have any dirty attributes.
-	bool HasDirty(AttributeDirty dirtyType) const
-	{
-		return std::any_of(m_properties.begin(), m_properties.end(), [dirtyType](const auto& v) -> bool
-		{
-			return v.second->IsDirty(dirtyType);
-		});
-	}
-
 	//! Clears all the dirty flags and doesn't dispatch any events.
 	void ClearAllDirty();
 
 	EventDispatcher<uint16_t> DirtyUpdateDispatch;
+	std::unordered_set<AttributeID> NetworkQueuedAttributes;
 
 public:
 	ObjectAttributes::attribute_map::iterator begin() { return m_properties.begin(); }

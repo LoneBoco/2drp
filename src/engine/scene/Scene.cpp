@@ -29,11 +29,10 @@ bool Scene::RemoveObject(SceneObjectPtr so) noexcept
 	if (p->second != so)
 		return false;
 
-	m_graph.erase(p);
 	p->second->SetCurrentScene(nullptr);
-
 	Physics.RemoveSceneObject(so);
 
+	m_graph.erase(p);
 	return true;
 }
 

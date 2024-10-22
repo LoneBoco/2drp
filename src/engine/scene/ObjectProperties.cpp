@@ -74,7 +74,7 @@ std::shared_ptr<Attribute> ObjectProperties::Get(const std::string& prop)
 void ObjectProperties::create()
 {
 // Add 10 to move the pointer past 'Property::' because I am horrible.
-#define _PROP(x, y, z) m_properties.AddAttribute(#x + 10, y, (AttributeID)x); Get(x)->NetworkUpdate.UpdateRate = z;
+#define _PROP(x, y, z) m_properties.AddAttribute(#x + 10, y, (AttributeID)x); Get(x)->NetworkUpdateRate = z;
 
 	_PROP(Property::LEVEL, "", 0ms);
 	_PROP(Property::X, 0.0f, 15ms);
@@ -107,7 +107,7 @@ void ObjectProperties::ClearAllDirty()
 {
 	for (auto& [id, attribute] : m_properties)
 	{
-		attribute->ResetAllDirty();
+		attribute->Dirty = false;
 	}
 }
 

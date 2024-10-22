@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <string_view>
 #include <variant>
+#include <unordered_set>
 
 #include "engine/common.h"
 
@@ -23,14 +24,6 @@ enum class AttributeType
 	COUNT
 };
 
-enum class AttributeDirty
-{
-	CLIENT,
-	NETWORK,
-
-	COUNT
-};
-
 const AttributeType GetAttributeType(const AttributeVariant& value);
 
 ///////////////////////////////////////////////////////////
@@ -38,73 +31,25 @@ const AttributeType GetAttributeType(const AttributeVariant& value);
 class Attribute
 {
 public:
-	struct Dirty
-	{
-	public:
-		Dirty(std::chrono::milliseconds update_rate) : UpdateRate{ update_rate } {}
-
-	public:
-		bool GetIsDirty() const
-		{
-			return m_isDirty;
-		}
-
-		bool CanProcessDirty() const
-		{
-			return m_showDirty;
-		}
-
-		bool SetIsDirty(bool dirty)
-		{
-			bool was_dirty = m_isDirty;
-
-			m_isDirty = dirty;
-			m_showDirty = (m_updateCooldown == std::chrono::milliseconds::zero());
-
-			m_updateCooldown = UpdateRate;
-
-			return was_dirty;
-		}
-
-		void Update(const std::chrono::milliseconds& elapsed)
-		{
-			if (!m_isDirty) return;
-			if (m_updateCooldown <= std::chrono::milliseconds::zero())
-			{
-				m_showDirty = true;
-				m_updateCooldown = std::chrono::milliseconds::zero();
-				return;
-			}
-
-			m_updateCooldown -= elapsed;
-		}
-
-	public:
-		std::chrono::milliseconds UpdateRate = 0ms;
-		EventDispatcher<uint16_t> UpdateDispatch;
-
-	private:
-		bool m_isDirty = false;
-		bool m_showDirty = false;
-		std::chrono::milliseconds m_updateCooldown = 0ms;
-	};
-
-public:
 	Attribute() = default;
-	Attribute(const AttributeID i, const AttributeType t) : ID{ i } {}
-	Attribute(const Attribute& a) : ID{ a.ID }, ClientUpdate{ a.ClientUpdate }, NetworkUpdate { a.NetworkUpdate }, m_value{ a.m_value } {}
+	Attribute(const AttributeID i) : ID{ i } {}
+	Attribute(const Attribute& a) : ID{ a.ID }, Name{ a.Name }, Replicated{ a.Replicated }, Dirty{ a.Dirty }, NetworkUpdateRate{ a.NetworkUpdateRate }, m_value{ a.m_value }, m_update_cooldown{ a.m_update_cooldown } {}
 	Attribute(Attribute&& o) noexcept;
 	~Attribute() = default;
 
 	Attribute& operator=(const Attribute& other);
 	Attribute& operator=(Attribute&& other) noexcept;
 
-	Attribute& Set(const AttributeVariant& value);
 	Attribute& Set(const Attribute& other);
+	Attribute& Set(const AttributeVariant& value);
+	Attribute& Set(const int64_t value);
+	Attribute& Set(const double value);
 	Attribute& Set(std::nullptr_t);
 	Attribute& SetAsType(AttributeType type, const std::string& value);
 
 	Attribute& operator=(const AttributeVariant& value);
+	Attribute& operator=(const int64_t value);
+	Attribute& operator=(const double value);
 
 	template <typename T>
 	std::optional<T> Get() const
@@ -212,83 +157,38 @@ public:
 
 	const AttributeType GetType() const;
 
-	//! Checks if any dirty flag is set.
-	bool IsAnyDirty() const
+	//! Sets the update cooldown to the network update rate.
+	void SetUpdateCooldown()
 	{
-		return ClientUpdate.GetIsDirty() || NetworkUpdate.GetIsDirty();
+		m_update_cooldown = NetworkUpdateRate;
 	}
 
-	//! Checks if a dirty flag is set.
-	bool IsDirty(AttributeDirty dirtyType) const
+	//! Updates the cooldown by the given time.
+	void UpdateCooldown(std::chrono::milliseconds dt)
 	{
-		switch (dirtyType)
-		{
-		case AttributeDirty::CLIENT:
-			return ClientUpdate.GetIsDirty();
-		case AttributeDirty::NETWORK:
-			return NetworkUpdate.GetIsDirty();
-		}
-		return false;
+		if (m_update_cooldown > dt)
+			m_update_cooldown -= dt;
+		else
+			m_update_cooldown = 0ms;
 	}
 
-	//! Sets the dirty flag of the attribute.
-	bool SetDirty(bool dirty, AttributeDirty dirtyType)
+	//! Checks if we are ready for a network update.
+	bool IsNetworkReadyForUpdate() const
 	{
-		switch (dirtyType)
-		{
-		case AttributeDirty::CLIENT:
-			return ClientUpdate.SetIsDirty(dirty);
-		case AttributeDirty::NETWORK:
-			return NetworkUpdate.SetIsDirty(!Replicated ? false : dirty);
-		}
-		return false;
-	}
-
-	//! Sets all the dirty flags.
-	bool SetAllDirty(bool dirty)
-	{
-		bool result = SetDirty(dirty, AttributeDirty::CLIENT);
-		result |= SetDirty(dirty, AttributeDirty::NETWORK);
-		return result;
-	}
-
-	//! Clears all the dirty flags and does not notify the dispatch.
-	void ResetAllDirty()
-	{
-		ClientUpdate.SetIsDirty(false);
-		NetworkUpdate.SetIsDirty(false);
+		return m_update_cooldown == 0ms;
 	}
 
 	//! Clears the dirty flag and notifies the dispatch if the dirty flag was true.
-	//! Returns false if the dispatch cleared the flag, true if we cleared it, or null if we were not dirty.
-	std::optional<bool> ProcessDirty(AttributeDirty dirtyType)
+	//! Returns false if we were not dirty, true if we were.
+	bool ProcessDirty()
 	{
-		if (dirtyType == AttributeDirty::CLIENT)
-		{
-			if (!ClientUpdate.GetIsDirty() || !ClientUpdate.CanProcessDirty())
-				return {};
+		if (!Dirty)
+			return false;
 
-			ClientUpdate.UpdateDispatch.Post(ID);
-			return ClientUpdate.SetIsDirty(false);
-		}
-		else // AttributeDirty::NETWORK
-		{
-			if (!NetworkUpdate.GetIsDirty() || !NetworkUpdate.CanProcessDirty())
-				return {};
-
-			NetworkUpdate.UpdateDispatch.Post(ID);
-			return NetworkUpdate.SetIsDirty(false);
-		}
-
-		return {};
+		UpdateDispatch.Post(ID);
+		Dirty = false;
+		return true;
 	}
-
-public:
-	AttributeID ID = 0;
-	std::string Name;
-	bool Replicated = true;
-	Dirty ClientUpdate{ 0ms };
-	Dirty NetworkUpdate{ 15ms };
 
 public:
 	static AttributeType TypeFromString(const std::string& type);
@@ -298,8 +198,17 @@ public:
 		return os << attribute.GetAs<std::string>();
 	}
 
+public:
+	AttributeID ID = 0;
+	std::string Name;
+	bool Replicated = true;
+	bool Dirty = false;
+	std::chrono::milliseconds NetworkUpdateRate = 0ms;
+	EventDispatcher<uint16_t> UpdateDispatch;
+
 protected:
 	AttributeVariant m_value;
+	std::chrono::milliseconds m_update_cooldown = 0ms;
 };
 
 using AttributePtr = std::shared_ptr<Attribute>;
@@ -309,68 +218,9 @@ using AttributePtr = std::shared_ptr<Attribute>;
 class ObjectAttributes
 {
 	friend class ObjectProperties;
-	using attribute_map = std::unordered_map<AttributeID, std::shared_ptr<Attribute>>;
 
 public:
-
-	class IteratorDirty
-	{
-	public:
-		using iterator_category = std::forward_iterator_tag;
-		using value_type = Attribute;
-		using difference_type = int;
-		using pointer = Attribute * ;
-		using reference = Attribute & ;
-
-	public:
-		IteratorDirty(ObjectAttributes& attributes, attribute_map::iterator iterator)
-		{
-			m_begin = attributes.m_attributes.begin();
-			m_end = attributes.m_attributes.end();
-			m_iter = iterator;
-
-			// Find the first dirty attribute.
-			while (m_iter != m_end && !m_iter->second->IsAnyDirty())
-				++m_iter;
-		}
-		IteratorDirty(IteratorDirty& other) : m_begin(other.m_begin), m_end(other.m_end), m_iter(other.m_iter) {}
-
-	public:
-		bool operator==(const IteratorDirty& other) const { return m_iter == other.m_iter; }
-		bool operator!=(const IteratorDirty& other) const { return m_iter != other.m_iter; }
-		reference operator*() { return *m_iter->second; }
-		pointer operator->() { return m_iter->second.get(); }
-
-		IteratorDirty operator++()
-		{
-			IteratorDirty i{ *this };
-			if (m_iter == m_end)
-				return i;
-
-			++m_iter;
-			while (m_iter != m_end && !m_iter->second->IsAnyDirty())
-				++m_iter;
-
-			return i;
-		}
-
-		IteratorDirty operator++(int)
-		{
-			if (m_iter == m_end)
-				return *this;
-
-			++m_iter;
-			while (m_iter != m_end && !m_iter->second->IsAnyDirty())
-				++m_iter;
-
-			return *this;
-		}
-
-	protected:
-		attribute_map::iterator m_begin;
-		attribute_map::iterator m_iter;
-		attribute_map::iterator m_end;
-	};
+	using attribute_map = std::unordered_map<AttributeID, std::shared_ptr<Attribute>>;
 
 public:
 	ObjectAttributes() : m_cid(0) {}
@@ -404,25 +254,12 @@ public:
 	//! \return The attribute map.
 	std::unordered_map<AttributeID, std::shared_ptr<Attribute>>& GetMap()		{ return m_attributes; }
 
-	//! Returns an iterator to iterate over dirty attributes.
-	IteratorDirty GetDirtyBegin() { return IteratorDirty(*this, m_attributes.begin()); }
-	IteratorDirty GetDirtyEnd() { return IteratorDirty(*this, m_attributes.end()); }
-
 	//! Returns if we have any dirty attributes.
 	bool HasDirty() const
 	{
 		return std::any_of(m_attributes.begin(), m_attributes.end(), [](const auto& v) -> bool
 		{
-			return v.second->IsAnyDirty();
-		});
-	}
-
-	//! Returns if we have any dirty attributes.
-	bool HasDirty(AttributeDirty dirtyType) const
-	{
-		return std::any_of(m_attributes.begin(), m_attributes.end(), [dirtyType](const auto& v) -> bool
-		{
-			return v.second->IsDirty(dirtyType);
+			return v.second->Dirty;
 		});
 	}
 
@@ -430,6 +267,7 @@ public:
 	void ClearAllDirty();
 
 	EventDispatcher<uint16_t> DirtyUpdateDispatch;
+	std::unordered_set<AttributeID> NetworkQueuedAttributes;
 
 public:
 	using value_type = Attribute;
@@ -446,20 +284,17 @@ private:
 	//! Gets or creates an attribute.
 	std::shared_ptr<Attribute> getOrCreateAttribute(const std::string& name, AttributeID id = -1);
 
-	std::unordered_map<AttributeID, std::shared_ptr<Attribute>> m_attributes;
+	attribute_map m_attributes;
 	AttributeID m_cid;
-
-public:
-	class Dirty
-	{
-	public:
-		Dirty(ObjectAttributes& attributes) : m_attributes{ &attributes } {}
-		IteratorDirty begin() { return m_attributes->GetDirtyBegin(); }
-		IteratorDirty end() { return m_attributes->GetDirtyEnd(); }
-
-	protected:
-		ObjectAttributes* m_attributes;
-	};
 };
+
+///////////////////////////////////////////////////////////
+
+namespace attribute
+{
+
+inline constexpr auto dirty = std::views::filter([](const ObjectAttributes::attribute_map::value_type& a) { return a.second->Dirty; });
+
+} // namespace attribute
 
 } // end namespace tdrp

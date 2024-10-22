@@ -640,7 +640,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 							auto soprop = so->Properties.Get(name);
 							soprop->SetAsType(attrtype, value);
 							soprop->Replicated = replicated;
-							soprop->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
+							soprop->NetworkUpdateRate = std::chrono::milliseconds{ update_rate };
 						}
 					}
 
@@ -660,7 +660,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 						{
 							auto soattrib = so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
 							soattrib->Replicated = replicated;
-							soattrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ update_rate };
+							soattrib->NetworkUpdateRate = std::chrono::milliseconds{ update_rate };
 						}
 					}
 

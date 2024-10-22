@@ -34,7 +34,7 @@ Game::Game()
 	Script = script_manager->CreateScriptInstance("Game");
 
 	using namespace std::placeholders;
-	Server.GetNetwork().AddReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
+	Server.GetNetwork().AddClientReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
 
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	std::string package{ settings->Get("game.package", "login") };
@@ -73,39 +73,34 @@ void Game::Initialize()
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	if (settings->Exists("game.networked"))
 	{
-		if (settings->Exists("game.hosting"))
-		{
-			uint16_t port = settings->GetAs<uint16_t>("network.port");
-			Server.Host(port);
-		}
-		else if (settings->Exists("network.server"))
+		// Connecting to a server, so don't load us into the game by returning early.
+		if (settings->Exists("network.server"))
 		{
 			std::string host{ settings->Get("network.server") };
 			uint16_t port = settings->GetAs<uint16_t>("network.port");
 			Server.Connect(host, port);
+			return;
+		}
+		// Hosting a server so load into the game.
+		else if (settings->Exists("game.hosting"))
+		{
+			uint16_t port = settings->GetAs<uint16_t>("network.port");
+			Server.Host(port);
 		}
 		else throw "** ERROR: Networked game but cannot determine if host or guest.";
 	}
 	else
 	{
 		Server.SinglePlayer();
-		State = GameState::PLAYING;
-
-		// Register client scripts.
-		/*
-		for (const auto& [name, script] : Server.GetClientScriptMap())
-		{
-			Script->RunScript(name, script, this);
-			OnCreated.Run(name);
-		}
-		*/
-
-		// Call connected callback.
-		OnConnected.RunAll();
-
-		// Call the OnPlayerJoin script function.
-		Server.OnPlayerJoin.RunAll(GetCurrentPlayer());
 	}
+
+	State = GameState::PLAYING;
+
+	// Call connected callback.
+	OnConnected.RunAll();
+
+	// Call the OnPlayerJoin script function.
+	// Server.OnPlayerJoin.RunAll(GetCurrentPlayer());
 }
 
 Game::~Game()

@@ -81,7 +81,7 @@ namespace tdrp::helper
 						{
 							auto attrib = pc->Attributes.AddAttribute(attrname, type, attrvalue);
 							attrib->Replicated = attrreplicated;
-							attrib->NetworkUpdate.UpdateRate = std::chrono::milliseconds{ attrupdaterate };
+							attrib->NetworkUpdateRate = std::chrono::milliseconds{ attrupdaterate };
 						}
 					}
 

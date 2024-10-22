@@ -32,22 +32,21 @@ concept HasUpdateRate = requires (T a)
 template <typename P, typename A>
 P& processAndAssignAttributesToPacket(P& packet, A& attributes, auto adder, const std::chrono::milliseconds& elapsed)
 {
-	// Loop through all dirty attributes and add them to the packet.
-	//for (auto& attribute : ObjectAttributes::Dirty(attributes))
+	// Loop through all attributes and process them.
 	for (auto& [id, attribute] : attributes)
 	{
-		attribute->ClientUpdate.Update(elapsed);
-		attribute->NetworkUpdate.Update(elapsed);
+		bool networkQueued = attributes.NetworkQueuedAttributes.contains(id);
 
-		auto processResult = attribute->ProcessDirty(AttributeDirty::CLIENT);
-		if (!processResult.value_or(true))
-		{
-			attribute->NetworkUpdate.SetIsDirty(false);
+		// Process the attribute and return if its not dirty or was not queue for network update.
+		if (!attribute->ProcessDirty() && !networkQueued)
 			continue;
-		}
 
-		processResult = attribute->ProcessDirty(AttributeDirty::NETWORK);
-		if (processResult.has_value())
+		// Update the network cooldown.
+		if (networkQueued)
+			attribute->UpdateCooldown(elapsed);
+
+		// Send the attribute if we're ready for it.
+		if (attribute->IsNetworkReadyForUpdate())
 		{
 			auto attr = std::invoke(adder, packet);
 			attr->set_id(id);
@@ -56,22 +55,34 @@ P& processAndAssignAttributesToPacket(P& packet, A& attributes, auto adder, cons
 
 			if constexpr (HasUpdateRate<return_type_v<decltype(adder)>>)
 			{
-				attr->set_update_rate(static_cast<google::protobuf::uint32>(attribute->NetworkUpdate.UpdateRate.count()));
+				attr->set_update_rate(static_cast<google::protobuf::uint32>(attribute->NetworkUpdateRate.count()));
 			}
 
 			switch (attribute->GetType())
 			{
-			case AttributeType::INTEGER:
-				attr->set_as_int(attribute->GetAs<int64_t>());
-				break;
-			case AttributeType::DOUBLE:
-				attr->set_as_double(attribute->GetAs<double>());
-				break;
-			default:
-			case AttributeType::STRING:
-				attr->set_as_string(attribute->GetAs<std::string>());
-				break;
+				case AttributeType::INTEGER:
+					attr->set_as_int(attribute->GetAs<int64_t>());
+					break;
+				case AttributeType::DOUBLE:
+					attr->set_as_double(attribute->GetAs<double>());
+					break;
+				default:
+				case AttributeType::STRING:
+					attr->set_as_string(attribute->GetAs<std::string>());
+					break;
 			}
+
+			// Remove the attribute from our network queued list.
+			if (networkQueued)
+				attributes.NetworkQueuedAttributes.erase(id);
+
+			// Set the attribute network cooldown now that we've sent it.
+			attribute->SetUpdateCooldown();
+		}
+		// If we have a rate limit on this attribute, add it to the network queue to send later.
+		else if (!networkQueued)
+		{
+			attributes.NetworkQueuedAttributes.insert(id);
 		}
 	}
 
@@ -94,7 +105,7 @@ P& assignAllAttributesToPacket(P& packet, A& attributes, auto adder)
 
 		if constexpr (HasUpdateRate<return_type_v<decltype(adder)>>)
 		{
-			element->set_update_rate(static_cast<google::protobuf::uint32>(attribute->NetworkUpdate.UpdateRate.count()));
+			element->set_update_rate(static_cast<google::protobuf::uint32>(attribute->NetworkUpdateRate.count()));
 		}
 
 		switch (attribute->GetType())

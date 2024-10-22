@@ -75,14 +75,14 @@ public:
 public:
 	std::future<bool> Connect(const std::string& hostname, const uint16_t port);
 	void Disconnect();
-	void DisconnectPeer(const uint16_t peer_id);
+	void DisconnectPeer(const uint16_t player_id);
 
 public:
 	void Update();
 
 public:
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel);
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message);
+	void Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel);
+	void Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const Channel channel);
 	void Broadcast(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message);
 	std::vector<server::PlayerPtr> SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude = {});
@@ -110,6 +110,12 @@ public:
 	template <class Insert = std::back_insert_iterator<enet_receive_cb_container>>
 	void AddReceiveCallback(enet_receive_cb callback) { Insert where(m_receive_cb); *where = callback; }
 
+	template <class Insert = std::back_insert_iterator<enet_receive_cb_container>>
+	void AddClientReceiveCallback(enet_receive_cb callback) { Insert where(m_client_receive_cb); *where = callback; }
+
+public:
+	void ExecuteClientReceiveCallback(const uint16_t player_id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length);
+
 private:
 	static bool ms_started;
 	server::Server* m_server;
@@ -118,6 +124,7 @@ private:
 	enet_connection_cb_container m_disconnect_cb;
 	enet_receive_cb_container m_login_cb;
 	enet_receive_cb_container m_receive_cb;
+	enet_receive_cb_container m_client_receive_cb;
 	std::unique_ptr<_ENetHost, enet_host_deleter> m_host;
 	std::map<uint16_t, _ENetPeer*> m_peers;
 };

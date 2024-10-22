@@ -1,5 +1,6 @@
 #include <chrono>
 #include <iostream>
+#include <unordered_set>
 
 #include "engine/os/Utils.h"
 
@@ -147,15 +148,14 @@ bool Server::Host(const uint16_t port, const size_t peers)
 
 	log::PrintLine(":: Hosting on port {} for {} peers.", port, peers);
 
+	// Initialize our network and connect.
 	m_network.Initialize(peers, port);
-	m_connecting = true;
-
 	network_connect(0);
 
-	// Force a successful connection.
-	std::promise<bool> connecting_promise;
-	m_connecting_future = connecting_promise.get_future();
-	connecting_promise.set_value(true);
+	// Log the player in.
+	SetPlayerNumber(0);
+	ProcessPlayerLogin(0, "host");
+	ProcessPlayerJoin(0);
 
 	return true;
 }
@@ -179,14 +179,12 @@ bool Server::SinglePlayer()
 
 	log::PrintLine(":: Starting as single player server.");
 
-	// Network.Initialize();
-
 	network_connect(0);
 
-	packet::Login packet;
-	packet.set_method(packet::Login_Method_PEER2PEER);
-	packet.set_account("singleplayer");
-	Send(network::HOSTID, PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
+	// Log the player in.
+	SetPlayerNumber(0);
+	ProcessPlayerLogin(0, "singleplayer");
+	ProcessPlayerJoin(0);
 
 	return true;
 }
@@ -317,7 +315,7 @@ void Server::Update(const std::chrono::milliseconds& tick)
 
 				new_objects.insert(item->ID);
 
-				log::PrintLine("-> Sending scene object {} via range.", item->ID);
+				log::PrintLine("-> Sending scene object {} via range to player {}.", item->ID, player->GetPlayerId());
 
 				auto packet = network::constructSceneObjectPacket(item);
 				Send(player->GetPlayerId(), PACKETID(Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
@@ -340,48 +338,44 @@ void Server::Update(const std::chrono::milliseconds& tick)
 			// Run the server tick script on the object.
 			object->OnUpdate.RunAll(tick_count);
 
-			// Check if we have dirty attributes.
-			if (object->Properties.HasDirty() || object->Attributes.HasDirty())
-			{
-				// Create a packet that contains our updated attributes.
-				// This will also process any engine updates on the dirty attributes.
-				packet::SceneObjectChange packet;
-				network::processAndAssignAttributesToPacket(packet, object->Attributes, &packet::SceneObjectChange::add_attributes, tick);
-				network::processAndAssignAttributesToPacket(packet, object->Properties, &packet::SceneObjectChange::add_properties, tick);
+			// Process our attributes.
+			packet::SceneObjectChange packet;
+			network::processAndAssignAttributesToPacket(packet, object->Attributes, &packet::SceneObjectChange::add_attributes, tick);
+			network::processAndAssignAttributesToPacket(packet, object->Properties, &packet::SceneObjectChange::add_properties, tick);
 
-				// Nothing is being sent anymore.  The event dispatch may have resolved the dirty status.
-				if (packet.attributes_size() == 0 && packet.properties_size() == 0)
-					continue;
+			// If nothing is being sent, we can continue to the next object.
+			if (packet.attributes_size() == 0 && packet.properties_size() == 0)
+				continue;
 
-				// If we don't own this scene object, don't send.
-				// Non-replicated objects skip this check.
-				if (auto op = object->GetOwningPlayer().lock(); op != m_player && object->Replicated)
-				{
-					// If we don't own this object and this object has an owner, don't process changes.
-					// If the scene object isn't owned and we are the host, we'll take care of the events.
-					if (!IsHost() || !object->GetOwningPlayer().expired())
-						continue;
-				}
+			// If we are the host and this object doesn't have an owner, we'll take care of the events.
+			if (IsHost() && object->GetOwningPlayer().expired())
+				SwitchSceneObjectOwnership(object, m_player);
 
-				packet.set_id(id);
-				packet.set_replicated(object->Replicated);
-				packet.set_attached_to(object->GetAttachedId());
+			// If the scene object is not replicated across the network, don't send anything.
+			if (!object->Replicated)
+				continue;
 
-				if (!IsSinglePlayer() && object->Replicated)
-				{
-					// log::PrintLine("-> Sending prop updates for scene object {}.", id);
+			// If we are in single player mode, there is no need to send anything.
+			if (IsSinglePlayer())
+				continue;
 
-					auto location = object->GetPosition();
-					SendToScene(scene, location, PACKETID(Packets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet, { m_player });
-				}
-			}
+			// If we don't own this scene object, don't send anything.
+			if (auto op = object->GetOwningPlayer().lock(); op != m_player)
+				continue;
+
+			// Send the packet to all players in the scene.
+			packet.set_id(object->ID);
+			packet.set_replicated(object->Replicated);
+			packet.set_attached_to(object->GetAttachedId());
+			auto location = object->GetPosition();
+			SendToScene(scene, location, PACKETID(Packets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet, { m_player });
 
 			// Send over any physics changes to the scene object.
 			// This is changes in collision mesh or simulated body type, not velocities or anything.
 			if (object->PhysicsChanged)
 			{
 				object->PhysicsChanged = false;
-				if (!IsSinglePlayer() && object->PhysicsBody.has_value())
+				if (object->PhysicsBody.has_value())
 				{
 					packet::SceneObjectCollision packet;
 					packet.set_id(object->ID);
@@ -399,6 +393,94 @@ void Server::Update(const std::chrono::milliseconds& tick)
 		m_network.Update();
 
 	FileSystem.Update();
+}
+
+void Server::ProcessPlayerJoin(const uint16_t player_id)
+{
+	auto player = GetPlayerById(player_id);
+
+	// Switch to the starting scene.
+	auto scene = GetScene(GetPackage()->GetStartingScene());
+	player->SwitchScene(scene);
+
+	// Call the OnPlayerJoin script function.
+	OnPlayerJoin.RunAll(player);
+}
+
+void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& account)
+{
+	// Load account.
+	log::PrintLine(":: Loading account {}.", account);
+	auto player = GetPlayerById(player_id);
+	player->Account.Load(account);
+
+	// Tell the client the login was a success.
+	packet::LoginStatus login_status;
+	login_status.set_player_id(player_id);
+	login_status.set_success(true);
+	Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+	log::PrintLine("-> Sending login allowed.");
+
+	// Send client control script.
+	log::PrintLine("-> Sending client control script to player {}.", player_id);
+	packet::ClientControlScript client_control;
+	client_control.set_script(m_client_control_script);
+	Send(player_id, PACKETID(Packets::CLIENTCONTROLSCRIPT), network::Channel::RELIABLE, client_control);
+
+	// Send classes.
+	for (const auto& [name, oc] : m_object_classes)
+	{
+		auto packet = network::constructClassAddPacket(oc);
+		Send(player_id, PACKETID(Packets::CLASSADD), network::Channel::RELIABLE, packet);
+	}
+
+	// Send client scripts.
+	for (const auto& name : player->Account.ClientScripts)
+	{
+		AddPlayerClientScript(name, player);
+	}
+
+	// Send owned items.
+	for (const auto& [itemId, item] : player->Account.Items)
+	{
+		// Send item definitions.
+		SendItemDefinition(m_player, item->ItemBaseID);
+
+		// Send the item.
+		packet::ItemAdd packetAdd;
+		packetAdd.set_id(item->ID);
+		packetAdd.set_baseid(item->ItemBaseID);
+		packetAdd.set_type(static_cast<packet::ItemType>(item->Type));
+
+		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+			packetAdd.set_stackable_count(stackable->Count);
+
+		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
+			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
+
+		log::PrintLine("-> Sending weapon {} (base {}, type {}) to player {}.", item->ID, item->ItemBaseID, static_cast<uint8_t>(item->Type), player->GetPlayerId());
+		Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMADD), network::Channel::RELIABLE, packetAdd);
+	}
+
+	// Send server info.
+	// Keep this last.  The client will start the load after this packet.
+	packet::ServerInfo server_info;
+	server_info.set_uniqueid(m_unique_id);
+	server_info.set_package(m_package->GetName());
+	server_info.set_loadingscene(m_package->GetLoadingScene());
+	if (m_package != nullptr)
+	{
+		auto file_details = FileSystem.GetArchiveInfo(m_package->GetBasePath());
+		for (auto& detail : file_details)
+		{
+			auto* file = server_info.add_files();
+			file->set_name(detail.File.filename().string());
+			file->set_size(detail.FileSize);
+			file->set_crc32(detail.CRC32);
+			file->set_date(detail.TimeSinceEpoch);
+		}
+	}
+	Send(player_id, PACKETID(Packets::SERVERINFO), network::Channel::RELIABLE, server_info);
 }
 
 void Server::SetPlayerNumber(const uint16_t player_number)
@@ -641,7 +723,7 @@ bool Server::AddItemDefinition(item::ItemDefinitionUPtr&& item)
 {
 	if (!item) return false;
 	auto baseID = item->BaseID;
-	auto name = item->Name;
+	auto& name = item->Name;
 
 	const auto&& [iter, success] = m_item_definitions.emplace(std::make_pair(item->BaseID, std::move(item)));
 	if (success) log::PrintLine(":: Loaded item {}.{}.", baseID, name);
@@ -941,6 +1023,10 @@ SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string
 	// Add to the scene.
 	scene->AddObject(so);
 
+	// Follow the scene object if it is in our scene.
+	if (scene == m_player->GetCurrentScene().lock())
+		m_player->FollowedSceneObjects.insert(so->ID);
+
 	// Send to players in range.
 	auto packet = network::constructSceneObjectPacket(so);
 	SendToScene(scene, so->GetPosition(), PACKETID(Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
@@ -995,23 +1081,27 @@ size_t Server::DeletePlayerOwnedSceneObjects(PlayerPtr player)
 
 	for (auto& [name, scene] : m_scenes)
 	{
+		std::unordered_set<SceneObjectID> to_delete;
+
 		auto& graph = scene->GetGraph();
-		for (auto it = std::begin(graph); it != std::end(graph);)
+		for (auto it = std::begin(graph); it != std::end(graph); ++it)
 		{
-			auto sceneobject = it->second;
+			auto& sceneobject = it->second;
 			if (sceneobject->GetOwningPlayer().lock() == player)
 			{
 				SCRIPT_THEM_ERASE(sceneobject);
 
-				++count;
-				graph.erase(it++);
-
 				packet::SceneObjectDelete packet;
 				packet.set_id(sceneobject->ID);
 				BroadcastToScene(scene, PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet, { m_player });
+
+				++count;
+				to_delete.insert(sceneobject->ID);
 			}
-			else ++it;
 		}
+
+		for (auto& id : to_delete)
+			graph.erase(id);
 	}
 
 	return count;
@@ -1103,7 +1193,7 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 	if (iter == m_object_classes.end())
 		return nullptr;
 
-	auto c = iter->second;
+	auto& c = iter->second;
 	m_object_classes.erase(iter);
 
 	// Broadcast to players if we are the host.
@@ -1316,129 +1406,47 @@ void Server::network_login(const uint16_t id, const uint16_t packet_id, const ui
 	if (packet_id != PACKETID(Packets::LOGIN))
 		return;
 
+	auto player = GetPlayerById(id);
 	log::PrintLine("<- Received login packet from player {}.", id);
 
 	packet::Login packet;
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
-	
-	packet::LoginStatus login_status;
-	login_status.set_player_id(id);
+	const auto& method = packet.method();
+	const auto& account = packet.account();
+	const auto& passwordhash = packet.passwordhash();
+	const auto& type = packet.type();
+	const auto& version = packet.version();
 
-	auto player = GetPlayerById(id);
+	// TODO: This is a temporary override while we work on the account system.
+	std::string login_account = account;
 
-	// If this is single player, just accept the login.
-	if (IsSinglePlayer())
+	// TODO: Properly handle account verification for servers that use it.
+	// Load the account.
+	if (method == packet::Login_Method_DEDICATED)
 	{
-		// Load account.
-		player->Account.Load("singleplayer");
-
-		// Send response.
-		login_status.set_success(true);
-		Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-		log::PrintLine("-> Sending login status - Singleplayer.");
+		login_account = "dedicated";
 	}
 	else
 	{
-		const auto& method = packet.method();
-		const auto& account = packet.account();
-		const auto& passwordhash = packet.passwordhash();
-		const auto& type = packet.type();
-		const auto& version = packet.version();
-
-		// TODO: Properly handle account verification for servers that use it.
-		// Load the account.
-		if (method == packet::Login_Method_DEDICATED)
-		{
-			player->Account.Load(account);
-			log::PrintLine(":: Loading account {}.", account);
-		}
-		else
-		{
-			std::string acc = (id == network::HOSTID && IsHost()) ? "host" : "guest" + std::to_string(id);
-			player->Account.Load(acc);
-			log::PrintLine(":: Loading account {}.", acc);
-		}
-
-		// Login successful.
-		if (true)
-		{
-			login_status.set_success(true);
-			Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-			log::PrintLine("-> Sending login status - success.");
-		}
-		// Login failure.
-		else
-		{
-			login_status.set_success(false);
-			login_status.set_message("Invalid username or password.");
-			Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-			log::PrintLine("-> Sending login status - failure.");
-
-			m_network.DisconnectPeer(id);
-			return;
-		}
+		login_account = (id == network::HOSTID && IsHost()) ? "host" : "guest" + std::to_string(id);
 	}
 
-	// Send client control script.
-	log::PrintLine("-> Sending client control script to player {}.", id);
-	packet::ClientControlScript client_control;
-	client_control.set_script(m_client_control_script);
-	Send(id, PACKETID(Packets::CLIENTCONTROLSCRIPT), network::Channel::RELIABLE, client_control);
-
-	// Send classes.
-	for (const auto& [name, oc] : m_object_classes)
+	// Login failure.
+	if (false)
 	{
-		auto packet = network::constructClassAddPacket(oc);
-		Send(id, PACKETID(Packets::CLASSADD), network::Channel::RELIABLE, packet);
+		packet::LoginStatus login_status;
+		login_status.set_player_id(id);
+		login_status.set_success(false);
+		login_status.set_message("Invalid username or password.");
+		Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		log::PrintLine("-> Sending login status - failure.");
+
+		m_network.DisconnectPeer(id);
+		return;
 	}
 
-	// Send client scripts.
-	for (const auto& name : player->Account.ClientScripts)
-	{
-		AddPlayerClientScript(name, player);
-	}
-
-	// Send owned items.
-	for (const auto& [itemId, item] : player->Account.Items)
-	{
-		// Send item definitions.
-		SendItemDefinition(m_player, item->ItemBaseID);
-
-		// Send the item.
-		packet::ItemAdd packetAdd;
-		packetAdd.set_id(item->ID);
-		packetAdd.set_baseid(item->ItemBaseID);
-		packetAdd.set_type(static_cast<packet::ItemType>(item->Type));
-
-		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
-			packetAdd.set_stackable_count(stackable->Count);
-
-		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
-			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
-
-		log::PrintLine("-> Sending weapon {} (base {}, type {}) to player {}.", item->ID, item->ItemBaseID, static_cast<uint8_t>(item->Type), player->GetPlayerId());
-		Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMADD), network::Channel::RELIABLE, packetAdd);
-	}
-
-	// Send server info.
-	// Keep this last.  The client will start the load after this packet.
-	packet::ServerInfo server_info;
-	server_info.set_uniqueid(m_unique_id);
-	server_info.set_package(m_package->GetName());
-	server_info.set_loadingscene(m_package->GetLoadingScene());
-	if (m_package != nullptr)
-	{
-		auto file_details = FileSystem.GetArchiveInfo(m_package->GetBasePath());
-		for (auto& detail : file_details)
-		{
-			auto* file = server_info.add_files();
-			file->set_name(detail.File.filename().string());
-			file->set_size(detail.FileSize);
-			file->set_crc32(detail.CRC32);
-			file->set_date(detail.TimeSinceEpoch);
-		}
-	}
-	Send(id, PACKETID(Packets::SERVERINFO), network::Channel::RELIABLE, server_info);
+	// Log in the player.
+	ProcessPlayerLogin(id, login_account);
 }
 
 } // end namespace tdrp::server

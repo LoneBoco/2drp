@@ -21,15 +21,16 @@ const AttributeType GetAttributeType(const AttributeVariant& value)
 ///////////////////////////////////////////////////////////
 
 Attribute::Attribute(Attribute&& o) noexcept
-	: ID{ o.ID }, Name{ std::move(o.Name) }, ClientUpdate{ std::move(o.ClientUpdate) }, NetworkUpdate{ std::move(o.NetworkUpdate) },
-	m_value{ std::move(o.m_value) }
+	: ID{ o.ID }, Name{ std::move(o.Name) }, Replicated{ o.Replicated }, Dirty{ o.Dirty }, NetworkUpdateRate{ o.NetworkUpdateRate }, m_value{ std::move(o.m_value) }, m_update_cooldown{ o.m_update_cooldown }
 {}
 
 Attribute& Attribute::operator=(const Attribute& other)
 {
 	ID = other.ID;
-	ClientUpdate.UpdateRate = other.ClientUpdate.UpdateRate;
-	NetworkUpdate.UpdateRate = other.NetworkUpdate.UpdateRate;
+	Name = other.Name;
+	Replicated = other.Replicated;
+	Dirty = other.Dirty;
+	NetworkUpdateRate = other.NetworkUpdateRate;
 	Set(other.m_value);
 	return *this;
 }
@@ -38,12 +39,18 @@ Attribute& Attribute::operator=(Attribute&& other) noexcept
 {
 	ID = other.ID;
 	Name = std::move(other.Name);
-	ClientUpdate = std::move(other.ClientUpdate);
-	NetworkUpdate = std::move(other.NetworkUpdate);
+	Replicated = other.Replicated;
+	Dirty = other.Dirty;
+	NetworkUpdateRate = other.NetworkUpdateRate;
 	m_value = std::move(other.m_value);
 
 	other.ID = 0;
 	return *this;
+}
+
+Attribute& Attribute::Set(const Attribute& other)
+{
+	return Set(other.m_value);
 }
 
 Attribute& Attribute::Set(const AttributeVariant& value)
@@ -62,48 +69,44 @@ Attribute& Attribute::Set(const AttributeVariant& value)
 			{
 				auto& me = std::get<int64_t>(m_value);
 				auto& them = std::get<int64_t>(value);
-				if (me != them) setDirty = true;
+				if (me != them) Dirty = true;
 				break;
 			}
 			case AttributeType::DOUBLE:
 			{
 				auto& me = std::get<double>(m_value);
 				auto& them = std::get<double>(value);
-				if (me != them) setDirty = true;
+				if (me != them) Dirty = true;
 				break;
 			}
 			case AttributeType::STRING:
 			{
 				auto& me = std::get<std::string>(m_value);
 				auto& them = std::get<std::string>(value);
-				if (me != them) setDirty = true;
+				if (me != them) Dirty = true;
 				break;
 			}
 		}
-	}
-
-	if (setDirty)
-	{
-		ClientUpdate.SetIsDirty(true);
-		if (Replicated) NetworkUpdate.SetIsDirty(true);
 	}
 
 	m_value = value;
 	return *this;
 }
 
-Attribute& Attribute::Set(const Attribute& other)
+Attribute& Attribute::Set(const int64_t value)
 {
-	return Set(other.m_value);
+	return Set(AttributeVariant{ value });
+}
+
+Attribute& Attribute::Set(const double value)
+{
+	return Set(AttributeVariant{ value });
 }
 
 Attribute& Attribute::Set(std::nullptr_t)
 {
 	if (GetType() != AttributeType::INVALID)
-	{
-		ClientUpdate.SetIsDirty(true);
-		if (Replicated) NetworkUpdate.SetIsDirty(true);
-	}
+		Dirty = true;
 
 	m_value = AttributeVariant{};
 
@@ -119,18 +122,18 @@ Attribute& Attribute::SetAsType(AttributeType type, const std::string& value)
 	}
 
 	std::istringstream str(value);
-	int r{};
+	int64_t r{};
 	double d{};
 
 	switch (type)
 	{
 	case AttributeType::INTEGER:
 		str >> r;
-		Set(r);
+		Set(AttributeVariant{ r });
 		break;
 	case AttributeType::DOUBLE:
 		str >> d;
-		Set(d);
+		Set(AttributeVariant{ d });
 		break;
 	}
 
@@ -138,6 +141,16 @@ Attribute& Attribute::SetAsType(AttributeType type, const std::string& value)
 }
 
 Attribute& Attribute::operator=(const AttributeVariant& value)
+{
+	return Set(value);
+}
+
+Attribute& Attribute::operator=(const int64_t value)
+{
+	return Set(value);
+}
+
+Attribute& Attribute::operator=(const double value)
 {
 	return Set(value);
 }
@@ -283,7 +296,7 @@ void ObjectAttributes::ClearAllDirty()
 {
 	for (auto& [id, attribute] : m_attributes)
 	{
-		attribute->ResetAllDirty();
+		attribute->Dirty = false;
 	}
 }
 

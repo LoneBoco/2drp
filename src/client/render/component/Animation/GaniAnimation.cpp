@@ -245,7 +245,7 @@ void GaniAnimation::UpdateAnimation(const std::string& animation)
 					if (auto so = m_owner.lock())
 					{
 						auto prop = so->Properties.Get(Property::ANIMATION);
-						prop->ResetAllDirty();
+						prop->Dirty = false;
 					}
 				}
 			}

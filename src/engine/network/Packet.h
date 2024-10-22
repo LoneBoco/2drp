@@ -14,7 +14,7 @@ constexpr uint16_t PACKETID(T packet)
 template <class T>
 const T construct(const uint8_t* const packet_data, const size_t packet_length)
 {
-	T packet;
+	T packet{};
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
 	return packet;
 }

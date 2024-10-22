@@ -5,7 +5,7 @@ namespace tdrp::script::helpers
 
 EventHandle subscribe(Attribute& self, sol::protected_function func)
 {
-	return self.ClientUpdate.UpdateDispatch.Subscribe(
+	return self.UpdateDispatch.Subscribe(
 		[&self, func](uint16_t id)
 		{
 			func.call(self);
