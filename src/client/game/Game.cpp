@@ -71,20 +71,22 @@ void Game::Initialize()
 
 	// Load the UI.
 	UI = loader::UILoader::CreateUIManager();
-	UI->ScreenSizeUpdate();
 
 	// If we are connecting to a server, connect now.
 	if (settings->Exists("game.networked") && settings->Exists("network.server"))
 	{
+		// TODO: Make this configurable.
+		// TODO: Built-in loading UI for when we have no package or anything.
+		//UI->LoadContext("loading");
+
 		std::string host{ settings->Get("network.server") };
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
 		Server.Connect(host, port);
 		return;
 	}
 
-	// Load the package and UI.
+	// Load the package.
 	Server.LoadPackage(package);
-	loader::UILoader::Load(UI.get());
 
 	// Hosted.
 	if (settings->Exists("game.networked") && settings->Exists("game.hosting"))
@@ -97,6 +99,11 @@ void Game::Initialize()
 	{
 		Server.SinglePlayer();
 	}
+
+	// Load the game UI.
+	UI->ToggleContextVisibility("loading", false);
+	UI->LoadContextsFromEvent("joined");
+	UI->ScreenSizeUpdate();
 
 	// Mark the game as playing.
 	State = GameState::PLAYING;
@@ -134,7 +141,8 @@ void Game::Update()
 		if (!Server.DownloadManager.FilesInQueue && !Server.FileSystem.IsSearchingForFiles())
 		{
 			// Load the UI.
-			loader::UILoader::Load(UI.get());
+			UI->ToggleContextVisibility("loading", false);
+			UI->LoadContextsFromEvent("joined");
 
 			// Set to player.
 			State = GameState::PLAYING;

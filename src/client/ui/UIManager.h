@@ -9,6 +9,7 @@
 #include <RmlUi/Core.h>
 #include <sol/sol.hpp>
 
+#include "client/loader/ui/UILoader.h"
 #include "client/ui/interface/RmlUi_Platform_SFML.h"
 #include "client/ui/interface/RmlUi_Renderer_GL2.h"
 #include "client/ui/interface/ShellFileInterface.h"
@@ -23,8 +24,23 @@ namespace tdrp::ui
 
 using ContextIterationFunc = std::function<bool(Rml::Context&)>;
 
+struct UIContextDataDocument
+{
+	bool ShowOnLoad = false;
+	std::string Filename;
+};
+
+struct UIContextData
+{
+	Rml::Context* Context = nullptr;
+	std::string LoadOn;
+	std::vector<UIContextDataDocument> Documents;
+};
+
 class UIManager
 {
+	friend class tdrp::loader::UILoader;
+
 public:
 	UIManager();
 	~UIManager();
@@ -36,14 +52,7 @@ public:
 	bool operator==(const UIManager&) = delete;
 
 public:
-	Rml::Context* CreateContext(const std::string& name);
-	Rml::Context* GetContext(const std::string& name);
-
-public:
-	void BindDataModels(Rml::Context* context);
-
-public:
-	void ToggleContextVisibility(const std::string& context, bool visible);
+	void ToggleContextVisibility(const std::string& context, bool visible) noexcept;
 	void ToggleDocumentVisibility(const std::string& context, const std::string& document);
 	void ReloadUI();
 	void AssignDebugger(const std::string& context);
@@ -55,6 +64,15 @@ public:
 	void Render();
 
 public:
+	void LoadContext(std::string_view name);
+	size_t LoadContextsFromEvent(std::string_view event);
+
+protected:
+	Rml::Context* createContext(std::string_view name);
+	void bindDataModels(Rml::Context* context);
+	UIContextData* getContextData(std::string_view name);
+
+public:
 	script::ScriptPtr Script;
 	std::unique_ptr<Rml::FileInterface> FileInterface = nullptr;
 	Rml::SystemInterface* SystemInterface = nullptr;
@@ -64,8 +82,8 @@ protected:
 	INJECT(::tdrp::render::Window, window);
 	INJECT(::tdrp::script::ScriptManager, script_manager);
 	std::unordered_map<std::string, Rml::DataModelHandle> m_item_handles;
-	std::unordered_set<std::string> m_visible_contexts;
-	std::vector<Rml::Context*> m_managed_contexts;
+	std::set<std::string> m_visible_contexts;
+	std::map<std::string, UIContextData> m_contexts;
 	Rml::Context* m_debugger_host;
 	Rml::Context* m_debugger_context;
 
@@ -77,9 +95,13 @@ using UIManagerPtr = std::unique_ptr<UIManager>;
 
 /////////////////////////////
 
-inline Rml::Context* UIManager::GetContext(const std::string& name)
+inline UIContextData* UIManager::getContextData(std::string_view name)
 {
-	return Rml::GetContext(name);
+	auto it = m_contexts.find(std::string{ name });
+	if (it != m_contexts.end())
+		return &it->second;
+
+	return nullptr;
 }
 
 } // end namespace tdrp::ui

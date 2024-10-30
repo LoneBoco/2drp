@@ -11,6 +11,25 @@
 #include <boost/range/algorithm_ext.hpp>
 
 
+namespace tdrp::loader::helper
+{
+	static void loadContext(pugi::xml_node& node, ui::UIManager* manager, std::vector<ui::UIContextDataDocument>& documents)
+	{
+		// Load documents into the context.
+		for (auto& node_document : node.children("document"))
+		{
+			std::string file = node_document.attribute("file").as_string();
+			if (file.empty()) continue;
+
+			bool show = node_document.attribute("show").as_bool(false);
+			documents.emplace_back(ui::UIContextDataDocument{ .ShowOnLoad = show, .Filename = file });
+
+			log::PrintLine("         Document: {}", file);
+		}
+	}
+} // end namespace tdrp::loader::helper
+
+
 namespace tdrp::loader
 {
 
@@ -19,7 +38,7 @@ std::unique_ptr<ui::UIManager> UILoader::CreateUIManager()
 	return std::make_unique<ui::UIManager>();
 }
 
-size_t UILoader::Load(ui::UIManager* manager, std::string_view load_on)
+size_t UILoader::Load(ui::UIManager* manager)
 {
 	size_t count = 0;
 
@@ -39,74 +58,41 @@ size_t UILoader::Load(ui::UIManager* manager, std::string_view load_on)
 		// Determine file version.
 		auto version = n_contexts.attribute("version").as_int(1);
 
+		log::PrintLine("[UI] Gathering UI data...");
+
 		// Load our fonts.
-		if (load_on.empty())
+		for (auto& fonts : n_contexts.children("font"))
 		{
-			for (auto& fonts : n_contexts.children("font"))
+			std::string file = fonts.attribute("file").as_string();
+			if (!file.empty())
 			{
-				std::string file = fonts.attribute("file").as_string();
-				if (!file.empty())
-				{
-					auto fallback = fonts.attribute("fallback").as_bool(false);
-					Rml::LoadFontFace(file, fallback);
-				}
+				auto fallback = fonts.attribute("fallback").as_bool(false);
+				Rml::LoadFontFace(file, fallback);
+				log::PrintLine("       Loaded font: {}", file);
 			}
 		}
 
 		// Load our contexts.
 		for (auto& context : n_contexts.children("context"))
 		{
-			auto attrloadon = context.attribute("load-on");
+			std::string name = context.attribute("name").as_string();
+			if (name.empty()) continue;
 
-			// If load_on is empty and we have a load-on, ignore.
-			if (load_on.empty() && !attrloadon.empty())
-				continue;
+			ui::UIContextData data = {};
+			if (auto attr = context.attribute("load-on"); !attr.empty())
+				data.LoadOn = attr.as_string();
 
-			// If load_on is set and load-on does not match, ignore.
-			if (!load_on.empty() && load_on != std::string_view{ attrloadon.as_string() })
-				continue;
+			log::PrintLine("       Registered context: {}", name);
 
 			// Load the context.
-			LoadContext(context, manager);
+			helper::loadContext(context, manager, data.Documents);
+
+			manager->m_contexts.emplace(std::make_pair(name, std::move(data)));
 			++count;
 		}
 	}
 
 	return count;
-}
-
-void UILoader::LoadContext(pugi::xml_node& node, ui::UIManager* manager)
-{
-	std::string name = node.attribute("name").as_string();
-	if (name.empty()) return;
-
-	auto context = manager->CreateContext(name);
-	if (!context) return;
-
-	// Load our data models here.
-	// We have to do this before we load the document.
-	if (!node.attribute("load-on").empty())
-		manager->BindDataModels(context);
-
-	// Load documents into the context.
-	for (auto& node_document : node.children("document"))
-	{
-		std::string file = node_document.attribute("file").as_string();
-		if (file.empty()) continue;
-
-		auto document = context->LoadDocument(file);
-		document->Show();
-
-		log::PrintLine("[UI] Loaded document \"{}\".", file);
-		if (!node_document.attribute("show").as_bool(false))
-		{
-			document->Hide();
-		}
-		else
-		{
-			log::PrintLine("[UI] Setting document to visible.");
-		}
-	}
 }
 
 } // end namespace tdrp::loader

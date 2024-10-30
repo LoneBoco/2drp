@@ -102,7 +102,9 @@ void handle(Game& game, const packet::ServerInfo& packet)
 
 	// Joined UI.
 	loader::UILoader::Load(game.UI.get());
-	loader::UILoader::Load(game.UI.get(), "joined");
+	game.UI->LoadContext("loading");
+	game.UI->ToggleContextVisibility("loading", true);
+	game.UI->ScreenSizeUpdate();
 }
 
 void handle(Game& game, const packet::SwitchScene& packet)

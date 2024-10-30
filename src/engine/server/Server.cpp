@@ -1306,8 +1306,7 @@ int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string
 	// Process the event.
 	int count = ProcessSendEvent(scene, player, name, data, origin, radius);
 
-	log::PrintLine("-> Sending event '{}' to scene '{}' at ({}, {}):{} with data: {}", name, scene->GetName(), origin.x, origin.y, radius, data);
-	log::PrintLine("   -- hits: {}", count);
+	log::PrintLine("-> [{}] Event '{}' ({:.2f}, {:.2f})-{}: {} hits, data: {}", scene->GetName(), name, origin.x, origin.y, radius, count, data);
 
 	// Send the packet.
 	SendToScene(scene, origin, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });

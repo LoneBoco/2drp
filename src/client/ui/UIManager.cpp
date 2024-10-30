@@ -204,20 +204,183 @@ UIManager::~UIManager()
 	script_manager->EraseScriptInstance("UI");
 }
 
+/////////////////////////////
 
-Rml::Context* UIManager::CreateContext(const std::string& name)
+void UIManager::ToggleContextVisibility(const std::string& name, bool visible) noexcept
+{
+	if (visible)
+		m_visible_contexts.insert(name);
+	else
+		m_visible_contexts.erase(name);
+}
+
+void UIManager::ToggleDocumentVisibility(const std::string& context, const std::string& document)
+{
+	auto c = Rml::GetContext(context);
+	if (c != nullptr)
+	{
+		auto d = c->GetDocument(document);
+		if (d)
+		{
+			if (d->IsVisible()) d->Hide();
+			else d->Show();
+		}
+	}
+}
+
+void UIManager::ReloadUI()
+{
+	// Turn off the debugger so we don't get a million error messages.
+	Rml::Debugger::SetContext(nullptr);
+
+	// Reload document stylesheets.
+	for (int c = 0; c < Rml::GetNumContexts(); ++c)
+	{
+		auto context = Rml::GetContext(c);
+		for (int d = 0; d < context->GetNumDocuments(); ++d)
+		{
+			auto document = context->GetDocument(d);
+			if (document)
+			{
+				document->ReloadStyleSheet();
+				document->DispatchEvent(Rml::EventId::Load, Rml::Dictionary());
+			}
+		}
+	}
+
+	// Add the debugger back in.
+	if (m_debugger_context != nullptr)
+		Rml::Debugger::SetContext(m_debugger_context);
+}
+
+void UIManager::AssignDebugger(const std::string& context)
+{
+	auto c = Rml::GetContext(context);
+	if (c == nullptr)
+		return;
+
+	m_debugger_context = c;
+	Rml::Debugger::SetContext(m_debugger_context);
+}
+
+void UIManager::MakeItemsDirty()
+{
+	for (auto& [k, v] : m_item_handles)
+	{
+		v.DirtyVariable("items");
+	}
+}
+
+/////////////////////////////
+
+void UIManager::ScreenSizeUpdate()
+{
+	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
+
+	for (int i = 0; i < Rml::GetNumContexts(); ++i)
+		Rml::GetContext(i)->SetDimensions(size);
+
+	RenderInterface->SetViewport(size.x, size.y);
+}
+
+void UIManager::Update()
+{
+	for (int i = 0; i < Rml::GetNumContexts(); ++i)
+	{
+		auto context = Rml::GetContext(i);
+		if (!context) continue;
+
+		if (m_visible_contexts.contains(context->GetName()))
+			context->Update();
+	}
+}
+
+void UIManager::Render()
+{
+	assert(RenderInterface);
+
+	RenderInterface->BeginFrame();
+
+	// Render back to front.
+	// We want the debugger to render last.
+	for (int i = Rml::GetNumContexts(); i > 0; --i)
+	{
+		auto context = Rml::GetContext(i - 1);
+		if (!context) continue;
+
+		if (m_visible_contexts.contains(context->GetName()))
+			context->Render();
+	}
+
+	RenderInterface->EndFrame();
+}
+
+/////////////////////////////
+
+void UIManager::LoadContext(std::string_view name)
+{
+	auto* data = getContextData(name);
+	if (data == nullptr) return;
+	if (data->Context != nullptr) return;
+
+	// Create the data context.
+	auto context = createContext(name);
+	if (context == nullptr) return;
+	data->Context = context;
+
+	// Load the data models.
+	bindDataModels(context);
+
+	// Load all the documents.
+	for (size_t i = 0; i < data->Documents.size(); ++i)
+	{
+		auto& document_config = data->Documents[i];
+		auto* document = context->LoadDocument(document_config.Filename);
+		if (document == nullptr) continue;
+
+		log::Print("[UI] Loaded document \"{}\"", document_config.Filename);
+
+		// Show the document.
+		// If we want it hidden, hide it afterwards.
+		document->Show();
+		if (!document_config.ShowOnLoad)
+		{
+			log::Print(" (hidden)");
+			document->Hide();
+		}
+
+		log::PrintLine(".");
+	}
+}
+
+size_t UIManager::LoadContextsFromEvent(std::string_view event)
+{
+	size_t count = 0;
+	for (auto& [name, data] : m_contexts)
+	{
+		if (data.LoadOn != event)
+			continue;
+
+		LoadContext(name);
+		++count;
+	}
+	return count;
+}
+
+/////////////////////////////
+
+Rml::Context* UIManager::createContext(std::string_view name)
 {
 	// Convert to RmlUi size.
 	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
 
-	auto context = Rml::CreateContext(name, size, RenderInterface);
+	auto context = Rml::CreateContext(Rml::String{ name }, size, RenderInterface);
 	if (!context) return nullptr;
-	m_managed_contexts.push_back(context);
 
 	return context;
 }
 
-void UIManager::BindDataModels(Rml::Context* context)
+void UIManager::bindDataModels(Rml::Context* context)
 {
 	// Bind Items.
 	{
@@ -299,112 +462,7 @@ void UIManager::BindDataModels(Rml::Context* context)
 	}
 }
 
-void UIManager::ToggleContextVisibility(const std::string& name, bool visible)
-{
-	if (visible)
-		m_visible_contexts.insert(name);
-	else
-		m_visible_contexts.erase(name);
-}
-
-void UIManager::ToggleDocumentVisibility(const std::string& context, const std::string& document)
-{
-	auto c = Rml::GetContext(context);
-	if (c != nullptr)
-	{
-		auto d = c->GetDocument(document);
-		if (d)
-		{
-			if (d->IsVisible()) d->Hide();
-			else d->Show();
-		}
-	}
-}
-
-void UIManager::ReloadUI()
-{
-	// Turn off the debugger so we don't get a million error messages.
-	Rml::Debugger::SetContext(nullptr);
-
-	// Reload document stylesheets.
-	for (int c = 0; c < Rml::GetNumContexts(); ++c)
-	{
-		auto context = Rml::GetContext(c);
-		for (int d = 0; d < context->GetNumDocuments(); ++d)
-		{
-			auto document = context->GetDocument(d);
-			if (document)
-			{
-				document->ReloadStyleSheet();
-				document->DispatchEvent(Rml::EventId::Load, Rml::Dictionary());
-			}
-		}
-	}
-
-	// Add the debugger back in.
-	if (m_debugger_context != nullptr)
-		Rml::Debugger::SetContext(m_debugger_context);
-}
-
-void UIManager::AssignDebugger(const std::string& context)
-{
-	auto c = Rml::GetContext(context);
-	if (c == nullptr)
-		return;
-
-	m_debugger_context = c;
-	Rml::Debugger::SetContext(m_debugger_context);
-}
-
-void UIManager::MakeItemsDirty()
-{
-	for (auto& [k, v] : m_item_handles)
-	{
-		v.DirtyVariable("items");
-	}
-}
-
-void UIManager::ScreenSizeUpdate()
-{
-	Rml::Vector2i size{ window->GetWidth(), window->GetHeight() };
-
-	for (int i = 0; i < Rml::GetNumContexts(); ++i)
-		Rml::GetContext(i)->SetDimensions(size);
-
-	RenderInterface->SetViewport(size.x, size.y);
-}
-
-void UIManager::Update()
-{
-	for (int i = 0; i < Rml::GetNumContexts(); ++i)
-	{
-		auto context = Rml::GetContext(i);
-		if (!context) continue;
-
-		if (m_visible_contexts.contains(context->GetName()))
-			context->Update();
-	}
-}
-
-void UIManager::Render()
-{
-	assert(RenderInterface);
-
-	RenderInterface->BeginFrame();
-
-	// Render back to front.
-	// We want the debugger to render last.
-	for (int i = Rml::GetNumContexts(); i > 0; --i)
-	{
-		auto context = Rml::GetContext(i - 1);
-		if (!context) continue;
-
-		if (m_visible_contexts.contains(context->GetName()))
-			context->Render();
-	}
-
-	RenderInterface->EndFrame();
-}
+/////////////////////////////
 
 bool UIManager::ForEachVisible(ContextIterationFunc func)
 {

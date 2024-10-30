@@ -2,8 +2,10 @@
 
 #include "engine/common.h"
 
-#include "client/ui/UIManager.h"
-
+namespace tdrp::ui
+{
+	class UIManager;
+}
 
 namespace tdrp::loader
 {
@@ -27,14 +29,9 @@ public:
 
 	/// <summary>
 	/// Loads contexts from the contexts.xml file.
-	/// If a load_on is provided, it will only load contexts with a matching load-on attribute.
-	/// If none is provided, it will load all contexts without a load-on attribute, and fonts.
 	/// </summary>
 	/// <returns>How many contexts were loaded.</returns>
-	static size_t Load(ui::UIManager* manager, std::string_view load_on = {});
-
-private:
-	static void LoadContext(pugi::xml_node& node, ui::UIManager* manager);
+	static size_t Load(ui::UIManager* manager);
 };
 
 } // end namespace tdrp::loader
