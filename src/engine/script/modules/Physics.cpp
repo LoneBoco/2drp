@@ -5,8 +5,11 @@
 #include "engine/physics/Physics.h"
 
 #include <PlayRho/PlayRho.hpp>
+#include <PlayRho/Common/Units.hpp>
 #include <PlayRho/Dynamics/Contacts/Contact.hpp>
 #include <PlayRho/Collision/Manifold.hpp>
+
+using namespace playrho;
 
 
 namespace tdrp::script::modules
@@ -14,23 +17,22 @@ namespace tdrp::script::modules
 
 namespace helpers::sceneobject
 {
-	scene::ScenePtr check_body(SceneObject& so)
+	static scene::ScenePtr check_body(SceneObject& so)
 	{
-		auto body = so.GetInitializedPhysicsBody();
-		if (!body.has_value()) return nullptr;
-
+		if (!so.HasPhysicsBody())
+			return nullptr;
 		return so.GetCurrentScene().lock();
 	}
 } // end namespace helpers::sceneobject
 
 namespace functions::manifold
 {
-	Vector2df get_normal(physics::Collision& collision)
+	static Vector2df get_normal(physics::Collision& collision)
 	{
 		return Vector2df{ collision.Manifold.GetNormal().GetX(), collision.Manifold.GetNormal().GetY() };
 	}
 
-	std::vector<Vector2df> get_points(physics::Collision& collision)
+	static std::vector<Vector2df> get_points(physics::Collision& collision)
 	{
 		std::vector<Vector2df> result;
 
@@ -46,103 +48,97 @@ namespace functions::manifold
 
 namespace functions::contact
 {
-	bool get_enabled(physics::Collision& collision)
+	static bool get_enabled(physics::Collision& collision)
 	{
 		auto& contact = collision.World.GetContact(collision.Contact);
 		return contact.IsEnabled();
 	}
 
-	void set_enabled(physics::Collision& collision, bool value)
+	static void set_enabled(physics::Collision& collision, bool value)
 	{
 		playrho::d2::SetEnabled(collision.World, collision.Contact, value);
 	}
 } // end namespace functions::contact
 
+namespace functions::body
+{
+	static physics::BodyTypes get_type(physics::BodyConfiguration& body)
+	{
+		return body.Type;
+	}
+
+	static physics::BodyConfiguration& set_type(physics::BodyConfiguration& body, physics::BodyTypes type)
+	{
+		body.Type = type;
+		return body;
+	}
+
+	static bool get_fixed_rotation(physics::BodyConfiguration& body)
+	{
+		return body.BodyConf.fixedRotation;
+	}
+
+	static physics::BodyConfiguration& set_fixed_rotation(physics::BodyConfiguration& body, bool fixed_rotation)
+	{
+		body.BodyConf.fixedRotation = fixed_rotation;
+		return body;
+	}
+
+	static bool get_enabled(physics::BodyConfiguration& body)
+	{
+		return body.BodyConf.enabled;
+	}
+
+	static physics::BodyConfiguration& set_enabled(physics::BodyConfiguration& body, bool enabled)
+	{
+		body.BodyConf.enabled = enabled;
+		return body;
+	}
+
+	static physics::BodyConfiguration& add_collision_circle(physics::BodyConfiguration& body, float radius, const Vector2df& position)
+	{
+		body.Shapes.emplace_back(playrho::d2::Shape{ playrho::d2::DiskShapeConf{ radius }.UseLocation({ position.x, position.y }).UseDensity(1010_kgpm2)});
+		return body;
+	}
+
+	static physics::BodyConfiguration& add_collision_box(physics::BodyConfiguration& body, const Vector2df& radius, const Vector2df& center)
+	{
+		body.Shapes.emplace_back(playrho::d2::Shape{ playrho::d2::PolygonShapeConf{}.SetAsBox(radius.x, radius.y, { center.x, center.y}, 0) });
+		return body;
+	}
+} // end namespace functions::body
+
 namespace functions::sceneobject
 {
-	void set_type(SceneObject& so, playrho::BodyType type)
+	static bool get_enabled(SceneObject& so)
 	{
 		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return;
+		if (!scene || !so.HasPhysicsBody()) return false;
 
 		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-		playrho::d2::SetType(world, body, type);
+		if (playrho::d2::IsEnabled(world, so.GetPhysicsBody().value()))
+			return true;
 
-		so.PhysicsChanged = true;
+		return false;
 	}
 
-	void set_fixedrotation(SceneObject& so, bool value)
+	static void set_enabled(SceneObject& so, bool value)
 	{
 		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return;
+		if (!scene || !so.HasPhysicsBody()) return;
 
 		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-		playrho::d2::SetFixedRotation(world, body, value);
-
-		so.PhysicsChanged = true;
-	}
-
-	void add_collision_circle(SceneObject& so, float radius, const Vector2df& position)
-	{
-		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return;
-
-		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-
-		auto shape = playrho::d2::CreateShape(world, playrho::d2::DiskShapeConf{ radius }.UseLocation({ position.x, position.y }));
-		playrho::d2::Attach(world, body, shape);
-
-		so.PhysicsChanged = true;
-	}
-
-	void add_collision_box(SceneObject& so, const Vector2df& radius, const Vector2df& center)
-	{
-		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return;
-
-		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-
-		auto shape = playrho::d2::CreateShape(world, playrho::d2::PolygonShapeConf{ radius.x, radius.y }.Translate({ center.x, center.y }));
-		playrho::d2::Attach(world, body, shape);
-
-		so.PhysicsChanged = true;
-	}
-
-	bool get_enabled(SceneObject& so)
-	{
-		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return false;
-
-		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-
-		auto b = playrho::d2::GetBody(world, body);
-		return b.IsEnabled();
-	}
-
-	void set_enabled(SceneObject& so, bool value)
-	{
-		auto scene = helpers::sceneobject::check_body(so);
-		if (!scene) return;
-
-		auto& world = scene->Physics.GetWorld();
-		const auto& body = so.PhysicsBody.value();
-
-		playrho::d2::SetEnabled(world, body, value);
+		playrho::d2::SetEnabled(world, so.GetPhysicsBody().value(), value);
 	}
 } // end namespace functions::sceneobject
 
-
 void bind_physics(sol::state& lua)
 {
-	lua.new_enum<playrho::BodyType>("BodyType", {
-		{ "STATIC", playrho::BodyType::Static },
-		{ "KINEMATIC", playrho::BodyType::Kinematic },
-		{ "DYNAMIC", playrho::BodyType::Dynamic }
+	lua.new_enum<physics::BodyTypes>("BodyType", {
+		{ "STATIC", physics::BodyTypes::STATIC },
+		{ "KINEMATIC", physics::BodyTypes::KINEMATIC },
+		{ "DYNAMIC", physics::BodyTypes::DYNAMIC },
+		{ "HYBRID", physics::BodyTypes::HYBRID }
 	});
 
 	lua.new_usertype<physics::Collision>("Collision", sol::no_constructor,
@@ -151,13 +147,17 @@ void bind_physics(sol::state& lua)
 		"Enabled", sol::property(&functions::contact::get_enabled, &functions::contact::set_enabled)
 	);
 
+	lua.new_usertype<physics::BodyConfiguration>("PhysicsBody", sol::constructors<physics::BodyConfiguration()>(),
+		"Type", sol::property(&functions::body::get_type, &functions::body::set_type),
+		"FixedRotation", sol::property(&functions::body::get_fixed_rotation, &functions::body::set_fixed_rotation),
+		"Enabled", sol::property(&functions::body::get_enabled, &functions::body::set_enabled),
+		"AddCollisionCircle", &functions::body::add_collision_circle,
+		"AddCollisionBox", &functions::body::add_collision_box
+	);
+
 	auto physics = lua.create_named_table("Physics");
-	
+
 	auto sceneobject = lua.create_table();
-	sceneobject.set_function("SetType", &functions::sceneobject::set_type);
-	sceneobject.set_function("SetFixedRotation", &functions::sceneobject::set_fixedrotation);
-	sceneobject.set_function("AddCollisionCircle", &functions::sceneobject::add_collision_circle);
-	sceneobject.set_function("AddCollisionBox", &functions::sceneobject::add_collision_box);
 	sceneobject.set_function("IsEnabled", &functions::sceneobject::get_enabled);
 	sceneobject.set_function("SetEnabled", &functions::sceneobject::set_enabled);
 

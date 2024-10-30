@@ -29,8 +29,8 @@ bool Scene::RemoveObject(SceneObjectPtr so) noexcept
 	if (p->second != so)
 		return false;
 
+	Physics.RemoveSceneObject(p->second);
 	p->second->SetCurrentScene(nullptr);
-	Physics.RemoveSceneObject(so);
 
 	m_graph.erase(p);
 	return true;
@@ -124,17 +124,17 @@ std::vector<SceneObjectPtr> Scene::FindObjectsByCollision(const Vector2df& posit
 
 	// Query the circle against the world.
 	playrho::d2::Query(world.GetTree(), aabb,
-		[&, this](playrho::BodyID bodyId, playrho::ShapeID shapeId, playrho::ChildCounter child) -> bool
+		[&, this](playrho::FixtureID fixtureId, playrho::ChildCounter child) -> bool
 		{
+			auto& fixture = world.GetFixture(fixtureId);
 			auto shapeA = playrho::d2::GetChild(shape, 0);
-			auto shapeB = playrho::d2::GetChild(playrho::d2::GetShape(world, shapeId), 0);
-			const auto& body = playrho::d2::GetBody(world, bodyId);
-			const auto& transformB = body.GetTransformation();
+			auto shapeB = playrho::d2::GetChild(playrho::d2::GetShape(world, fixtureId), 0);
+			auto transformB = playrho::d2::GetTransformation(world, fixtureId);
 
 			auto manifold = playrho::d2::CollideShapes(shapeA, transform, shapeB, transformB);
 			if (manifold.GetPointCount() != 0)
 			{
-				if (auto so = Physics.FindSceneObjectByBodyId(bodyId); so != nullptr && (!predicate || predicate(so)))
+				if (auto so = Physics.FindSceneObjectByBodyId(fixture.body); so != nullptr && (!predicate || predicate(so)))
 					results.push_back(so);
 			}
 
@@ -146,8 +146,9 @@ std::vector<SceneObjectPtr> Scene::FindObjectsByCollision(const Vector2df& posit
 
 std::vector<SceneObjectPtr> Scene::FindObjectsByCollisionAndBoundInRange(const Vector2df& position, float radius, SearchPredicate predicate) noexcept
 {
-	// Collect objects from bothy methods.
-	auto result = FindObjectsBoundInRangeOf(position, radius, [](SceneObjectPtr& so) { return !so->PhysicsBody.has_value(); });
+	// Collect objects from both methods.
+	// Get by bounding box if no physics.
+	auto result = FindObjectsBoundInRangeOf(position, radius, [](SceneObjectPtr& so) { return !so->HasPhysicsBody(); });
 	result.append_range(FindObjectsByCollision(position, radius));
 	
 	// Sort the vector.

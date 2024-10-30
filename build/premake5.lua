@@ -102,6 +102,8 @@ project "2drp"
 		"../dependencies/ziplib/Source/ZipLib/",
 		"../dependencies/enet/include/",
 		"../dependencies/protobuf/src/",
+		"../dependencies/protobuf/third_party/abseil-cpp/",
+		"../dependencies/protobuf/third_party/utf8_range/",
 		"../dependencies/SFML/include/",
 		"../dependencies/freetype-windows-binaries/include/",
 		"../dependencies/PlayRho/",
@@ -148,7 +150,12 @@ project "2drp"
 
 	-- Disable MSVC warnings because 3rd party libraries never update.
 	filter "toolset:msc*"
-		defines { "_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING", "_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING", "_SILENCE_CXX23_DENORM_DEPRECATION_WARNING" }
+		defines {
+			"_SILENCE_CXX17_ITERATOR_BASE_CLASS_DEPRECATION_WARNING",
+			"_SILENCE_CXX20_IS_POD_DEPRECATION_WARNING",
+			"_SILENCE_CXX23_DENORM_DEPRECATION_WARNING",
+			"_SILENCE_CXX23_ALIGNED_STORAGE_DEPRECATION_WARNING",
+		}
 
 	-- Per-platform libraries.
 	filter { "system:linux or system:macosx or system:bsd or system:solaris" }
@@ -368,7 +375,7 @@ project "PlayRho"
 	kind "StaticLib"
 	language "C++"
 	location "projects"
-	files { "../dependencies/PlayRho/PlayRho/**.h", "../dependencies/PlayRho/PlayRho/**.cpp" }
+	files { "../dependencies/PlayRho/PlayRho/**.hpp", "../dependencies/PlayRho/PlayRho/**.cpp" }
 	includedirs { "../dependencies/PlayRho/" }
 
 project "bzip2"
@@ -427,19 +434,27 @@ project "enet"
 project "protobuf"
 	kind "StaticLib"
 	language "C++"
+	cppdialect "C++17"
 	location "projects"
-	includedirs { "../dependencies/protobuf/src/", "../dependencies/zlib/" }
-	defines { "HAVE_ZLIB", "UNICODE", "_UNICODE" }
+	defines { "HAVE_ZLIB", "UNICODE", "_UNICODE", "NOMINMAX" }
 	links { "zlib" }
 	optimize "Size"
 	-- staticruntime "On"
 
-	cppdialect "C++17"
+	includedirs {
+		"../dependencies/protobuf/src/",
+		"../dependencies/protobuf/third_party/abseil-cpp/",
+		"../dependencies/protobuf/third_party/utf8_range/",
+		"../dependencies/zlib/",
+	}
 
-	-- libprotobuf-lite.cmake
+	-- protobuf/src/file_lists.cmake
+
+	-- libprotobuf_lite_srcs
 	files {
 		"../dependencies/protobuf/src/google/protobuf/any_lite.cc",
 		"../dependencies/protobuf/src/google/protobuf/arena.cc",
+		"../dependencies/protobuf/src/google/protobuf/arena_align.cc",
 		"../dependencies/protobuf/src/google/protobuf/arenastring.cc",
 		"../dependencies/protobuf/src/google/protobuf/arenaz_sampler.cc",
 		"../dependencies/protobuf/src/google/protobuf/extension_set.cc",
@@ -450,83 +465,113 @@ project "protobuf"
 		"../dependencies/protobuf/src/google/protobuf/inlined_string_field.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/coded_stream.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/io_win32.cc",
-		"../dependencies/protobuf/src/google/protobuf/io/strtod.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
 		"../dependencies/protobuf/src/google/protobuf/map.cc",
 		"../dependencies/protobuf/src/google/protobuf/message_lite.cc",
 		"../dependencies/protobuf/src/google/protobuf/parse_context.cc",
+		"../dependencies/protobuf/src/google/protobuf/port.cc",
+		"../dependencies/protobuf/src/google/protobuf/raw_ptr.cc",
 		"../dependencies/protobuf/src/google/protobuf/repeated_field.cc",
 		"../dependencies/protobuf/src/google/protobuf/repeated_ptr_field.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/bytestream.cc",
 		"../dependencies/protobuf/src/google/protobuf/stubs/common.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/int128.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/status.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/statusor.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringpiece.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/stringprintf.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/structurally_valid.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/strutil.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/time.cc",
 		"../dependencies/protobuf/src/google/protobuf/wire_format_lite.cc",
 	}
 
-	-- libprotobuf.cmake
+	-- libprotobuf_srcs
 	files {
-		"../dependencies/protobuf/src/google/protobuf/any.cc",
 		"../dependencies/protobuf/src/google/protobuf/any.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/api.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/duration.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/empty.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/field_mask.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/source_context.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/struct.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/timestamp.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/type.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/wrappers.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/any.cc",
+		"../dependencies/protobuf/src/google/protobuf/any_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/arena.cc",
+		"../dependencies/protobuf/src/google/protobuf/arena_align.cc",
+		"../dependencies/protobuf/src/google/protobuf/arenastring.cc",
+		"../dependencies/protobuf/src/google/protobuf/arenaz_sampler.cc",
 		"../dependencies/protobuf/src/google/protobuf/compiler/importer.cc",
 		"../dependencies/protobuf/src/google/protobuf/compiler/parser.cc",
+		"../dependencies/protobuf/src/google/protobuf/cpp_features.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/descriptor.cc",
 		"../dependencies/protobuf/src/google/protobuf/descriptor.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/descriptor_database.cc",
-		"../dependencies/protobuf/src/google/protobuf/duration.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/dynamic_message.cc",
-		"../dependencies/protobuf/src/google/protobuf/empty.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/extension_set.cc",
 		"../dependencies/protobuf/src/google/protobuf/extension_set_heavy.cc",
-		"../dependencies/protobuf/src/google/protobuf/field_mask.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/feature_resolver.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_enum_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/generated_message_bases.cc",
 		"../dependencies/protobuf/src/google/protobuf/generated_message_reflection.cc",
 		"../dependencies/protobuf/src/google/protobuf/generated_message_tctable_full.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_tctable_gen.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_tctable_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/generated_message_util.cc",
+		"../dependencies/protobuf/src/google/protobuf/implicit_weak_message.cc",
+		"../dependencies/protobuf/src/google/protobuf/inlined_string_field.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/coded_stream.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/gzip_stream.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/io_win32.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/printer.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/strtod.cc",
 		"../dependencies/protobuf/src/google/protobuf/io/tokenizer.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_sink.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl.cc",
+		"../dependencies/protobuf/src/google/protobuf/io/zero_copy_stream_impl_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/lexer.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/message_path.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/parser.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/unparser.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/untyped_message.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/writer.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/internal/zero_copy_buffered_stream.cc",
+		"../dependencies/protobuf/src/google/protobuf/json/json.cc",
+		"../dependencies/protobuf/src/google/protobuf/map.cc",
 		"../dependencies/protobuf/src/google/protobuf/map_field.cc",
 		"../dependencies/protobuf/src/google/protobuf/message.cc",
-		"../dependencies/protobuf/src/google/protobuf/reflection_internal.h",
+		"../dependencies/protobuf/src/google/protobuf/message_lite.cc",
+		"../dependencies/protobuf/src/google/protobuf/parse_context.cc",
+		"../dependencies/protobuf/src/google/protobuf/port.cc",
+		"../dependencies/protobuf/src/google/protobuf/raw_ptr.cc",
+		"../dependencies/protobuf/src/google/protobuf/reflection_mode.cc",
 		"../dependencies/protobuf/src/google/protobuf/reflection_ops.cc",
+		"../dependencies/protobuf/src/google/protobuf/repeated_field.cc",
+		"../dependencies/protobuf/src/google/protobuf/repeated_ptr_field.cc",
 		"../dependencies/protobuf/src/google/protobuf/service.cc",
-		"../dependencies/protobuf/src/google/protobuf/source_context.pb.cc",
-		"../dependencies/protobuf/src/google/protobuf/struct.pb.cc",
-		"../dependencies/protobuf/src/google/protobuf/stubs/substitute.cc",
+		"../dependencies/protobuf/src/google/protobuf/stubs/common.cc",
 		"../dependencies/protobuf/src/google/protobuf/text_format.cc",
-		"../dependencies/protobuf/src/google/protobuf/timestamp.pb.cc",
-		"../dependencies/protobuf/src/google/protobuf/type.pb.cc",
 		"../dependencies/protobuf/src/google/protobuf/unknown_field_set.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/delimited_message_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/field_comparator.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/field_mask_util.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/datapiece.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/default_value_objectwriter.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/error_listener.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/field_mask_utility.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_escaping.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_objectwriter.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/json_stream_parser.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/object_writer.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/proto_writer.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectsource.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/protostream_objectwriter.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/type_info.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/internal/utility.cc",
-		"../dependencies/protobuf/src/google/protobuf/util/json_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/message_differencer.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/time_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/util/type_resolver_util.cc",
 		"../dependencies/protobuf/src/google/protobuf/wire_format.cc",
-		"../dependencies/protobuf/src/google/protobuf/wrappers.pb.cc",
+		"../dependencies/protobuf/src/google/protobuf/wire_format_lite.cc",
+	}
+
+	files {
+		"../dependencies/protobuf/third_party/abseil-cpp/absl/**.cc",
+	}
+	removefiles {
+		"../dependencies/protobuf/third_party/abseil-cpp/absl/**/*test*.cc",
+		"../dependencies/protobuf/third_party/abseil-cpp/absl/**/*mock*.cc",
+		"../dependencies/protobuf/third_party/abseil-cpp/absl/**benchmarks.cc",
+		"../dependencies/protobuf/third_party/abseil-cpp/absl/**benchmark.cc",
+	}
+
+	files {
+		"../dependencies/protobuf/third_party/utf8_range/utf8_range.c",
+		"../dependencies/protobuf/third_party/utf8_range/utf8_validity.cc",
 	}
 
 	filter "toolset:msc*"

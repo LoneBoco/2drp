@@ -82,7 +82,7 @@ Rectf RenderComponent::GetBoundingBox() const
 	return Rectf{};
 }
 
-void RenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed)
+void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
 	if (auto so = m_owner.lock())
 	{

@@ -1,3 +1,7 @@
+#include <PlayRho/PlayRho.hpp>
+
+#include "engine/common.h"
+
 #include "engine/network/PacketHandler.h"
 
 #include "engine/server/Server.h"
@@ -10,9 +14,6 @@
 #include "engine/item/Item.h"
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/Log.h"
-
-#include <PlayRho/PlayRho.hpp>
-#include <set>
 
 
 using tdrp::server::Server;
@@ -43,7 +44,10 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectDe
 void handle(Server& server, const uint16_t playerId, const packet::SceneObjectOwnership& packet);
 void handle(Server& server, const uint16_t playerId, const packet::SceneObjectControl& packet);
 void handle(Server& server, const uint16_t playerId, const packet::SceneObjectUnfollow& packet);
-void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCollision& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectShapes& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectChunkData& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectRequestChunkData& packet);
+void handle(Server& server, const uint16_t playerId, const packet::SceneTilesetAdd& packet);
 void handle(Server& server, const uint16_t playerId, const packet::SendEvent& packet);
 void handle(Server& server, const uint16_t playerId, const packet::FlagSet& packet);
 void handle(Server& server, const uint16_t playerId, const packet::ItemDefinition& packet);
@@ -114,8 +118,17 @@ void network_receive_server(Server& server, const uint16_t playerId, const uint1
 		case Packets::SCENEOBJECTUNFOLLOW:
 			HANDLE(packet::SceneObjectUnfollow);
 			break;
-		case Packets::SCENEOBJECTCOLLISION:
-			HANDLE(packet::SceneObjectCollision);
+		case Packets::SCENEOBJECTSHAPES:
+			HANDLE(packet::SceneObjectShapes);
+			break;
+		case Packets::SCENEOBJECTCHUNKDATA:
+			HANDLE(packet::SceneObjectChunkData);
+			break;
+		case Packets::SCENEOBJECTREQUESTCHUNKDATA:
+			HANDLE(packet::SceneObjectRequestChunkData);
+			break;
+		case Packets::SCENETILESETADD:
+			HANDLE(packet::SceneTilesetAdd);
 			break;
 		case Packets::SENDEVENT:
 			HANDLE(packet::SendEvent);
@@ -139,7 +152,7 @@ void network_receive_server(Server& server, const uint16_t playerId, const uint1
 
 /////////////////////////////
 
-AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribute, ObjectAttributes& container)
+static AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribute, ObjectAttributes& container)
 {
 	const auto attribute_id = static_cast<uint16_t>(packet_attribute.id());
 	auto attribute = container.Get(attribute_id);
@@ -172,6 +185,7 @@ AttributePtr load_attribute_from_packet(const packet::Attribute& packet_attribut
 
 void handle_ready(Server& server, const uint16_t playerId)
 {
+	log::PrintLine("<- Client {} is ready.", playerId);
 	server.ProcessPlayerJoin(playerId);
 }
 
@@ -196,7 +210,7 @@ void handle(Server& server, const uint16_t playerId, const packet::LoginStatus& 
 
 	if (success)
 	{
-		log::PrintLine("<- Login successful.");
+		log::PrintLine("<- Login successful.  Player id: {}", player_id);
 		server.SetPlayerNumber(player_id);
 	}
 	else
@@ -351,8 +365,8 @@ void handle(Server& server, const uint16_t playerId, const packet::ClassAdd& pac
 	log::PrintLine(":: Adding class {}.", name);
 
 	auto c = server.GetObjectClass(name);
-	c->ScriptClient = script_client;
-	c->ScriptServer = script_server;
+	c->ClientScript = script_client;
+	c->ServerScript = script_server;
 	c->Attributes.GetMap().clear();
 
 	for (int i = 0; i < packet.attributes_size(); ++i)
@@ -397,10 +411,11 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 	const auto ptype = packet.type();
 	const auto& pclass = packet.class_();
 	const auto& pscript = packet.script();
+	const auto preplicatechanges = packet.replicatechanges();
+	const auto pignoresevents = packet.ignoresevents();
 	const auto pattached_to = packet.attached_to();
 	const auto& pscene = packet.scene();
 
-	auto class_ = server.GetObjectClass(pclass);
 	auto type = static_cast<SceneObjectType>(ptype);
 
 	auto scene = server.GetScene(pscene);
@@ -421,28 +436,15 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 	{
 		log::PrintLine(":: Adding scene object {} ({}).", pid, pclass);
 
-		// Create our new scene object.
-		switch (type)
-		{
-			case SceneObjectType::STATIC:
-				so = std::make_shared<StaticSceneObject>(class_, pid);
-				break;
-			case SceneObjectType::ANIMATED:
-				so = std::make_shared<AnimatedSceneObject>(class_, pid);
-				break;
-			case SceneObjectType::TILEMAP:
-				so = std::make_shared<TiledSceneObject>(class_, pid);
-				break;
-			case SceneObjectType::TMX:
-				so = std::make_shared<TMXSceneObject>(class_, pid);
-				break;
-			case SceneObjectType::TEXT:
-				so = std::make_shared<TextSceneObject>(class_, pid);
-				break;
-			default:
-				so = std::make_shared<SceneObject>(class_, pid);
-				break;
-		}
+		// Create the scene object.
+		so = server.CreateSceneObject(type, pclass, pid);
+		so->ClientScript = pscript;
+		so->ReplicateChanges = preplicatechanges;
+		so->IgnoresEvents = pignoresevents;
+
+		// Set owner.
+		auto powner = packet.owner();
+		so->SetOwningPlayer(static_cast<PlayerID>(powner));
 
 		// Set attached to.
 		// Do this before we read in attributes/props as attaching sets the position to {0, 0}.
@@ -453,7 +455,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 				so->AttachTo(attached);
 		}
 
-		// Add props and attributes.
+		// Add attributes.
 		for (int i = 0; i < packet.attributes_size(); ++i)
 		{
 			const auto& attribute = packet.attributes(i);
@@ -480,6 +482,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 			}
 		}
 
+		// Add props.
 		for (int i = 0; i < packet.properties_size(); ++i)
 		{
 			const auto& prop = packet.properties(i);
@@ -505,25 +508,31 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 			}
 		}
 
-		// Add it to the appropriate scene.
-		scene->AddObject(so);
-
-		// Collisions.
-		readCollisionFromPacket(so, packet);
-	}
-
-	// Handle the script.
-	if (so)
-	{
-		if (class_)
+		// Add tilesets.
+		if (so->GetType() == SceneObjectType::TMX)
 		{
-			server.Script->RunScript("sceneobject_cl_" + std::to_string(pid) + "_c_" + pclass, class_->ScriptClient, so);
+			auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
+			for (int i = 0; i < packet.tileset_gids_size(); ++i)
+			{
+				const auto& tileset_gid = packet.tileset_gids(i);
+				const auto& name = tileset_gid.name();
+				const auto first_gid = tileset_gid.first_gid();
+				const auto last_gid = tileset_gid.last_gid();
+
+				auto tileset = server.GetTileset(name);
+				if (tileset)
+				{
+					scene::TilesetGID gids{ first_gid, last_gid };
+					tmx->Tilesets.emplace_back(std::make_pair(std::move(gids), tileset));
+				}
+			}
 		}
 
-		so->ClientScript = pscript;
-		server.Script->RunScript("sceneobject_cl_" + std::to_string(pid), so->ClientScript, so);
+		// Add to the server.
+		server.AddSceneObject(so);
 
-		so->OnCreated.RunAll();
+		// Add it to the appropriate scene.
+		scene->AddObject(so);
 	}
 }
 
@@ -531,6 +540,8 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 {
 	const auto pid = packet.id();
 	const auto pattached_to = packet.attached_to();
+	const auto preplicatechanges = packet.replicatechanges();
+	const auto pignoresevents = packet.ignoresevents();
 
 	auto so = server.GetSceneObjectById(pid);
 	if (!so) return;
@@ -547,6 +558,9 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 		if (attached)
 			so->AttachTo(attached);
 	}
+
+	so->ReplicateChanges = preplicatechanges;
+	so->IgnoresEvents = pignoresevents;
 
 	for (int i = 0; i < packet.attributes_size(); ++i)
 	{
@@ -666,20 +680,143 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectUn
 	}
 }
 
-void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCollision& packet)
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectShapes& packet)
 {
-	if (packet.collision_size() == 0) return;
+	if (!packet.has_body()) return;
 
 	const auto sceneobject = packet.id();
 	auto player = server.GetPlayerById(playerId);
 	auto so = server.GetSceneObjectById(sceneobject);
 	if (!player || !so) return;
 
-	// If the player doesn't own the scene object, don't accept this change.
-	if (!so->IsOwnedBy(server.GetPlayer()))
+	// TODO: Needs player id rework.
+	// If the player who sent this packet doesn't own the scene object, don't accept this change.
+	//if (!so->IsOwnedBy(player))
+		//return;
+
+	log::PrintLine("<- Received collision data for scene object {}.", sceneobject);
+	readCollisionShapesFromPacket(so, packet, so->IsOwnedBy(server.GetPlayer()));
+}
+
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectChunkData& packet)
+{
+	const auto sceneobject = packet.id();
+	auto player = server.GetPlayerById(playerId);
+	auto so = server.GetSceneObjectById(sceneobject);
+	if (!player || !so) return;
+
+	// Currently, only TMX scene objects are supported.
+	if (so->GetType() != SceneObjectType::TMX)
 		return;
 
-	readCollisionFromPacket(so, packet);
+	auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
+
+	size_t chunk_idx = packet.index();
+	size_t max_chunks = packet.max_count();
+	Vector2di chunk_position{ packet.pos_x(), packet.pos_y() };
+	Vector2du chunk_dimensions{ packet.width(), packet.height() };
+
+	log::PrintLine("<- Received chunk {} data for scene object {}.", chunk_idx, sceneobject);
+	tmx->LoadChunkData(chunk_idx, max_chunks, std::move(chunk_position), std::move(chunk_dimensions));
+	tmx->RenderOrder = static_cast<tmx::RenderOrder>(packet.render_order());
+}
+
+void handle(Server& server, const uint16_t playerId, const packet::SceneObjectRequestChunkData& packet)
+{
+	const auto sceneobject = packet.id();
+	auto player = server.GetPlayerById(playerId);
+	auto so = server.GetSceneObjectById(sceneobject);
+	if (!player || !so) return;
+
+	// Currently, only TMX scene objects are supported.
+	if (so->GetType() != SceneObjectType::TMX)
+		return;
+
+	auto chunk_idx = packet.index();
+	auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
+	if (chunk_idx >= tmx->Chunks.size())
+		return;
+
+	log::PrintLine("<- Received request for chunk {} data for scene object {}.", chunk_idx, sceneobject);
+
+	// Record the chunk details.
+	const auto& chunk = tmx->Chunks.at(chunk_idx);
+	packet::SceneObjectChunkData chunk_packet{};
+	chunk_packet.set_id(sceneobject);
+	chunk_packet.set_index(chunk_idx);
+	chunk_packet.set_max_count(static_cast<uint32_t>(tmx->Chunks.size()));
+	chunk_packet.set_pos_x(chunk.Position.x);
+	chunk_packet.set_pos_y(chunk.Position.y);
+	chunk_packet.set_width(chunk.Size.x);
+	chunk_packet.set_height(chunk.Size.y);
+	chunk_packet.set_render_order(static_cast<uint32_t>(tmx->RenderOrder));
+
+	// If we have the TMX map, add the tiles.
+	if (auto tmx_map = tmx->GetMap(); tmx_map != nullptr)
+	{
+		const auto& layers = tmx_map->getLayers();
+		if (tmx->Layer >= layers.size())
+			return;
+
+		const auto& layer = layers.at(tmx->Layer);
+		if (layer->getType() != tmx::Layer::Type::Tile)
+			return;
+
+		const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+		const auto& chunks = tilelayer.getChunks();
+		if (chunk_idx >= chunks.size())
+			return;
+
+		const auto& chunk = chunks.at(chunk_idx);
+		auto* tiles = chunk_packet.mutable_tiles();
+		auto tile_ids = chunk.tiles | std::ranges::views::transform([](const tmx::TileLayer::Tile& tile) -> const uint32_t { return tile.ID; });
+
+		// Protobuf calculating iterator distances with ints again.
+		#pragma warning (push)
+		#pragma warning (disable : 4244)
+
+		tiles->Assign(tile_ids.begin(), tile_ids.end());
+
+		#pragma warning (pop)
+	}
+
+	// Send the data back to the requester.
+	server.GetNetwork().Send(playerId, network::PACKETID(Packets::SCENEOBJECTCHUNKDATA), network::Channel::RELIABLE, chunk_packet);
+
+	// Construct the shapes for the chunk too.
+	if (so->GetPhysicsBodyConfiguration().has_value())
+	{
+		auto packet_collision = network::constructCollisionShapesPacket(so, so->GetPhysicsBodyConfiguration().value(), chunk_idx);
+		server.GetNetwork().Send(playerId, network::PACKETID(Packets::SCENEOBJECTSHAPES), network::Channel::RELIABLE, packet_collision);
+	}
+}
+
+void handle(Server& server, const uint16_t playerId, const packet::SceneTilesetAdd& packet)
+{
+	if (packet.tilesets_size() == 0)
+		return;
+
+	for (int i = 0; i < packet.tilesets_size(); ++i)
+	{
+		const auto& tileset = packet.tilesets(i);
+		const auto& name = tileset.name();
+
+		if (server.GetTileset(name) != nullptr)
+			continue;
+
+		scene::Tileset ts
+		{
+			.File = name,
+			.TileDimensions = { tileset.tilewidth(), tileset.tileheight() },
+			.TileCount = tileset.tilecount(),
+			.Columns = static_cast<uint16_t>(tileset.columns()),
+			.Rows = static_cast<uint16_t>(tileset.rows()),
+			.Margin = static_cast<uint8_t>(tileset.margin()),
+			.Spacing = static_cast<uint8_t>(tileset.spacing()),
+		};
+
+		server.AddTileset(name, std::make_shared<scene::Tileset>(std::move(ts)));
+	}
 }
 
 void handle(Server& server, const uint16_t playerId, const packet::SendEvent& packet)

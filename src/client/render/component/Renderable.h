@@ -15,7 +15,7 @@ class IRenderableComponent
 public:
 	virtual ~IRenderableComponent() {}
 	virtual Rectf GetBoundingBox() const = 0;
-	virtual void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) = 0;
+	virtual void Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed) = 0;
 };
 
 } // end namespace tdrp::render::component

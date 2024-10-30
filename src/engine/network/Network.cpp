@@ -172,7 +172,10 @@ void Network::Disconnect()
 	if (m_peers.size() == 0)
 		return;
 
-	enet_peer_disconnect(m_peers.at(0), 0);
+	for (auto it = m_peers.rbegin(); it != m_peers.rend(); ++it)
+	{
+		enet_peer_disconnect_now(it->second, 0);
+	}
 
 	// Make sure the disconnect gets sent.
 	Update();
@@ -252,6 +255,8 @@ void Network::Update()
 
 void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel)
 {
+	if (m_host == nullptr) return;
+
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
 	{
@@ -276,6 +281,8 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 
 void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
+	if (m_host == nullptr) return;
+
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
 	{
@@ -301,6 +308,8 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 {
+	if (m_host == nullptr) return;
+
 	// Check for a network bypass.
 	// Broadcast shouldn't need this.
 	/*
@@ -318,6 +327,8 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
+	if (m_host == nullptr) return;
+
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
 
@@ -326,6 +337,8 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, const g
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return {};
+
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	// Guest should just send to the server.  They won't have other peers.
@@ -341,6 +354,8 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return {};
+
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	// Guest should just send to the server.  They won't have other peers.
@@ -356,6 +371,8 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return 0;
+
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id), exclude);
@@ -363,6 +380,8 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return 0;
+
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
@@ -372,6 +391,8 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return {};
+
 	std::vector<server::PlayerPtr> result;
 	
 	if (packet == nullptr)
@@ -392,7 +413,7 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 				auto so = m_server->GetSceneObjectById(id);
 				if (!so) return;
 
-				if (so->GetOwningPlayer().lock() == player)
+				if (so->GetOwningPlayer() == player_id)
 					owned_objects.insert(so);
 			}
 		);
@@ -454,6 +475,7 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
 {
+	if (m_host == nullptr) return 0;
 	if (packet == nullptr) return 0;
 	int count = 0;
 	auto original_ref_count = packet->referenceCount;

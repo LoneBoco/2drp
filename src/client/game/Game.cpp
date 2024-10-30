@@ -6,6 +6,7 @@
 #include "client/game/Game.h"
 
 #include "client/render/component/RenderComponent.h"
+#include "client/render/component/helper/SceneObject.h"
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
 #include "client/loader/ui/UILoader.h"
@@ -36,6 +37,12 @@ Game::Game()
 	using namespace std::placeholders;
 	Server.GetNetwork().AddClientReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
 
+	Server.OnSceneObjectAdd = &handlers::AddRenderComponent;
+}
+
+void Game::Initialize()
+{
+	// Get the package.
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
 	std::string package{ settings->Get("game.package", "login") };
 
@@ -52,12 +59,9 @@ Game::Game()
 	else flags = FLAGS<uint16_t>(server::ServerFlags::SINGLEPLAYER);
 
 	// Initialize the server.
-	if (!Server.Initialize(package, server_type, flags))
+	if (!Server.Initialize(server_type, flags))
 		throw std::runtime_error("Unable to start the server.");
-}
 
-void Game::Initialize()
-{
 	// Bind game script classes.
 	Script->BindIntoMe(
 		&bind_client,
@@ -69,38 +73,36 @@ void Game::Initialize()
 	UI = loader::UILoader::CreateUIManager();
 	UI->ScreenSizeUpdate();
 
-	// Load settings.
-	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
-	if (settings->Exists("game.networked"))
+	// If we are connecting to a server, connect now.
+	if (settings->Exists("game.networked") && settings->Exists("network.server"))
 	{
-		// Connecting to a server, so don't load us into the game by returning early.
-		if (settings->Exists("network.server"))
-		{
-			std::string host{ settings->Get("network.server") };
-			uint16_t port = settings->GetAs<uint16_t>("network.port");
-			Server.Connect(host, port);
-			return;
-		}
-		// Hosting a server so load into the game.
-		else if (settings->Exists("game.hosting"))
-		{
-			uint16_t port = settings->GetAs<uint16_t>("network.port");
-			Server.Host(port);
-		}
-		else throw "** ERROR: Networked game but cannot determine if host or guest.";
+		std::string host{ settings->Get("network.server") };
+		uint16_t port = settings->GetAs<uint16_t>("network.port");
+		Server.Connect(host, port);
+		return;
 	}
+
+	// Load the package and UI.
+	Server.LoadPackage(package);
+	loader::UILoader::Load(UI.get());
+
+	// Hosted.
+	if (settings->Exists("game.networked") && settings->Exists("game.hosting"))
+	{
+		uint16_t port = settings->GetAs<uint16_t>("network.port");
+		Server.Host(port);
+	}
+	// Singleplayer.
 	else
 	{
 		Server.SinglePlayer();
 	}
 
+	// Mark the game as playing.
 	State = GameState::PLAYING;
 
 	// Call connected callback.
 	OnConnected.RunAll();
-
-	// Call the OnPlayerJoin script function.
-	// Server.OnPlayerJoin.RunAll(GetCurrentPlayer());
 }
 
 Game::~Game()
@@ -129,8 +131,12 @@ void Game::Update()
 
 	if (State == GameState::LOADING)
 	{
-		if (!Server.DownloadManager.FilesInQueue && !Server.FileSystem.IsSearchingForFiles() && Server.GetPackage())
+		if (!Server.DownloadManager.FilesInQueue && !Server.FileSystem.IsSearchingForFiles())
 		{
+			// Load the UI.
+			loader::UILoader::Load(UI.get());
+
+			// Set to player.
 			State = GameState::PLAYING;
 			
 			// Send the finished loading packet.
@@ -194,12 +200,13 @@ void Game::Render(sf::RenderWindow* window)
 			});
 
 			// Render!
+			const auto& viewRect = Camera.GetViewRect();
 			for (const auto& so : within_camera)
 			{
 				auto comp = so->GetComponentDerivedFrom<render::component::IRenderableComponent>();
 				if (auto render = comp.lock())
 				{
-					render->Render(*window, std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()));
+					render->Render(*window, viewRect, std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()));
 				}
 			}
 		}

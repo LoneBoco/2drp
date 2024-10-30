@@ -25,6 +25,8 @@ class Server;
 
 class Player
 {
+	friend Account;
+
 	SCRIPT_SETUP;
 	SCRIPT_FUNCTION(OnSwitchedControl);
 

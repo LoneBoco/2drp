@@ -149,6 +149,7 @@ namespace functions
 void bind_player(sol::state& lua)
 {
 	lua.new_usertype<server::Account>("Account", sol::no_constructor,
+		"Scene", &server::Account::LastKnownScene,
 		"Flags", &server::Account::Flags
 	);
 

@@ -39,7 +39,7 @@ public:
 
 public:
 	Rectf GetBoundingBox() const override;
-	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
+	void Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed) override;
 
 protected:
 	void load_animation();

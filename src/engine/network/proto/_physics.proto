@@ -6,6 +6,7 @@ enum BodyType {
 	STATIC = 0;
 	KINEMATIC = 1;
 	DYNAMIC = 2;
+	HYBRID = 3;
 }
 enum ShapeType {
 	POLYGON = 0;

@@ -3,7 +3,7 @@ Me.OnStarted = function()
 end
 
 Me.OnPlayerJoin = function(player)
-	local scene = Me:GetScene(player.Account.Flags.scene or "") or Me:GetDefaultScene()
+	local scene = Me:GetScene(player.Account.Scene or "") or Me:GetDefaultScene()
 	log('OnPlayerJoin: scene: '..scene:GetName())
 
 	Me:SwitchPlayerScene(player, scene)
@@ -24,19 +24,22 @@ Me.OnPlayerJoin = function(player)
 
 	so.OnCreatePhysics = function()
 		log('Creating physics')
-		Physics.SceneObject.AddCollisionCircle(so, 0.98, Vector2df.new(1.5, 2.0))
-		Physics.SceneObject.SetType(so, BodyType.DYNAMIC)
-		Physics.SceneObject.SetFixedRotation(so, true)
-	end
 
-	Me:SwitchSceneObjectScene(so, scene)
+		local config = PhysicsBody.new()
+		config.Type = BodyType.HYBRID;
+		config.FixedRotation = true;
+		config:AddCollisionCircle(0.98, Vector2df.new(1.5, 2.0))
+
+		so:SetPhysicsBody(config)
+	end
 	--
 
-	local text = Me:CreateSceneObject(SceneObjectType.TEXT, "chat", scene)
+	local text = Me:CreateSceneObject(SceneObjectType.TEXT, "chat")
 	text.Layer = 2
 	text:AttachTo(so)
 	text.Position = Vector2df.new(1.5 * 16, -1.0 * 16)
 
+	Me:SwitchSceneObjectScene(so, scene)
 	Me:SwitchSceneObjectOwnership(so, player)
 	Me:SwitchSceneObjectOwnership(text, player)
 end
@@ -50,7 +53,6 @@ Me.OnPlayerLeave = function(player)
 		log('Saving player positional data.')
 		player.Account.Flags.x = so.Properties.X
 		player.Account.Flags.y = so.Properties.Y
-		player.Account.Flags.scene = player:GetCurrentScene():GetName()
 	else
 		log('Tried to save player position but they had no controlled scene object!')
 	end

@@ -27,10 +27,10 @@ public:
 	ObjectAttributes Attributes;
 
 	//! Client script.
-	std::string ScriptClient;
+	std::string ClientScript;
 
 	//! Server script.
-	std::string ScriptServer;
+	std::string ServerScript;
 
 private:
 	std::string m_name;

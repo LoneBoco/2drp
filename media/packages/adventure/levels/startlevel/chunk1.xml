@@ -1,12 +1,12 @@
 <levelchunk version="1" x="0" y="0" />
 <sceneobjects>
-	<object type="tmx" class="level" replicated="false" ignoresevents="true">
+	<object type="tmx" class="level" ignoresevents="true">
 		<property name="x" type="float" value="0.0" />
 		<property name="y" type="float" value="0.0" />
 		<property name="z" type="float" value="0.0" />
 		<tmx file="startlevel.tmx" />
 	</object>
-	<object type="animated" class="bush" replicated="false">
+	<object type="animated" class="bush" local="true">
 		<property name="x" type="float" value="256.0" />
 		<property name="y" type="float" value="196.0" />
 		<property name="z" type="float" value="0.0" />

@@ -3,6 +3,7 @@
 // Get rid of a horribly annoying warning in protobuf.
 #pragma warning (push)
 #pragma warning (disable : 4146)
+#pragma warning (disable : 4267)
 
 #include "engine/network/packets/ClassAdd.pb.h"
 #include "engine/network/packets/ClassDelete.pb.h"
@@ -18,13 +19,16 @@
 #include "engine/network/packets/ItemDelete.pb.h"
 #include "engine/network/packets/Login.pb.h"
 #include "engine/network/packets/LoginStatus.pb.h"
-#include "engine/network/packets/SceneObjectNew.pb.h"
-#include "engine/network/packets/SceneObjectDelete.pb.h"
 #include "engine/network/packets/SceneObjectChange.pb.h"
-#include "engine/network/packets/SceneObjectOwnership.pb.h"
+#include "engine/network/packets/SceneObjectChunkData.pb.h"
 #include "engine/network/packets/SceneObjectControl.pb.h"
+#include "engine/network/packets/SceneObjectDelete.pb.h"
+#include "engine/network/packets/SceneObjectNew.pb.h"
+#include "engine/network/packets/SceneObjectOwnership.pb.h"
+#include "engine/network/packets/SceneObjectRequestChunkData.pb.h"
+#include "engine/network/packets/SceneObjectShapes.pb.h"
 #include "engine/network/packets/SceneObjectUnfollow.pb.h"
-#include "engine/network/packets/SceneObjectCollision.pb.h"
+#include "engine/network/packets/SceneTilesetAdd.pb.h"
 #include "engine/network/packets/SendEvent.pb.h"
 #include "engine/network/packets/ServerInfo.pb.h"
 #include "engine/network/packets/SwitchScene.pb.h"

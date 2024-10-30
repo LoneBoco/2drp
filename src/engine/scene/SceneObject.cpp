@@ -3,12 +3,93 @@
 #include <set>
 #include <sstream>
 
+#include <PlayRho/Dynamics/Body.hpp>
+#include <clipper2/clipper.h>
+#include <polypartition.h>
+
 #include "engine/common.h"
 #include "engine/server/Player.h"
 #include "engine/scene/Scene.h"
 #include "engine/filesystem/Log.h"
 
 #include "SceneObject.h"
+
+
+namespace tdrp::helper
+{
+	static std::pair<int32_t, int32_t> getTilePosition(tmx::RenderOrder render_order, const tmx::Vector2i& chunk_size, uint32_t index)
+	{
+		std::pair<int32_t, int32_t> result;
+
+		switch (render_order)
+		{
+			case tmx::RenderOrder::RightDown:
+				result.first = (chunk_size.x - 1) - (index % chunk_size.x);
+				result.second = index / chunk_size.y;
+				break;
+			case tmx::RenderOrder::RightUp:
+				result.first = (chunk_size.x - 1) - (index % chunk_size.x);
+				result.second = (chunk_size.y - 1) - (index / chunk_size.y);
+				break;
+			case tmx::RenderOrder::LeftDown:
+				result.first = index % chunk_size.x;
+				result.second = index / chunk_size.y;
+				break;
+			case tmx::RenderOrder::LeftUp:
+				result.first = index % chunk_size.x;
+				result.second = (chunk_size.y - 1) - (index / chunk_size.y);
+				break;
+		}
+
+		return result;
+	}
+
+	static void collectPolygons(const std::unique_ptr<Clipper2Lib::PolyPathD>& polypath, TPPLPolyList& polylist)
+	{
+		const auto& poly = polypath->Polygon();
+
+		TPPLPoly polygon;
+		polygon.Init(static_cast<long>(poly.size()));
+		polygon.SetHole(polypath->IsHole());
+
+		if (polypath->IsHole())
+			polygon.SetOrientation(TPPL_ORIENTATION_CCW);
+		else polygon.SetOrientation(TPPL_ORIENTATION_CW);
+
+		for (auto i = 0; i < poly.size(); ++i)
+		{
+			polygon[i].x = poly[i].x;
+			polygon[i].y = poly[i].y;
+		}
+
+		polylist.emplace_back(std::move(polygon));
+
+		for (const auto& child : *polypath)
+			collectPolygons(child, polylist);
+	}
+
+	static std::optional<playrho::d2::Shape> createPhysicsShape(physics::BodyConfiguration& body, tmx::Vector2i position, const uint8_t& ppu, const TPPLPoly& polygon)
+	{
+		if (polygon.IsHole()) return std::nullopt;
+
+		// Convert to PlayRho vertices.
+		std::vector<playrho::Length2> vertices;
+		for (auto i = 0; i < polygon.GetNumPoints(); ++i)
+		{
+			const auto& point = polygon[i];
+			vertices.emplace_back(playrho::Length2{ position.x + static_cast<float>(point.x) / ppu, position.y + static_cast<float>(point.y) / ppu });
+		}
+
+		// Set the shape config.
+		playrho::d2::PolygonShapeConf conf{};
+		conf.UseVertices(vertices);
+
+		// Save the shape.
+		body.Shapes.emplace_back(playrho::d2::Shape{ conf });
+		return std::make_optional(body.Shapes.back());
+	}
+
+} // end namespace tdrp::helper
 
 namespace tdrp
 {
@@ -34,7 +115,9 @@ SceneObject& SceneObject::operator=(const SceneObject& other)
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
-	Replicated = other.Replicated;
+	ReplicateChanges = other.ReplicateChanges;
+	IgnoresEvents = other.IgnoresEvents;
+	Initialized = false;
 	return *this;
 }
 
@@ -65,21 +148,22 @@ void SceneObject::SetPosition(const Vector2df& position)
  	Properties[Property::X] = position.x;
 	Properties[Property::Y] = position.y;
 
-	if (PhysicsBody.has_value())
-	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto ppu = scene->Physics.GetPixelsPerUnit();
-			auto& world = scene->Physics.GetWorld();
-			auto attached_to = m_attached_to.lock();
+	// If we have no bodies or we are attached to another scene object, don't bother updating anything.
+	if (!HasPhysicsBody() || !m_attached_to.expired())
+		return;
 
-			if (!attached_to)
-				playrho::d2::SetLocation(world, PhysicsBody.value(), { position.x / ppu, position.y / ppu });
-			else
-			{
-				Vector2df attached_pos{ attached_to->GetPosition() + position };
-				playrho::d2::SetLocation(world, PhysicsBody.value(), { attached_pos.x / ppu, attached_pos.y / ppu });
-			}
+	if (auto scene = m_current_scene.lock(); scene)
+	{
+		auto& world = scene->Physics.GetWorld();
+		auto ppu = scene->Physics.GetPixelsPerUnit();
+		auto attached_to = m_attached_to.lock();
+
+		if (!attached_to)
+			playrho::d2::SetLocation(world, m_physics_body.value(), {position.x / ppu, position.y / ppu});
+		else
+		{
+			Vector2df attached_pos{ attached_to->GetPosition() + position };
+			playrho::d2::SetLocation(world, m_physics_body.value(), {attached_pos.x / ppu, attached_pos.y / ppu});
 		}
 	}
 }
@@ -103,13 +187,13 @@ void SceneObject::SetAngle(const float& angle)
 {
 	Properties[Property::ANGLE] = angle;
 
-	if (PhysicsBody.has_value())
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
 	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetAngle(world, PhysicsBody.value(), angle);
-		}
+		auto& world = scene->Physics.GetWorld();
+		playrho::d2::SetAngle(world, m_physics_body.value(), angle);
 	}
 }
 
@@ -127,6 +211,7 @@ void SceneObject::SetScale(const Vector2df& scale)
 	Properties[Property::SCALE_Y] = scale.y;
 
 	// TODO: Physics scale.
+	/*
 	if (PhysicsBody.has_value())
 	{
 		if (auto scene = m_current_scene.lock(); scene)
@@ -134,6 +219,7 @@ void SceneObject::SetScale(const Vector2df& scale)
 			auto& world = scene->Physics.GetWorld();
 		}
 	}
+	*/
 
 /*
 	// Scale the physics objects.
@@ -248,13 +334,14 @@ void SceneObject::SetVelocity(const Vector2df& velocity)
 	Properties[Property::VELOCITY_X] = velocity.x;
 	Properties[Property::VELOCITY_Y] = velocity.y;
 
-	if (PhysicsBody.has_value())
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
 	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetVelocity(world, PhysicsBody.value(), { velocity.x, velocity.y });
-		}
+		auto& world = scene->Physics.GetWorld();
+		SetHybridBodyMoving(velocity.x != 0.0f || velocity.y != 0.0f);
+		playrho::d2::SetVelocity(world, m_physics_body.value(), {velocity.x, velocity.y});
 	}
 }
 
@@ -271,13 +358,13 @@ void SceneObject::SetAcceleration(const Vector2df& acceleration)
 	Properties[Property::ACCELERATION_X] = acceleration.x;
 	Properties[Property::ACCELERATION_Y] = acceleration.y;
 
-	if (PhysicsBody.has_value())
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
 	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetAcceleration(world, PhysicsBody.value(), { acceleration.x, acceleration.y });
-		}
+		auto& world = scene->Physics.GetWorld();
+		playrho::d2::SetAcceleration(world, m_physics_body.value(), {acceleration.x, acceleration.y});
 	}
 }
 
@@ -290,13 +377,13 @@ void SceneObject::SetVelocityAngle(const float& velocity)
 {
 	Properties[Property::VELOCITY_ANGLE] = velocity;
 
-	if (PhysicsBody.has_value())
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
 	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetVelocity(world, PhysicsBody.value(), velocity);
-		}
+		auto& world = scene->Physics.GetWorld();
+		playrho::d2::SetVelocity(world, m_physics_body.value(), velocity);
 	}
 }
 
@@ -309,13 +396,13 @@ void SceneObject::SetAccelerationAngle(const float& acceleration)
 {
 	Properties[Property::ACCELERATION_ANGLE] = acceleration;
 
-	if (PhysicsBody.has_value())
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
 	{
-		if (auto scene = m_current_scene.lock(); scene)
-		{
-			auto& world = scene->Physics.GetWorld();
-			playrho::d2::SetAcceleration(world, PhysicsBody.value(), acceleration);
-		}
+		auto& world = scene->Physics.GetWorld();
+		playrho::d2::SetAcceleration(world, m_physics_body.value(), acceleration);
 	}
 }
 
@@ -391,10 +478,7 @@ Rectf SceneObject::GetBounds() const noexcept
 
 bool SceneObject::IsOwnedBy(PlayerID id) const noexcept
 {
-	if (m_owning_player.expired()) return false;
-	if (auto owner = m_owning_player.lock(); owner)
-		return owner->GetPlayerId() == id;
-	return false;
+	return id == m_owning_player;
 }
 
 bool SceneObject::IsOwnedBy(std::shared_ptr<server::Player> player) const noexcept
@@ -402,14 +486,19 @@ bool SceneObject::IsOwnedBy(std::shared_ptr<server::Player> player) const noexce
 	return player != nullptr && IsOwnedBy(player->GetPlayerId());
 }
 
-void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
+void SceneObject::SetOwningPlayer(PlayerID player)
 {
 	m_owning_player = player;
 }
 
+void SceneObject::SetOwningPlayer(std::shared_ptr<server::Player> player)
+{
+	m_owning_player = player->GetPlayerId();
+}
+
 bool SceneObject::SetCurrentScene(std::shared_ptr<scene::Scene> scene)
 {
-	if (IsGlobal() || m_current_scene.expired())
+	if (!IsLocal() || m_current_scene.expired())
 	{
 		m_current_scene = scene;
 		return true;
@@ -426,6 +515,14 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 		return;
 
 	m_attached_to = other;
+	other->m_attached.push_back(weak_from_this());
+
+	// Enable or disable the bodies depending on the attach status.
+	if (auto scene = m_current_scene.lock(); scene && HasPhysicsBody())
+	{
+		auto& world = scene->Physics.GetWorld();
+		playrho::d2::SetEnabled(world, m_physics_body.value(), other != nullptr);
+	}
 
 	// If we are detaching, set our position to our current location.
 	// If we are attaching, set our position offset to 0,0.
@@ -451,33 +548,131 @@ SceneObjectID SceneObject::GetAttachedId() const noexcept
 	return attached->ID;
 }
 
-std::optional<playrho::BodyID> SceneObject::GetInitializedPhysicsBody()
+void SceneObject::addPhysicsBodyToScene(std::shared_ptr<scene::Scene>& scene) noexcept
 {
-	if (PhysicsBody.has_value())
-		return PhysicsBody.value();
-
-	auto scene = m_current_scene.lock();
-	if (!scene) return std::nullopt;
+	if (HasPhysicsBody())
+		return;
+	if (!m_physics_body_config.has_value() || m_physics_body_config.value().Shapes.empty())
+		return;
 
 	auto& world = scene->Physics.GetWorld();
 	auto ppu = scene->Physics.GetPixelsPerUnit();
 	auto position = GetPosition();
 
-	playrho::d2::BodyConf config;
-	config
-		.UseType(playrho::BodyType::Kinematic)
-		.UseLocation({ position.x / ppu, position.y / ppu })
-		.UseFixedRotation(true);
+	// Update the config before we add it.
+	physics::BodyConfiguration config{ m_physics_body_config.value()};
+	config.BodyConf.UseLocation({ position.x / ppu, position.y / ppu });
+	if (!m_attached_to.expired())
+		config.BodyConf.enabled = false;
 
-	auto body = playrho::d2::CreateBody(world, config);
-	PhysicsBody = body;
+	// Set the body type.
+	bool has_shadow = false;
+	switch (config.Type)
+	{
+		case physics::BodyTypes::STATIC:
+		case physics::BodyTypes::HYBRID:
+			config.BodyConf.UseType(playrho::BodyType::Static);
+			break;
+		case physics::BodyTypes::KINEMATIC:
+			config.BodyConf.UseType(playrho::BodyType::Kinematic);
+			break;
+		case physics::BodyTypes::DYNAMIC:
+			config.BodyConf.UseType(playrho::BodyType::Dynamic);
+			break;
+	}
 
-	return body;
+	// Create the body.
+	auto body = playrho::d2::CreateBody(world, config.BodyConf);
+	m_physics_body = body;
+	scene->Physics.AddBodyToSceneObject(body, shared_from_this());
+
+	// Add the shapes to the body.
+	for (playrho::d2::Shape shape : config.Shapes)
+	{
+		playrho::d2::FixtureConf fixture_conf{};
+		fixture_conf.UseBody(body).UseShape(shape);
+		fixture_conf.filter.categoryBits = physics::category_default;
+		fixture_conf.filter.maskBits = physics::category_default | physics::category_hybrid;
+
+		//if (config.Type == physics::BodyTypes::HYBRID)
+		//	fixture_conf.filter.categoryBits = physics::category_hybrid;
+
+		playrho::d2::CreateFixture(world, fixture_conf);
+	}
+}
+
+void SceneObject::SetPhysicsBody(const physics::BodyConfiguration& body_config) noexcept
+{
+	m_physics_body_config = body_config;
+
+	auto scene = m_current_scene.lock();
+	if (!scene) return;
+
+	addPhysicsBodyToScene(scene);
+}
+
+void SceneObject::SetHybridBodyMoving(bool is_moving) noexcept
+{
+	auto scene = m_current_scene.lock();
+	if (!scene) return;
+
+	SetHybridBodyMoving(scene->Physics.GetWorld(), is_moving);
+}
+
+void SceneObject::SetHybridBodyMoving(playrho::d2::World& world, bool is_moving) noexcept
+{
+	if (!HasPhysicsBody() || !m_physics_body_config.has_value())
+		return;
+	if (m_physics_body_config.value().Type != physics::BodyTypes::HYBRID)
+		return;
+
+	auto& body = m_physics_body.value();
+	auto current_type = playrho::d2::GetType(world, body);
+	
+	// If we are already in the correct state, don't change anything.
+	if (current_type == playrho::BodyType::Dynamic && is_moving)
+		return;
+	if (current_type == playrho::BodyType::Static && !is_moving)
+		return;
+
+	playrho::d2::SetType(world, body, is_moving ? playrho::BodyType::Dynamic : playrho::BodyType::Static, true);
+
+	// Just for debug drawing purposes.
+	for (const auto& fixture : playrho::d2::GetFixtures(world, body))
+	{
+		auto filter = playrho::d2::GetFilterData(world, fixture);
+		filter.categoryBits = is_moving ? physics::category_hybrid : physics::category_default;
+		playrho::d2::SetFilterData(world, fixture, filter);
+	}
+}
+
+void SceneObject::ConstructPhysicsBodiesFromConfiguration() noexcept
+{
+	auto scene = m_current_scene.lock();
+	if (!scene) return;
+
+	DestroyAllPhysicsBodies();
+	addPhysicsBodyToScene(scene);
+}
+
+void SceneObject::DestroyAllPhysicsBodies() noexcept
+{
+	if (!HasPhysicsBody())
+		return;
+
+	if (auto scene = m_current_scene.lock(); scene)
+	{
+		auto& world = scene->Physics.GetWorld();
+		world.Destroy(m_physics_body.value());
+	}
+
+	m_physics_body.reset();
 }
 
 void SceneObject::SynchronizePhysics()
 {
-	if (!PhysicsBody.has_value()) return;
+	if (!HasPhysicsBody())
+		return;
 
 	bool x_dirty = Properties[Property::X].Dirty;
 	bool y_dirty = Properties[Property::Y].Dirty;
@@ -517,6 +712,9 @@ AnimatedSceneObject& AnimatedSceneObject::operator=(const AnimatedSceneObject& o
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
+	ReplicateChanges = other.ReplicateChanges;
+	IgnoresEvents = other.IgnoresEvents;
+	Initialized = false;
 	return *this;
 }
 
@@ -557,17 +755,337 @@ TMXSceneObject& TMXSceneObject::operator=(const TMXSceneObject& other)
 	Attributes = other.Attributes;
 	Properties = other.Properties;
 	Visible = other.Visible;
-	TmxMap = other.TmxMap;
+	ReplicateChanges = other.ReplicateChanges;
+	IgnoresEvents = other.IgnoresEvents;
+	Initialized = false;
+
+	Tilesets = other.Tilesets;
 	Layer = other.Layer;
+	m_tmx = other.m_tmx;
 	return *this;
 }
 
 Rectf TMXSceneObject::GetBounds() const noexcept
 {
-	if (TmxMap == nullptr)
-		return Rectf(GetPosition(), Vector2df(0.0f));
+	return Rectf(GetPosition() + m_calculated_level_bounds.pos, m_calculated_level_bounds.size);
+}
 
-	return Rectf(GetPosition(), ChunkSize);
+bool TMXSceneObject::LoadMap(const std::shared_ptr<tmx::Map>& map, const std::vector<std::pair<scene::TilesetGID, scene::TilesetPtr>>& tilesets) noexcept
+{
+	if (map == nullptr)
+		return false;
+
+	m_tmx = map;
+	Tilesets = tilesets;
+	RenderOrder = map->getRenderOrder();
+
+	// We can't have a map without tilesets.
+	if (Tilesets.empty())
+		return false;
+
+	// Get the map layer.
+	const auto& layer = m_tmx->getLayers().at(Layer);
+	if (layer->getType() != tmx::Layer::Type::Tile)
+		return false;
+
+	// Calculate chunks.
+	const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+	const auto& chunks = tilelayer.getChunks();
+	for (size_t i = 0; i < chunks.size(); ++i)
+	{
+		const auto& chunk = chunks.at(i);
+
+		Chunk ch{};
+		ch.Position = Vector2di{ chunk.position.x, chunk.position.y };
+		ch.Size = Vector2du{ static_cast<uint32_t>(chunk.size.x), static_cast<uint32_t>(chunk.size.y) };
+		Chunks.emplace_back(std::move(ch));
+	}
+
+	// Calculate the level size.
+	CalculateLevelSize();
+
+	// Create the physics body configuration.
+	physics::BodyConfiguration config{};
+	config.Type = physics::BodyTypes::STATIC;
+	config.BodyConf.UseFixedRotation(true);
+	config.BodyConf.UseType(playrho::BodyType::Static);
+	m_physics_body_config = std::make_optional(std::move(config));
+
+	return true;
+}
+
+void TMXSceneObject::LoadChunkData(size_t chunk_idx, size_t chunks_max, Vector2di&& position, Vector2du&& size) noexcept
+{
+	if (chunk_idx >= Chunks.size())
+		Chunks.resize(chunks_max);
+
+	auto& chunkdef = Chunks.at(chunk_idx);
+	chunkdef.Position = std::move(position);
+	chunkdef.Size = std::move(size);
+}
+
+void TMXSceneObject::CalculateLevelSize() noexcept
+{
+	m_calculated_level_bounds = {};
+	for (const auto& chunk : Chunks)
+	{
+		if (chunk.Position.x < m_calculated_level_bounds.pos.x)
+			m_calculated_level_bounds.pos.x = static_cast<float>(chunk.Position.x);
+		if (chunk.Position.y < m_calculated_level_bounds.pos.y)
+			m_calculated_level_bounds.pos.y = static_cast<float>(chunk.Position.y);
+		if (chunk.Size.x > m_calculated_level_bounds.size.x)
+			m_calculated_level_bounds.size.x = static_cast<float>(chunk.Size.x);
+		if (chunk.Size.y > m_calculated_level_bounds.size.y)
+			m_calculated_level_bounds.size.y = static_cast<float>(chunk.Size.y);
+	}
+
+	if (Tilesets.empty())
+		return;
+
+	const auto& first_tileset = Tilesets.front().second;
+	auto tilesize_x = first_tileset->TileDimensions.x;
+	auto tilesize_y = first_tileset->TileDimensions.y;
+	m_calculated_level_bounds.pos.x *= tilesize_x;
+	m_calculated_level_bounds.pos.y *= tilesize_y;
+	m_calculated_level_bounds.size.x *= tilesize_x;
+	m_calculated_level_bounds.size.y *= tilesize_y;
+
+	log::PrintLine("TMX [{}] Calculated level size as ({}, {}, {}, {}).", ID, m_calculated_level_bounds.pos.x, m_calculated_level_bounds.pos.y, m_calculated_level_bounds.size.x, m_calculated_level_bounds.size.y);
+}
+
+void TMXSceneObject::CalculateChunksToRender(const Rectf& window, std::vector<uint32_t>& chunks_to_render) const noexcept
+{
+	chunks_to_render.clear();
+	const auto& first_tileset = Tilesets.front().second;
+	for (uint32_t i = 0; i < Chunks.size(); ++i)
+	{
+		const auto& chunk = Chunks.at(i);
+		if (math::containsOrIntersects(chunk.Position * first_tileset->TileDimensions, chunk.Size * first_tileset->TileDimensions, window))
+			chunks_to_render.push_back(i);
+	}
+}
+
+void TMXSceneObject::LoadChunkCollision(uint32_t chunk_idx, std::shared_ptr<scene::Scene> scene) noexcept
+{
+	if (chunk_idx >= Chunks.size() || m_tmx == nullptr) return;
+	auto& chunkdef = Chunks.at(chunk_idx);
+	if (chunkdef.CollisionLoaded)
+		return;
+
+	const auto& layer = m_tmx->getLayers().at(Layer);
+	if (!layer || layer->getType() != tmx::Layer::Type::Tile)
+		return;
+
+	const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
+	const auto& chunks = tilelayer.getChunks();
+	if (chunk_idx >= chunks.size())
+		return;
+
+	// Search all the tilesets to find the details on a tile.
+	const auto& tilesets = m_tmx->getTilesets();
+	const auto& tile_size = m_tmx->getTileSize();
+	auto find_tile_in_tileset = [&tilesets](const tmx::TileLayer::Tile& layer_tile) -> const tmx::Tileset::Tile*
+	{
+		for (const auto& tileset : tilesets)
+		{
+			const auto* tile = tileset.getTile(layer_tile.ID);
+			return tile;
+		}
+		return nullptr;
+	};
+
+	// Load the scene.
+	if (scene == nullptr)
+		scene = m_current_scene.lock();
+	if (!scene) return;
+
+	// If we have no body config, create it now.
+	if (!m_physics_body_config.has_value())
+	{
+		// Create the physics body configuration.
+		physics::BodyConfiguration config{};
+		config.Type = physics::BodyTypes::STATIC;
+		config.BodyConf.UseFixedRotation(true);
+		config.BodyConf.UseType(playrho::BodyType::Static);
+		m_physics_body_config = std::make_optional(std::move(config));
+	}
+
+	const auto& chunk = chunks.at(chunk_idx);
+	auto ppu = scene->Physics.GetPixelsPerUnit();
+	Clipper2Lib::PathsD collision_polys;
+
+	// Look through all the tiles in the chunk.
+	auto tile_count = chunk.size.x * chunk.size.y;
+	for (int i = 0; i < tile_count; ++i)
+	{
+		// Find our tileset tile entry.
+		// If we have no entry, we have no collision so skip.
+		const auto& layer_tile = chunk.tiles[i];
+		const auto* tile = find_tile_in_tileset(layer_tile);
+		if (tile == nullptr)
+			continue;
+
+		// Calculate the tile position.
+		auto [x, y] = helper::getTilePosition(m_tmx->getRenderOrder(), chunk.size, i);
+
+		// Check if we have a polygon collision specified.
+		auto has_points = std::ranges::find_if(tile->objectGroup.getObjects(), [](const tmx::Object& item) { return item.getPoints().size() != 0; });
+		if (has_points != std::ranges::end(tile->objectGroup.getObjects()))
+		{
+			Clipper2Lib::PathD poly;
+			const auto& points = has_points->getPoints();
+			for (const auto& point : points)
+				poly.emplace_back(Clipper2Lib::PointD{ (x * tile_size.x) + point.x, (y * tile_size.y) + point.y });
+
+			collision_polys.push_back(std::move(poly));
+		}
+		// Otherwise, we may have a box collision.
+		else if (tile->objectGroup.getObjects().size() == 1)
+		{
+			const auto& object = tile->objectGroup.getObjects().at(0);
+			const auto& aabb = object.getAABB();
+			if (aabb.width != 0)
+			{
+				Clipper2Lib::PathD poly;
+				float px = x * tile_size.x + aabb.left;
+				float py = y * tile_size.y + aabb.top;
+
+				poly.emplace_back(Clipper2Lib::PointD{ px, py });
+				poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py });
+				poly.emplace_back(Clipper2Lib::PointD{ px + aabb.width, py + aabb.height });
+				poly.emplace_back(Clipper2Lib::PointD{ px, py + aabb.height });
+				collision_polys.push_back(std::move(poly));
+			}
+		}
+	}
+
+	// If we have collision data, process it.
+	if (!collision_polys.empty())
+	{
+		Clipper2Lib::ClipperD clip;
+		clip.PreserveCollinear = false;
+		clip.AddSubject(collision_polys);
+
+		// Union all the polygons.
+		Clipper2Lib::PolyTreeD polytree;
+		clip.Execute(Clipper2Lib::ClipType::Union, Clipper2Lib::FillRule::NonZero, polytree);
+
+		// Construct the collision polys.
+		TPPLPolyList polygons;
+		for (const auto& polychild : polytree)
+			helper::collectPolygons(polychild, polygons);
+
+		// Partition the polygons into convex shapes.
+		TPPLPartition partition;
+		TPPLPolyList partitioned_polys;
+		partition.ConvexPartition_HM(&polygons, &partitioned_polys);
+
+		// Create physics shapes on the vertices.
+		for (const auto& polychild : partitioned_polys)
+		{
+			auto shape = helper::createPhysicsShape(m_physics_body_config.value(), chunk.position, ppu, polychild);
+			m_shape_chunks.push_back(chunk_idx);
+			if (shape.has_value() && HasPhysicsBody())
+			{
+				playrho::d2::FixtureConf fixture_conf{};
+				fixture_conf.UseBody(m_physics_body.value()).UseShape(shape.value());
+				auto fixture_id = playrho::d2::CreateFixture(scene->Physics.GetWorld(), fixture_conf);
+				chunkdef.Fixtures.push_back(fixture_id);
+			}
+		}
+	}
+
+	chunkdef.CollisionLoaded = true;
+	if (!HasPhysicsBody())
+		ConstructPhysicsBodiesFromConfiguration();
+
+	log::PrintLine("TMX [{}] Loaded collision for chunk {}.", ID, chunk_idx);
+}
+
+void TMXSceneObject::SetChunkCollision(uint32_t chunk_idx, const physics::BodyConfiguration& config) noexcept
+{
+	if (chunk_idx >= Chunks.size()) return;
+	auto& chunkdef = Chunks.at(chunk_idx);
+	if (chunkdef.CollisionLoaded)
+		return;
+
+	// Load the scene.
+	auto scene = m_current_scene.lock();
+	if (!scene) return;
+
+	// If we don't have a physics body, create it normally.
+	if (!HasPhysicsBody())
+	{
+		auto position = GetPosition();
+		auto ppu = scene->Physics.GetPixelsPerUnit();
+
+		physics::BodyConfiguration tmxbody
+		{
+			.Type = physics::BodyTypes::STATIC,
+			.BodyConf = config.BodyConf,
+			//.Shapes = config.Shapes,
+		};
+		tmxbody.BodyConf.UseFixedRotation(true);
+		tmxbody.BodyConf.UseType(playrho::BodyType::Static);
+		tmxbody.BodyConf.UseLocation({ position.x / ppu, position.y / ppu });
+
+		auto body = playrho::d2::CreateBody(scene->Physics.GetWorld(), tmxbody.BodyConf);
+		m_physics_body = body;
+		scene->Physics.AddBodyToSceneObject(body, shared_from_this());
+	}
+
+	// We already have a body so link the shapes to the existing body.
+	for (const auto& shape : config.Shapes)
+	{
+		playrho::d2::FixtureConf fixture_conf{};
+		fixture_conf.UseBody(m_physics_body.value()).UseShape(shape);
+		auto fixture_id = playrho::d2::CreateFixture(scene->Physics.GetWorld(), fixture_conf);
+		chunkdef.Fixtures.push_back(fixture_id);
+	}
+
+	// Mark the chunk as loaded.
+	chunkdef.CollisionLoaded = true;
+}
+
+void TMXSceneObject::DestroyAllPhysicsBodies() noexcept
+{
+	for (auto& chunk : Chunks)
+		chunk.Fixtures.clear();
+
+	SceneObject::DestroyAllPhysicsBodies();
+}
+
+void TMXSceneObject::addPhysicsBodyToScene(std::shared_ptr<scene::Scene>& scene) noexcept
+{
+	if (!m_physics_body_config.has_value() || m_physics_body_config.value().Shapes.empty())
+		return;
+
+	auto& world = scene->Physics.GetWorld();
+	auto ppu = scene->Physics.GetPixelsPerUnit();
+	auto position = GetPosition();
+
+	// Update the config before we add it.
+	physics::BodyConfiguration config{ m_physics_body_config.value()};
+	config.BodyConf.UseType(playrho::BodyType::Static);
+	config.BodyConf.UseLocation({ position.x / ppu, position.y / ppu });
+	if (!m_attached_to.expired())
+		config.BodyConf.enabled = false;
+
+	// Create the body.
+	auto body = playrho::d2::CreateBody(world, config.BodyConf);
+	m_physics_body = body;
+	scene->Physics.AddBodyToSceneObject(body, shared_from_this());
+
+	// Add the shapes to the body.
+	for (uint32_t i = 0; i < config.Shapes.size(); ++i)
+	{
+		playrho::d2::FixtureConf fixture_conf{};
+		fixture_conf.UseBody(body).UseShape(config.Shapes[i]);
+		auto fixture_id = playrho::d2::CreateFixture(world, fixture_conf);
+
+		auto& chunk = Chunks.at(m_shape_chunks[i]);
+		chunk.Fixtures.push_back(fixture_id);
+	}
 }
 
 ///////////////////////////////////////////////////////////////////////////////

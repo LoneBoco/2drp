@@ -73,7 +73,7 @@ Rectf TextRenderComponent::GetBoundingBox() const
 	return Rectf{};
 }
 
-void TextRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed)
+void TextRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
 	if (m_text.getString().isEmpty())
 		return;

@@ -34,6 +34,8 @@ enum class ServerFlags : uint8_t
 	SINGLEPLAYER = 0b0000'0010,
 };
 
+typedef std::function<void(SceneObjectPtr so)> sceneobject_add_cb;
+
 class Server
 {
 	friend class tdrp::Loader;
@@ -57,7 +59,8 @@ public:
 	Server& operator=(Server&& other) = delete;
 
 public:
-	bool Initialize(const std::string& package_name, const ServerType type, const uint16_t flags);
+	bool Initialize(const ServerType type, const uint16_t flags);
+	bool LoadPackage(const std::string& package_name);
 	bool HostDedicated(const uint16_t port, const size_t peers = 32);
 	bool Host(const uint16_t port, const size_t peers = 32);
 	bool Connect(const std::string& hostname, const uint16_t port);
@@ -90,6 +93,7 @@ public:
 	std::shared_ptr<ObjectClass> GetObjectClass(const std::string& name);
 	std::shared_ptr<scene::Tileset> GetTileset(const std::string& name) const;
 	scene::ScenePtr GetScene(const std::string& name) const;
+	scene::ScenePtr GetOrCreateScene(const std::string& name) noexcept;
 
 public:
 	void LoadClientScript(const filesystem::path& file);
@@ -112,17 +116,21 @@ public:
 	AttributePtr GetAccountFlag(const server::PlayerPtr player, const std::string& flag) const;
 
 public:
-	SceneObjectPtr CreateSceneObject(SceneObjectType type, const std::string& object_class);
-	SceneObjectPtr CreateSceneObject(SceneObjectType type, const std::string& object_class, scene::ScenePtr scene);
+	SceneObjectPtr CreateSceneObject(SceneObjectType type, const std::string& object_class, SceneObjectID = 0);
+	SceneObjectPtr AddSceneObject(SceneObjectPtr sceneobject);
 	bool DeleteSceneObject(SceneObjectID id);
 	bool DeleteSceneObject(SceneObjectPtr sceneobject);
 	size_t DeletePlayerOwnedSceneObjects(PlayerPtr player);
 	bool SwitchSceneObjectScene(SceneObjectPtr sceneobject, scene::ScenePtr scene);
 	bool SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player);
+	void RequestSceneObjectChunkData(SceneObjectPtr sceneobject, uint32_t chunk_idx);
 
 public:
 	// AddObjectClass
 	std::shared_ptr<ObjectClass> DeleteObjectClass(const std::string& name);
+
+public:
+	bool AddTileset(const std::string& name, scene::TilesetPtr tileset);
 
 public:
 	bool SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene);
@@ -130,7 +138,7 @@ public:
 public:
 	int SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data);
 	int SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius);
-	int ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data);
+	int ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data) const;
 	int ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data, Vector2df origin, float radius);
 
 public:
@@ -164,6 +172,10 @@ public:
 public:
 	script::ScriptPtr Script;
 
+public:
+	sceneobject_add_cb OnSceneObjectAdd;
+	sceneobject_add_cb OnSceneObjectRemove;
+
 protected:
 	void network_connect(const uint16_t id);
 	void network_disconnect(const uint16_t id);
@@ -196,8 +208,7 @@ protected:
 	std::string m_server_name;
 	uint16_t m_max_players;
 
-	// Set by SetPlayerNumber.
-	PlayerPtr m_player;
+	PlayerPtr m_player = std::make_shared<Player>(0);
 };
 
 inline bool Server::IsShuttingDown() const noexcept

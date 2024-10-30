@@ -53,9 +53,22 @@ void Account::Load(const std::string& name)
 		}
 	};
 
-	// Attributes.
-	auto node_attributes = doc.child("attributes");
-	load_attribute("Account flag", node_attributes, Flags);
+	// Last known scene.
+	auto node_scene = doc.child("scene");
+	if (!node_scene.empty())
+	{
+		auto attrname = node_scene.attribute("last-known").as_string();
+		auto scene = server->GetScene(attrname);
+		if (scene != nullptr)
+		{
+			LastKnownScene = scene->GetName();
+			m_player->m_current_scene = scene;
+		}
+	}
+
+	// Flags.
+	auto node_flags = doc.child("flags");
+	load_attribute("Account flag", node_flags, Flags);
 
 	// Scripts.
 	auto node_scripts = doc.child("scripts");
@@ -142,12 +155,23 @@ void Account::Save()
 		attrvalue.set_value(attribute.GetAs<std::string>().c_str());
 	};
 
-	// Assemble attributes.
 	pugi::xml_document doc;
-	auto node_attributes = doc.append_child("attributes");
+
+	// Last known scene.
+	auto node_scene = doc.append_child("scene");
+	if (!node_scene.empty())
+	{
+		auto attrname = node_scene.append_attribute("last-known");
+		auto scene = m_player->GetCurrentScene().lock();
+		if (scene)
+			attrname.set_value(scene->GetName().c_str());
+	}
+
+	// Assemble flags.
+	auto node_flags = doc.append_child("flags");
 	for (const auto& attribute : Flags)
 	{
-		create_attribute(node_attributes, *attribute.second);
+		create_attribute(node_flags, *attribute.second);
 	}
 
 	// Assemble scripts.

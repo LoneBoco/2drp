@@ -145,21 +145,21 @@ void Window::EventLoop()
 
 void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 {
-	if (so->PhysicsBody.has_value())
+	auto scene = so->GetCurrentScene().lock();
+	auto& world = scene->Physics.GetWorld();
+	auto ppu = scene->Physics.GetPixelsPerUnit();
+
+	if (so->HasPhysicsBody())
 	{
-		auto scene = so->GetCurrentScene().lock();
-		auto& world = scene->Physics.GetWorld();
-		auto ppu = scene->Physics.GetPixelsPerUnit();
+		const auto& body_id = so->GetPhysicsBody().value();
+		if (!playrho::d2::IsEnabled(world, body_id))
+			return;
 
-		const auto& body = playrho::d2::GetBody(world, so->PhysicsBody.value());
-		if (!body.IsEnabled()) return;
-
-		const auto& transformation = body.GetTransformation();
-
-		auto shapes = playrho::d2::GetShapes(world, so->PhysicsBody.value());
-		for (const auto& shapeid : shapes)
+		auto transformation = playrho::d2::GetTransformation(world, body_id);
+		auto fixtures = playrho::d2::GetFixtures(world, body_id);
+		for (const auto& fixture_id : fixtures)
 		{
-			const auto& shape = playrho::d2::GetShape(world, shapeid);
+			const auto& shape = playrho::d2::GetShape(world, fixture_id);
 			auto disk = playrho::d2::TypeCast<const playrho::d2::DiskShapeConf>(&shape);
 			auto polygon = playrho::d2::TypeCast<const playrho::d2::PolygonShapeConf>(&shape);
 			if (disk != nullptr)
@@ -169,10 +169,15 @@ void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 
 				sf::CircleShape circle;
 				circle.setFillColor(sf::Color::Transparent);
-				circle.setOutlineColor(sf::Color::Yellow);
 				circle.setOutlineThickness(1.0f);
-				circle.setPosition({ (transformation.p[0] - radius + location[0]) * ppu, (transformation.p[1] - radius + location[1]) * ppu});
+				circle.setPosition({ (transformation.p[0] - radius + location[0]) * ppu, (transformation.p[1] - radius + location[1]) * ppu });
 				circle.setRadius(radius * ppu);
+
+				auto filter = playrho::d2::GetFilterData(world, fixture_id);
+				if (filter.categoryBits == physics::category_default)
+					circle.setOutlineColor(sf::Color::Yellow);
+				else if (filter.categoryBits == physics::category_hybrid)
+					circle.setOutlineColor(sf::Color::Cyan);
 
 				//window.resetGLStates();
 				window.draw(circle);

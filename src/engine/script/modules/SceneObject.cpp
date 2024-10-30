@@ -29,16 +29,16 @@ namespace functions
 
 	#define CONVERSION(T) static_cast<T* (*)(SceneObject&)>(&functions::convert)
 
-	std::string get_class_name(const SceneObject& self)
+	static std::string get_class_name(const SceneObject& self)
 	{
 		auto c = self.GetClass().lock();
 		if (c) return c->GetName();
 		else return {};
 	}
 
-	server::PlayerPtr get_owner(const SceneObject& self)
+	static PlayerID get_owner(const SceneObject& self)
 	{
-		return self.GetOwningPlayer().lock();
+		return self.GetOwningPlayer();
 	}
 }
 
@@ -77,13 +77,14 @@ void bind_sceneobject(sol::state& lua)
 		"Text", sol::property(&SceneObject::GetText, &SceneObject::SetText),
 
 		"AttachTo", &SceneObject::AttachTo,
+		"SetPhysicsBody", &SceneObject::SetPhysicsBody,
 
 		"Attributes", &SceneObject::Attributes,
 		"Properties", &SceneObject::Properties,
 
 		"Visible", &SceneObject::Visible,
 		"IgnoresEvents", &SceneObject::IgnoresEvents,
-		"Replicated", sol::readonly_property(&SceneObject::Replicated),
+		"Replicated", sol::readonly_property(&SceneObject::ReplicateChanges),
 		"Owner", sol::readonly_property(&functions::get_owner),
 
 		"OnCreated", sol::writeonly_property(&SceneObject::SetOnCreated),
@@ -110,7 +111,7 @@ void bind_sceneobject(sol::state& lua)
 	);
 }
 
-AnimatedSceneObject* asAnimated(SceneObject& self)
+static AnimatedSceneObject* asAnimated(SceneObject& self)
 {
 	if (self.GetType() != SceneObjectType::ANIMATED)
 		return nullptr;

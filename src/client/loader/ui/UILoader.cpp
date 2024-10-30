@@ -16,49 +16,7 @@ namespace tdrp::loader
 
 std::unique_ptr<ui::UIManager> UILoader::CreateUIManager()
 {
-	auto game = BabyDI::Get<Game>();
-	auto manager = std::make_unique<ui::UIManager>();
-
-	// Get our contexts.xml file.
-	auto contexts = game->Server.FileSystem.GetFile("contexts.xml");
-	if (!contexts) return nullptr;
-
-	// Load our file.
-	{
-		pugi::xml_document infodoc;
-		infodoc.load(*contexts);
-
-		auto n_contexts = infodoc.child("contexts");
-		if (n_contexts.empty()) return manager;
-
-		// Determine level version.
-		auto version = n_contexts.attribute("version").as_int(1);
-
-		// Load our fonts.
-		for (auto& fonts : n_contexts.children("font"))
-		{
-			std::string file = fonts.attribute("file").as_string();
-			if (!file.empty())
-			{
-				auto fallback = fonts.attribute("fallback").as_bool(false);
-				Rml::LoadFontFace(file, fallback);
-			}
-		}
-
-		// Load our contexts.
-		for (auto& context : n_contexts.children("context"))
-		{
-			// Don't load any contexts that have a load-on attribute set.
-			auto load_on = context.attribute("load-on");
-			if (!load_on.empty())
-				continue;
-
-			// Load the context.
-			LoadContext(context, manager.get());
-		}
-	}
-
-	return manager;
+	return std::make_unique<ui::UIManager>();
 }
 
 size_t UILoader::Load(ui::UIManager* manager, std::string_view load_on)
@@ -78,15 +36,34 @@ size_t UILoader::Load(ui::UIManager* manager, std::string_view load_on)
 		auto n_contexts = infodoc.child("contexts");
 		if (n_contexts.empty()) return 0;
 
-		// Determine level version.
+		// Determine file version.
 		auto version = n_contexts.attribute("version").as_int(1);
+
+		// Load our fonts.
+		if (load_on.empty())
+		{
+			for (auto& fonts : n_contexts.children("font"))
+			{
+				std::string file = fonts.attribute("file").as_string();
+				if (!file.empty())
+				{
+					auto fallback = fonts.attribute("fallback").as_bool(false);
+					Rml::LoadFontFace(file, fallback);
+				}
+			}
+		}
 
 		// Load our contexts.
 		for (auto& context : n_contexts.children("context"))
 		{
-			// If we don't have a load-on or if it doesn't match, ignore.
 			auto attrloadon = context.attribute("load-on");
-			if (attrloadon.empty() || std::string_view{ attrloadon.as_string() } != load_on)
+
+			// If load_on is empty and we have a load-on, ignore.
+			if (load_on.empty() && !attrloadon.empty())
+				continue;
+
+			// If load_on is set and load-on does not match, ignore.
+			if (!load_on.empty() && load_on != std::string_view{ attrloadon.as_string() })
 				continue;
 
 			// Load the context.

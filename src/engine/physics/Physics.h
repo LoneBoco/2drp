@@ -21,6 +21,21 @@ enum class ShapeTypes
 	COUNT
 };
 
+enum class BodyTypes
+{
+	STATIC = 0,
+	KINEMATIC,
+	DYNAMIC,
+	HYBRID,
+
+	COUNT
+};
+
+constexpr playrho::Filter::bits_type category_default = 0b0001;
+constexpr playrho::Filter::bits_type category_hybrid  = 0b0010;
+//constexpr playrho::Filter::bits_type category_hybrid_other  = 0b0100;
+//constexpr playrho::Filter::bits_type category_hybrid_shadow = 0b1000;
+
 struct Collision
 {
 	playrho::d2::World& World;
@@ -28,6 +43,12 @@ struct Collision
 	playrho::d2::WorldManifold Manifold;
 };
 
+struct BodyConfiguration
+{
+	physics::BodyTypes Type = physics::BodyTypes::STATIC;
+	playrho::d2::BodyConf BodyConf;
+	std::vector<playrho::d2::Shape> Shapes;
+};
 
 class Physics
 {
@@ -52,6 +73,7 @@ public:
 
 public:
 	void AddSceneObject(const std::shared_ptr<SceneObject>& so);
+	void AddBodyToSceneObject(playrho::BodyID body, const std::shared_ptr<SceneObject>& so);
 	void RemoveSceneObject(const std::shared_ptr<SceneObject>& so);
 	std::shared_ptr<SceneObject> FindSceneObjectByBodyId(playrho::BodyID bodyId);
 
@@ -59,6 +81,7 @@ protected:
 	void contactBegin(playrho::ContactID);
 	void contactEnd(playrho::ContactID);
 	void preSolveContact(playrho::ContactID, const playrho::d2::Manifold&);
+	void postSolveContact(playrho::ContactID, const playrho::d2::ContactImpulsesList&, unsigned);
 
 protected:
 	playrho::d2::World m_world;

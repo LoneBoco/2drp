@@ -1,0 +1,8 @@
+syntax = "proto3";
+package tdrp.packet;
+
+import "_tilesets.proto";
+
+message SceneTilesetAdd {
+	repeated Tileset tilesets = 1;
+}

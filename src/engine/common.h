@@ -15,9 +15,11 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 #include <functional>
 #include <algorithm>
 #include <numeric>
+#include <optional>
 #include <atomic>
 #include <chrono>
 #include <type_traits>
@@ -48,6 +50,10 @@ concept is_numeric = std::integral<T> || std::floating_point<T>;
 template <class T>
 concept is_string = std::convertible_to<T, std::string>;
 
+// Helper concept to restrict a range to a specific type.
+template <typename R, typename V>
+concept range_of = std::ranges::range<R> && std::same_as<std::remove_const<std::ranges::range_value_t<R>>, std::remove_const<V>>;
+
 } // end namespace tdrp
 
 namespace tdrp
@@ -57,6 +63,8 @@ using SceneObjectID = uint32_t;
 using AttributeID = uint16_t;
 using ItemID = uint16_t;
 using PlayerID = uint16_t;
+
+constexpr PlayerID NO_PLAYER = ~0;
 
 } // end namespace tdrp
 

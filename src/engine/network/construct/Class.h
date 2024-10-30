@@ -11,8 +11,8 @@ inline packet::ClassAdd constructClassAddPacket(std::shared_ptr<ObjectClass> obj
 {
 	packet::ClassAdd object;
 	object.set_name(objectclass->GetName());
-	object.set_scriptclient(objectclass->ScriptClient);
-	// object.set_clientserver(objectclass->ScriptServer);
+	object.set_scriptclient(objectclass->ClientScript);
+	// object.set_clientserver(objectclass->ServerScript);
 
 	assignAllAttributesToPacket(object, objectclass->Attributes, &packet::ClassAdd::add_attributes);
 

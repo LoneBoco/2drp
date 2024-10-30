@@ -99,7 +99,7 @@ Rectf AnimationRenderComponent::GetBoundingBox() const
 	return Rectf{ 0.0f };
 }
 
-void AnimationRenderComponent::Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed)
+void AnimationRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
 	if (auto so = m_owner.lock())
 	{

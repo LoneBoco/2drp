@@ -17,7 +17,7 @@
 namespace tdrp::helper
 {
 
-	void LoadObjectClasses(server::Server& server, std::unordered_map<std::string, std::shared_ptr<ObjectClass>>& object_classes, std::shared_ptr<package::Package>& package, pugi::xml_node& node_doc)
+	static void LoadObjectClasses(server::Server& server, std::unordered_map<std::string, std::shared_ptr<ObjectClass>>& object_classes, std::shared_ptr<package::Package>& package, pugi::xml_node& node_doc)
 	{
 		for (const auto& node_classes : node_doc.children("objectclasses"))
 		{
@@ -45,9 +45,9 @@ namespace tdrp::helper
 					for (const auto& node_script : node_class.children("script"))
 					{
 						const auto& attribute_type = node_script.attribute("type");
-						std::string* script = &pc->ScriptClient;
+						std::string* script = &pc->ClientScript;
 						if (boost::iequals(attribute_type.as_string(), "server"))
-							script = &pc->ScriptServer;
+							script = &pc->ServerScript;
 
 						std::string file = node_script.attribute("file").as_string();
 						if (!file.empty())
@@ -91,7 +91,7 @@ namespace tdrp::helper
 		}
 	}
 
-	void LoadScripts(server::Server& server, std::vector<std::pair<std::string, std::string>>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& search_node_name, pugi::xml_node& parent_node)
+	static void LoadScripts(server::Server& server, std::vector<std::pair<std::string, std::string>>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& search_node_name, pugi::xml_node& parent_node)
 	{
 		const auto& node = parent_node.child(search_node_name.data());
 		if (node.empty())
@@ -152,7 +152,7 @@ namespace tdrp::helper
 		}
 	}
 
-	void LoadItems(server::Server& server, std::shared_ptr<package::Package>& package, pugi::xml_node& parent_node)
+	static void LoadItems(server::Server& server, std::shared_ptr<package::Package>& package, pugi::xml_node& parent_node)
 	{
 		auto readFile = [&](const std::string_view& filename) -> std::string
 		{

@@ -42,6 +42,7 @@ public:
 	void RemoveItem(item::ItemInstancePtr item);
 
 public:
+	std::string LastKnownScene;
 	ObjectAttributes Flags;
 	std::unordered_set<std::string> ClientScripts;
 	std::map<ItemID, item::ItemInstancePtr> Items;

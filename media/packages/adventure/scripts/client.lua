@@ -95,9 +95,7 @@ Me.OnKeyPress = function(key)
 end
 
 Me.OnGainedOwnership = function(sceneobject)
-	if Me.Server.IsGuest then
-		log('Controlling scene object '..sceneobject.ID..' ('..sceneobject.ClassName..')')
-	end
+	log('Gained ownership of scene object '..sceneobject.ID..' ('..sceneobject.ClassName..')')
 
 	-- Set the camera to follow the player.
 	-- Subscribe to the 'chat' attribute so we can update our chat text.

@@ -17,10 +17,10 @@ std::weak_ptr<scene::Scene> Player::SwitchScene(std::shared_ptr<scene::Scene>& n
 {
 	auto old_scene = m_current_scene;
 
-	if (auto current_sceneobject = m_current_sceneobject.lock())
+	if (auto so = m_current_sceneobject.lock(); so != nullptr)
 	{
 		// If this isn't a global scene object, we lose access to it in the new scene.
-		if (!current_sceneobject->IsGlobal())
+		if (so->IsLocal())
 			m_current_sceneobject.reset();
 	}
 

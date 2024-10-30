@@ -1,0 +1,14 @@
+syntax = "proto3";
+package tdrp.packet;
+
+message SceneObjectChunkData {
+	fixed32 id = 1;
+	uint32 index = 2;
+	uint32 max_count = 3;
+	int32 pos_x = 4;
+	int32 pos_y = 5;
+	uint32 width = 6;
+	uint32 height = 7;
+	uint32 render_order = 8;
+	repeated uint32 tiles = 9;
+}

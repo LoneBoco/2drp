@@ -14,6 +14,7 @@
 #include "engine/network/construct/Attributes.h"
 #include "engine/network/construct/SceneObject.h"
 #include "engine/network/construct/Class.h"
+#include "engine/network/construct/Tileset.h"
 
 using tdrp::network::PACKETID;
 using tdrp::network::Packets;
@@ -21,15 +22,7 @@ using tdrp::network::Packets;
 namespace tdrp::server
 {
 
-inline bool _bypass(Server* server, const uint16_t peer_id)
-{
-	bool bypass = server->IsSinglePlayer();
-	if (server->IsHost() && peer_id == network::HOSTID)
-		bypass = true;
-	return bypass;
-}
-
-std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& message)
+static std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& message)
 {
 	size_t message_size = message.ByteSizeLong();
 
@@ -37,6 +30,62 @@ std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& 
 	message.SerializeToArray(result.data(), static_cast<int>(message_size));
 
 	return result;
+}
+
+static bool _sendNewSceneObjectToPlayer(Server& server, const PlayerPtr& player, const SceneObjectPtr& so)
+{
+	if (so->IsLocal() || player->FollowedSceneObjects.contains(so->ID))
+		return false;
+
+	auto packet_newso = network::constructSceneObjectPacket(so);
+	server.Send(player->GetPlayerId(), PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet_newso);
+
+	// Send collision.
+	if (so->GetType() != SceneObjectType::TMX && so->GetPhysicsBodyConfiguration().has_value())
+	{
+		auto packet_collision = network::constructCollisionShapesPacket(so, so->GetPhysicsBodyConfiguration().value());
+		server.Send(player->GetPlayerId(), PACKETID(network::Packets::SCENEOBJECTSHAPES), network::Channel::RELIABLE, packet_collision);
+	}
+
+	// Send chunk data.
+	if (so->GetType() == SceneObjectType::TMX)
+	{
+		auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
+		uint32_t chunk_count = static_cast<uint32_t>(tmx->Chunks.size());
+		for (uint32_t chunk_idx = 0; chunk_idx < chunk_count; ++chunk_idx)
+		{
+			const auto& chunk = tmx->Chunks.at(chunk_idx);
+
+			// Send the chunk details.
+			packet::SceneObjectChunkData chunk_packet{};
+			chunk_packet.set_id(so->ID);
+			chunk_packet.set_index(chunk_idx);
+			chunk_packet.set_max_count(chunk_count);
+			chunk_packet.set_pos_x(chunk.Position.x);
+			chunk_packet.set_pos_y(chunk.Position.y);
+			chunk_packet.set_width(chunk.Size.x);
+			chunk_packet.set_height(chunk.Size.y);
+			server.Send(player->GetPlayerId(), PACKETID(network::Packets::SCENEOBJECTCHUNKDATA), network::Channel::RELIABLE, chunk_packet);
+		}
+	}
+
+	return true;
+}
+
+static bool _sendDeleteSceneObjectToPlayers(Server& server, const scene::ScenePtr& scene, const SceneObjectPtr& so, const PlayerPtr& deleted_by)
+{
+	if (so->IsLocal() || !scene)
+		return false;
+
+	packet::SceneObjectDelete packet;
+	packet.set_id(so->ID);
+	server.BroadcastToScene(scene, PACKETID(network::Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet, { deleted_by });
+	return true;
+}
+
+static bool _sendDeleteSceneObjectToPlayers(Server& server, const SceneObjectPtr& so, const PlayerPtr& deleted_by)
+{
+	return _sendDeleteSceneObjectToPlayers(server, so->GetCurrentScene().lock(), so, deleted_by);
 }
 
 /////////////////////////////
@@ -62,8 +111,11 @@ Server::Server()
 	m_network.AddDisconnectCallback(std::bind(&Server::network_disconnect, this, _1));
 	m_network.AddLoginCallback(std::bind(&Server::network_login, this, _1, _2, _3, _4));
 	m_network.AddReceiveCallback(std::bind(network::handlers::network_receive_server, std::ref(*this), _1, _2, _3, _4));
-
 	m_network.BindServer(this);
+
+	// Set up the default player.
+	m_player->BindServer(this);
+	m_player_list[0] = m_player;
 }
 
 Server::~Server()
@@ -71,7 +123,7 @@ Server::~Server()
 	Shutdown();
 }
 
-bool Server::Initialize(const std::string& package_name, const ServerType type, const uint16_t flags)
+bool Server::Initialize(const ServerType type, const uint16_t flags)
 {
 	network::Network::Shutdown();
 	if (!network::Network::Startup())
@@ -80,11 +132,20 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	m_server_type = type;
 	m_server_flags = flags;
 
-	log::PrintLine(":: Initializing server.");
+	log::PrintLine(":: Initialized server.");
+	return true;
+}
+
+bool Server::LoadPackage(const std::string& package_name)
+{
+	if (m_package != nullptr)
+		throw std::runtime_error("!! TODO: Implement package swap (connecting to different server).");
 
 	// Load the package.
-	auto[load_success, package] = Loader::LoadPackageIntoServer(*this, package_name);
+	auto [load_success, package] = Loader::LoadPackageIntoServer(*this, package_name);
 	m_package = package;
+
+	log::PrintLine(":: Loading package: {}", package_name);
 
 	// Sanity check for starting scene.
 	if (package->GetStartingScene().empty())
@@ -93,7 +154,7 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 	// Load everything from the package into the server.
 	if (HASFLAG(m_server_flags, ServerFlags::PRELOAD_EVERYTHING))
 	{
-		log::PrintLine(":: Loading all scenes in package.");
+		log::PrintLine("   Loading all scenes in package.");
 
 		// Load all scenes.
 		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "levels" })
@@ -101,32 +162,27 @@ bool Server::Initialize(const std::string& package_name, const ServerType type, 
 			if (!filesystem::is_directory(d.status()))
 				continue;
 
-			auto scene = Loader::CreateScene(*this, d);
-			if (scene != nullptr)
-				m_scenes.insert(std::make_pair(d.path().filename().string(), scene));
+			auto scene = Loader::CreateScene(*this, m_scenes, d.path().filename().string(), d);
 		}
 	}
 	// Load only the starting scene into the server.
 	else
 	{
-		log::PrintLine(":: Loading the starting scene: {}.", package->GetStartingScene());
+		log::PrintLine("   Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
-		auto scene = Loader::CreateScene(*this, package->GetBasePath() / "levels" / package->GetStartingScene());
-		if (scene != nullptr)
-			m_scenes.insert(std::make_pair(package->GetStartingScene(), scene));
+		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetBasePath() / "levels" / package->GetStartingScene());
 	}
 
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine(":: Loading server control script.");
+		log::PrintLine("   Loading server control script.");
 		Script->RunScript("servercontrol", m_server_control_script, this);
 	}
 
 	// Run our started script.
 	OnStarted.RunAll();
-
 	return true;
 }
 
@@ -150,10 +206,8 @@ bool Server::Host(const uint16_t port, const size_t peers)
 
 	// Initialize our network and connect.
 	m_network.Initialize(peers, port);
-	network_connect(0);
 
 	// Log the player in.
-	SetPlayerNumber(0);
 	ProcessPlayerLogin(0, "host");
 	ProcessPlayerJoin(0);
 
@@ -179,10 +233,7 @@ bool Server::SinglePlayer()
 
 	log::PrintLine(":: Starting as single player server.");
 
-	network_connect(0);
-
 	// Log the player in.
-	SetPlayerNumber(0);
 	ProcessPlayerLogin(0, "singleplayer");
 	ProcessPlayerJoin(0);
 
@@ -313,15 +364,11 @@ void Server::Update(const std::chrono::milliseconds& tick)
 			auto& p = player;
 			std::for_each(std::begin(nearby), std::end(nearby), [&](const decltype(nearby)::value_type& item)
 			{
-				if (p->FollowedSceneObjects.contains(item->ID))
+				if (!_sendNewSceneObjectToPlayer(*this, player, item))
 					return;
 
-				new_objects.insert(item->ID);
-
 				log::PrintLine("-> Sending scene object {} via range to player {}.", item->ID, player->GetPlayerId());
-
-				auto packet = network::constructSceneObjectPacket(item);
-				Send(player->GetPlayerId(), PACKETID(Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
+				new_objects.insert(item->ID);
 			});
 
 			player->FollowedSceneObjects.insert(std::begin(new_objects), std::end(new_objects));
@@ -351,11 +398,11 @@ void Server::Update(const std::chrono::milliseconds& tick)
 				continue;
 
 			// If we are the host and this object doesn't have an owner, we'll take care of the events.
-			if (IsHost() && object->GetOwningPlayer().expired())
+			if (IsHost() && object->GetOwningPlayer() == NO_PLAYER)
 				SwitchSceneObjectOwnership(object, m_player);
 
 			// If the scene object is not replicated across the network, don't send anything.
-			if (!object->Replicated)
+			if (!object->ReplicateChanges)
 				continue;
 
 			// If we are in single player mode, there is no need to send anything.
@@ -363,12 +410,13 @@ void Server::Update(const std::chrono::milliseconds& tick)
 				continue;
 
 			// If we don't own this scene object, don't send anything.
-			if (auto op = object->GetOwningPlayer().lock(); op != m_player)
+			if (object->GetOwningPlayer() != m_player->GetPlayerId())
 				continue;
 
 			// Send the packet to all players in the scene.
 			packet.set_id(object->ID);
-			packet.set_replicated(object->Replicated);
+			packet.set_replicatechanges(object->ReplicateChanges);
+			packet.set_ignoresevents(object->IgnoresEvents);
 			packet.set_attached_to(object->GetAttachedId());
 			auto location = object->GetPosition();
 			SendToScene(scene, location, PACKETID(Packets::SCENEOBJECTCHANGE), network::Channel::RELIABLE, packet, { m_player });
@@ -378,15 +426,12 @@ void Server::Update(const std::chrono::milliseconds& tick)
 			if (object->PhysicsChanged)
 			{
 				object->PhysicsChanged = false;
-				if (object->PhysicsBody.has_value())
+
+				// Don't send TMX physics over the network this way.
+				if (object->GetType() != SceneObjectType::TMX && object->GetPhysicsBodyConfiguration().has_value())
 				{
-					packet::SceneObjectCollision packet;
-					packet.set_id(object->ID);
-
-					network::writeCollisionToPacket(object->PhysicsBody.value(), scene, packet);
-
-					auto location = object->GetPosition();
-					SendToScene(scene, location, PACKETID(Packets::SCENEOBJECTCOLLISION), network::Channel::RELIABLE, packet, { m_player });
+					auto packet = network::constructCollisionShapesPacket(object, object->GetPhysicsBodyConfiguration().value());
+					SendToScene(scene, object->GetPosition(), PACKETID(Packets::SCENEOBJECTSHAPES), network::Channel::RELIABLE, packet, { m_player });
 				}
 			}
 		}
@@ -403,7 +448,11 @@ void Server::ProcessPlayerJoin(const uint16_t player_id)
 	auto player = GetPlayerById(player_id);
 
 	// Switch to the starting scene.
-	auto scene = GetScene(GetPackage()->GetStartingScene());
+	auto scene = GetScene(player->Account.LastKnownScene);
+	if (scene == nullptr)
+		scene = GetScene(GetPackage()->GetStartingScene());
+
+	log::PrintLine("-> Sending player {} to scene {}.", player_id, scene->GetName());
 	player->SwitchScene(scene);
 
 	// Call the OnPlayerJoin script function.
@@ -436,6 +485,10 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 		auto packet = network::constructClassAddPacket(oc);
 		Send(player_id, PACKETID(Packets::CLASSADD), network::Channel::RELIABLE, packet);
 	}
+
+	// Send tilesets.
+	for (const auto& [_, tileset] : m_tilesets)
+		Send(player_id, PACKETID(Packets::SCENETILESETADD), network::Channel::RELIABLE, network::constructTilesetAddPacket(tileset));
 
 	// Send client scripts.
 	for (const auto& name : player->Account.ClientScripts)
@@ -471,6 +524,7 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	server_info.set_uniqueid(m_unique_id);
 	server_info.set_package(m_package->GetName());
 	server_info.set_loadingscene(m_package->GetLoadingScene());
+	/*
 	if (m_package != nullptr)
 	{
 		auto file_details = FileSystem.GetArchiveInfo(m_package->GetBasePath());
@@ -483,19 +537,15 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 			file->set_date(detail.TimeSinceEpoch);
 		}
 	}
+	*/
 	Send(player_id, PACKETID(Packets::SERVERINFO), network::Channel::RELIABLE, server_info);
 }
 
 void Server::SetPlayerNumber(const uint16_t player_number)
 {
-	log::PrintLine(":: Player number {}.", player_number);
+	log::PrintLine(":: Assigned player number {}.", player_number);
 
-	if (IsSinglePlayer() || IsHost())
-	{
-		auto player = GetPlayerById(player_number);
-		m_player = player;
-	}
-	else
+	if (IsGuest())
 	{
 		auto player = std::make_shared<Player>(player_number);
 		player->BindServer(this);
@@ -508,10 +558,7 @@ void Server::SetPlayerNumber(const uint16_t player_number)
 
 std::shared_ptr<ObjectClass> Server::GetObjectClass(const std::string& name)
 {
-	auto iter = m_object_classes.find(name);
-	if (iter == m_object_classes.end())
-		iter = m_object_classes.find("blank");
-
+	auto iter = m_object_classes.find(name.empty() ? "blank" : name);
 	if (iter == m_object_classes.end())
 	{
 		auto c = std::make_shared<ObjectClass>(name);
@@ -537,6 +584,17 @@ scene::ScenePtr Server::GetScene(const std::string& name) const
 	return iter->second;
 }
 
+scene::ScenePtr Server::GetOrCreateScene(const std::string& name) noexcept
+{
+	auto scene = GetScene(name);
+	if (scene != nullptr)
+		return scene;
+
+	scene = std::make_shared<scene::Scene>(name);
+	m_scenes.insert(std::make_pair(name, scene));
+	return scene;
+}
+
 ///////////////////////////////////////////////////////////////////////////////
 
 bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
@@ -556,56 +614,19 @@ bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
 	auto sceneobjects = new_scene->FindObjectsInRangeOf({ 0.0f, 0.0f }, static_cast<float>(new_scene->GetTransmissionDistance()));
 	for (const auto& sceneobject : sceneobjects)
 	{
-		if (player->FollowedSceneObjects.contains(sceneobject->ID))
+		if (!_sendNewSceneObjectToPlayer(*this, player, sceneobject))
 			continue;
 
+		log::PrintLine("-> Sending scene object {} via scene switch.", sceneobject->ID);
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 
-		if (!(IsHost() && m_player == player && old_scene.expired()))
-			log::PrintLine("-> Sending scene object {} via scene switch.", sceneobject->ID);
-
-		auto object = network::constructSceneObjectPacket(sceneobject);
-		Send(player->GetPlayerId(), network::PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, object);
-
 		// If there is no owning player, take ownership.
-		if (sceneobject->GetOwningPlayer().expired())
+		if (sceneobject->GetOwningPlayer() == NO_PLAYER)
 			SwitchSceneObjectOwnership(sceneobject, player);
 	}
 
 	return true;
 }
-
-/*
-bool Server::SwitchPlayerControlledSceneObject(std::shared_ptr<server::Player>& player, std::shared_ptr<SceneObject>& new_scene_object)
-{
-	if (player == nullptr || new_scene_object == nullptr)
-		return false;
-
-	auto old_so = player->SwitchControlledSceneObject(new_scene_object);
-
-	auto old_id = 0;
-	if (auto so = old_so.lock())
-		old_id = so->ID;
-
-	// If we aren't following this scene object we now have control over, send it over now.
-	if (!player->FollowedSceneObjects.contains(new_scene_object->ID))
-	{
-		player->FollowedSceneObjects.insert(new_scene_object->ID);
-		auto packet_newso = network::constructSceneObjectPacket(new_scene_object);
-		m_network.Send(player->GetPlayerId(), PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet_newso);
-	}
-
-	packet::SceneObjectControl packet;
-	packet.set_old_id(old_id);
-	packet.set_new_id(new_scene_object->ID);
-	m_network.Send(player->GetPlayerId(), network::PACKETID(network::Packets::SCENEOBJECTCONTROL), network::Channel::RELIABLE, packet);
-
-	if (!IsSinglePlayer())
-		new_scene_object->OnPlayerGainedControl.RunAll(player);
-
-	return true;
-}
-*/
 
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -953,91 +974,77 @@ AttributePtr Server::GetAccountFlag(const server::PlayerPtr player, const std::s
 
 ///////////////////////////////////////////////////////////////////////////////
 
-SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string& object_class)
+SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string& object_class, SceneObjectID id)
 {
-	// TODO: Let server allow client side creation.
-	if (!IsHost())
-		return nullptr;
-
 	// Get our object class.
 	auto oc = GetObjectClass(object_class);
 	if (oc == nullptr)
 		return nullptr;
 
 	// Retrieve the new ID for our scene object.
-	// Set the global flag.
-	auto id = GetNextSceneObjectID() | GlobalSceneObjectIDFlag;
+	auto soid = id != 0 ? id : GetNextSceneObjectID();
 
 	// Create the scene object.
 	SceneObjectPtr so = nullptr;
 	switch (type)
 	{
 	case SceneObjectType::DEFAULT:
-		so = std::make_shared<tdrp::SceneObject>(oc, id);
+		so = std::make_shared<tdrp::SceneObject>(oc, soid);
 		break;
 	case SceneObjectType::STATIC:
-		so = std::make_shared<tdrp::StaticSceneObject>(oc, id);
+		so = std::make_shared<tdrp::StaticSceneObject>(oc, soid);
 		break;
 	case SceneObjectType::ANIMATED:
-		so = std::make_shared<tdrp::AnimatedSceneObject>(oc, id);
+		so = std::make_shared<tdrp::AnimatedSceneObject>(oc, soid);
 		break;
 	case SceneObjectType::TILEMAP:
-		so = std::make_shared<tdrp::TiledSceneObject>(oc, id);
+		so = std::make_shared<tdrp::TiledSceneObject>(oc, soid);
 		break;
 	case SceneObjectType::TMX:
-		so = std::make_shared<tdrp::TMXSceneObject>(oc, id);
+		so = std::make_shared<tdrp::TMXSceneObject>(oc, soid);
 		break;
 	case SceneObjectType::TEXT:
-		so = std::make_shared<tdrp::TextSceneObject>(oc, id);
+		so = std::make_shared<tdrp::TextSceneObject>(oc, soid);
 		break;
 	default:
 		log::PrintLine("!! CreateSceneObject requires a valid scene object type.");
 		return nullptr;
 	}
 
-	// Claim ownership.
-	if (m_player)
-	{
-		so->SetOwningPlayer(m_player);
-		m_player->FollowedSceneObjects.insert(id);
-	}
-
-	// Handle the script.
-	if (IsHost() && so && oc)
-	{
-		Script->RunScript("sceneobject_sv_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptServer, so);
-		Script->RunScript("sceneobject_sv_" + std::to_string(id), so->ServerScript, so);
-	}
-
-	// Single player checks.
-	if (IsSinglePlayer())
-	{
-		Script->RunScript("sceneobject_cl_" + std::to_string(id) + "_c_" + oc->GetName(), oc->ScriptClient, so);
-		Script->RunScript("sceneobject_cl" + std::to_string(id), so->ClientScript, so);
-	}
-
 	return so;
 }
 
-SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string& object_class, scene::ScenePtr scene)
+SceneObjectPtr Server::AddSceneObject(SceneObjectPtr sceneobject)
 {
-	auto so = CreateSceneObject(type, object_class);
+	// Claim ownership if there is none.
+	if (sceneobject->GetOwningPlayer() == NO_PLAYER && (IsSinglePlayer() || IsHost()))
+		sceneobject->SetOwningPlayer(m_player);
 
-	// Add to the scene.
-	scene->AddObject(so);
+	// Execute scripts.
+	auto object_class = sceneobject->GetClass();
+	bool server_script = IsHost() || IsSinglePlayer();
+	bool client_script = true;
+	if (server_script)
+	{
+		Script->RunScript("sceneobject_sv_" + std::to_string(sceneobject->ID) + "_c_" + object_class->GetName(), object_class->ServerScript, sceneobject);
+		Script->RunScript("sceneobject_sv_" + std::to_string(sceneobject->ID), sceneobject->ServerScript, sceneobject);
+	}
+	if (client_script)
+	{
+		Script->RunScript("sceneobject_cl_" + std::to_string(sceneobject->ID) + "_c_" + object_class->GetName(), object_class->ClientScript, sceneobject);
+		Script->RunScript("sceneobject_cl" + std::to_string(sceneobject->ID), sceneobject->ClientScript, sceneobject);
+	}
 
-	// Follow the scene object if it is in our scene.
-	if (scene == m_player->GetCurrentScene().lock())
-		m_player->FollowedSceneObjects.insert(so->ID);
+	sceneobject->OnCreated.RunAll();
+	sceneobject->OnCreatePhysics.RunAll();
 
-	// Send to players in range.
-	auto packet = network::constructSceneObjectPacket(so);
-	SendToScene(scene, so->GetPosition(), PACKETID(Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
+	if (m_player != nullptr)
+		m_player->FollowedSceneObjects.insert(sceneobject->ID);
 
-	// This is a new object so the physics get sent already.
-	so->PhysicsChanged = false;
+	sceneobject->PhysicsChanged = false;
+	sceneobject->Initialized = true;
 
-	return so;
+	return sceneobject;
 }
 
 bool Server::DeleteSceneObject(SceneObjectID id)
@@ -1050,24 +1057,20 @@ bool Server::DeleteSceneObject(SceneObjectPtr sceneobject)
 {
 	if (sceneobject == nullptr)
 		return false;
-	if (!sceneobject->IsGlobal() && !IsHost())
+	if (!IsHost() && !sceneobject->IsLocal())
 		return false;
-	if (sceneobject->GetOwningPlayer().lock() != m_player)
+	if (sceneobject->GetOwningPlayer() != m_player->GetPlayerId())
 		return false;
 
-	packet::SceneObjectDelete packet;
-	packet.set_id(sceneobject->ID);
+	// Unfollow the scene object.
+	m_player->FollowedSceneObjects.erase(sceneobject->ID);
 
-	auto scene = sceneobject->GetCurrentScene().lock();
-	if (!scene)
-	{
-		Broadcast(PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet);
-	}
-	else
-	{
-		scene->RemoveObject(sceneobject);
-		BroadcastToScene(scene, PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet, { m_player });
-	}
+	// Inform any clients that the scene object is being removed.
+	if (OnSceneObjectRemove != nullptr)
+		OnSceneObjectRemove(sceneobject);
+
+	// Broadcast the removal.
+	_sendDeleteSceneObjectToPlayers(*this, sceneobject, m_player);
 
 	SCRIPT_THEM_ERASE(sceneobject);
 
@@ -1090,13 +1093,19 @@ size_t Server::DeletePlayerOwnedSceneObjects(PlayerPtr player)
 		for (auto it = std::begin(graph); it != std::end(graph); ++it)
 		{
 			auto& sceneobject = it->second;
-			if (sceneobject->GetOwningPlayer().lock() == player)
+			if (sceneobject->GetOwningPlayer() == player->GetPlayerId())
 			{
-				SCRIPT_THEM_ERASE(sceneobject);
+				// Unfollow the scene object.
+				m_player->FollowedSceneObjects.erase(sceneobject->ID);
 
-				packet::SceneObjectDelete packet;
-				packet.set_id(sceneobject->ID);
-				BroadcastToScene(scene, PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, packet, { m_player });
+				// Inform any clients that the scene object is being removed.
+				if (OnSceneObjectRemove != nullptr)
+					OnSceneObjectRemove(sceneobject);
+
+				// Broadcast the removal.
+				_sendDeleteSceneObjectToPlayers(*this, sceneobject, m_player);
+
+				SCRIPT_THEM_ERASE(sceneobject);
 
 				++count;
 				to_delete.insert(sceneobject->ID);
@@ -1112,26 +1121,39 @@ size_t Server::DeletePlayerOwnedSceneObjects(PlayerPtr player)
 
 bool Server::SwitchSceneObjectScene(SceneObjectPtr sceneobject, scene::ScenePtr scene)
 {
-	bool switch_scene = sceneobject->IsGlobal();
-	switch_scene |= !sceneobject->IsGlobal() && sceneobject->GetCurrentScene().expired();
+	bool switch_scene = !sceneobject->IsLocal();
+	switch_scene |= sceneobject->IsLocal() && sceneobject->GetCurrentScene().expired();
+
+	// If the scene object hasn't been added yet, do it now.
+	if (!sceneobject->Initialized)
+		AddSceneObject(sceneobject);
 
 	if (!switch_scene) return false;
+	if (!sceneobject->IsOwnedBy(m_player))
+		return false;
 
 	// Tell the old scene we have left.
 	if (auto old_scene = sceneobject->GetCurrentScene().lock(); old_scene)
 	{
 		scene->RemoveObject(sceneobject);
-
-		packet::SceneObjectDelete pdelete;
-		pdelete.set_id(sceneobject->ID);
-		SendToScene(old_scene, sceneobject->GetPosition(), PACKETID(Packets::SCENEOBJECTDELETE), network::Channel::RELIABLE, pdelete);
+		_sendDeleteSceneObjectToPlayers(*this, old_scene, sceneobject, m_player);
 	}
 
 	if (scene->AddObject(sceneobject))
 	{
+		// Inform the client we added a scene object.
+		if (OnSceneObjectAdd != nullptr)
+			OnSceneObjectAdd(sceneobject);
+
 		// Send to players in range.
-		auto packet = network::constructSceneObjectPacket(sceneobject);
-		SendToScene(scene, sceneobject->GetPosition(), PACKETID(Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet);
+		_sendNewSceneObjectToPlayer(*this, m_player, sceneobject);
+	}
+
+	// Move attached scene objects too.
+	for (const auto& attached : sceneobject->AttachedObjects())
+	{
+		if (auto attached_object = attached.lock(); attached_object)
+			SwitchSceneObjectScene(attached_object, scene);
 	}
 
 	return true;
@@ -1140,33 +1162,26 @@ bool Server::SwitchSceneObjectScene(SceneObjectPtr sceneobject, scene::ScenePtr 
 bool Server::SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr player)
 {
 	// Non-replicated objects can't be owned.
-	if (!sceneobject->Replicated)
+	if (!sceneobject->ReplicateChanges)
 		return false;
 
 	// Check for ownership of this scene object before we give it away.
 	// Host can always give away ownership.
-	auto old_player = sceneobject->GetOwningPlayer().lock();
-	if (!IsHost() && old_player != m_player)
+	auto old_player = sceneobject->GetOwningPlayer();
+	if (!IsHost() && old_player != m_player->GetPlayerId())
 		return false;
 
-	uint16_t old_player_id = 0;
-	uint16_t new_player_id = 0;
-
-	if (old_player) old_player_id = old_player->GetPlayerId();
-	if (player) new_player_id = player->GetPlayerId();
-
+	uint16_t new_player_id = (player ? player->GetPlayerId() : 0);
 	sceneobject->SetOwningPlayer(player);
 	sceneobject->OnOwnershipChange.RunAll(player, old_player);
 
 	// If the player isn't following this scene object, send it over first.
 	if (!player->FollowedSceneObjects.contains(sceneobject->ID))
 	{
-		if (m_player != player)
+		if (_sendNewSceneObjectToPlayer(*this, player, sceneobject))
 			log::PrintLine("-> Sending scene object {} via ownership change.", sceneobject->ID);
 
 		player->FollowedSceneObjects.insert(sceneobject->ID);
-		auto packet_newso = network::constructSceneObjectPacket(sceneobject);
-		Send(player->GetPlayerId(), PACKETID(network::Packets::SCENEOBJECTNEW), network::Channel::RELIABLE, packet_newso);
 	}
 
 	// Switch ownership.
@@ -1175,13 +1190,26 @@ bool Server::SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr pl
 	{
 		packet::SceneObjectOwnership packet;
 		packet.set_sceneobject_id(sceneobject->ID);
-		packet.set_old_player_id(old_player_id);
+		packet.set_old_player_id(old_player);
 		packet.set_new_player_id(new_player_id);
 
 		BroadcastToScene(scene, PACKETID(Packets::SCENEOBJECTOWNERSHIP), network::Channel::RELIABLE, packet);
 	}
 
 	return true;
+}
+
+void Server::RequestSceneObjectChunkData(SceneObjectPtr sceneobject, uint32_t chunk_idx)
+{
+	if (IsHost() || sceneobject->GetType() != SceneObjectType::TMX)
+		return;
+
+	packet::SceneObjectRequestChunkData packet{};
+	packet.set_id(sceneobject->ID);
+	packet.set_index(chunk_idx);
+	
+	log::PrintLine("-> Requesting chunk {} data for scene object {}.", chunk_idx, sceneobject->ID);
+	Send(network::HOSTID, PACKETID(Packets::SCENEOBJECTREQUESTCHUNKDATA), network::Channel::RELIABLE, packet);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1208,6 +1236,25 @@ std::shared_ptr<ObjectClass> Server::DeleteObjectClass(const std::string& name)
 	// TODO: Wipe out all script functions bound to this module.
 
 	return c;
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+bool Server::AddTileset(const std::string& name, scene::TilesetPtr tileset)
+{
+	auto it = m_tilesets.find(name);
+	if (it != std::end(m_tilesets))
+		return false;
+
+	m_tilesets[name] = tileset;
+
+	log::PrintLine(":: Adding tileset {}.", name);
+
+	// Broadcast to players if we are the host.
+	if (IsHost())
+		Broadcast(PACKETID(Packets::SCENETILESETADD), network::Channel::RELIABLE, network::constructTilesetAddPacket(tileset));
+
+	return true;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1268,7 +1315,7 @@ int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string
 	return count;
 }
 
-int Server::ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data)
+int Server::ProcessSendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string& name, const std::string& data) const
 {
 	// Global events.
 	OnServerEvent.RunAll(scene, player, name, data);

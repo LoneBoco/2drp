@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_map>
 #include "engine/common.h"
 
 
@@ -10,10 +11,15 @@ namespace tdrp::server
 namespace tdrp::scene
 {
 	class Scene;
+	using ScenePtr = std::shared_ptr<Scene>;
 }
 namespace tdrp::package
 {
 	class Package;
+}
+namespace tdrp
+{
+	class TMXSceneObject;
 }
 
 
@@ -33,7 +39,7 @@ private:
 	bool operator==(const Loader&) = delete;
 
 public:
-	static std::shared_ptr<tdrp::scene::Scene> CreateScene(server::Server& server, const filesystem::path& level);
+	static std::shared_ptr<tdrp::scene::Scene> CreateScene(server::Server& server, std::unordered_map<std::string, scene::ScenePtr>& scene_list, const std::string& scene_name, const filesystem::path& level);
 
 public:
 	static std::pair<bool, std::shared_ptr<package::Package>> LoadPackageIntoServer(server::Server& server, const std::string& name);

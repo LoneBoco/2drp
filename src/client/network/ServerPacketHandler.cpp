@@ -30,6 +30,7 @@ void handle(Game& game, const packet::ClientScriptAdd& packet);
 void handle(Game& game, const packet::ClientScriptDelete& packet);
 void handle(Game& game, const packet::SceneObjectNew& packet);
 void handle(Game& game, const packet::SceneObjectOwnership& packet);
+void handle(Game& game, const packet::SceneObjectChunkData& packet);
 void handle(Game& game, const packet::SendEvent& packet);
 void handle(Game& game, const packet::ItemAdd& packet);
 void handle(Game& game, const packet::ItemDelete& packet);
@@ -68,6 +69,9 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 		case Packets::SCENEOBJECTOWNERSHIP:
 			HANDLE(packet::SceneObjectOwnership);
 			break;
+		case Packets::SCENEOBJECTCHUNKDATA:
+			HANDLE(packet::SceneObjectChunkData);
+			break;
 		case Packets::SENDEVENT:
 			HANDLE(packet::SendEvent);
 			break;
@@ -88,17 +92,17 @@ void handle(Game& game, const packet::LoginStatus& packet)
 {
 	const auto success = packet.success();
 	const auto& msg = packet.message();
-
-	// Bind the UI data models.
-	if (success)
-	{
-		loader::UILoader::Load(game.UI.get(), "joined");
-	}
 }
 
 void handle(Game& game, const packet::ServerInfo& packet)
 {
+	// Set our state to loading.
+	// The server will process file downloads.
 	game.State = GameState::LOADING;
+
+	// Joined UI.
+	loader::UILoader::Load(game.UI.get());
+	loader::UILoader::Load(game.UI.get(), "joined");
 }
 
 void handle(Game& game, const packet::SwitchScene& packet)
@@ -108,9 +112,11 @@ void handle(Game& game, const packet::SwitchScene& packet)
 	auto player = game.GetCurrentPlayer();
 	if (player)
 	{
-		auto scene = game.Server.GetScene(scene_name);
+		auto scene = game.Server.GetOrCreateScene(scene_name);
 		player->SwitchScene(scene);
 		game.OnSceneSwitch.RunAll(scene);
+
+		log::PrintLine("<- Switched to scene {}.", scene_name);
 	}
 }
 
@@ -155,32 +161,13 @@ void handle(Game& game, const packet::ClientScriptDelete& packet)
 
 void handle(Game& game, const packet::SceneObjectNew& packet)
 {
-	const auto pid = packet.id();
+	const auto sceneobject = packet.id();
 
-	auto so = game.Server.GetSceneObjectById(pid);
-
-	// Add the render component.
-	if (so)
+	if (auto so = game.Server.GetSceneObjectById(sceneobject); so != nullptr)
 	{
-		switch (so->GetType())
-		{
-		default:
-		case SceneObjectType::STATIC:
-			so->AddComponent<render::component::RenderComponent>();
-			break;
-		case SceneObjectType::TILEMAP:
-			so->AddComponent<render::component::TileMapRenderComponent>();
-			break;
-		case SceneObjectType::TMX:
-			so->AddComponent<render::component::TMXRenderComponent>();
-			break;
-		case SceneObjectType::ANIMATED:
-			so->AddComponent<render::component::AnimationRenderComponent>();
-			break;
-		case SceneObjectType::TEXT:
-			so->AddComponent<render::component::TextRenderComponent>();
-			break;
-		}
+		// Inform the client we added a scene object.
+		if (game.Server.OnSceneObjectAdd != nullptr)
+			game.Server.OnSceneObjectAdd(so);
 	}
 }
 
@@ -196,8 +183,52 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet)
 
 	if (new_player == game.GetCurrentPlayer())
 	{
-		// log::PrintLine("<- SceneObjectOwnership [C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
-		game.OnGainedOwnership.RunAll(so);
+		log::PrintLine("<- SceneObjectOwnership [C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
+		if (so != nullptr)
+			game.OnGainedOwnership.RunAll(so);
+	}
+}
+
+void handle(Game& game, const packet::SceneObjectChunkData& packet)
+{
+	const auto sceneobject = packet.id();
+	auto so = game.Server.GetSceneObjectById(sceneobject);
+	if (!so) return;
+
+	// Currently, only TMX scene objects are supported.
+	if (so->GetType() != SceneObjectType::TMX)
+		return;
+
+	auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
+
+	// Get the render component.
+	auto render = tmx->GetComponent<render::component::TMXRenderComponent>().lock();
+	if (render == nullptr)
+		return;
+
+	log::PrintLine("<- Loading chunk data for scene object {}.", sceneobject);
+
+	// Load the chunk data.
+	// The position and size is recorded by the client and the client will ask the server for tiles when it needs them.
+	size_t chunk_idx = packet.index();
+	size_t max_chunks = packet.max_count();
+	Vector2di chunk_position{ packet.pos_x(), packet.pos_y() };
+	Vector2du chunk_dimensions{ packet.width(), packet.height() };
+	render->SetMaxChunks(max_chunks);
+	tmx->LoadChunkData(chunk_idx, max_chunks, std::move(chunk_position), std::move(chunk_dimensions));
+
+	// TODO: Make this less hacky.
+	if (chunk_idx == max_chunks - 1)
+		tmx->CalculateLevelSize();
+
+	// Load the collision data.
+	tmx->LoadChunkCollision(static_cast<uint32_t>(chunk_idx));
+
+	// If we have tiles, render them.
+	if (packet.tiles_size() != 0)
+	{
+		std::span<const uint32_t> tiles{ packet.tiles() };
+		render->RenderChunkToTexture(static_cast<uint32_t>(chunk_idx), tiles);
 	}
 }
 

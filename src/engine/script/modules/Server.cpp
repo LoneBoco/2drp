@@ -8,20 +8,24 @@ namespace tdrp::script::modules
 
 namespace functions
 {
+	static SceneObjectPtr create_scene_object(server::Server& server, SceneObjectType type, const std::string& object_class)
+	{
+		return server.CreateSceneObject(type, object_class);
+	}
 
-	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, ItemID baseId, item::ItemType itemType)
+	static item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, ItemID baseId, item::ItemType itemType)
 	{
 		return server.GiveItemToPlayer(player, baseId, itemType);
 	}
 
-	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType, size_t count)
+	static item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType, size_t count)
 	{
 		if (item != nullptr)
 			return server.GiveItemToPlayer(player, item->BaseID, itemType, count);
 		return nullptr;
 	}
 
-	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType, size_t count)
+	static item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType, size_t count)
 	{
 		auto item = server.GetItemDefinition(itemName);
 		if (item == nullptr) return nullptr;
@@ -29,57 +33,57 @@ namespace functions
 		return server.GiveItemToPlayer(player, item->BaseID, itemType, count);
 	}
 
-	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType)
+	static item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, const std::string& itemName, item::ItemType itemType)
 	{
 		return give_item(server, player, itemName, itemType, 1);
 	}
 
-	item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType)
+	static item::ItemInstancePtr give_item(server::Server& server, server::PlayerPtr player, item::ItemDefinition* item, item::ItemType itemType)
 	{
 		return give_item(server, player, item, itemType, 1);
 	}
 
 
-	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, ItemID id)
+	static item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, ItemID id)
 	{
 		return server.RemoveItemFromPlayer(player, id);
 	}
 
-	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item, size_t count)
+	static item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item, size_t count)
 	{
 		if (item != nullptr)
 			return server.RemoveItemFromPlayer(player, item->ID, count);
 		return nullptr;
 	}
 
-	item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item)
+	static item::ItemInstancePtr remove_item(server::Server& server, server::PlayerPtr player, item::ItemInstancePtr item)
 	{
 		return remove_item(server, player, item, 1);
 	}
 
-	void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName, size_t count)
+	static void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName, size_t count)
 	{
 		auto items = player->GetItems(itemName);
 		for (const auto& item : items)
 			server.RemoveItemFromPlayer(player, item->ID, count);
 	}
 
-	void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName)
+	static void remove_items(server::Server& server, server::PlayerPtr player, const std::string& itemName)
 	{
 		remove_items(server, player, itemName, 1);
 	}
 
-	void send_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data, Vector2df origin, float radius)
+	static void send_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data, Vector2df origin, float radius)
 	{
 		self.SendEvent(scene, self.GetPlayer(), name, data, origin, radius);
 	}
 
-	void send_level_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data)
+	static void send_level_event(server::Server& self, scene::ScenePtr scene, const std::string& name, const std::string& data)
 	{
 		self.SendEvent(scene, self.GetPlayer(), name, data);
 	}
 
-	void send_server_event(server::Server& self, const std::string& name, const std::string& data)
+	static void send_server_event(server::Server& self, const std::string& name, const std::string& data)
 	{
 		self.SendEvent(nullptr, self.GetPlayer(), name, data);
 	}
@@ -133,8 +137,8 @@ void bind_server(sol::state& lua)
 		),
 
 		"CreateSceneObject", sol::overload(
-			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&)>(&server::Server::CreateSceneObject),
-			sol::resolve<SceneObjectPtr(SceneObjectType, const std::string&, scene::ScenePtr)>(&server::Server::CreateSceneObject)
+			&server::Server::CreateSceneObject,
+			&functions::create_scene_object
 		),
 		"DeleteSceneObject", sol::resolve<bool(uint32_t)>(&server::Server::DeleteSceneObject),
 		"DeleteSceneObject", sol::resolve<bool(SceneObjectPtr)>(&server::Server::DeleteSceneObject),

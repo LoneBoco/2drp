@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+package tdrp.packet;
+
+message Tileset {
+	string name = 1;
+	uint32 tilewidth = 2;
+	uint32 tileheight = 3;
+	uint32 tilecount = 4;
+	uint32 columns = 5;
+	uint32 rows = 6;
+	uint32 margin = 7;
+	uint32 spacing = 8;
+}
+
+message TilesetGID {
+	string name = 1;
+	uint32 first_gid = 2;
+	uint32 last_gid = 3;
+}

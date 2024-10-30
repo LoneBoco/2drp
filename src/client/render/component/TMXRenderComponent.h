@@ -24,6 +24,15 @@ class TMXRenderComponent : public IRenderableComponent, public Component
 	COMPONENT_ENABLE(TMXRenderComponent)
 
 public:
+	struct Chunk
+	{
+		sf::Sprite Sprite;
+		//sf::VertexArray Vertices;
+		Rectf Bounds;
+		std::shared_ptr<sf::RenderTexture> RenderTexture;
+	};
+
+public:
 	TMXRenderComponent() = default;
 	~TMXRenderComponent();
 
@@ -40,22 +49,22 @@ public:
 
 public:
 	Rectf GetBoundingBox() const override;
-	void Render(sf::RenderTarget& window, std::chrono::milliseconds elapsed) override;
+	void Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed) override;
 
-protected:
-	Vector2di getTilePosition(const tmx::Vector2i& chunk_size, uint32_t index) const;
-	void renderToTexture();
+public:
+	void SetMaxChunks(size_t max);
+	std::optional<Chunk> RenderChunkToTexture(uint32_t chunk_idx, std::shared_ptr<tmx::Map> tmx);
+	void RenderChunkToTexture(uint32_t chunk_idx, const std::span<const uint32_t>& tiles);
 
 protected:
 	INJECT(settings::ProgramSettings, Settings);
 
 protected:
 	std::weak_ptr<TMXSceneObject> m_owner;
+	//std::shared_ptr<tmx::Map> m_tmx;
 	std::unordered_map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	std::shared_ptr<sf::RenderTexture> m_render_texture;
-	std::shared_ptr<tmx::Map> m_tmx;
-	sf::Sprite m_sprite;
-	sf::VertexArray m_chunk_vertices;
+	std::vector<std::optional<Chunk>> m_chunks;
+	std::vector<uint32_t> m_chunks_to_render;
 };
 
 } // end namespace tdrp::render::component

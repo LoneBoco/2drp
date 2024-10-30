@@ -8,6 +8,9 @@
 namespace tdrp::physics
 {
 
+constexpr playrho::d2::Velocity ZeroVelocity{};
+constexpr playrho::Momentum2 ZeroMomentum{ 0, 0 };
+
 Physics::Physics()
 	: m_world{}
 {
@@ -15,6 +18,7 @@ Physics::Physics()
 	m_world.SetBeginContactListener(std::bind(&Physics::contactBegin, this, _1));
 	m_world.SetEndContactListener(std::bind(&Physics::contactEnd, this, _1));
 	m_world.SetPreSolveContactListener(std::bind(&Physics::preSolveContact, this, _1, _2));
+	//m_world.SetPostSolveContactListener(std::bind(&Physics::postSolveContact, this, _1, _2, _3));
 }
 
 void Physics::ResetTimers()
@@ -37,15 +41,14 @@ void Physics::Update(const std::chrono::milliseconds& elapsed)
 
 		auto so = iter->second.lock();
 		if (!so) continue;
-		
-		const auto& body = m_world.GetBody(body_id);
-		const auto& transformation = body.GetTransformation();
-		auto velocity = playrho::d2::GetVelocity(body);
-		auto acceleration = playrho::d2::GetAcceleration(body);
+
+		auto transformation = playrho::d2::GetTransformation(m_world, body_id);
+		auto velocity = playrho::d2::GetVelocity(m_world, body_id);
+		auto acceleration = playrho::d2::GetAcceleration(m_world, body_id);
 
 		so->Properties[Property::X] = transformation.p[0] * m_pixels_per_unit;
 		so->Properties[Property::Y] = transformation.p[1] * m_pixels_per_unit;
-		so->Properties[Property::ANGLE] = playrho::d2::GetAngle(body);
+		so->Properties[Property::ANGLE] = playrho::d2::GetAngle(m_world, body_id);
 		so->Properties[Property::VELOCITY_X] = velocity.linear[0];
 		so->Properties[Property::VELOCITY_Y] = velocity.linear[1];
 		so->Properties[Property::VELOCITY_ANGLE] = velocity.angular;
@@ -57,25 +60,29 @@ void Physics::Update(const std::chrono::milliseconds& elapsed)
 
 void Physics::AddSceneObject(const std::shared_ptr<SceneObject>& so)
 {
-	// Create physics body in world.
-	so->OnCreatePhysics.RunAll();
+	so->ConstructPhysicsBodiesFromConfiguration();
 
-	if (!so->PhysicsBody.has_value())
+	const auto& body = so->GetPhysicsBody();
+	if (!body.has_value())
 		return;
 
-	m_scene_objects.insert_or_assign(so->PhysicsBody.value(), so);
+	m_scene_objects.insert_or_assign(body.value(), so);
+}
+
+void Physics::AddBodyToSceneObject(playrho::BodyID body, const std::shared_ptr<SceneObject>& so)
+{
+	m_scene_objects.insert_or_assign(body, so);
 }
 
 void Physics::RemoveSceneObject(const std::shared_ptr<SceneObject>& so)
 {
-	if (!so->PhysicsBody.has_value())
+	const auto& body = so->GetPhysicsBody();
+	if (!body.has_value())
 		return;
 
-	// Remove physics body from world.
-	m_world.Destroy(so->PhysicsBody.value());
+	m_scene_objects.erase(body.value());
 
-	m_scene_objects.erase(so->PhysicsBody.value());
-	so->PhysicsBody.reset();
+	so->DestroyAllPhysicsBodies();
 }
 
 std::shared_ptr<SceneObject> Physics::FindSceneObjectByBodyId(playrho::BodyID bodyId)
@@ -158,6 +165,10 @@ void Physics::preSolveContact(playrho::ContactID id, const playrho::d2::Manifold
 	// Call Lua function for pre-solving the contact.
 	soA->OnSolveContact.RunAll(soB, &collision);
 	soB->OnSolveContact.RunAll(soA, &collision);
+}
+
+void Physics::postSolveContact(playrho::ContactID id, const playrho::d2::ContactImpulsesList& impulses, unsigned step_iterations)
+{
 }
 
 } // end namespace tdrp::physics

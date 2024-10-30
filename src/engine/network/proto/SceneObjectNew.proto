@@ -3,17 +3,20 @@ package tdrp.packet;
 
 import "_attributes.proto";
 import "_physics.proto";
+import "_tilesets.proto";
 
 message SceneObjectNew {
 	fixed32 id = 1;
 	uint32 type = 2;
 	string class = 3;
-	string script = 4;
-	bool replicated = 5;
-	optional fixed32 attached_to = 6;
-	string scene = 7;
-	optional Body body = 8;
-	repeated Attribute properties = 9;
-	repeated Attribute attributes = 10;
-	repeated Shape collision = 11;
+	fixed32 owner = 4;
+	string script = 5;
+	bool replicatechanges = 6;
+	bool ignoresevents = 7;
+	string scene = 8;
+	optional fixed32 attached_to = 9;
+	optional Body body = 10;
+	repeated Attribute properties = 11;
+	repeated Attribute attributes = 12;
+	repeated TilesetGID tileset_gids = 13;
 }
