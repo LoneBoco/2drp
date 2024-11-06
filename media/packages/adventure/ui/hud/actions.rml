@@ -73,7 +73,7 @@
 
 			local ci = Game.Flags:Get('CurrentItem')
 			if ci == nil then
-				Game.Flags:Add('CurrentItem', '', NEW_ID)
+				Game.Flags:Add('CurrentItem', 0, NEW_ID)
 				ci = Game.Flags:Get('CurrentItem')
 			end
 			_listener = ci:Subscribe(UpdateItem)

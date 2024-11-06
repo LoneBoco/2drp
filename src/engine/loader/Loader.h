@@ -43,6 +43,7 @@ public:
 
 public:
 	static std::pair<bool, std::shared_ptr<package::Package>> LoadPackageIntoServer(server::Server& server, const std::string& name);
+	static bool LoadPackageFileSystemIntoServer(server::Server& server, const std::string& name);
 };
 
 } // end namespace tdrp

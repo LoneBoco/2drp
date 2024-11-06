@@ -14,6 +14,7 @@
 #include "engine/item/Item.h"
 #include "engine/filesystem/File.h"
 #include "engine/filesystem/Log.h"
+#include "engine/loader/Loader.h"
 
 
 using tdrp::server::Server;
@@ -227,7 +228,8 @@ void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& p
 	const auto& loadingscene = packet.loadingscene();
 
 	// Try to bind the package directory, if it exists.
-	//server.FileSystem.Bind(filesystem::path("packages") / package);
+	// TODO: This will need to be removed in the future when file downloads fully work.
+	Loader::LoadPackageFileSystemIntoServer(server, package);
 
 	if (server.IsSinglePlayer())
 		return;

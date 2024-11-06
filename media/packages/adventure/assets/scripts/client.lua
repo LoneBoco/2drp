@@ -167,7 +167,7 @@ end
 -- Useable.
 func.keys[Key.D] = function(key)
 	local itemid = Me.Flags.CurrentItem
-	if itemid ~= nil then
+	if itemid ~= 0 then
 		local item = Me.Player:GetItem(tonumber(itemid))
 		if item ~= nil then item:Use() end
 	end

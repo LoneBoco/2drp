@@ -418,4 +418,47 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 	return std::make_pair(true, package);
 }
 
+bool Loader::LoadPackageFileSystemIntoServer(server::Server& server, const std::string& name)
+{
+	filesystem::path root_dir = filesystem::path("packages") / name;
+
+	// Make sure our package directory exists.
+	if (!filesystem::exists(root_dir / "package.xml"))
+		return false;
+
+	// Load our package metadata.
+	fs::File packagefile{ root_dir / "package.xml" };
+	pugi::xml_document doc;
+	doc.load(packagefile);
+
+	auto node_package = doc.child("package");
+	if (node_package.empty())
+		return false;
+
+	// Load the file systems.
+	for (const auto& node_filesystem : node_package.children("filesystem"))
+	{
+		auto node_assets = node_filesystem.child("assets");
+		auto node_config = node_filesystem.child("config");
+		auto node_items = node_filesystem.child("items");
+		auto node_levels = node_filesystem.child("levels");
+		auto node_ui = node_filesystem.child("ui");
+
+		if (!node_assets.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::ASSETS, root_dir, node_assets);
+		if (!node_config.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::CONFIG, root_dir, node_config);
+		if (!node_items.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::ITEMS, root_dir, node_items);
+		if (!node_levels.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::LEVELS, root_dir, node_levels);
+		if (!node_ui.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::UI, root_dir, node_ui);
+
+		server.FileSystem.WaitUntilFilesSearched();
+	}
+
+	return true;
+}
+
 } // end namespace tdrp

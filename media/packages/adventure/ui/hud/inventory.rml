@@ -115,7 +115,7 @@
 			Element.As.ElementForm(filters):Submit()
 
 			local curitem = Game.Flags.CurrentItem or 0
-			local select = element:GetElementById(curitem)
+			local select = element:GetElementById(tostring(curitem))
 			if select == nil then return end
 			select:Focus()
 		end
