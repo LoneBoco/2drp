@@ -1,8 +1,29 @@
-<package name="Login" version="1.0">
-	<logo file="logo.png" />
-	<description>Login package for online play.</description>
-	<objectclass file="classes.xml" />
-	<clientscript file="client.js" />
-	<startingscene>startlevel</startingscene>
-	<loadingscene>loading</loadingscene>
+<package id="Login" version="1">
+	<details>
+		<logo file="logo.png" />
+		<name>Login</name>
+		<description>Login package for online play.</description>
+		<version>1.0</version>
+		<author>Nalin</author>
+	</details>
+	<scene>
+		<starting>startlevel</starting>
+		<loading>loading</loading>
+		<classes file="classes.xml" />
+		<tilesets />
+	</scene>
+	<scripts>
+		<control>
+			<server file="server.lua" />
+			<client file="client.lua" />
+		</control>
+		<clientscripts />
+	</scripts>
+	<filesystem>
+		<assets directory="assets" />
+		<config directory="config" />
+		<items directory="items" />
+		<levels directory="levels" />
+		<ui directory="ui" />
+	</filesystem>
 </package>
