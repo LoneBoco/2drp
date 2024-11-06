@@ -22,7 +22,7 @@
 		<clientscripts />
 	</scripts>
 	<filesystem>
-		<assets directory="world" />
+		<assets directory="assets" />
 		<config directory="config" />
 		<items directory="items" />
 		<levels directory="levels" />
