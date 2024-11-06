@@ -177,7 +177,7 @@ uint32_t calculateCRC32(std::istream& stream)
 	{
 		do
 		{
-			constexpr size_t READBUFFER_SIZE = 1024 * 8;
+			constexpr size_t READBUFFER_SIZE = static_cast<size_t>(1024) * 8;
 
 			char buffer[READBUFFER_SIZE];
 			stream.read(buffer, READBUFFER_SIZE);

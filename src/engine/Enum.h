@@ -6,8 +6,8 @@
 #include <limits>
 #include <algorithm>
 
-constexpr const unsigned int E_NONE = std::numeric_limits<unsigned int>::max();
-constexpr const unsigned int E_AUTO = E_NONE - 1;
+inline constexpr const unsigned int E_NONE = std::numeric_limits<unsigned int>::max();
+inline constexpr const unsigned int E_AUTO = E_NONE - 1;
 
 template <int i>
 struct MetaIndex {

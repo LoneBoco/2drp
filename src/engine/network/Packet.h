@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #undef ERROR
 
 namespace tdrp::network
@@ -20,7 +22,7 @@ const T construct(const uint8_t* const packet_data, const size_t packet_length)
 }
 
 //! If this changes, it means we re-ordered the packet numbers or did something else to make versions incompatible.
-constexpr int PACKETVERSION = 1;
+inline constexpr int PACKETVERSION = 1;
 
 // Don't adjust packet order without changing PACKETVERSION.
 enum class Packets

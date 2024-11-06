@@ -28,7 +28,7 @@ namespace tdrp::server
 namespace tdrp::network
 {
 
-constexpr int HOSTID = 0;
+inline constexpr int HOSTID = 0;
 
 struct enet_host_deleter
 {

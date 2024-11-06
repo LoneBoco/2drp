@@ -32,9 +32,7 @@ void SfmlSoundFile::initializeFile()
 	if (id == 0)
 	{
 		auto base = game->Server.GetPackage()->GetBasePath();
-		auto file = game->Server.FileSystem.GetFile(base / imagepath);
-		if (file == nullptr)
-			file = game->Server.FileSystem.GetFile(filename);
+		auto file = game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, filename);
 
 		if (file)
 		{

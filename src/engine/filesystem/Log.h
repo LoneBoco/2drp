@@ -67,7 +67,7 @@ constexpr std::string_view Indent()
 {
 	if constexpr (N == 0)
 	{
-		std::array<char, 1> result = { '\0' };
+		static std::array<char, 1> result = { '\0' };
 		return std::string_view{ result.data() };
 	}
 	else

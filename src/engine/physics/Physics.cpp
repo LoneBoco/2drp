@@ -8,8 +8,8 @@
 namespace tdrp::physics
 {
 
-constexpr playrho::d2::Velocity ZeroVelocity{};
-constexpr playrho::Momentum2 ZeroMomentum{ 0, 0 };
+inline constexpr playrho::d2::Velocity ZeroVelocity{};
+inline constexpr playrho::Momentum2 ZeroMomentum{ 0, 0 };
 
 Physics::Physics()
 	: m_world{}

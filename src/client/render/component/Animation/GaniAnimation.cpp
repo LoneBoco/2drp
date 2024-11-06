@@ -38,7 +38,7 @@ void GaniAnimation::Load(const filesystem::path& image)
 		auto id = resources->FindId<loader::GaniAnimation>(filename);
 		if (id == 0)
 		{
-			auto filepath = game->Server.FileSystem.GetFilePath(filename);
+			auto filepath = game->Server.FileSystem.GetFilePath(fs::FileCategory::WORLD, filename);
 			if (!filepath.empty())
 			{
 				auto gani = loader::GaniLoader::LoadGani(filepath);

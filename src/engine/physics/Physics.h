@@ -31,10 +31,8 @@ enum class BodyTypes
 	COUNT
 };
 
-constexpr playrho::Filter::bits_type category_default = 0b0001;
-constexpr playrho::Filter::bits_type category_hybrid  = 0b0010;
-//constexpr playrho::Filter::bits_type category_hybrid_other  = 0b0100;
-//constexpr playrho::Filter::bits_type category_hybrid_shadow = 0b1000;
+inline constexpr playrho::Filter::bits_type category_default = 0b0001;
+inline constexpr playrho::Filter::bits_type category_hybrid  = 0b0010;
 
 struct Collision
 {

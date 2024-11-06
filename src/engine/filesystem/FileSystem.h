@@ -14,6 +14,25 @@
 namespace tdrp::fs
 {
 
+/// <summary>
+/// Category of the file system.
+/// </summary>
+enum class FileCategory : uint8_t
+{
+	WORLD = 0,
+	CONFIG,
+	FONTS,
+	ITEMS,
+	UI,
+	ACCOUNTS,
+
+	COUNT
+};
+inline constexpr uint8_t FileCategoryCount = static_cast<uint8_t>(FileCategory::COUNT);
+
+/// <summary>
+/// Data about a file.
+/// </summary>
 struct FileData
 {
 	filesystem::path File;
@@ -71,27 +90,27 @@ public:
 	//! \param directory The directory to bind to.
 	//! \param exclude_dirs A list of directories to exclude.  Will be pattern matched like *exclude_dir*
 	template <typename... Args>
-	void Bind(const filesystem::path& directory, Args... exclude_dirs)
+	void Bind(FileCategory category, const filesystem::path& directory, Args... exclude_dirs)
 	{
 		std::list<filesystem::path> exclude_list;
 		buildExclusionList(exclude_list, exclude_dirs...);
-		bind(directory, std::move(exclude_list));
+		bind(category, directory, std::move(exclude_list));
 	}
 
 	//! Binds to a directory.
 	//! \param directory The directory to bind to.
 	//! \param exclude_dirs A list of directories to exclude.  Will be pattern matched like *exclude_dir*
 	template <typename... Args>
-	void BindFront(const filesystem::path& directory, Args... exclude_dirs)
+	void BindFront(FileCategory category, const filesystem::path& directory, Args... exclude_dirs)
 	{
 		std::list<filesystem::path> exclude_list;
 		buildExclusionList(exclude_list, exclude_dirs...);
-		bind(directory, std::move(exclude_list), true);
+		bind(category, directory, std::move(exclude_list), true);
 	}
 
 	//! Checks if the file exists in the filesystem.
 	//! \return Successful if the file exists.
-	bool HasFile(const filesystem::path& file) const;
+	bool HasFile(FileCategory category, const filesystem::path& file) const;
 
 	//! Checks if the file exists in the filesystem.
 	//! \return Successful if the file exists.
@@ -99,7 +118,7 @@ public:
 
 	//! Returns information about the file.
 	//! \return Information about the file.
-	FileData GetFileData(const filesystem::path& file) const;
+	FileData GetFileData(FileCategory category, const filesystem::path& file) const;
 
 	//! Returns information about the file.
 	//! \return Information about the file.
@@ -107,7 +126,7 @@ public:
 
 	//! Gets a file by name.
 	//! \return A shared pointer to the file.
-	std::shared_ptr<File> GetFile(const filesystem::path& file) const;
+	std::shared_ptr<File> GetFile(FileCategory category, const filesystem::path& file) const;
 
 	//! Gets a file by name.
 	//! \return A shared pointer to the file.
@@ -115,19 +134,26 @@ public:
 
 	//! Gets the full path to a file by name.
 	//! \return The full path to a file.
-	filesystem::path GetFilePath(const filesystem::path& file) const;
-
-	//! Gets the full path to a file by name.
-	//! \return The full path to a file.
-	filesystem::path GetFilePath(const filesystem::path& root_dir, const filesystem::path& file) const;
+	filesystem::path GetFilePath(FileCategory category, const filesystem::path& file) const;
 
 	//! Gets all the archive CRC32s.
 	//! \return A map of the archive CRC32s.
-	std::vector<FileData> GetArchiveInfo() const;
+	std::vector<FileData> GetArchiveInfo(FileCategory category) const;
 
 	//! Gets all the archive CRC32s.
 	//! \return A map of the archive CRC32s.
-	std::vector<FileData> GetArchiveInfo(const filesystem::path& root_dir) const;
+	std::vector<FileData> GetArchiveInfo(FileCategory category, const filesystem::path& root_dir) const;
+
+	//! Gets a range of all files in a category.
+	std::vector<std::filesystem::path> GetFiles(FileCategory category) const
+	{
+		std::vector<std::filesystem::path> result;
+		auto& groups = m_categories[static_cast<uint8_t>(category)];
+		for (const auto& group : groups)
+			result.append_range(group.Files | std::views::keys);
+
+		return result;
+	}
 
 	//! Gets the first iterator for the directory we are watching.  Does not honor exclusion list.
 	// filesystem::directory_iterator GetFirstDirectoryIterator() const;
@@ -155,7 +181,7 @@ public:
 	void Update();
 
 private:
-	void bind(const filesystem::path& directory, std::list<filesystem::path>&& exclude_list, bool at_front = false);
+	void bind(FileCategory category, const filesystem::path& directory, std::list<filesystem::path>&& exclude_list, bool at_front = false);
 	bool isExcluded(const std::list<filesystem::path>& exclude_list, const filesystem::path& directory);
 
 private:
@@ -174,7 +200,7 @@ private:
 	std::condition_variable m_searching_files_condition;
 
 	// Using list instead of vector as some compilers don't noexcept certain STL container member functions and can, down the line, cause issues with unique_ptr.
-	std::list<DirectoryGroup> m_directories;
+	std::array<std::list<DirectoryGroup>, FileCategoryCount> m_categories;
 
 	mutable std::mutex m_file_mutex;
 };

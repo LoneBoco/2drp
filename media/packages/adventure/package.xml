@@ -1,15 +1,31 @@
-<package name="Adventure" version="1.0">
-	<logo file="logo.png" />
-	<description>Adventure game.</description>
-	<startingscene>startlevel</startingscene>
-	<loadingscene>loading</loadingscene>
-	<objectclasses file="classes.xml" />
-	<servercontrolscripts>
-		<file>server.lua</file>
-	</servercontrolscripts>
-	<clientcontrolscripts>
-		<file>client.lua</file>
-	</clientcontrolscripts>
-	<loadclientscripts />
-	<loaditems directory="items/" />
+<package id="Adventure" version="1">
+	<details>
+		<logo file="logo.png" />
+		<name>Adventure</name>
+		<description>Adventure game description.</description>
+		<version>0.1</version>
+		<author>Santa</author>
+	</details>
+	<scene>
+		<starting>startlevel</starting>
+		<loading>loading</loading>
+		<classes file="classes.xml" />
+		<tilesets />
+	</scene>
+	<scripts>
+		<control>
+			<server file="server.lua" />
+			<client>
+				<file>client.lua</file>
+			</client>
+		</control>
+		<clientscripts />
+	</scripts>
+	<filesystem>
+		<config directory="config" />
+		<fonts directory="fonts" />
+		<items directory="items" />
+		<ui directory="ui" />
+		<world directory="world" />
+	</filesystem>
 </package>

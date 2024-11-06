@@ -1,0 +1,12 @@
+<class name="player">
+	<attribute name="SPRITES" type="string" value="sprites.png" />
+	<attribute name="SWORD" type="string" value="sword_hero1.png" />
+	<attribute name="SHIELD" type="string" value="shield2.png" />
+	<attribute name="HEAD" type="string" value="head_hero1.png" />
+	<attribute name="BODY" type="string" value="body_hero1.png" />
+	<attribute name="hearts" type="integer" value="6" />
+	<attribute name="maxhearts" type="integer" value="6" />
+	<attribute name="swordpower" type="integer" value="1" />
+	<attribute name="shieldpower" type="integer" value="1" />
+	<attribute name="chat" type="string" value="" />
+</class>

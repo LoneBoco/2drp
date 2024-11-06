@@ -50,6 +50,12 @@ public:
 		return m_description;
 	}
 	
+	//! Gets the package author.
+	const std::string& GetAuthor() const
+	{
+		return m_author;
+	}
+	
 	//! Gets the package starting scene.
 	const std::string& GetStartingScene() const
 	{
@@ -73,6 +79,7 @@ private:
 	std::string m_logo;
 	std::string m_version;
 	std::string m_description;
+	std::string m_author;
 	std::string m_starting_scene;
 	std::string m_loading_scene;
 	filesystem::path m_basepath;

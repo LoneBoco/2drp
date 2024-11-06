@@ -592,10 +592,6 @@ void SceneObject::addPhysicsBodyToScene(std::shared_ptr<scene::Scene>& scene) no
 		playrho::d2::FixtureConf fixture_conf{};
 		fixture_conf.UseBody(body).UseShape(shape);
 		fixture_conf.filter.categoryBits = physics::category_default;
-		fixture_conf.filter.maskBits = physics::category_default | physics::category_hybrid;
-
-		//if (config.Type == physics::BodyTypes::HYBRID)
-		//	fixture_conf.filter.categoryBits = physics::category_hybrid;
 
 		playrho::d2::CreateFixture(world, fixture_conf);
 	}

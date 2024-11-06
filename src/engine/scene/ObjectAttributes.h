@@ -12,7 +12,7 @@ namespace tdrp
 {
 
 using AttributeVariant = std::variant<int64_t, double, std::string>;
-constexpr AttributeID INVALID_ATTRIBUTE = 0xFFFF;
+inline constexpr AttributeID INVALID_ATTRIBUTE = 0xFFFF;
 
 enum class AttributeType
 {

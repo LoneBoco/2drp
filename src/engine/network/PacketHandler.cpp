@@ -227,7 +227,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& p
 	const auto& loadingscene = packet.loadingscene();
 
 	// Try to bind the package directory, if it exists.
-	server.FileSystem.Bind(filesystem::path("packages") / package);
+	//server.FileSystem.Bind(filesystem::path("packages") / package);
 
 	if (server.IsSinglePlayer())
 		return;
@@ -236,7 +236,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& p
 	if (!server.IsHost())
 	{
 		server.DefaultDownloadPath = filesystem::path("downloads") / uniqueid;
-		server.FileSystem.Bind(server.DefaultDownloadPath);
+		server.FileSystem.Bind(fs::FileCategory::WORLD, server.DefaultDownloadPath);
 	}
 
 	// Rage.
@@ -261,9 +261,9 @@ void handle(Server& server, const uint16_t playerId, const packet::ServerInfo& p
 
 				// Check to see if we have this file.
 				bool request_file = true;
-				if (server.FileSystem.HasFile(name))
+				if (server.FileSystem.HasFile(fs::FileCategory::WORLD, name))
 				{
-					auto data = server.FileSystem.GetFileData(name);
+					auto data = server.FileSystem.GetFileData(fs::FileCategory::WORLD, name);
 					if (data.FileSize == size && data.TimeSinceEpoch == date && data.CRC32 == crc32)
 						request_file = false;
 				}
@@ -290,7 +290,7 @@ void handle(Server& server, const uint16_t playerId, const packet::FileRequest& 
 
 		// TODO: Better file sending with a class to send data in proper chunks.
 
-		auto file = server.FileSystem.GetFile(file_path.filename());
+		auto file = server.FileSystem.GetFile(fs::FileCategory::WORLD, file_path.filename());
 		if (file != nullptr)
 		{
 			tdrp::packet::FileTransfer message;

@@ -23,7 +23,7 @@ void JSONSpriterFileDocumentWrapper::loadFile(std::string fileName)
 {
 	auto game = BabyDI::Get<tdrp::Game>();
 
-	auto file = game->Server.FileSystem.GetFile(fileName);
+	auto file = game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, fileName);
 	if (file && file->Opened())
 	{
 		m_json = json::parse(*file);

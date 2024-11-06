@@ -13,7 +13,7 @@ std::shared_ptr<GaniAnimation> GaniLoader::LoadGani(const filesystem::path& file
 {
 	auto game = BabyDI::Get<tdrp::Game>();
 
-	auto f = game->Server.FileSystem.GetFile(file);
+	auto f = game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, file);
 	if (f)
 	{
 		/*

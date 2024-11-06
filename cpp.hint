@@ -1,5 +1,7 @@
 #define SCRIPT_SETUP
 #define SCRIPT_FUNCTION(name)
+#define SCRIPT_ME_ERASE(name)
+#define SCRIPT_THEM_ERASE(name)
 #define INJECT(c,v)
 #define PROVIDE(c,v)
 #define _PROPDEF(name,type)

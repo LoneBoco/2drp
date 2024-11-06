@@ -116,6 +116,9 @@ Server::Server()
 	// Set up the default player.
 	m_player->BindServer(this);
 	m_player_list[0] = m_player;
+
+	// Bind the accounts directory.
+	FileSystem.Bind(fs::FileCategory::ACCOUNTS, filesystem::path("accounts") / GetUniqueId());
 }
 
 Server::~Server()
@@ -157,7 +160,7 @@ bool Server::LoadPackage(const std::string& package_name)
 		log::PrintLine("   Loading all scenes in package.");
 
 		// Load all scenes.
-		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "levels" })
+		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "world" / "levels" })
 		{
 			if (!filesystem::is_directory(d.status()))
 				continue;
@@ -171,7 +174,7 @@ bool Server::LoadPackage(const std::string& package_name)
 		log::PrintLine("   Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
-		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetBasePath() / "levels" / package->GetStartingScene());
+		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetBasePath() / "world" / "levels" / package->GetStartingScene());
 	}
 
 	// Load server script.
@@ -635,7 +638,7 @@ void Server::LoadClientScript(const filesystem::path& file)
 	auto name = file.stem().string();
 
 	std::string script;
-	auto f = FileSystem.GetFile(file);
+	auto f = FileSystem.GetFile(fs::FileCategory::WORLD, file);
 	if (f && f->Opened())
 		script = f->ReadAsString();
 

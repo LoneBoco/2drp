@@ -7,13 +7,13 @@
 namespace tdrp::fs
 {
 
-bool isArchive(const filesystem::path& file)
+static bool isArchive(const filesystem::path& file)
 {
 	return (file.extension() == "zip" || file.extension() == "pak");
 }
 
 using ArchiveEntriesFuture = std::tuple<ZipArchive::Ptr, std::vector<filesystem::path>, uint32_t>;
-std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path file, ZipArchive::Ptr archive)
+static std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path file, ZipArchive::Ptr archive)
 {
 	auto f = std::async(std::launch::async, [file, archive]() -> ArchiveEntriesFuture
 	{
@@ -37,14 +37,15 @@ std::future<ArchiveEntriesFuture> collectArchiveEntries(const filesystem::path f
 
 /////////////////////////////
 
-void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::path>&& exclude_list, bool at_front)
+void FileSystem::bind(FileCategory category, const filesystem::path& directory, std::list<filesystem::path>&& exclude_list, bool at_front)
 {
 	std::map<filesystem::path, std::future<ArchiveEntriesFuture>> processingArchives;
 	std::scoped_lock guard(m_file_mutex);
 
 	// Make sure we aren't already listening to this directory.
-	auto existingGroup = std::find_if(std::begin(m_directories), std::end(m_directories), [&directory](decltype(m_directories)::value_type const& entry) { return entry.Directory == directory; });
-	if (existingGroup != std::end(m_directories))
+	auto& directories = m_categories[static_cast<uint8_t>(category)];
+	auto existingGroup = std::find_if(std::begin(directories), std::end(directories), [&directory](std::remove_reference_t<decltype(directories)>::value_type const& entry) { return entry.Directory == directory; });
+	if (existingGroup != std::end(directories))
 	{
 		// We are going to abort, but first lets merge our exclude directory list as we may have wanted to update it.
 		if (!exclude_list.empty())
@@ -56,7 +57,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 	}
 
 	// Insert our directory to the list.
-	auto directoryGroup = m_directories.emplace(at_front ? m_directories.begin() : m_directories.end());
+	auto directoryGroup = directories.emplace(at_front ? directories.begin() : directories.end());
 	directoryGroup->Directory = directory;
 	directoryGroup->ExcludedDirectories = std::move(exclude_list);
 
@@ -147,14 +148,14 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 	finalFiles.clear();
 
 	//m_directory_include.push_back(directory);
-	m_watcher.Add(directory, [this](uint32_t watch_id, const filesystem::path& dir, const filesystem::path& file, watch::Event e)
+	m_watcher.Add(directory, [this, &directories](uint32_t watch_id, const filesystem::path& dir, const filesystem::path& file, watch::Event e)
 	{
-		if (e == watch::Event::Invalid || e == watch::Event::Modified)
+		if (e == watch::Event::Invalid || HASFLAG(e, watch::Event::Modified))
 			return;
 
 		// Get our directory group.
-		auto directoryGroup = std::find_if(m_directories.begin(), m_directories.end(), [&](const auto& group) { return group.Directory == dir; });
-		if (directoryGroup == std::end(m_directories))
+		auto directoryGroup = std::find_if(directories.begin(), directories.end(), [&](const auto& group) { return group.Directory == dir; });
+		if (directoryGroup == std::end(directories))
 			return;
 
 		// Check if the directory is in the exclusion list.
@@ -168,7 +169,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 			auto archive_iter = directoryGroup->Archives.find(file);
 			if (archive_iter != directoryGroup->Archives.end())
 			{
-				auto archive = archive_iter->second->Archive;
+				auto& archive = archive_iter->second->Archive;
 
 				// Remove all registered files that came from this archive.
 				for (auto i = std::begin(directoryGroup->Files); i != std::end(directoryGroup->Files);)
@@ -263,7 +264,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 
 		if (iter != directoryGroup->Files.end())
 		{
-			if (e == watch::Event::Add)
+			if (HASFLAG(e, watch::Event::Add))
 			{
 				if (isArchive(file))
 				{
@@ -279,7 +280,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 					iter->second->File = dir / file;
 				}
 			}
-			else if (e == watch::Event::Delete)
+			else if (HASFLAG(e, watch::Event::Delete))
 			{
 				directoryGroup->Files.erase(iter);
 
@@ -288,7 +289,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 					removeArchive();
 				}
 			}
-			else if (e == watch::Event::Modified)
+			else if (HASFLAG(e, watch::Event::Modified))
 			{
 				// Our archive got modified.  Remove it and reload it.
 				if (iter->second->Type == FileEntryType::ARCHIVE)
@@ -300,7 +301,7 @@ void FileSystem::bind(const filesystem::path& directory, std::list<filesystem::p
 		}
 		else
 		{
-			if (e == watch::Event::Add)
+			if (HASFLAG(e, watch::Event::Add))
 			{
 				// Check if it is an archive file.
 				if (isArchive(file))
@@ -331,7 +332,7 @@ bool FileSystem::isExcluded(const std::list<filesystem::path>& exclude_list, con
 	return true;
 }
 
-bool FileSystem::HasFile(const filesystem::path& file) const
+bool FileSystem::HasFile(FileCategory category, const filesystem::path& file) const
 {
 	if (filesystem::exists(file))
 		return true;
@@ -340,7 +341,8 @@ bool FileSystem::HasFile(const filesystem::path& file) const
 	{
 		std::scoped_lock guard(m_file_mutex);
 
-		for (const auto& group : m_directories)
+		auto& directories = m_categories[static_cast<uint8_t>(category)];
+		for (const auto& group : directories)
 		{
 			auto iter = group.Files.find(file);
 			if (iter != group.Files.end())
@@ -356,27 +358,14 @@ bool FileSystem::HasFile(const filesystem::path& root_dir, const filesystem::pat
 	if (filesystem::exists(root_dir / file))
 		return true;
 
-	// Check if our file is saved in the file system list.
-	{
-		std::scoped_lock guard(m_file_mutex);
-
-		auto group = std::find_if(std::begin(m_directories), std::end(m_directories), [&](decltype(m_directories)::value_type const& entry) { return entry.Directory == root_dir; });
-		if (group == std::end(m_directories))
-			return false;
-
-		auto iter = group->Files.find(file);
-		if (iter != group->Files.end())
-			return true;
-	}
-
 	return false;
 }
 
-FileData FileSystem::GetFileData(const filesystem::path& file) const
+FileData FileSystem::GetFileData(FileCategory category, const filesystem::path& file) const
 {
 	FileData data;
 
-	auto f = GetFile(file);
+	auto f = GetFile(category, file);
 	if (f)
 	{
 		data.CRC32 = f->Crc32();
@@ -402,7 +391,7 @@ FileData FileSystem::GetFileData(const filesystem::path& root_dir, const filesys
 	return data;
 }
 
-std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
+std::shared_ptr<File> FileSystem::GetFile(FileCategory category, const filesystem::path& file) const
 {
 	// Check if the file exists in the native file system and file is a direct path.
 	if (filesystem::exists(file))
@@ -414,7 +403,9 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& file) const
 	// Check if the file exists in the native file system and file is a filename we want to find.
 	{
 		std::scoped_lock guard(m_file_mutex);
-		for (const auto& group : m_directories)
+
+		auto& directories = m_categories[static_cast<uint8_t>(category)];
+		for (const auto& group : directories)
 		{
 			auto iter = group.Files.find(file);
 			if (iter != group.Files.end())
@@ -452,41 +443,10 @@ std::shared_ptr<File> FileSystem::GetFile(const filesystem::path& root_dir, cons
 		return f;
 	}
 
-	// Check if the file exists in the native file system and file is a filename we want to find.
-	{
-		std::scoped_lock guard(m_file_mutex);
-
-		auto group = std::find_if(std::begin(m_directories), std::end(m_directories), [&](decltype(m_directories)::value_type const& entry) { return entry.Directory == root_dir; });
-		if (group == std::end(m_directories))
-			return nullptr;
-
-		auto iter = group->Files.find(file);
-		if (iter != group->Files.end())
-		{
-			switch (iter->second->Type)
-			{
-				case FileEntryType::SYSTEM:
-					return std::make_shared<File>(iter->second->File);
-
-				case FileEntryType::ARCHIVE:
-					auto& archive = iter->second->Archive;
-					for (size_t i = 0; i < archive->GetEntriesCount(); ++i)
-					{
-						auto entry = archive->GetEntry(static_cast<int>(i));
-						if (entry->GetName() == file)
-						{
-							return std::make_shared<FileZip>(entry->GetFullName(), entry);
-						}
-					}
-					break;
-			}
-		}
-	}
-
 	return nullptr;
 }
 
-filesystem::path FileSystem::GetFilePath(const filesystem::path& file) const
+filesystem::path FileSystem::GetFilePath(FileCategory category, const filesystem::path& file) const
 {
 	if (filesystem::exists(file))
 		return file;
@@ -494,7 +454,9 @@ filesystem::path FileSystem::GetFilePath(const filesystem::path& file) const
 	// Check if the file exists in the native file system and file is a filename we want to find.
 	{
 		std::scoped_lock guard(m_file_mutex);
-		for (const auto& group : m_directories)
+
+		auto& directories = m_categories[static_cast<uint8_t>(category)];
+		for (const auto& group : directories)
 		{
 			auto iter = group.Files.find(file);
 			if (iter != group.Files.end())
@@ -514,42 +476,13 @@ filesystem::path FileSystem::GetFilePath(const filesystem::path& file) const
 	return {};
 }
 
-filesystem::path FileSystem::GetFilePath(const filesystem::path& root_dir, const filesystem::path& file) const
-{
-	if (filesystem::exists(root_dir / file))
-		return root_dir / file;
-
-	// Check if the file exists in the native file system and file is a filename we want to find.
-	{
-		std::scoped_lock guard(m_file_mutex);
-
-		auto group = std::find_if(std::begin(m_directories), std::end(m_directories), [&](decltype(m_directories)::value_type const& entry) { return entry.Directory == root_dir; });
-		if (group == std::end(m_directories))
-			return {};
-
-		auto iter = group->Files.find(file);
-		if (iter != group->Files.end())
-		{
-			switch (iter->second->Type)
-			{
-				case FileEntryType::SYSTEM:
-					return iter->second->File;
-
-				case FileEntryType::ARCHIVE:
-					return {};
-			}
-		}
-	}
-
-	return {};
-}
-
-std::vector<FileData> FileSystem::GetArchiveInfo() const
+std::vector<FileData> FileSystem::GetArchiveInfo(FileCategory category) const
 {
 	std::vector<FileData> result;
 	//result.reserve(m_archives.size());
 
-	for (const auto& group : m_directories)
+	auto& directories = m_categories[static_cast<uint8_t>(category)];
+	for (const auto& group : directories)
 	{
 		for (const auto& [filename, entry] : group.Archives)
 		{
@@ -561,12 +494,13 @@ std::vector<FileData> FileSystem::GetArchiveInfo() const
 	return result;
 }
 
-std::vector<FileData> FileSystem::GetArchiveInfo(const filesystem::path& root_dir) const
+std::vector<FileData> FileSystem::GetArchiveInfo(FileCategory category, const filesystem::path& root_dir) const
 {
 	std::vector<FileData> result;
 
-	auto group = std::find_if(std::begin(m_directories), std::end(m_directories), [&](decltype(m_directories)::value_type const& entry) { return entry.Directory == root_dir; });
-	if (group == std::end(m_directories))
+	auto& directories = m_categories[static_cast<uint8_t>(category)];
+	auto group = std::find_if(std::begin(directories), std::end(directories), [&](std::remove_reference_t<decltype(directories)>::value_type const& entry) { return entry.Directory == root_dir; });
+	if (group == std::end(directories))
 		return result;
 
 	for (const auto& [filename, entry] : group->Archives)

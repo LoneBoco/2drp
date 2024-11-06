@@ -29,7 +29,7 @@ void Account::Load(const std::string& name)
 
 	m_name = name;
 
-	auto file = server->FileSystem.GetFile(filesystem::path("accounts") / server->GetUniqueId() / (name + ".txt"));
+	auto file = server->FileSystem.GetFile(fs::FileCategory::ACCOUNTS, (name + ".txt"));
 	if (!file)
 	{
 		log::PrintLine(":: Account {} does not exist.", name);

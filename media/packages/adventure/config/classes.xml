@@ -1,0 +1,15 @@
+<classes version="1">
+	<class name="level" />
+	<class name="chat">
+		<script type="client" file="c_chat.lua" />
+	</class>
+	<class name="player" file="_player.xml" />
+	<class name="bush">
+		<attribute name="state" type="integer" value="0" updaterate="5000" />
+		<attribute name="ani_idle" type="string" value="c_bush_idle.gani" />
+		<attribute name="ani_cut" type="string" value="c_bush_cut.gani" />
+		<attribute name="ani_grow" type="string" value="c_bush_grow.gani" />
+		<attribute name="BUSHIMAGE" type="string" value="bush.png" />
+		<script type="client" file="c_bush.lua" />
+	</class>
+</classes>

@@ -16,15 +16,79 @@
 
 namespace tdrp::helper
 {
-
-	static void LoadObjectClasses(server::Server& server, std::unordered_map<std::string, std::shared_ptr<ObjectClass>>& object_classes, std::shared_ptr<package::Package>& package, pugi::xml_node& node_doc)
+	static void LoadFileSystem(server::Server& server, fs::FileCategory category, const std::filesystem::path& package_path, const pugi::xml_node& node_fs)
 	{
-		for (const auto& node_classes : node_doc.children("objectclasses"))
+		if (auto dir = node_fs.attribute("directory"); !dir.empty())
+		{
+			server.FileSystem.Bind(category, package_path / dir.as_string());
+		}
+
+		for (const auto& dirs : node_fs.children("directory"))
+		{
+			server.FileSystem.Bind(category, package_path / dirs.text().get());
+		}
+	}
+
+	static void LoadObjectClass(server::Server& server, std::unordered_map<std::string, std::shared_ptr<ObjectClass>>& object_classes, std::shared_ptr<package::Package>& package, const pugi::xml_node& node_class)
+	{
+		std::string classname = node_class.attribute("name").as_string();
+		auto pc = std::make_shared<ObjectClass>(classname);
+
+		// Script.
+		for (const auto& node_script : node_class.children("script"))
+		{
+			const auto& attribute_type = node_script.attribute("type");
+			std::string* script = &pc->ClientScript;
+			if (boost::iequals(attribute_type.as_string(), "server"))
+				script = &pc->ServerScript;
+
+			std::string file = node_script.attribute("file").as_string();
+			if (!file.empty())
+			{
+				// Load script from file.
+				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::WORLD, file);
+				script->append(scriptfile->ReadAsString());
+				script->append("\n");
+			}
+			else
+			{
+				// Load text directly.
+				script->append(node_script.text().get());
+				script->append("\n");
+			}
+		}
+
+		// Attributes.
+		for (const auto& node_attribute : node_class.children("attribute"))
+		{
+			std::string attrname = node_attribute.attribute("name").as_string();
+			std::string attrtype = node_attribute.attribute("type").as_string();
+			std::string attrvalue = node_attribute.attribute("value").as_string();
+			bool attrreplicated = node_attribute.attribute("replicated").as_bool(true);
+			int32_t attrupdaterate = node_attribute.attribute("updaterate").as_int();
+
+			auto type = Attribute::TypeFromString(attrtype);
+			if (type == AttributeType::INVALID)
+				log::PrintLine("!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
+			else
+			{
+				auto attrib = pc->Attributes.AddAttribute(attrname, type, attrvalue);
+				attrib->Replicated = attrreplicated;
+				attrib->NetworkUpdateRate = std::chrono::milliseconds{ attrupdaterate };
+			}
+		}
+
+		object_classes.insert(std::make_pair(classname, pc));
+	}
+
+	static void LoadObjectClasses(server::Server& server, std::unordered_map<std::string, std::shared_ptr<ObjectClass>>& object_classes, std::shared_ptr<package::Package>& package, const pugi::xml_node& node_doc)
+	{
+		for (const auto& node_classes : node_doc.children("classes"))
 		{
 			std::string_view attrib_file = node_classes.attribute("file").as_string();
 			if (!attrib_file.empty())
 			{
-				auto classes = server.FileSystem.GetFile(package->GetBasePath(), attrib_file);
+				auto classes = server.FileSystem.GetFile(fs::FileCategory::CONFIG, attrib_file);
 				if (classes != nullptr)
 				{
 					pugi::xml_document doc;
@@ -38,60 +102,26 @@ namespace tdrp::helper
 			{
 				for (const auto& node_class : node_classes.children("class"))
 				{
-					std::string classname = node_class.attribute("name").as_string();
-					auto pc = std::make_shared<ObjectClass>(classname);
-
-					// Script.
-					for (const auto& node_script : node_class.children("script"))
+					std::string_view attrib_file = node_class.attribute("file").as_string();
+					if (!attrib_file.empty())
 					{
-						const auto& attribute_type = node_script.attribute("type");
-						std::string* script = &pc->ClientScript;
-						if (boost::iequals(attribute_type.as_string(), "server"))
-							script = &pc->ServerScript;
+						// Load the class information from a file.
+						if (auto classes = server.FileSystem.GetFile(fs::FileCategory::CONFIG, attrib_file); classes != nullptr)
+						{
+							pugi::xml_document doc;
+							doc.load(*classes);
 
-						std::string file = node_script.attribute("file").as_string();
-						if (!file.empty())
-						{
-							// Load script from file.
-							auto scriptfile = server.FileSystem.GetFile(package->GetBasePath(), file);
-							script->append(scriptfile->ReadAsString());
-							script->append("\n");
-						}
-						else
-						{
-							// Load text directly.
-							script->append(node_script.text().get());
-							script->append("\n");
+							if (const auto& file_node_class = doc.child("class"); !file_node_class.empty())
+								LoadObjectClass(server, object_classes, package, file_node_class);
 						}
 					}
-
-					// Attributes.
-					for (const auto& node_attribute : node_class.children("attribute"))
-					{
-						std::string attrname = node_attribute.attribute("name").as_string();
-						std::string attrtype = node_attribute.attribute("type").as_string();
-						std::string attrvalue = node_attribute.attribute("value").as_string();
-						bool attrreplicated = node_attribute.attribute("replicated").as_bool(true);
-						int32_t attrupdaterate = node_attribute.attribute("updaterate").as_int();
-
-						auto type = Attribute::TypeFromString(attrtype);
-						if (type == AttributeType::INVALID)
-							log::PrintLine("!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
-						else
-						{
-							auto attrib = pc->Attributes.AddAttribute(attrname, type, attrvalue);
-							attrib->Replicated = attrreplicated;
-							attrib->NetworkUpdateRate = std::chrono::milliseconds{ attrupdaterate };
-						}
-					}
-
-					object_classes.insert(std::make_pair(classname, pc));
+					else LoadObjectClass(server, object_classes, package, node_class);
 				}
 			}
 		}
 	}
 
-	static void LoadScripts(server::Server& server, std::vector<std::pair<std::string, std::string>>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& search_node_name, pugi::xml_node& parent_node)
+	static void LoadScripts(server::Server& server, std::vector<std::pair<std::string, std::string>>& scripts, std::shared_ptr<package::Package>& package, const std::string_view& search_node_name, const pugi::xml_node& parent_node)
 	{
 		const auto& node = parent_node.child(search_node_name.data());
 		if (node.empty())
@@ -100,7 +130,7 @@ namespace tdrp::helper
 		auto readFile = [&](const std::string_view& file)
 		{
 			if (file.empty()) return;
-			auto scriptfile = server.FileSystem.GetFile(package->GetBasePath(), file);
+			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::WORLD, file);
 			if (scriptfile) scripts.push_back(std::make_pair(std::string{ scriptfile->FilePath().stem().string() }, std::move(scriptfile->ReadAsString())));
 		};
 
@@ -152,35 +182,22 @@ namespace tdrp::helper
 		}
 	}
 
-	static void LoadItems(server::Server& server, std::shared_ptr<package::Package>& package, pugi::xml_node& parent_node)
+	static void LoadItems(server::Server& server, std::shared_ptr<package::Package>& package)
 	{
-		auto readFile = [&](const std::string_view& filename) -> std::string
+		auto readFile = [&](fs::FileCategory category, const std::string_view& filename) -> std::string
 		{
 			if (filename.empty()) return {};
-			auto file = server.FileSystem.GetFile(package->GetBasePath(), filename);
+			auto file = server.FileSystem.GetFile(category, filename);
 			if (file)
 				return file->ReadAsString();
 			else return {};
-		};
-
-		auto readDirectory = [&](const std::string_view& directory) -> std::vector<std::string>
-		{
-			std::vector<std::string> files;
-			if (directory.empty()) return files;
-			for (auto& file : filesystem::directory_iterator(package->GetBasePath() / directory))
-			{
-				if (!filesystem::is_regular_file(file.status()))
-					continue;
-				files.emplace_back((directory / file.path().filename()).string());
-			}
-			return files;
 		};
 
 		auto loadItem = [&](const filesystem::path& filename) -> item::ItemDefinitionUPtr
 		{
 			if (filename.empty()) return nullptr;
 
-			auto itemfile = server.FileSystem.GetFile(package->GetBasePath(), filename);
+			auto itemfile = server.FileSystem.GetFile(fs::FileCategory::ITEMS, filename);
 			if (!itemfile) return nullptr;
 
 			pugi::xml_document doc;
@@ -207,7 +224,7 @@ namespace tdrp::helper
 			if (!node_clientscript.empty())
 			{
 				if (auto attrib_file = node_clientscript.attribute("file"); attrib_file)
-					clientscript = readFile(attrib_file.as_string());
+					clientscript = readFile(fs::FileCategory::WORLD, attrib_file.as_string());
 				else
 					clientscript = node_clientscript.text().as_string();
 			}
@@ -223,41 +240,10 @@ namespace tdrp::helper
 			return item;
 		};
 
-		auto loadOneItem = [&](std::string_view filename)
+		for (const auto& file : server.FileSystem.GetFiles(fs::FileCategory::ITEMS))
 		{
-			auto item = loadItem(filename);
+			auto item = loadItem(file);
 			server.AddItemDefinition(std::move(item));
-		};
-
-		auto loadManyItems = [&](std::string_view directory)
-		{
-			auto files = readDirectory(directory);
-			for (const auto& file : files)
-			{
-				auto item = loadItem(file);
-				server.AddItemDefinition(std::move(item));
-			}
-		};
-
-		if (parent_node.empty())
-			return;
-
-		// Attributes.
-		auto attrib_file = parent_node.attribute("file");
-		auto attrib_directory = parent_node.attribute("directory");
-		if (!attrib_file.empty()) loadOneItem(attrib_file.as_string());
-		if (!attrib_directory.empty()) loadManyItems(attrib_directory.as_string());
-
-		// File.
-		for (const auto& node_file : parent_node.children("file"))
-		{
-			loadOneItem(node_file.text().as_string());
-		}
-
-		// Directory.
-		for (const auto& node_directory : parent_node.children("directory"))
-		{
-			loadManyItems(node_directory.text().as_string());
 		}
 	}
 
@@ -277,14 +263,14 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		return std::make_pair(false, nullptr);
 
 	// Bind the package directory to our server filesystem.
-	server.FileSystem.Bind(root_dir, "levels");
-	server.FileSystem.WaitUntilFilesSearched();
+	//server.FileSystem.Bind(root_dir, "levels");
+	//server.FileSystem.WaitUntilFilesSearched();
 
 	// Create the package and save the directory it is under.
 	auto package = std::make_shared<package::Package>(name);
 	package->m_basepath = root_dir;
 
-	std::string tileset_file{ "tilesets.xml" };
+	//std::string tileset_file{ "tilesets.xml" };
 
 	// Load our package metadata.
 	if (filesystem::exists(root_dir / "package.xml"))
@@ -294,57 +280,102 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		doc.load(packagefile);
 
 		auto node_package = doc.child("package");
-		if (!node_package.empty())
+		if (node_package.empty())
+			return std::make_pair(false, nullptr);
+
+		// Load the file systems.
+		for (const auto& node_filesystem : node_package.children("filesystem"))
 		{
-			std::string name = node_package.attribute("name").as_string();
-			std::string version = node_package.attribute("version").as_string();
+			auto node_config = node_filesystem.child("config");
+			auto node_fonts = node_filesystem.child("fonts");
+			auto node_items = node_filesystem.child("items");
+			auto node_ui = node_filesystem.child("ui");
+			auto node_world = node_filesystem.child("world");
 
-			auto node_logo = node_package.child("logo");
-			auto node_desc = node_package.child("description");
-			auto node_tileset = node_package.child("tileset");
-			auto node_startingscene = node_package.child("startingscene");
-			auto node_loadingscene = node_package.child("loadingscene");
-			auto node_loadclientscripts = node_package.child("loadclientscripts");
-			auto node_loaditems = node_package.child("loaditems");
+			if (!node_config.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::CONFIG, root_dir, node_config);
+			if (!node_fonts.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::FONTS, root_dir, node_fonts);
+			if (!node_items.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::ITEMS, root_dir, node_items);
+			if (!node_ui.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::UI, root_dir, node_ui);
+			if (!node_world.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::WORLD, root_dir, node_world);
 
-			package->m_name = name;
-			package->m_version = version;
+			server.FileSystem.WaitUntilFilesSearched();
+		}
+
+		// Load the package details.
+		if (const auto& node_details = node_package.child("details"); !node_details.empty())
+		{
+			auto node_logo = node_details.child("logo");
+			auto node_name = node_details.child("name");
+			auto node_desc = node_details.child("description");
+			auto node_version = node_details.child("version");
+			auto node_author = node_details.child("author");
+
+			if (!node_name.empty())
+				package->m_name = node_name.text().get();
+			else package->m_name = name;
+
 			if (!node_logo.empty())
 				package->m_logo = node_logo.attribute("file").as_string();
 			if (!node_desc.empty())
 				package->m_description = node_desc.text().get();
-			if (!node_tileset.empty())
-				tileset_file = node_tileset.attribute("file").as_string();
-			if (!node_startingscene.empty())
-				package->m_starting_scene = node_startingscene.text().get();
-			if (!node_loadingscene.empty())
-				package->m_loading_scene = node_loadingscene.text().get();
+			if (!node_version.empty())
+				package->m_version = node_version.text().get();
+			if (!node_author.empty())
+				package->m_author = node_author.text().get();
+		}
+		else return std::make_pair(false, nullptr);
+
+		// Load the scene details.
+		if (const auto& node_scene = node_package.child("scene"); !node_scene.empty())
+		{
+			auto node_starting = node_scene.child("starting");
+			auto node_loading = node_scene.child("loading");
+			auto node_classes = node_scene.child("classes");
+
+			if (!node_starting.empty())
+				package->m_starting_scene = node_starting.text().get();
+			if (!node_loading.empty())
+				package->m_loading_scene = node_loading.text().get();
 
 			// Load object classes.
-			helper::LoadObjectClasses(server, server.m_object_classes, package, node_package);
+			helper::LoadObjectClasses(server, server.m_object_classes, package, node_scene);
+		}
 
-			// Load client scripts.
-			std::vector<script_pair> clientcontrolscripts;
-			std::vector<script_pair> servercontrolscripts;
-			helper::LoadScripts(server, clientcontrolscripts, package, "clientcontrolscripts", node_package);
-			helper::LoadScripts(server, servercontrolscripts, package, "servercontrolscripts", node_package);
-			std::for_each(std::begin(clientcontrolscripts), std::end(clientcontrolscripts), [&server](const script_pair& pair) { server.m_client_control_script += pair.second; server.m_client_control_script += "\n"; });
-			std::for_each(std::begin(servercontrolscripts), std::end(servercontrolscripts), [&server](const script_pair& pair) { server.m_server_control_script += pair.second; server.m_server_control_script += "\n"; });
+		// Load the script details.
+		if (const auto& node_scripts = node_package.child("scripts"); !node_scripts.empty())
+		{
+			// Control scripts.
+			if (const auto& node_control = node_scripts.child("control"); !node_control.empty())
+			{
+				// Load client scripts.
+				std::vector<script_pair> clientcontrolscripts;
+				std::vector<script_pair> servercontrolscripts;
+				helper::LoadScripts(server, clientcontrolscripts, package, "client", node_control);
+				helper::LoadScripts(server, servercontrolscripts, package, "server", node_control);
+				std::for_each(std::begin(clientcontrolscripts), std::end(clientcontrolscripts), [&server](const script_pair& pair) { server.m_client_control_script += pair.second; server.m_client_control_script += "\n"; });
+				std::for_each(std::begin(servercontrolscripts), std::end(servercontrolscripts), [&server](const script_pair& pair) { server.m_server_control_script += pair.second; server.m_server_control_script += "\n"; });
+			}
 
 			// Load client scripts.
 			std::vector<script_pair> clientscripts;
-			helper::LoadScripts(server, clientscripts, package, "loadclientscripts", node_package);
+			helper::LoadScripts(server, clientscripts, package, "clientscripts", node_package);
 			for (const auto& [name, script] : clientscripts)
 			{
 				server.LoadClientScript(name, script);
 			}
-
-			// Load items.
-			helper::LoadItems(server, package, node_loaditems);
 		}
+
+		// Load items.
+		helper::LoadItems(server, package);
 	}
 
 	// Load our tilesets.
+	/*
 	auto tilesets = server.FileSystem.GetFile(root_dir, tileset_file);
 	if (tilesets != nullptr)
 	{
@@ -377,6 +408,7 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 			}
 		}
 	}
+	*/
 
 	return std::make_pair(true, package);
 }

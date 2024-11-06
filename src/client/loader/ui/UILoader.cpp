@@ -44,7 +44,7 @@ size_t UILoader::Load(ui::UIManager* manager)
 
 	// Get our contexts.xml file.
 	auto game = BabyDI::Get<Game>();
-	auto contexts = game->Server.FileSystem.GetFile("contexts.xml");
+	auto contexts = game->Server.FileSystem.GetFile(fs::FileCategory::UI, "contexts.xml");
 	if (!contexts) return 0;
 
 	// Load our file.
