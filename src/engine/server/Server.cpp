@@ -1,6 +1,7 @@
 #include <chrono>
 #include <iostream>
 #include <unordered_set>
+#include <filesystem>
 
 #include "engine/os/Utils.h"
 
@@ -160,12 +161,15 @@ bool Server::LoadPackage(const std::string& package_name)
 		log::PrintLine("   Loading all scenes in package.");
 
 		// Load all scenes.
-		for (auto& d : filesystem::directory_iterator{ package->GetBasePath() / "world" / "levels" })
+		for (const std::filesystem::path& directory : FileSystem.GetDirectories(fs::FileCategory::LEVELS))
 		{
-			if (!filesystem::is_directory(d.status()))
-				continue;
+			for (auto& dir : filesystem::directory_iterator{ directory })
+			{
+				if (!filesystem::is_directory(dir.status()))
+					continue;
 
-			auto scene = Loader::CreateScene(*this, m_scenes, d.path().filename().string(), d);
+				auto scene = Loader::CreateScene(*this, m_scenes, dir.path().filename().string(), dir);
+			}
 		}
 	}
 	// Load only the starting scene into the server.
@@ -174,7 +178,7 @@ bool Server::LoadPackage(const std::string& package_name)
 		log::PrintLine("   Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
-		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetBasePath() / "world" / "levels" / package->GetStartingScene());
+		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetStartingScene());
 	}
 
 	// Load server script.
@@ -638,7 +642,7 @@ void Server::LoadClientScript(const filesystem::path& file)
 	auto name = file.stem().string();
 
 	std::string script;
-	auto f = FileSystem.GetFile(fs::FileCategory::WORLD, file);
+	auto f = FileSystem.GetFile(fs::FileCategory::ASSETS, file);
 	if (f && f->Opened())
 		script = f->ReadAsString();
 

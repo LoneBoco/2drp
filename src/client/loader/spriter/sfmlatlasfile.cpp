@@ -40,7 +40,7 @@ void SfmlAtlasFile::initializeFile()
 	if (id == 0)
 	{
 		auto base = game->Server.GetPackage()->GetBasePath();
-		auto file = game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, filename);
+		auto file = game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, filename);
 
 		if (file)
 		{

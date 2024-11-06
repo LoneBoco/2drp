@@ -54,12 +54,8 @@ ShellFileInterface::~ShellFileInterface()
 // Opens a file.
 Rml::FileHandle ShellFileInterface::Open(const Rml::String& path)
 {
-	fs::FilePtr file;
-	if (path.ends_with(".ttf"))
-		file = Game->Server.FileSystem.GetFile(fs::FileCategory::FONTS, path);
-
-	if (!file) file = Game->Server.FileSystem.GetFile(fs::FileCategory::UI, path);
-	if (!file) file = Game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, path);
+	fs::FilePtr file = Game->Server.FileSystem.GetFile(fs::FileCategory::UI, path);
+	if (!file) file = Game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, path);
 	if (!file) return 0;
 
 	auto id = file->Crc32();

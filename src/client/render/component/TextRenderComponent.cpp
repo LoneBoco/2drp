@@ -152,7 +152,7 @@ void TextRenderComponent::load_font(const std::string& name)
 	else
 	{
 		auto game = BabyDI::Get<tdrp::Game>();
-		auto filepath = game->Server.FileSystem.GetFilePath(fs::FileCategory::FONTS, name);
+		auto filepath = game->Server.FileSystem.GetFilePath(fs::FileCategory::ASSETS, name);
 		if (filepath.empty())
 			return;
 

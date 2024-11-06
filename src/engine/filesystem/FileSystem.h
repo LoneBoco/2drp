@@ -19,10 +19,10 @@ namespace tdrp::fs
 /// </summary>
 enum class FileCategory : uint8_t
 {
-	WORLD = 0,
+	ASSETS = 0,
 	CONFIG,
-	FONTS,
 	ITEMS,
+	LEVELS,
 	UI,
 	ACCOUNTS,
 
@@ -153,6 +153,13 @@ public:
 			result.append_range(group.Files | std::views::keys);
 
 		return result;
+	}
+	
+	//! Gets a range of all directories in a category.
+	auto GetDirectories(FileCategory category) const
+	{
+		const auto& groups = m_categories[static_cast<uint8_t>(category)];
+		return groups | std::views::transform([](const auto& group) { return group.Directory; });
 	}
 
 	//! Gets the first iterator for the directory we are watching.  Does not honor exclusion list.

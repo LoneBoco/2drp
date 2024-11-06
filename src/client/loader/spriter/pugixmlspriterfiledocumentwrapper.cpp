@@ -17,7 +17,7 @@ void PugiXmlSpriterFileDocumentWrapper::loadFile(std::string fileName)
 {
 	auto game = BabyDI::Get<tdrp::Game>();
 
-	auto file = game->Server.FileSystem.GetFile(fs::FileCategory::WORLD, fileName);
+	auto file = game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, fileName);
 	if (file && file->Opened())
 	{
 		doc.load(*file);

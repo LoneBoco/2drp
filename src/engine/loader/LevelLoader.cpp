@@ -326,6 +326,12 @@ namespace tdrp::helper
 		std::vector<std::pair<scene::TilesetGID, scene::TilesetPtr>> tilesets;
 		for (const auto& tileset : tmx->getTilesets())
 		{
+			if (tileset.getTileCount() == 0)
+			{
+				log::PrintLine("!! ERROR: Could not load tileset '{}', skipping.", tileset.getImagePath());
+				continue;
+			}
+
 			auto ts = std::make_shared<scene::Tileset>();
 			ts->File = tileset.getImagePath();
 			ts->TileDimensions = { tileset.getTileSize().x, tileset.getTileSize().y };
@@ -533,7 +539,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 						{
 							if (auto nodefile = node.attribute("file"); !nodefile.empty())
 							{
-								auto file = server.FileSystem.GetFile(fs::FileCategory::WORLD, nodefile.as_string());
+								auto file = server.FileSystem.GetFile(fs::FileCategory::ASSETS, nodefile.as_string());
 								so->ClientScript.append(file->ReadAsString());
 							}
 							if (auto nodetext = node.text(); !nodetext.empty())
@@ -546,7 +552,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 						{
 							if (auto nodefile = node.attribute("file"); !nodefile.empty())
 							{
-								auto file = server.FileSystem.GetFile(fs::FileCategory::WORLD, nodefile.as_string());
+								auto file = server.FileSystem.GetFile(fs::FileCategory::ASSETS, nodefile.as_string());
 								so->ServerScript.append(file->ReadAsString());
 							}
 							if (auto nodetext = node.text(); !nodetext.empty())

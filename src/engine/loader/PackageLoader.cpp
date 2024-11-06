@@ -46,7 +46,7 @@ namespace tdrp::helper
 			if (!file.empty())
 			{
 				// Load script from file.
-				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::WORLD, file);
+				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
 				script->append(scriptfile->ReadAsString());
 				script->append("\n");
 			}
@@ -130,7 +130,7 @@ namespace tdrp::helper
 		auto readFile = [&](const std::string_view& file)
 		{
 			if (file.empty()) return;
-			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::WORLD, file);
+			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
 			if (scriptfile) scripts.push_back(std::make_pair(std::string{ scriptfile->FilePath().stem().string() }, std::move(scriptfile->ReadAsString())));
 		};
 
@@ -224,7 +224,7 @@ namespace tdrp::helper
 			if (!node_clientscript.empty())
 			{
 				if (auto attrib_file = node_clientscript.attribute("file"); attrib_file)
-					clientscript = readFile(fs::FileCategory::WORLD, attrib_file.as_string());
+					clientscript = readFile(fs::FileCategory::ASSETS, attrib_file.as_string());
 				else
 					clientscript = node_clientscript.text().as_string();
 			}
@@ -247,6 +247,49 @@ namespace tdrp::helper
 		}
 	}
 
+	static void LoadTilesets(server::Server& server, std::shared_ptr<package::Package>& package, const pugi::xml_node& parent_node)
+	{
+		std::string tileset_file{ "tilesets.xml" };
+		if (auto attr_file = parent_node.attribute("file"); !attr_file.empty())
+			tileset_file = attr_file.as_string();
+		if (!parent_node.text().empty())
+			tileset_file = parent_node.text().get();
+
+		// Load our tilesets.
+		auto tilesets = server.FileSystem.GetFile(fs::FileCategory::ASSETS, tileset_file);
+		if (tilesets != nullptr)
+		{
+			pugi::xml_document doc;
+			doc.load(*tilesets);
+
+			for (const auto& node_tilesets : doc.children("tilesets"))
+			{
+				for (const auto& node_tileset : node_tilesets.children("tileset"))
+				{
+					auto t = std::make_shared<scene::Tileset>();
+
+					// File.
+					// TODO: Throw error if empty.
+					const auto& node_file = node_tileset.child("file");
+					if (node_file.empty())
+						continue;
+
+					t->File = node_file.text().get();
+
+					// Tile dimensions.
+					const auto& node_tiledimension = node_tileset.child("tiledimension");
+					if (!node_tiledimension.empty())
+					{
+						t->TileDimensions.x = std::max(16, node_tiledimension.attribute("x").as_int());
+						t->TileDimensions.y = std::max(16, node_tiledimension.attribute("y").as_int());
+					}
+
+					server.AddTileset(t->File, t);
+				}
+			}
+		}
+	}
+
 } // end namespace tdrp::helper
 
 namespace tdrp
@@ -262,15 +305,9 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 	if (!filesystem::exists(root_dir))
 		return std::make_pair(false, nullptr);
 
-	// Bind the package directory to our server filesystem.
-	//server.FileSystem.Bind(root_dir, "levels");
-	//server.FileSystem.WaitUntilFilesSearched();
-
 	// Create the package and save the directory it is under.
 	auto package = std::make_shared<package::Package>(name);
 	package->m_basepath = root_dir;
-
-	//std::string tileset_file{ "tilesets.xml" };
 
 	// Load our package metadata.
 	if (filesystem::exists(root_dir / "package.xml"))
@@ -286,22 +323,22 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		// Load the file systems.
 		for (const auto& node_filesystem : node_package.children("filesystem"))
 		{
+			auto node_assets = node_filesystem.child("assets");
 			auto node_config = node_filesystem.child("config");
-			auto node_fonts = node_filesystem.child("fonts");
 			auto node_items = node_filesystem.child("items");
+			auto node_levels = node_filesystem.child("levels");
 			auto node_ui = node_filesystem.child("ui");
-			auto node_world = node_filesystem.child("world");
 
+			if (!node_assets.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::ASSETS, root_dir, node_assets);
 			if (!node_config.empty())
 				helper::LoadFileSystem(server, fs::FileCategory::CONFIG, root_dir, node_config);
-			if (!node_fonts.empty())
-				helper::LoadFileSystem(server, fs::FileCategory::FONTS, root_dir, node_fonts);
 			if (!node_items.empty())
 				helper::LoadFileSystem(server, fs::FileCategory::ITEMS, root_dir, node_items);
+			if (!node_levels.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::LEVELS, root_dir, node_levels);
 			if (!node_ui.empty())
 				helper::LoadFileSystem(server, fs::FileCategory::UI, root_dir, node_ui);
-			if (!node_world.empty())
-				helper::LoadFileSystem(server, fs::FileCategory::WORLD, root_dir, node_world);
 
 			server.FileSystem.WaitUntilFilesSearched();
 		}
@@ -336,6 +373,7 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 			auto node_starting = node_scene.child("starting");
 			auto node_loading = node_scene.child("loading");
 			auto node_classes = node_scene.child("classes");
+			auto node_tilesets = node_scene.child("tilesets");
 
 			if (!node_starting.empty())
 				package->m_starting_scene = node_starting.text().get();
@@ -344,6 +382,9 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 
 			// Load object classes.
 			helper::LoadObjectClasses(server, server.m_object_classes, package, node_scene);
+
+			// Load tilesets.
+			helper::LoadTilesets(server, package, node_tilesets);
 		}
 
 		// Load the script details.
@@ -373,42 +414,6 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		// Load items.
 		helper::LoadItems(server, package);
 	}
-
-	// Load our tilesets.
-	/*
-	auto tilesets = server.FileSystem.GetFile(root_dir, tileset_file);
-	if (tilesets != nullptr)
-	{
-		pugi::xml_document doc;
-		doc.load(*tilesets);
-
-		for (const auto& node_tilesets : doc.children("tilesets"))
-		{
-			for (const auto& node_tileset : node_tilesets.children("tileset"))
-			{
-				auto t = std::make_shared<scene::Tileset>();
-
-				// File.
-				// TODO: Throw error if empty.
-				const auto& node_file = node_tileset.child("file");
-				if (node_file.empty())
-					continue;
-
-				t->File = node_file.text().get();
-
-				// Tile dimensions.
-				const auto& node_tiledimension = node_tileset.child("tiledimension");
-				if (!node_tiledimension.empty())
-				{
-					t->TileDimensions.x = std::max(16, node_tiledimension.attribute("x").as_int());
-					t->TileDimensions.y = std::max(16, node_tiledimension.attribute("y").as_int());
-				}
-
-				server.m_tilesets.insert(std::make_pair(t->File, t));
-			}
-		}
-	}
-	*/
 
 	return std::make_pair(true, package);
 }

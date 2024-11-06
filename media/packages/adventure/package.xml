@@ -22,10 +22,10 @@
 		<clientscripts />
 	</scripts>
 	<filesystem>
+		<assets directory="world" />
 		<config directory="config" />
-		<fonts directory="fonts" />
 		<items directory="items" />
+		<levels directory="levels" />
 		<ui directory="ui" />
-		<world directory="world" />
 	</filesystem>
 </package>
