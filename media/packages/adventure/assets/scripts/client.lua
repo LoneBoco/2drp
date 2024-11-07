@@ -166,10 +166,14 @@ end
 
 -- Useable.
 func.keys[Key.D] = function(key)
-	local itemid = Me.Flags.CurrentItem
-	if itemid ~= 0 then
+	local itemid = Me.Flags.CurrentItem or -1
+	if itemid ~= -1 then
 		local item = Me.Player:GetItem(tonumber(itemid))
-		if item ~= nil then item:Use() end
+		if item ~= nil then
+			item:Use()
+		else
+			log('Could not find item '..itemid..' on player!')
+		end
 	end
 end
 

@@ -123,13 +123,17 @@ namespace tdrp::ui
 			else if (name == "tags") return Rml::DataVariable(m_definitions[name], &instance->ItemBase->Tags);
 			else if (name == "count")
 			{
+				static size_t default_count = 1;
 				if (auto* stackable = dynamic_cast<item::ItemStackable*>(instance); stackable)
 					return Rml::DataVariable(m_definitions[name], &stackable->Count);
+				return Rml::DataVariable(m_definitions[name], &default_count);
 			}
 			else if (name == "attributes")
 			{
+				static ObjectAttributes default_attributes{};
 				if (auto* variant = dynamic_cast<item::ItemVariant*>(instance); variant)
 					return Rml::DataVariable(m_definitions[name], &variant->VariantAttributes);
+				return Rml::DataVariable(m_definitions[name], &default_attributes);
 			}
 
 			Rml::Log::Message(Rml::Log::LT_WARNING, "Member %s not found in data struct.", name.c_str());
@@ -183,6 +187,14 @@ UIManager::UIManager()
 			[this, &game](sol::state& lua) {
 				lua["MODULENAME"] = "UI";
 				lua["Game"] = game;
+
+				lua.new_enum<item::ItemType>("ItemType",
+					{
+						{ "SINGLE", item::ItemType::SINGLE },
+						{ "STACKABLE", item::ItemType::STACKABLE },
+						{ "VARIANT", item::ItemType::VARIANT }
+					}
+				);
 			}
 		);
 
@@ -269,6 +281,9 @@ void UIManager::MakeItemsDirty()
 	{
 		v.DirtyVariable("items");
 	}
+
+	auto game = BabyDI::Get<tdrp::Game>();
+	game->OnItemsUpdate.RunAll();
 }
 
 /////////////////////////////
@@ -389,9 +404,25 @@ void UIManager::bindDataModels(Rml::Context* context)
 			auto mhandle = constructor.GetModelHandle();
 			m_item_handles.insert(std::make_pair(context->GetName(), mhandle));
 
+			// Item type.
 			constructor.RegisterScalar<item::ItemType>(
-				[](const auto& type, auto& variant) { variant = static_cast<uint8_t>(type); },
-				[](auto& type, const auto& variant) { type = static_cast<item::ItemType>(variant.Get<uint8_t>(0)); }
+				[](const item::ItemType& type, Rml::Variant& variant)
+				{
+					if (type == item::ItemType::STACKABLE)
+						variant = "stackable";
+					else if (type == item::ItemType::VARIANT)
+						variant = "variant";
+					else variant = "single";
+				},
+				[](item::ItemType& type, const Rml::Variant& variant)
+				{
+					std::string strval = variant.Get<std::string>();
+					if (strval == "stackable")
+						type = item::ItemType::STACKABLE;
+					else if (strval == "variant")
+						type = item::ItemType::VARIANT;
+					else type = item::ItemType::SINGLE;
+				}
 			);
 
 			// Attributes.

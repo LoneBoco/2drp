@@ -13,14 +13,6 @@
 namespace tdrp::server
 {
 
-Account::~Account()
-{
-	for (const auto& [itemId, item] : Items)
-	{
-		SCRIPT_THEM_ERASE(item);
-	}
-}
-
 void Account::Load(const std::string& name)
 {
 	if (m_player == nullptr) return;

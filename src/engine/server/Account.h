@@ -22,7 +22,6 @@ class Account
 {
 public:
 	Account(Player* player) : m_player(player) {}
-	~Account();
 
 	Account(const Account& other) = delete;
 	Account(Account&& other) = delete;

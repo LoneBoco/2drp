@@ -80,7 +80,7 @@ void bind_attributes(sol::state& lua)
 		"Unsubscribe", [](Attribute& self, EventHandle ev) { self.UpdateDispatch.Unsubscribe(ev); }
 	);
 
-	lua.new_usertype<ObjectAttributes>("ObjectAttributes", sol::no_constructor,
+	lua.new_usertype<ObjectAttributes>("Attributes",
 		"Add", sol::overload(
 			[](ObjectAttributes& self, const std::string& name, int64_t value, uint16_t id) { return self.AddAttribute(name, value, id); },
 			[](ObjectAttributes& self, const std::string& name, double value, uint16_t id) { return self.AddAttribute(name, value, id); },

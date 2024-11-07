@@ -71,6 +71,9 @@
 			display: block;
 			text-align: center;
 		}
+		.count {
+			font-size: 0.8em;
+		}
 	</style>
 	<script>
 
@@ -107,6 +110,17 @@
 			return tags
 		end
 
+		function Init(document)
+			Game.OnItemsUpdate = ItemsUpdate
+		end
+
+		function ItemsUpdate()
+			local curitem = Game.Flags.CurrentItem or -1
+			if curitem ~= -1 and Game.Player:HasItem(curitem) == false then
+				Game.Flags.CurrentItem = -1
+			end
+		end
+
 		function ShowInventory(element)
 			local tags = collectTags(element)
 			RegisterTags(element.owner_document, tags)
@@ -114,7 +128,7 @@
 			local filters = element:GetElementById('filters')
 			Element.As.ElementForm(filters):Submit()
 
-			local curitem = Game.Flags.CurrentItem or 0
+			local curitem = Game.Flags.CurrentItem or -1
 			local select = element:GetElementById(tostring(curitem))
 			if select == nil then return end
 			select:Focus()
@@ -175,7 +189,7 @@
 		end
 
 		function Select(element)
-			Game.Flags.CurrentItem = element.id
+			Game.Flags.CurrentItem = tonumber(element.id)
 			element.owner_document:Hide()
 		end
 
@@ -220,7 +234,7 @@
 
 	</script>
 </head>
-<body id="inventory" onshow="ShowInventory(element)" onkeydown="KeyDown(event, element)">
+<body id="inventory" onshow="ShowInventory(element)" onkeydown="KeyDown(event, element)" onload="Init(document)">
 	<div id="container">
 		<form id="filters" class="filters" onsubmit="SubmitFilter(event, document)">
 			<div id="filter-template">
@@ -236,6 +250,8 @@
 						<td>
 							<div class="image-center"><img data-attr-src="item.image"/></div>
 							<span class="name">{{item.name}}</span>
+							<span class="count" data-if="item.type == 'stackable'"> x{{item.count}}</span>
+							<span class="variant" data-if="item.type == 'variant'"> *</span>
 						</td>
 					</tr>
 				</table>

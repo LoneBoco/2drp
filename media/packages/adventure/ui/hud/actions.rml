@@ -73,7 +73,7 @@
 
 			local ci = Game.Flags:Get('CurrentItem')
 			if ci == nil then
-				Game.Flags:Add('CurrentItem', 0, NEW_ID)
+				Game.Flags:Add('CurrentItem', -1, NEW_ID)
 				ci = Game.Flags:Get('CurrentItem')
 			end
 			_listener = ci:Subscribe(UpdateItem)
@@ -82,12 +82,11 @@
 		end
 
 		function UpdateItem(attribute)
-			log('Updating item image')
-
 			local dbutton = _document:GetElementById("d-button")
 			local uimg = dbutton:GetElementsByClassName('useable')[1]
 
-			local item = Game.Player:GetItem(attribute:AsInteger())
+			local id = attribute:AsInteger()
+			local item = Game.Player:GetItem(id)
 			if item ~= nil then
 				uimg.style.display = 'inline-block'
 				uimg:SetAttribute('src', item.Image)

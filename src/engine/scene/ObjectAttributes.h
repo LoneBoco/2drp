@@ -276,6 +276,7 @@ public:
 	attribute_map::const_iterator begin() const { return m_attributes.begin(); }
 	attribute_map::const_iterator end() const { return m_attributes.end(); }
 	size_t size() const { return m_attributes.size(); }
+	size_t max_size() const { return std::numeric_limits<attribute_map::difference_type>::max(); }
 
 private:
 	//! Assigns an id to the attribute.

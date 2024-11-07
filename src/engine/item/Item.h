@@ -28,12 +28,25 @@ using tag_container = std::vector<std::string>;
 /// </summary>
 class ItemDefinition
 {
+	SCRIPT_SETUP;
+	SCRIPT_FUNCTION(OnCreated);
+	SCRIPT_FUNCTION(OnAdded);
+	SCRIPT_FUNCTION(OnRemoved);
+	SCRIPT_FUNCTION(OnUsed);
+	//SCRIPT_FUNCTION(OnUpdate);
+	//SCRIPT_FUNCTION(OnSelected);
+
 public:
 	ItemDefinition() = delete;
 
 	ItemDefinition(ItemID&& id, std::string&& name, std::string&& description, std::string&& image, std::string&& clientscript, tag_container&& tags)
 		: BaseID{ id }, Name{ name }, Description{ description }, Image{ image }, ClientScript{ clientscript }, Tags{ tags }
 	{}
+
+	~ItemDefinition()
+	{
+		SCRIPT_ME_ERASE;
+	}
 
 public:
 	ItemID BaseID;
@@ -51,14 +64,6 @@ using ItemDefinitionUPtr = std::unique_ptr<ItemDefinition>;
 /// </summary>
 class ItemInstance
 {
-	SCRIPT_SETUP;
-	SCRIPT_FUNCTION(OnCreated);
-	//SCRIPT_FUNCTION(OnUpdate);
-	SCRIPT_FUNCTION(OnAdded);
-	SCRIPT_FUNCTION(OnRemoved);
-	//SCRIPT_FUNCTION(OnSelected);
-	SCRIPT_FUNCTION(OnUsed);
-
 public:
 	ItemInstance(ItemID id, ItemID baseId) : ID{ id }, ItemBaseID{ baseId }, Type{ ItemType::SINGLE } {}
 	ItemInstance(ItemID id, ItemID baseId, ItemType type) : ID{ id }, ItemBaseID{ baseId }, Type{ type } {}

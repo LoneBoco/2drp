@@ -219,7 +219,8 @@ void bind_game(sol::state& lua)
 		"OnMouseDown", sol::writeonly_property(&Game::SetOnMouseDown),
 		"OnMouseUp", sol::writeonly_property(&Game::SetOnMouseUp),
 		"OnGainedOwnership", sol::writeonly_property(&Game::SetOnGainedOwnership),
-		"OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch)
+		"OnSceneSwitch", sol::writeonly_property(&Game::SetOnSceneSwitch),
+		"OnItemsUpdate", sol::writeonly_property(&Game::SetOnItemsUpdate)
 	);
 }
 

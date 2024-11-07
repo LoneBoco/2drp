@@ -49,6 +49,7 @@ class Game
 	SCRIPT_FUNCTION(OnMouseUp);
 	SCRIPT_FUNCTION(OnGainedOwnership);
 	SCRIPT_FUNCTION(OnSceneSwitch);
+	SCRIPT_FUNCTION(OnItemsUpdate);
 
 public:
 	Game();

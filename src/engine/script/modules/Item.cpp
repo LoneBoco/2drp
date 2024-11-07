@@ -28,12 +28,12 @@ namespace functions
 
 	#define CONVERSION(T) static_cast<T* (*)(item::ItemInstance&)>(&functions::convert)
 
-	auto getTags(item::ItemDefinition& item)
+	static auto getTags(item::ItemDefinition& item)
 	{
 		return sol::as_table(item.Tags);
 	}
 
-	auto getTag(item::ItemDefinition& item)
+	static auto getTag(item::ItemDefinition& item)
 	{
 		auto result = [&item](size_t index)
 		{
@@ -43,7 +43,7 @@ namespace functions
 		return result;
 	}
 
-	auto getTagSize(item::ItemDefinition& item)
+	static auto getTagSize(item::ItemDefinition& item)
 	{
 		auto result = [&item]() -> size_t 
 		{
@@ -53,25 +53,32 @@ namespace functions
 		return result;
 	}
 
-	auto getInstanceName(item::ItemInstance& item)
+	static item::ItemDefinition* getItemDefinition(item::ItemInstance& item)
+	{
+		if (item.ItemBase != nullptr)
+			return item.ItemBase;
+		return nullptr;
+	}
+
+	static auto getInstanceName(item::ItemInstance& item)
 	{
 		if (item.ItemBase == nullptr) return std::string{};
 		return item.ItemBase->Name;
 	}
 
-	auto getInstanceDescription(item::ItemInstance& item)
+	static auto getInstanceDescription(item::ItemInstance& item)
 	{
 		if (item.ItemBase == nullptr) return std::string{};
 		return item.ItemBase->Description;
 	}
 
-	auto getInstanceImage(item::ItemInstance& item)
+	static auto getInstanceImage(item::ItemInstance& item)
 	{
 		if (item.ItemBase == nullptr) return std::string{};
 		return item.ItemBase->Image;
 	}
 
-	auto getInstanceTags(item::ItemInstance& item)
+	static auto getInstanceTags(item::ItemInstance& item)
 	{
 		if (item.ItemBase != nullptr)
 			return sol::as_table(item.ItemBase->Tags);
@@ -98,12 +105,24 @@ void bind_item(sol::state& lua)
 		"Name", sol::readonly_property(&item::ItemDefinition::Name),
 		"Description", sol::readonly_property(&item::ItemDefinition::Description),
 		"Image", sol::readonly_property(&item::ItemDefinition::Image),
-		"Tags", sol::readonly_property(&functions::getTags)
+		"Tags", sol::readonly_property(&functions::getTags),
+
+		// Functions.
+		"Use", [](item::ItemDefinition& item) { item.OnUsed.RunAll(nullptr); },
+
+		// Callbacks.
+		"OnCreated", sol::writeonly_property(&item::ItemDefinition::SetOnCreated),
+		"OnAdded", sol::writeonly_property(&item::ItemDefinition::SetOnAdded),
+		"OnRemoved", sol::writeonly_property(&item::ItemDefinition::SetOnRemoved),
+		"OnUsed", sol::writeonly_property(&item::ItemDefinition::SetOnUsed)
+		//"OnUpdate", sol::writeonly_property(&item::ItemDefinition::SetOnUpdate),
+		//"OnSelected", sol::writeonly_property(&item::ItemDefinition::SetOnSelected),
 		);
 
 	lua.new_usertype<item::ItemInstance>("ItemInstance", sol::no_constructor,
 		"ID", sol::readonly_property(&item::ItemInstance::ID),
 		"BaseID", sol::readonly_property(&item::ItemInstance::ItemBaseID),
+		"Base", sol::readonly_property(&functions::getItemDefinition),
 		"Type", sol::readonly_property(&item::ItemInstance::Type),
 
 		// From ItemDefinition but directly added here for convenience.
@@ -113,18 +132,10 @@ void bind_item(sol::state& lua)
 		"Tags", sol::readonly_property(&functions::getInstanceTags),
 
 		// Functions.
-		"Use", [](item::ItemInstance& item) { item.OnUsed.RunAll(); },
+		"Use", [](item::ItemInstance& item) { if (item.ItemBase != nullptr) item.ItemBase->OnUsed.RunAll(item); },
 
 		// Conversion.
-		"As", item_as,
-
-		// Callbacks.
-		"OnCreated", sol::writeonly_property(&item::ItemInstance::SetOnCreated),
-		//"OnUpdate", sol::writeonly_property(&item::ItemInstance::SetOnUpdate),
-		"OnAdded", sol::writeonly_property(&item::ItemInstance::SetOnAdded),
-		"OnRemoved", sol::writeonly_property(&item::ItemInstance::SetOnRemoved),
-		//"OnSelected", sol::writeonly_property(&item::ItemInstance::SetOnSelected),
-		"OnUsed", sol::writeonly_property(&item::ItemInstance::SetOnUsed)
+		"As", item_as
 		);
 
 	lua.new_usertype<item::ItemStackable>("ItemStackable", sol::no_constructor,

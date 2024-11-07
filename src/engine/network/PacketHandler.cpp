@@ -912,17 +912,9 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 	auto item_definition = server.GetItemDefinition(baseId);
 	if (item_definition == nullptr) return;
 
-	// Host/SinglePlayer already has the item loaded so just run the scripts.
-	// We would only get this packet on startup.
-	if (server.IsHost() || server.IsSinglePlayer())
-	{
-		if (auto item = player->GetItem(id); item)
-		{
-			server.Script->RunScript(std::format("item_{}", id), item_definition->ClientScript, item);
-			item->OnCreated.RunAll();
-		}
+	// Host already has the item loaded so just run the scripts.
+	if (server.IsHost())
 		return;
-	}
 
 	auto hasExisting = player->HasItem(id);
 
@@ -964,14 +956,17 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 	}
 
 	// Run OnCreated.
+	/*
 	if (!hasExisting)
 	{
 		server.Script->RunScript(std::format("item_{}", id), item_definition->ClientScript, item);
 		item->OnCreated.RunAll();
 	}
+	*/
 
 	// Run OnAdded.
-	item->OnAdded.RunAll();
+	if (auto* base = server.GetItemDefinition(item->ItemBaseID); base != nullptr)
+		base->OnAdded.RunAll(item, count);
 }
 
 void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& packet)
@@ -985,7 +980,8 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& p
 	if (auto item = server.GetPlayer()->GetItem(id); item)
 	{
 		server.RemoveItemFromPlayer(server.GetPlayer(), id, count);
-		item->OnRemoved.RunAll(count);
+		if (auto* base = server.GetItemDefinition(item->ItemBaseID); base != nullptr)
+			base->OnRemoved.RunAll(item, count);
 	}
 }
 

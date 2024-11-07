@@ -125,6 +125,7 @@ void bind_server(sol::state& lua)
 			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, const std::string&, item::ItemType, size_t)>(&functions::give_item),
 			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, const std::string&, item::ItemType)>(&functions::give_item)
 		),
+		"GiveVariantItemToPlayer", &server::Server::GiveVariantItemToPlayer,
 		"RemoveItemFromPlayer", sol::overload(
 			sol::resolve<item::ItemInstancePtr(server::PlayerPtr, ItemID, size_t)>(&server::Server::RemoveItemFromPlayer),
 			sol::resolve<item::ItemInstancePtr(server::Server&, server::PlayerPtr, item::ItemInstancePtr, size_t)>(&functions::remove_item),

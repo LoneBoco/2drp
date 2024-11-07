@@ -55,11 +55,10 @@ Attribute& Attribute::Set(const Attribute& other)
 
 Attribute& Attribute::Set(const AttributeVariant& value)
 {
-	bool setDirty = false;
 	const auto me_t = GetType();
 	const auto them_t = GetAttributeType(value);
 	if (me_t != them_t)
-		setDirty = true;
+		Dirty = true;
 	else
 	{
 		// TODO: See what happens if the type changes.

@@ -237,6 +237,9 @@ namespace tdrp::helper
 			}
 
 			auto item = std::make_unique<item::ItemDefinition>(node_id.text().as_int(), node_name.text().as_string(), node_description.text().as_string(), node_image.text().as_string(), std::move(clientscript), item::tag_container{ tags.begin(), tags.end() });
+
+			server.Script->RunScript(std::format("item_{}", item->BaseID), item->ClientScript, item.get());
+
 			return item;
 		};
 
