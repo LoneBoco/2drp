@@ -33,7 +33,7 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet);
 void handle(Game& game, const packet::SceneObjectChunkData& packet);
 void handle(Game& game, const packet::SendEvent& packet);
 void handle(Game& game, const packet::ItemAdd& packet);
-void handle(Game& game, const packet::ItemDelete& packet);
+void handle(Game& game, const packet::ItemCount& packet);
 
 /////////////////////////////
 
@@ -78,8 +78,8 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 		case Packets::ITEMADD:
 			HANDLE(packet::ItemAdd);
 			break;
-		case Packets::ITEMDELETE:
-			HANDLE(packet::ItemDelete);
+		case Packets::ITEMCOUNT:
+			HANDLE(packet::ItemCount);
 			break;
 	}
 }
@@ -269,7 +269,7 @@ void handle(Game& game, const packet::ItemAdd& packet)
 	game.UI->MakeItemsDirty();
 }
 
-void handle(Game& game, const packet::ItemDelete& packet)
+void handle(Game& game, const packet::ItemCount& packet)
 {
 	game.UI->MakeItemsDirty();
 }

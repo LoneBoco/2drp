@@ -55,7 +55,7 @@ enum class Packets
 	FLAGSET,
 	ITEMDEFINITION,
 	ITEMADD,
-	ITEMDELETE,
+	ITEMCOUNT,
 
 	COUNT
 };

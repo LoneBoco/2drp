@@ -16,7 +16,7 @@
 #include "engine/network/packets/FlagSet.pb.h"
 #include "engine/network/packets/ItemAdd.pb.h"
 #include "engine/network/packets/ItemDefinition.pb.h"
-#include "engine/network/packets/ItemDelete.pb.h"
+#include "engine/network/packets/ItemCount.pb.h"
 #include "engine/network/packets/Login.pb.h"
 #include "engine/network/packets/LoginStatus.pb.h"
 #include "engine/network/packets/SceneObjectChange.pb.h"

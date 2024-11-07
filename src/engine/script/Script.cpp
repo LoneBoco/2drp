@@ -40,7 +40,11 @@ sol::protected_function_result Script::ErrorHandler(lua_State* state, sol::prote
 				try
 				{
 					auto line_number = std::stoi(error.substr(line_start, line_end - line_start));
-					std::span<char> split_range = (script | std::ranges::views::split('\n') | std::ranges::views::drop(line_number - 1) | std::ranges::views::take(1)).front();
+					auto r = script | std::ranges::views::split('\n') | std::ranges::views::drop(line_number - 1) | std::ranges::views::take(1);
+					if (r.empty())
+						break;
+
+					std::span<char> split_range = r.front();
 					std::string line{ split_range.begin(), split_range.end() };
 					boost::trim(line);
 

@@ -511,7 +511,7 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	for (const auto& [itemId, item] : player->Account.Items)
 	{
 		// Send item definitions.
-		SendItemDefinition(m_player, item->ItemBaseID);
+		SendItemDefinition(player, item->ItemBaseID);
 
 		// Send the item.
 		packet::ItemAdd packetAdd;
@@ -789,6 +789,7 @@ void Server::SendItemDefinition(server::PlayerPtr player, ItemID baseId)
 			packet::ItemDefinition packetDef;
 			packetDef.set_baseid(baseItem->BaseID);
 			packetDef.set_name(baseItem->Name);
+			packetDef.set_image(baseItem->Image);
 			packetDef.set_description(baseItem->Description);
 			packetDef.set_clientscript(baseItem->ClientScript);
 			for (const auto& tag : baseItem->Tags)
@@ -868,7 +869,7 @@ item::ItemInstancePtr Server::GiveItemToPlayer(server::PlayerPtr player, ItemID 
 		packetAdd.set_type(static_cast<packet::ItemType>(item->Type));
 
 		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
-			packetAdd.set_stackable_count(count);
+			packetAdd.set_stackable_count(stackable->Count);
 
 		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
 			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
@@ -989,44 +990,92 @@ item::ItemInstancePtr Server::GiveVariantItemToPlayer(server::PlayerPtr player, 
 	return instance;
 }
 
-item::ItemInstancePtr Server::RemoveItemFromPlayer(server::PlayerPtr player, ItemID id, size_t count)
+item::ItemInstancePtr Server::RemoveItemFromPlayer(server::PlayerPtr player, ItemID itemId, size_t count)
 {
-	if (IsGuest()) return nullptr;
+	if (player == nullptr || IsGuest() && player != m_player)
+		return nullptr;
 
-	if (player == nullptr) return nullptr;
-	auto iter = player->Account.Items.find(id);
+	auto iter = player->Account.Items.find(itemId);
 	if (iter == std::end(player->Account.Items))
 		return nullptr;
 
 	item::ItemInstancePtr item = iter->second;
-	auto* base = GetItemDefinition(item->ItemBaseID);
 
-	// Remove the item.
-	if (item->Type == item::ItemType::SINGLE || item->Type == item::ItemType::VARIANT)
-		player->Account.RemoveItem(item);
-	else if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+	// If we are removing a stackable item, and the count is greater than the requested removal count, adjust the count since we won't be deleting it.
+	if (item->Type == item::ItemType::STACKABLE)
 	{
-		count = std::min(stackable->Count, count);
-		stackable->Count -= count;
-		if (stackable->Count == 0)
-			player->Account.RemoveItem(item);
+		if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable != nullptr && stackable->Count > count)
+			return SetItemCount(player, itemId, stackable->Count - count);
 	}
 
-	// Host item add, just run the script and return.
+	// Remove the item.
+	player->Account.RemoveItem(item);
+
+	// If this is for us, just run the script and return.
 	if (player == m_player)
 	{
-		if (base != nullptr)
+		if (auto* base = item->ItemBase; base != nullptr)
 			base->OnRemoved.RunAll(item, count);
 
-		Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMDELETE), network::Channel::RELIABLE);
+		Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMCOUNT), network::Channel::RELIABLE);
 		return item;
 	}
 
-	packet::ItemDelete packet;
-	packet.set_id(item->ID);
-	packet.set_count(count);
+	// Send the delete to the player.
+	if (IsHost())
+	{
+		packet::ItemCount packet;
+		packet.set_id(item->ID);
+		packet.set_count(0);
 
-	Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMDELETE), network::Channel::RELIABLE, packet);
+		Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMCOUNT), network::Channel::RELIABLE, packet);
+	}
+	return item;
+}
+
+item::ItemInstancePtr Server::SetItemCount(server::PlayerPtr player, ItemID itemId, size_t count)
+{
+	if (player == nullptr || IsGuest() && player != m_player)
+		return nullptr;
+
+	auto iter = player->Account.Items.find(itemId);
+	if (iter == std::end(player->Account.Items))
+		return nullptr;
+
+	item::ItemInstancePtr item = iter->second;
+
+	// If this is not a stackable item, but our count is 0, delete it.
+	if (item->Type != item::ItemType::STACKABLE && count == 0)
+		return RemoveItemFromPlayer(player, itemId);
+
+	// Adjust the stack size.
+	if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+	{
+		size_t old_count = stackable->Count;
+		stackable->Count = count;
+		if (stackable->Count == 0)
+			return RemoveItemFromPlayer(player, itemId);
+
+		// Run functions to let us know that our item count changed.
+		if (auto* base = stackable->ItemBase; base != nullptr)
+		{
+			if (old_count > count)
+				base->OnRemoved.RunAll(item, old_count - count);
+			else if (old_count < count)
+				base->OnAdded.RunAll(item, count - old_count);
+		}
+
+		// Send the count adjustment to the player.
+		if (IsHost())
+		{
+			packet::ItemCount packet;
+			packet.set_id(item->ID);
+			packet.set_count(count);
+
+			Send(player->GetPlayerId(), PACKETID(network::Packets::ITEMCOUNT), network::Channel::RELIABLE, packet);
+		}
+	}
+
 	return item;
 }
 

@@ -53,7 +53,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SendEvent& pa
 void handle(Server& server, const uint16_t playerId, const packet::FlagSet& packet);
 void handle(Server& server, const uint16_t playerId, const packet::ItemDefinition& packet);
 void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& packet);
-void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& packet);
+void handle(Server& server, const uint16_t playerId, const packet::ItemCount& packet);
 
 /////////////////////////////
 
@@ -143,8 +143,8 @@ void network_receive_server(Server& server, const uint16_t playerId, const uint1
 		case Packets::ITEMADD:
 			HANDLE(packet::ItemAdd);
 			break;
-		case Packets::ITEMDELETE:
-			HANDLE(packet::ItemDelete);
+		case Packets::ITEMCOUNT:
+			HANDLE(packet::ItemCount);
 			break;
 	}
 }
@@ -859,7 +859,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SendEvent& pa
 
 		// Perform the event.
 		auto hits = server.ProcessSendEvent(scene, player, name, data);
-		log::PrintLine("   -- hits: {}", hits);
+		if (scene) log::PrintLine("   -- hits: {}", hits);
 	}
 }
 
@@ -907,7 +907,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 	ItemID id = static_cast<ItemID>(packet.id());
 	ItemID baseId = static_cast<ItemID>(packet.baseid());
 	item::ItemType type = static_cast<item::ItemType>(packet.type());
-	size_t count = std::min(1ull, packet.stackable_count());
+	size_t count = std::max(1ull, packet.stackable_count());
 
 	auto item_definition = server.GetItemDefinition(baseId);
 	if (item_definition == nullptr) return;
@@ -939,8 +939,13 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 	}
 
 	// Load stackable.
+	size_t old_count = 0;
 	if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
+	{
+		log::PrintLine("Setting item count to {}", count);
+		old_count = stackable->Count;
 		stackable->Count = count;
+	}
 
 	// Load variant.
 	if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
@@ -955,21 +960,12 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 		}
 	}
 
-	// Run OnCreated.
-	/*
-	if (!hasExisting)
-	{
-		server.Script->RunScript(std::format("item_{}", id), item_definition->ClientScript, item);
-		item->OnCreated.RunAll();
-	}
-	*/
-
 	// Run OnAdded.
 	if (auto* base = server.GetItemDefinition(item->ItemBaseID); base != nullptr)
-		base->OnAdded.RunAll(item, count);
+		base->OnAdded.RunAll(item, count - old_count);
 }
 
-void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& packet)
+void handle(Server& server, const uint16_t playerId, const packet::ItemCount& packet)
 {
 	if (server.IsHost() || server.IsSinglePlayer())
 		return;
@@ -977,12 +973,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemDelete& p
 	ItemID id = static_cast<ItemID>(packet.id());
 	size_t count = static_cast<size_t>(packet.count());
 
-	if (auto item = server.GetPlayer()->GetItem(id); item)
-	{
-		server.RemoveItemFromPlayer(server.GetPlayer(), id, count);
-		if (auto* base = server.GetItemDefinition(item->ItemBaseID); base != nullptr)
-			base->OnRemoved.RunAll(item, count);
-	}
+	server.SetItemCount(server.GetPlayer(), id, count);
 }
 
 } // end namespace tdrp::handlers

@@ -110,7 +110,8 @@ public:
 	item::ItemDefinition* GetItemDefinition(const std::string& name);
 	item::ItemInstancePtr GiveItemToPlayer(server::PlayerPtr player, ItemID baseId, item::ItemType type, size_t count = 1);
 	item::ItemInstancePtr GiveVariantItemToPlayer(server::PlayerPtr player, ItemID baseId, const ObjectAttributes& attributes);
-	item::ItemInstancePtr RemoveItemFromPlayer(server::PlayerPtr player, ItemID id, size_t count = 1);
+	item::ItemInstancePtr RemoveItemFromPlayer(server::PlayerPtr player, ItemID itemId, size_t count = 1);
+	item::ItemInstancePtr SetItemCount(server::PlayerPtr player, ItemID itemId, size_t count);
 
 public:
 	void SetAccountFlag(server::PlayerPtr player, const std::string& flag, const auto& value);
