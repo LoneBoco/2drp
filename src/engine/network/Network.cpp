@@ -255,14 +255,14 @@ void Network::Update()
 
 void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel)
 {
-	if (m_host == nullptr) return;
-
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
 	{
 		ExecuteClientReceiveCallback(0, packet_id, nullptr, 0);
 		return;
 	}
+
+	if (m_host == nullptr) return;
 
 	auto peer = m_peers.find(player_id);
 	if (peer == m_peers.end() || peer->second == nullptr)
@@ -281,8 +281,6 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 
 void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
-	if (m_host == nullptr) return;
-
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
 	{
@@ -290,6 +288,8 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 		ExecuteClientReceiveCallback(0, packet_id, data.data(), data.size());
 		return;
 	}
+
+	if (m_host == nullptr) return;
 
 	auto peer = m_peers.find(player_id);
 	if (peer == m_peers.end() || peer->second == nullptr)
@@ -337,8 +337,6 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel, const g
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
-	if (m_host == nullptr) return {};
-
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	// Guest should just send to the server.  They won't have other peers.
@@ -354,8 +352,6 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
-	if (m_host == nullptr) return {};
-
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	// Guest should just send to the server.  They won't have other peers.
@@ -371,8 +367,6 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
-	if (m_host == nullptr) return 0;
-
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id), exclude);
@@ -380,8 +374,6 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
-	if (m_host == nullptr) return 0;
-
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
 	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
@@ -448,7 +440,7 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 						ExecuteClientReceiveCallback(player_id, packet_id, packet->data + 2, packet->dataLength - 2);
 					}
 					// Send the packet.
-					else
+					else if (m_host != nullptr)
 					{
 						auto peer = m_peers.find(player_id);
 						if (peer == std::end(m_peers) || peer->second == nullptr)
@@ -496,8 +488,8 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 				{
 					ExecuteClientReceiveCallback(player_id, packet_id, packet->data + 2, packet->dataLength - 2);
 				}
-				else
 				// Send the packet.
+				else if (m_host != nullptr)
 				{
 					auto peer = m_peers.find(player_id);
 					if (peer == std::end(m_peers) || peer->second == nullptr)

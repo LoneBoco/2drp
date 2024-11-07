@@ -178,7 +178,9 @@ bool Server::LoadPackage(const std::string& package_name)
 		log::PrintLine("   Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
-		auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), package->GetStartingScene());
+		if (auto path = FileSystem.GetDirectoryPath(fs::FileCategory::LEVELS, package->GetStartingScene()); !path.empty())
+			auto scene = Loader::CreateScene(*this, m_scenes, package->GetStartingScene(), path);
+		else return false;
 	}
 
 	// Load server script.
@@ -236,6 +238,7 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 
 bool Server::SinglePlayer()
 {
+	m_server_type = ServerType::HOST;
 	SETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 
 	log::PrintLine(":: Starting as single player server.");
@@ -457,7 +460,7 @@ void Server::ProcessPlayerJoin(const uint16_t player_id)
 	// Switch to the starting scene.
 	auto scene = GetScene(player->Account.LastKnownScene);
 	if (scene == nullptr)
-		scene = GetScene(GetPackage()->GetStartingScene());
+		scene = GetOrCreateScene(GetPackage()->GetStartingScene());
 
 	log::PrintLine("-> Sending player {} to scene {}.", player_id, scene->GetName());
 	player->SwitchScene(scene);

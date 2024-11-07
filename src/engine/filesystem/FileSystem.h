@@ -136,6 +136,9 @@ public:
 	//! \return The full path to a file.
 	filesystem::path GetFilePath(FileCategory category, const filesystem::path& file) const;
 
+	//! Gets the full path to a directory by name.
+	filesystem::path GetDirectoryPath(FileCategory category, const filesystem::path& directory) const;
+
 	//! Gets all the archive CRC32s.
 	//! \return A map of the archive CRC32s.
 	std::vector<FileData> GetArchiveInfo(FileCategory category) const;

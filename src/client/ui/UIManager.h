@@ -84,8 +84,8 @@ protected:
 	std::unordered_map<std::string, Rml::DataModelHandle> m_item_handles;
 	std::set<std::string> m_visible_contexts;
 	std::map<std::string, UIContextData> m_contexts;
-	Rml::Context* m_debugger_host;
-	Rml::Context* m_debugger_context;
+	Rml::Context* m_debugger_host = nullptr;
+	Rml::Context* m_debugger_context = nullptr;
 
 public:
 	bool ForEachVisible(ContextIterationFunc func);

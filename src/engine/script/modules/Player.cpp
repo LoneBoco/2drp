@@ -22,24 +22,24 @@ namespace tdrp::script::modules
 namespace functions
 {
 
-	scene::ScenePtr get_current_scene(const server::Player& player)
+	static scene::ScenePtr get_current_scene(const server::Player& player)
 	{
 		return player.GetCurrentScene().lock();
 	}
 
-	SceneObjectPtr get_current_controlled_scene_object(const server::Player& player)
+	static SceneObjectPtr get_current_controlled_scene_object(const server::Player& player)
 	{
 		return player.GetCurrentControlledSceneObject().lock();
 	}
 
-	auto getFirstItemByName(const server::Player& self, const std::string& name) -> item::ItemInstancePtr
+	static auto getFirstItemByName(const server::Player& self, const std::string& name) -> item::ItemInstancePtr
 	{
 		auto items = self.GetItems(name);
 		if (items.empty()) return nullptr;
 		return (*items.begin());
 	}
 
-	auto getFirstItemByNameAndType(const server::Player& self, const std::string& name, item::ItemType type) -> item::ItemInstancePtr
+	static auto getFirstItemByNameAndType(const server::Player& self, const std::string& name, item::ItemType type) -> item::ItemInstancePtr
 	{
 		auto items = self.GetItems(name);
 		auto items_of_type = items
@@ -49,26 +49,26 @@ namespace functions
 		return items_of_type.front();
 	}
 
-	auto getAllItems(const server::Player& self)
+	static auto getAllItems(const server::Player& self)
 	{
 		return sol::as_table(self.Account.Items);
 	}
 
-	auto getItemsByDefinition(const server::Player& self, item::ItemDefinition* item_definition)
+	static auto getItemsByDefinition(const server::Player& self, item::ItemDefinition* item_definition)
 	{
 		auto items = self.GetItems(item_definition) | std::views::transform([](const auto& item) { return std::make_pair(item->ID, item); });
 		std::map<ItemID, item::ItemInstancePtr> results{ std::ranges::begin(items), std::ranges::end(items) };
 		return sol::as_table(results);
 	}
 
-	auto getItemsByName(const server::Player& self, const std::string& name)
+	static auto getItemsByName(const server::Player& self, const std::string& name)
 	{
 		auto items = self.GetItems(name) | std::views::transform([](const auto& item) { return std::make_pair(item->ID, item); });
 		std::map<ItemID, item::ItemInstancePtr> results{ std::ranges::begin(items), std::ranges::end(items) };
 		return sol::as_table(results);
 	}
 
-	auto getItemsMatchingF(const server::Player& self, sol::variadic_args va, bool all)
+	static auto getItemsMatchingF(const server::Player& self, sol::variadic_args va, bool all)
 	{
 		// Collect a list of search tags.
 		std::unordered_set<std::string> search_tags;
@@ -92,7 +92,7 @@ namespace functions
 		return sol::as_table(results);
 	}
 
-	auto getItemsMatchingTags(const server::Player& self, sol::variadic_args va)
+	static auto getItemsMatchingTags(const server::Player& self, sol::variadic_args va)
 	{
 		// Collect a list of search tags.
 		std::unordered_set<std::string> search_tags;
@@ -115,7 +115,7 @@ namespace functions
 		return sol::as_table(results);
 	}
 
-	auto getItemsMatchingEveryTag(const server::Player& self, sol::variadic_args va)
+	static auto getItemsMatchingEveryTag(const server::Player& self, sol::variadic_args va)
 	{
 		// Collect a list of search tags.
 		std::unordered_set<std::string> search_tags;
@@ -138,7 +138,7 @@ namespace functions
 		return sol::as_table(results);
 	}
 
-	auto getAllItemTags(server::Player& self)
+	static auto getAllItemTags(server::Player& self)
 	{
 		return sol::as_table(self.GetAllItemTags());
 	}

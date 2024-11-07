@@ -476,6 +476,33 @@ filesystem::path FileSystem::GetFilePath(FileCategory category, const filesystem
 	return {};
 }
 
+filesystem::path FileSystem::GetDirectoryPath(FileCategory category, const filesystem::path& directory) const
+{
+	// Check if the directory exists in the native file system.
+	if (filesystem::exists(directory))
+		return directory;
+
+	// Check if the directory exists in the native file system and file is a filename we want to find.
+	{
+		std::scoped_lock guard(m_file_mutex);
+
+		auto& groups = m_categories[static_cast<uint8_t>(category)];
+		for (const auto& group : groups)
+		{
+			for (auto& dir : filesystem::directory_iterator{ group.Directory })
+			{
+				if (!filesystem::is_directory(dir.status()))
+					continue;
+
+				if (dir.path().filename() == directory)
+					return dir.path();
+			}
+		}
+	}
+
+	return {};
+}
+
 std::vector<FileData> FileSystem::GetArchiveInfo(FileCategory category) const
 {
 	std::vector<FileData> result;

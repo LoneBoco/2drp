@@ -179,7 +179,7 @@ void bind_camera(sol::state& lua)
 
 namespace functions
 {
-	ObjectAttributes* GetFlags(Game& self)
+	static ObjectAttributes* GetFlags(Game& self)
 	{
 		auto player = self.GetCurrentPlayer();
 		if (player == nullptr) return nullptr;

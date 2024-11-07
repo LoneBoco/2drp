@@ -3,7 +3,7 @@
  <editorsettings>
   <chunksize width="64" height="64"/>
  </editorsettings>
- <tileset firstgid="1" source="../../world/images/tilesets/forest.tsx"/>
+ <tileset firstgid="1" source="../../assets/images/tilesets/forest.tsx"/>
  <layer id="1" name="Background" width="128" height="128">
   <data encoding="base64" compression="zlib">
    <chunk x="0" y="0" width="64" height="64">
