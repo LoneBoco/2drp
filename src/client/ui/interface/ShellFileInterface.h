@@ -67,6 +67,9 @@ public:
 	/// Returns the current position of the file pointer.
 	size_t Tell(Rml::FileHandle file) override;
 
+	/// Returns the length of the file.
+	size_t Length(Rml::FileHandle file) override;
+
 private:
 	INJECT(::tdrp::Game, Game);
 	std::unordered_map<Rml::FileHandle, tdrp::fs::FilePtr> m_files;

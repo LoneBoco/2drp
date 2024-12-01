@@ -13,6 +13,7 @@
 
 			indicator: 0px 48px 48px 48px;
 		}
+
 		.hide {
 			display: none;
 		}
@@ -21,6 +22,18 @@
 			padding: 30dp;
 			padding-top: 40dp;
 		}
+		#action-container > div {
+			vertical-align: top;
+		}
+
+		.action {
+			display: inline-block;
+			width: 48dp;
+			height: 48dp;
+			margin-right: 10dp;
+			decorator: image(indicator);
+		}
+
 		.center-horiz {
 			margin-left: auto;
 			margin-right: auto;
@@ -29,31 +42,14 @@
 			margin-top: auto;
 			margin-bottom: auto;
 		}
-		.box-sized {
-			width: 48dp;
-			height: 48dp;
-		}
-		.box-wrapper {
-			position: absolute;
-			left: 0dp;
-			top: 0dp;
-			width: 100%;
-		}
 
-		.action {
-			display: inline-block;
-			margin-right: 10dp;
-		}
 		.action * {
 			padding: 0dp;
 		}
 
-		.indicator {
-		}
-
 		.key {
 			z-index: 1;
-			position: absolute;
+			position: relative;
 			top: -22dp;
 			width: 32dp;
 			height: 18dp;
@@ -62,6 +58,10 @@
 			border-radius: 5dp;
 			text-align: center;
 			vertical-align: middle;
+		}
+		.useable {
+			position: relative;
+			top: -22dp;
 		}
 	</style>
 	<script>
@@ -99,25 +99,14 @@
 <body id="actions" onload="Init(document)">
 	<div id="action-container">
 		<div id="a-button" class="action">
-			<img sprite="indicator" class="indicator box-sized" />
-			<div class="box-wrapper center-horiz">
-				<p class="key center-horiz">A</p>
-			</div>
+			<p class="key center-horiz">A</p>
 		</div>
 		<div id="s-button" class="action">
-			<img sprite="indicator" class="indicator box-sized" />
-			<div class="box-wrapper center-horiz">
-				<p class="key center-horiz">S</p>
-			</div>
+			<p class="key center-horiz">S</p>
 		</div>
 		<div id="d-button" class="action">
-			<img sprite="indicator" class="indicator box-sized" />
-			<div class="box-wrapper center-horiz">
-				<p class="key center-horiz">D</p>
-			</div>
-			<div class="box-wrapper center-horiz">
-				<img class="useable center-horiz center-vert" style="display: none;" />
-			</div>
+			<p class="key center-horiz">D</p>
+			<img class="useable center-horiz center-vert" style="display: none;" />
 		</div>
 	</div>
 </body>

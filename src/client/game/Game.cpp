@@ -171,7 +171,7 @@ void Game::Update()
 	std::erase_if(PlayingSounds,
 		[](decltype(PlayingSounds)::const_reference sound) -> bool
 		{
-			if (sound->getStatus() == sf::SoundSource::Stopped)
+			if (sound->getStatus() == sf::SoundSource::Status::Stopped)
 				return true;
 			return false;
 		}

@@ -26,7 +26,7 @@ class TMXRenderComponent : public IRenderableComponent, public Component
 public:
 	struct Chunk
 	{
-		sf::Sprite Sprite;
+		std::optional<sf::Sprite> Sprite;
 		//sf::VertexArray Vertices;
 		Rectf Bounds;
 		std::shared_ptr<sf::RenderTexture> RenderTexture;

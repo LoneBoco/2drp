@@ -1,3 +1,4 @@
+#define COMPONENT_ENABLE(name)
 #define SCRIPT_SETUP
 #define SCRIPT_FUNCTION(name)
 #define SCRIPT_ME_ERASE(name)

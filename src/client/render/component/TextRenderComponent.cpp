@@ -54,20 +54,24 @@ void TextRenderComponent::OnDetached(ComponentEntity& owner)
 
 Rectf TextRenderComponent::GetBoundingBox() const
 {
+	if (!m_text.has_value())
+		return Rectf{};
+
 	if (auto so = m_owner.lock())
 	{
 		if (so->GetType() != SceneObjectType::TEXT)
 			return Rectf{};
 
-		auto pos = so->GetPosition();
-		auto textpos = m_text.getPosition();
+		const auto& text = m_text.value();
 
-		auto bounds = m_text.getLocalBounds();
-		auto global = m_text.getGlobalBounds();
+		auto pos = so->GetPosition();
+		auto textpos = text.getPosition();
+		auto bounds = text.getLocalBounds();
+		auto global = text.getGlobalBounds();
 
 		if (Vector2df::Distance(pos, { textpos.x, textpos.y }) > 100)
-			return Rectf{ pos.x + bounds.left, pos.y + bounds.top, bounds.width, bounds.height };
-		else return Rectf{ global.left, global.top, global.width, global.height };
+			return Rectf{ pos.x + bounds.position.x, pos.y + bounds.position.y, bounds.size.x, bounds.size.y };
+		else return Rectf{ global.position.x, global.position.y, global.size.x, global.size.y };
 	}
 
 	return Rectf{};
@@ -75,7 +79,7 @@ Rectf TextRenderComponent::GetBoundingBox() const
 
 void TextRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
-	if (m_text.getString().isEmpty())
+	if (!m_text.has_value() || m_text.value().getString().isEmpty())
 		return;
 	if (!m_good_font)
 		return;
@@ -91,26 +95,27 @@ void TextRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect
 
 		auto pos = so->GetPosition();
 		auto scale = so->GetScale();
+		auto& text = m_text.value();
 
-		m_text.setPosition({ pos.x, pos.y });
-		m_text.setScale({ scale.x, scale.y });
-		m_text.setStyle(sf::Text::Bold);
-		m_text.setFillColor(sf::Color::White);
-		m_text.setOutlineColor(sf::Color::Black);
-		m_text.setOutlineThickness(1.0f);
+		text.setPosition({ pos.x, pos.y });
+		text.setScale({ scale.x, scale.y });
+		text.setStyle(sf::Text::Bold);
+		text.setFillColor(sf::Color::White);
+		text.setOutlineColor(sf::Color::Black);
+		text.setOutlineThickness(1.0f);
 
 		if (text_so->GetCentered())
 		{
-			auto global = m_text.getGlobalBounds();
-			auto local = m_text.getLocalBounds();
-			auto origin = local.getPosition() + (global.getSize() / 2.0f);
+			auto global = text.getGlobalBounds();
+			auto local = text.getLocalBounds();
+			auto origin = local.getCenter();
 			origin.x = std::roundf(origin.x);
 			origin.y = std::roundf(origin.y);
-			m_text.setOrigin(origin);
+			text.setOrigin(origin);
 		}
 		else
 		{
-			m_text.setOrigin({ 0.f, 0.f });
+			text.setOrigin({ 0.f, 0.f });
 		}
 
 		// Draw the bounding box first to avoid a weird SFML bug.
@@ -126,7 +131,7 @@ void TextRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect
 			window.draw(shape);
 		}
 
-		window.draw(m_text);
+		window.draw(text);
 	}
 }
 
@@ -146,7 +151,7 @@ void TextRenderComponent::load_font(const std::string& name)
 	{
 		auto handle = resources->Get<sf::Font>(id).lock();
 		m_font = handle;
-		m_text.setFont(*m_font);
+		m_text = std::make_optional<sf::Text>(*m_font);
 		m_good_font = true;
 	}
 	else
@@ -157,12 +162,12 @@ void TextRenderComponent::load_font(const std::string& name)
 			return;
 
 		auto font = std::make_shared<sf::Font>();
-		auto success = font->loadFromFile(filepath);
+		auto success = font->openFromFile(filepath);
 		if (success)
 		{
 			m_good_font = true;
 			m_font = font;
-			m_text.setFont(*m_font);
+			m_text = std::make_optional<sf::Text>(*m_font);
 			id = resources->Add(name, std::move(font));
 		}
 	}
@@ -170,6 +175,9 @@ void TextRenderComponent::load_font(const std::string& name)
 
 void TextRenderComponent::load_text(const std::string& text)
 {
+	if (!m_text.has_value())
+		return;
+
 	if (auto so = m_owner.lock())
 	{
 		if (so->GetType() != SceneObjectType::TEXT)
@@ -181,10 +189,10 @@ void TextRenderComponent::load_text(const std::string& text)
 
 		if (text_so->GetFont() != m_font_name)
 			load_font(text_so->GetFont());
-		m_text.setCharacterSize(text_so->GetFontSize());
+		m_text.value().setCharacterSize(text_so->GetFontSize());
 	}
 
-	m_text.setString(text);
+	m_text.value().setString(text);
 }
 
 void TextRenderComponent::property_update(uint16_t attribute_id)
@@ -206,13 +214,13 @@ void TextRenderComponent::property_update(uint16_t attribute_id)
 	}
 }
 
-std::any TextRenderComponent::provide_size()
+std::any TextRenderComponent::provide_size() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Vector2df>(box.size);
 }
 
-std::any TextRenderComponent::provide_boundingbox()
+std::any TextRenderComponent::provide_boundingbox() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Rectf>(box);

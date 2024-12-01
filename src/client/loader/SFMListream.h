@@ -16,30 +16,30 @@ public:
 
 	explicit SFMListream(std::istream* stream) : m_stream(stream) {}
 
-	sf::Int64 read(void* data, sf::Int64 size) override
+	std::optional<std::size_t> read(void* data, std::size_t size) override
 	{
 		m_stream->read(static_cast<char*>(data), size);
 		return m_stream->gcount();
 	}
 
-	sf::Int64 seek(sf::Int64 position) override
+	std::optional<std::size_t> seek(std::size_t position) override
 	{
 		m_stream->clear();
 		m_stream->seekg(position);
 		return m_stream->tellg();
 	}
 
-	sf::Int64 tell() override
+	std::optional<std::size_t> tell() override
 	{
 		return m_stream->tellg();
 	}
 
-	sf::Int64 getSize() override
+	std::optional<std::size_t> getSize() override
 	{
 		auto current_pos = m_stream->tellg();
 
 		m_stream->seekg(0, m_stream->end);
-		auto end_pos = static_cast<sf::Int64>(m_stream->tellg());
+		auto end_pos = static_cast<std::size_t>(m_stream->tellg());
 
 		m_stream->seekg(current_pos);
 		return end_pos;

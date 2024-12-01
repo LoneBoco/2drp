@@ -1,5 +1,6 @@
 #pragma once
 
+#include <concepts>
 #include <mathfu/vector.h>
 #include <mathfu/rect.h>
 #include <tmxlite/Types.hpp>
@@ -46,7 +47,7 @@ inline mathfu::Rect<T> convert(const mathfu::Rect<U>& other)
 	return mathfu::Rect<T>(static_cast<T>(other.pos.x), static_cast<T>(other.pos.y), static_cast<T>(other.size.x), static_cast<T>(other.size.y));
 }
 
-inline uint32_t next_power_of_two(uint32_t value)
+inline constexpr auto next_power_of_two(std::integral auto value) -> decltype(value)
 {
 	if (value == 0) return 2;
 
@@ -54,21 +55,22 @@ inline uint32_t next_power_of_two(uint32_t value)
 	value |= value >> 1;
 	value |= value >> 2;
 	value |= value >> 4;
-	value |= value >> 8;
-	value |= value >> 16;
-	return ++value;
-}
+	
+	if constexpr (sizeof(value) > 1)
+	{
+		value |= value >> 8;
+	}
 
-inline int32_t next_power_of_two(int32_t value)
-{
-	if (value == 0) return 2;
+	if constexpr (sizeof(value) > 2)
+	{
+		value |= value >> 16;
+	}
 
-	--value;
-	value |= value >> 1;
-	value |= value >> 2;
-	value |= value >> 4;
-	value |= value >> 8;
-	value |= value >> 16;
+	if constexpr (sizeof(value) > 4)
+	{
+		value |= value >> 32;
+	}
+
 	return ++value;
 }
 

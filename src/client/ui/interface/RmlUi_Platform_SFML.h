@@ -29,6 +29,7 @@
 #ifndef RMLUI_BACKENDS_PLATFORM_SFML_H
 #define RMLUI_BACKENDS_PLATFORM_SFML_H
 
+#include <optional>
 #include <RmlUi/Core/Input.h>
 #include <RmlUi/Core/SystemInterface.h>
 #include <RmlUi/Core/Types.h>
@@ -58,14 +59,13 @@ private:
 	sf::Clock timer;
 	sf::RenderWindow* window = nullptr;
 
-	bool cursors_valid = false;
-	sf::Cursor cursor_default;
-	sf::Cursor cursor_move;
-	sf::Cursor cursor_pointer;
-	sf::Cursor cursor_resize;
-	sf::Cursor cursor_cross;
-	sf::Cursor cursor_text;
-	sf::Cursor cursor_unavailable;
+	sf::Cursor cursor_default{ sf::Cursor::Type::Arrow };
+	sf::Cursor cursor_move{ sf::Cursor::Type::SizeAll };
+	sf::Cursor cursor_pointer{ sf::Cursor::Type::Hand };
+	std::optional<sf::Cursor> cursor_resize;
+	sf::Cursor cursor_cross{ sf::Cursor::Type::Cross };
+	sf::Cursor cursor_text{ sf::Cursor::Type::Text };
+	sf::Cursor cursor_unavailable{ sf::Cursor::Type::NotAllowed };
 };
 
 /**
@@ -75,7 +75,7 @@ namespace RmlSFML {
 
 // Applies input on the context based on the given SFML event.
 // @return True if the event is still propagating, false if it was handled by the context.
-bool InputHandler(Rml::Context* context, sf::Event& ev);
+bool InputHandler(Rml::Context* context, const sf::Event& event);
 
 // Converts the SFML key to RmlUi key.
 Rml::Input::KeyIdentifier ConvertKey(sf::Keyboard::Key sfml_key);

@@ -56,7 +56,7 @@ static std::shared_ptr<sf::RenderTexture> renderToTexture(uint32_t chunk_idx, TM
 
 	// Create our texture.
 	auto render_texture = std::make_shared<sf::RenderTexture>();
-	auto success = render_texture->create(static_cast<uint32_t>(render_chunk.Bounds.size.x + 0.4f), static_cast<uint32_t>(render_chunk.Bounds.size.y + 0.4f));
+	auto success = render_texture->resize({ static_cast<uint32_t>(render_chunk.Bounds.size.x + 0.4f), static_cast<uint32_t>(render_chunk.Bounds.size.y + 0.4f) });
 	if (!success)
 		return nullptr;
 
@@ -251,7 +251,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect,
 
 			// Render the chunk.
 			auto& cv = chunk.value();
-			if (cv.RenderTexture)
+			if (cv.RenderTexture && cv.Sprite.has_value())
 			{
 				sf::RenderStates state{};
 				state.transform
@@ -259,7 +259,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect,
 					.rotate(sf::degrees(rotate))
 					.scale({ scale.x, scale.y });
 
-				window.draw(cv.Sprite, state);
+				window.draw(cv.Sprite.value(), state);
 			}
 		}
 
@@ -326,7 +326,7 @@ std::optional<TMXRenderComponent::Chunk> TMXRenderComponent::RenderChunkToTextur
 	render_texture->display();
 
 	// Save our sprite and texture via the chunk index.
-	render_chunk.Sprite.setTexture(render_texture->getTexture());
+	render_chunk.Sprite = std::make_optional<sf::Sprite>(render_texture->getTexture());
 	render_chunk.RenderTexture = render_texture;
 
 	log::PrintLine("TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
@@ -375,15 +375,15 @@ void TMXRenderComponent::RenderChunkToTexture(uint32_t chunk_idx, const std::spa
 	render_texture->display();
 
 	// Save our sprite and texture via the chunk index.
-	render_chunk.Sprite.setTexture(render_texture->getTexture());
+	render_chunk.Sprite = std::make_optional<sf::Sprite>(render_texture->getTexture());
 	render_chunk.RenderTexture = render_texture;
 
 	log::PrintLine("TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
 
 	if (m_chunks.size() <= chunk_idx)
 	{
-		m_chunks.resize(chunk_idx + 1);
-		m_chunks_to_render.reserve(chunk_idx + 1);
+		m_chunks.resize(static_cast<size_t>(chunk_idx) + 1);
+		m_chunks_to_render.reserve(static_cast<size_t>(chunk_idx) + 1);
 	}
 	m_chunks[chunk_idx] = std::make_optional(std::move(render_chunk));
 }

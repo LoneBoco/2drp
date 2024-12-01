@@ -1,0 +1,21 @@
+{
+  "dependencies": [
+    "bzip2",
+    "clipper2",
+    "nlohmann-json",
+    "pkgconf",
+    "protobuf",
+    "pugixml",
+    {
+      "name": "rmlui",
+      "features": [
+        "freetype"
+      ]
+    },
+    "sol2",
+    "tmxlite",
+    "zlib",
+    "zstd",
+    "lua"
+  ]
+}

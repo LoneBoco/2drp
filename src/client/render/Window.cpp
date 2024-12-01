@@ -21,7 +21,7 @@ Window::Window(const char* title)
 	auto width = Settings->GetAs<uint32_t>("window.width", 640);
 	auto height = Settings->GetAs<uint32_t>("window.height", 480);
 
-	sf::VideoMode vm{ width, height };
+	sf::VideoMode vm{ { width, height } };
 
 	m_window = std::make_unique<sf::RenderWindow>(vm, title);
 	//m_window->setFramerateLimit(60);
@@ -38,71 +38,77 @@ Window::~Window()
 	log::PrintLine(":: Closing window.");
 }
 
-constinit auto rml_events = std::to_array<sf::Event::EventType>(
-	{
-		sf::Event::MouseMoved,
-		sf::Event::MouseButtonPressed,
-		sf::Event::MouseButtonReleased,
-		sf::Event::MouseWheelScrolled,
-		sf::Event::MouseLeft,
-		sf::Event::TextEntered,
-		sf::Event::KeyPressed,
-		sf::Event::KeyReleased,
-	}
-);
+constinit auto rml_events = std::variant<
+	sf::Event::MouseMoved,
+	sf::Event::MouseButtonPressed,
+	sf::Event::MouseButtonReleased,
+	sf::Event::MouseWheelScrolled,
+	sf::Event::MouseLeft,
+	sf::Event::TextEntered,
+	sf::Event::KeyPressed,
+	sf::Event::KeyReleased
+>{};
+
+template <typename... Ts>
+[[nodiscard]] static constexpr bool isRmlEvent(const sf::Event& ev, const std::variant<Ts...>&)
+{
+	return (ev.is<Ts>() || ...);
+}
 
 void Window::EventLoop()
 {
 	while (m_window->isOpen())
 	{
 		// Handle events.
-		sf::Event event;
-		while (m_window->pollEvent(event))
+		while (const std::optional event = m_window->pollEvent())
 		{
-			if (event.type == sf::Event::Closed)
+			if (!event.has_value())
+				continue;
+
+			if (event->is<sf::Event::Closed>())
 				m_window->close();
 
-			else if (event.type == sf::Event::Resized)
+			else if (event->is<sf::Event::Resized>())
 			{
 				Game->UI->ScreenSizeUpdate();
 			}
 
-			else if (event.type == sf::Event::LostFocus)
+			else if (event->is<sf::Event::FocusLost>())
 			{
 				m_window_active = false;
 			}
 
-			else if (event.type == sf::Event::GainedFocus)
+			else if (event->is<sf::Event::FocusGained>())
 			{
 				m_window_active = true;
 			}
 
-			else if (std::ranges::any_of(rml_events, [&event](auto& ev) { return ev == event.type; }))
+			else if (isRmlEvent(event.value(), rml_events))
 			{
-				auto eat = Game->UI->ForEachVisible([&event](auto& context) { return RmlSFML::InputHandler(&context, event); });
+				auto eat = Game->UI->ForEachVisible([&event](auto& context) { return RmlSFML::InputHandler(&context, event.value()); });
 				if (eat) continue;
 
-				if (event.type == sf::Event::KeyPressed)
+				if (const auto* ev = event->getIf<sf::Event::KeyPressed>(); ev)
 				{
-					if (event.key.code == sf::Keyboard::F8)
+					if (ev->code == sf::Keyboard::Key::F8)
 						Rml::Debugger::SetVisible(!Rml::Debugger::IsVisible());
 
-					Game->OnKeyPress.RunAll(event.key.code);
+					Game->OnKeyPress.RunAll(ev->code);
 				}
-				else if (event.type == sf::Event::MouseWheelScrolled)
+				else if (const auto* ev = event->getIf<sf::Event::MouseWheelScrolled>(); ev)
 				{
-					Vector2di pos{ event.mouseWheelScroll.x, event.mouseWheelScroll.y };
-					Game->OnMouseWheel.RunAll(event.mouseWheelScroll.wheel, event.mouseWheelScroll.delta, pos);
+					Vector2di pos{ ev->position.x, ev->position.y };
+					Game->OnMouseWheel.RunAll((int)ev->wheel, ev->delta, pos);
 				}
-				else if (event.type == sf::Event::MouseButtonPressed)
+				else if (const auto* ev = event->getIf<sf::Event::MouseButtonPressed>(); ev)
 				{
-					Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-					Game->OnMouseDown.RunAll(event.mouseButton.button, pos);
+					Vector2di pos{ ev->position.x, ev->position.y };
+					Game->OnMouseDown.RunAll((int)ev->button, pos);
 				}
-				else if (event.type == sf::Event::MouseButtonReleased)
+				else if (const auto* ev = event->getIf < sf::Event::MouseButtonReleased>(); ev)
 				{
-					Vector2di pos{ event.mouseButton.x, event.mouseButton.y };
-					Game->OnMouseUp.RunAll(event.mouseButton.button, pos);
+					Vector2di pos{ ev->position.x, ev->position.y };
+					Game->OnMouseUp.RunAll((int)ev->button, pos);
 				}
 			}
 		}
@@ -185,16 +191,16 @@ void Window::RenderPhysics(sf::RenderTarget& window, SceneObjectPtr so)
 			else if (polygon != nullptr)
 			{
 				sf::ConvexShape poly;
-				poly.setFillColor(sf::Color::Transparent);
-				poly.setOutlineColor(sf::Color::Yellow);
-				poly.setOutlineThickness(1.0f);
-
 				poly.setPointCount(polygon->GetVertexCount());
 				for (auto i = 0; i < polygon->GetVertexCount(); ++i)
 				{
 					auto vertex = polygon->GetVertex(i);
 					poly.setPoint(i, { (transformation.p[0] + vertex[0]) * ppu, (transformation.p[1] + vertex[1]) * ppu });
 				}
+
+				poly.setFillColor(sf::Color::Transparent);
+				poly.setOutlineColor(sf::Color::Yellow);
+				poly.setOutlineThickness(1.0f);
 
 				//window.resetGLStates();
 				window.draw(poly);

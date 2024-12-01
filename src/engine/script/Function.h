@@ -68,7 +68,7 @@ public:
 
 		for (auto& entry : m_function)
 		{
-			if (!RunFunction(entry.first, entry.second, std::forward<Args>(args)...))
+			if (!RunFunction(entry.first, entry.second, args...))
 				failed.insert(entry.first);
 		}
 
@@ -99,8 +99,8 @@ private:
 		if (!function.valid())
 			return false;
 
-		sol::environment env{ sol::env_key, function };
-		env["MODULENAME"] = modulename;
+		sol::state_view lua{ function.lua_state() };
+		lua["MODULENAME"] = modulename;
 
 		auto result = function.call(std::forward<Args>(args)...);
 		if (!result.valid())

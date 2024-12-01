@@ -1,6 +1,7 @@
 #pragma once
 
 #include <any>
+#include <optional>
 
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
@@ -43,8 +44,8 @@ public:
 protected:
 	void load_image(const std::string& image);
 	void image_property_update(uint16_t attribute_id);
-	std::any provide_size();
-	std::any provide_boundingbox();
+	std::any provide_size() const;
+	std::any provide_boundingbox() const;
 
 protected:
 	INJECT(settings::ProgramSettings, Settings);
@@ -53,7 +54,7 @@ protected:
 	EventHandle m_handle_image_change;
 	std::weak_ptr<SceneObject> m_owner;
 	std::weak_ptr<sf::Texture> m_texture;
-	sf::Sprite m_sprite;
+	std::optional<sf::Sprite> m_sprite;
 };
 
 } // end namespace tdrp::render::component

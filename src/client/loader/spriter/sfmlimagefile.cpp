@@ -69,13 +69,17 @@ void SfmlImageFile::initializeFile()
 
 	auto handle = resources->Get<sf::Texture>(id);
 	if (auto h = handle.lock())
-		sprite.setTexture(*h);
+		sprite = std::make_optional<sf::Sprite>(*h);
 	else SpriterEngine::Settings::Settings::error("SfmlImageFile::initializeFile - texture handle could not be locked");
 }
 
 void SfmlImageFile::renderSprite(SpriterEngine::UniversalObjectInterface * spriteInfo)
 {
-	sprite.setColor(sf::Color(255, 255, 255, static_cast<sf::Uint8>(255.0 * spriteInfo->getAlpha())));
+	if (!sprite.has_value())
+		return;
+
+	auto& sp = sprite.value();
+	sp.setColor(sf::Color(255, 255, 255, static_cast<uint8_t>(255.0 * spriteInfo->getAlpha())));
 
 	if(atlasFile) {
 		// Adding of transformations is in the reverse order you would expect.
@@ -101,14 +105,14 @@ void SfmlImageFile::renderSprite(SpriterEngine::UniversalObjectInterface * sprit
 			t.translate({ static_cast<float>(atlasFrameData.spriteSourcePosition.x - spriteInfo->getPivot().x * atlasFrameData.sourceSize.x),
 						  static_cast<float>(atlasFrameData.spriteSourcePosition.y - spriteInfo->getPivot().y * atlasFrameData.sourceSize.y) });
 		}
-		renderWindow->draw(sprite, t);
+		renderWindow->draw(sp, t);
 	}
 	else {
-		sprite.setPosition({ static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y) });
-		sprite.setRotation(sf::radians(static_cast<float>(spriteInfo->getAngle())));
-		sprite.setScale({ static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y) });
-		sprite.setOrigin({ static_cast<float>(spriteInfo->getPivot().x * texture.getSize().x), static_cast<float>(spriteInfo->getPivot().y * texture.getSize().y) });
-		renderWindow->draw(sprite);
+		sp.setPosition({ static_cast<float>(spriteInfo->getPosition().x), static_cast<float>(spriteInfo->getPosition().y) });
+		sp.setRotation(sf::radians(static_cast<float>(spriteInfo->getAngle())));
+		sp.setScale({ static_cast<float>(spriteInfo->getScale().x), static_cast<float>(spriteInfo->getScale().y) });
+		sp.setOrigin({ static_cast<float>(spriteInfo->getPivot().x * texture.getSize().x), static_cast<float>(spriteInfo->getPivot().y * texture.getSize().y) });
+		renderWindow->draw(sp);
 	}
 }
 
@@ -117,17 +121,21 @@ void SfmlImageFile::setAtlasFile(SpriterEngine::AtlasFile *initialAtlasFile, Spr
 	// First call baseclass implementation
 	ImageFile::setAtlasFile(initialAtlasFile, initialAtlasFrameData);
 
+	if (!sprite.has_value())
+		return;
+	auto& sp = sprite.value();
+
 	// atlasFile should be a SfmlAtlasFile
 	if(atlasFile && static_cast<SfmlAtlasFile*>(atlasFile)->loaded()) {
 		const sf::Texture *texture = static_cast<SfmlAtlasFile*>(atlasFile)->getTexture();
-		sprite.setTexture(*texture);
+		sp.setTexture(*texture);
 		if(atlasFrameData.rotated) {
 			// When rotated, the atlasdata framesize are relative to the original. Not the frame
-			sprite.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
+			sp.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
 									{ static_cast<int>(atlasFrameData.frameSize.y), static_cast<int>(atlasFrameData.frameSize.x) } });
 		}
 		else {
-			sprite.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
+			sp.setTextureRect({ { static_cast<int>(atlasFrameData.framePosition.x), static_cast<int>(atlasFrameData.framePosition.y) },
 									{ static_cast<int>(atlasFrameData.frameSize.x), static_cast<int>(atlasFrameData.frameSize.y) } });
 		}
 	}

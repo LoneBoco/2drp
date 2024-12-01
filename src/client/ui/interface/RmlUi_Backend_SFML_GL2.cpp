@@ -46,8 +46,7 @@ class RenderInterface_GL2_SFML : public RenderInterface_GL2 {
 public:
 	// -- Inherited from Rml::RenderInterface --
 
-	void RenderGeometry(Rml::Vertex* vertices, int num_vertices, int* indices, int num_indices, Rml::TextureHandle texture,
-		const Rml::Vector2f& translation) override
+	void RenderGeometry(Rml::CompiledGeometryHandle handle, Rml::Vector2f translation, Rml::TextureHandle texture) override
 	{
 		if (texture)
 		{
@@ -55,10 +54,10 @@ public:
 			texture = RenderInterface_GL2::TextureEnableWithoutBinding;
 		}
 
-		RenderInterface_GL2::RenderGeometry(vertices, num_vertices, indices, num_indices, texture, translation);
+		RenderInterface_GL2::RenderGeometry(handle, translation, texture);
 	}
 
-	bool LoadTexture(Rml::TextureHandle& texture_handle, Rml::Vector2i& texture_dimensions, const Rml::String& source) override
+	Rml::TextureHandle LoadTexture(Rml::Vector2i& texture_dimensions, const Rml::String& source) override
 	{
 		Rml::FileInterface* file_interface = Rml::GetFileInterface();
 		Rml::FileHandle file_handle = file_interface->Open(source);
@@ -69,45 +68,55 @@ public:
 		size_t buffer_size = file_interface->Tell(file_handle);
 		file_interface->Seek(file_handle, 0, SEEK_SET);
 
-		char* buffer = new char[buffer_size];
-		file_interface->Read(buffer, buffer_size, file_handle);
+		using Rml::byte;
+		Rml::UniquePtr<byte[]> buffer(new byte[buffer_size]);
+		file_interface->Read(buffer.get(), buffer_size, file_handle);
 		file_interface->Close(file_handle);
 
+		sf::Image image;
+		if (!image.loadFromMemory(buffer.get(), buffer_size))
+			return false;
+
+		// Convert colors to premultiplied alpha, which is necessary for correct alpha compositing.
+		for (unsigned int x = 0; x < image.getSize().x; x++)
+		{
+			for (unsigned int y = 0; y < image.getSize().y; y++)
+			{
+				sf::Color color = image.getPixel({ x, y });
+				color.r = (uint8_t)((color.r * color.a) / 255);
+				color.g = (uint8_t)((color.g * color.a) / 255);
+				color.b = (uint8_t)((color.b * color.a) / 255);
+				image.setPixel({ x, y }, color);
+			}
+		}
+
 		sf::Texture* texture = new sf::Texture();
 		texture->setSmooth(true);
 
-		bool success = texture->loadFromMemory(buffer, buffer_size);
-
-		delete[] buffer;
-
-		if (success)
-		{
-			texture_handle = (Rml::TextureHandle)texture;
-			texture_dimensions = Rml::Vector2i(texture->getSize().x, texture->getSize().y);
-		}
-		else
-		{
-			delete texture;
-		}
-
-		return success;
-	}
-
-	bool GenerateTexture(Rml::TextureHandle& texture_handle, const Rml::byte* source, const Rml::Vector2i& source_dimensions) override
-	{
-		sf::Texture* texture = new sf::Texture();
-		texture->setSmooth(true);
-
-		if (!texture->create(source_dimensions.x, source_dimensions.y))
+		if (!texture->loadFromImage(image))
 		{
 			delete texture;
 			return false;
 		}
 
-		texture->update(source, source_dimensions.x, source_dimensions.y, 0, 0);
-		texture_handle = (Rml::TextureHandle)texture;
+		texture_dimensions = Rml::Vector2i(texture->getSize().x, texture->getSize().y);
+		return (Rml::TextureHandle)texture;
+	}
 
-		return true;
+	Rml::TextureHandle GenerateTexture(Rml::Span<const Rml::byte> source, Rml::Vector2i source_dimensions) override
+	{
+		sf::Texture* texture = new sf::Texture();
+		texture->setSmooth(true);
+
+		if (!texture->resize({ static_cast<uint32_t>(source_dimensions.x), static_cast<uint32_t>(source_dimensions.y) }))
+		{
+			delete texture;
+			return false;
+		}
+
+		texture->update(source.data(), { static_cast<uint32_t>(source_dimensions.x), static_cast<uint32_t>(source_dimensions.y) }, { 0, 0 });
+
+		return (Rml::TextureHandle)texture;
 	}
 
 	void ReleaseTexture(Rml::TextureHandle texture_handle) override { delete (sf::Texture*)texture_handle; }
@@ -146,9 +155,11 @@ bool Backend::Initialize(sf::RenderWindow* window)
 	RMLUI_ASSERT(!data);
 
 	data = Rml::MakeUnique<BackendData>();
-	data->window = window;
 
+	data->window = window;
 	data->system_interface.SetWindow(data->window);
+
+	UpdateWindowDimensions(*data->window, data->render_interface, nullptr);
 
 	return true;
 }
@@ -170,25 +181,26 @@ Rml::RenderInterface* Backend::GetRenderInterface()
 	return &data->render_interface;
 }
 
-bool Backend::ProcessEvents(Rml::Context* context, KeyDownCallback key_down_callback)
+bool Backend::ProcessEvents(Rml::Context* context, KeyDownCallback key_down_callback, bool power_save)
 {
 	RMLUI_ASSERT(data && context && data->window);
+
+	// SFML does not seem to provide a way to wait for events with a timeout.
+	(void)power_save;
 
 	// The contents of this function is intended to be copied directly into your main loop.
 	bool result = data->running;
 	data->running = true;
 
-	sf::Event ev;
-	while (data->window->pollEvent(ev))
+	while (const std::optional event = data->window->pollEvent())
 	{
-		switch (ev.type)
+		if (const auto* ev = event->getIf<sf::Event::Resized>(); ev)
 		{
-		case sf::Event::Resized:
 			UpdateWindowDimensions(*data->window, data->render_interface, context);
-			break;
-		case sf::Event::KeyPressed:
+		}
+		else if (const auto* ev = event->getIf<sf::Event::KeyPressed>(); ev)
 		{
-			const Rml::Input::KeyIdentifier key = RmlSFML::ConvertKey(ev.key.code);
+			const Rml::Input::KeyIdentifier key = RmlSFML::ConvertKey(ev->code);
 			const int key_modifier = RmlSFML::GetKeyModifierState();
 			const float native_dp_ratio = 1.f;
 
@@ -196,19 +208,19 @@ bool Backend::ProcessEvents(Rml::Context* context, KeyDownCallback key_down_call
 			if (key_down_callback && !key_down_callback(context, key, key_modifier, native_dp_ratio, true))
 				break;
 			// Otherwise, hand the event over to the context by calling the input handler as normal.
-			if (!RmlSFML::InputHandler(context, ev))
+			if (!RmlSFML::InputHandler(context, *ev))
 				break;
 			// The key was not consumed by the context either, try keyboard shortcuts of lower priority.
 			if (key_down_callback && !key_down_callback(context, key, key_modifier, native_dp_ratio, false))
 				break;
 		}
-		break;
-		case sf::Event::Closed:
+		else if (event->is<sf::Event::Closed>())
+		{
 			result = false;
-			break;
-		default:
-			RmlSFML::InputHandler(context, ev);
-			break;
+		}
+		else
+		{
+			RmlSFML::InputHandler(context, *event);
 		}
 	}
 
@@ -220,7 +232,7 @@ void Backend::RequestExit()
 	RMLUI_ASSERT(data);
 	data->running = false;
 }
-
+	
 void Backend::BeginFrame()
 {
 	RMLUI_ASSERT(data);
@@ -230,22 +242,6 @@ void Backend::BeginFrame()
 	window.clear();
 
 	data->render_interface.BeginFrame();
-
-#if 0
-	// Draw a simple shape with SFML for demonstration purposes. Make sure to push and pop GL states as appropriate.
-	sf::Vector2f circle_position(100.f, 100.f);
-
-	window.pushGLStates();
-
-	sf::CircleShape circle(50.f);
-	circle.setPosition(circle_position);
-	circle.setFillColor(sf::Color::Blue);
-	circle.setOutlineColor(sf::Color::Red);
-	circle.setOutlineThickness(10.f);
-	window.draw(circle);
-
-	window.popGLStates();
-#endif
 }
 
 void Backend::PresentFrame()

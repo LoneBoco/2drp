@@ -229,7 +229,8 @@ void handle(Game& game, const packet::SceneObjectChunkData& packet)
 	// If we have tiles, render them.
 	if (packet.tiles_size() != 0)
 	{
-		std::span<const uint32_t> tiles{ packet.tiles() };
+		//std::span<const uint32_t> tiles{ packet.tiles() };
+		std::span<const uint32_t> tiles{ packet.tiles().data(), static_cast<size_t>(packet.tiles().size()) };
 		render->RenderChunkToTexture(static_cast<uint32_t>(chunk_idx), tiles);
 	}
 }

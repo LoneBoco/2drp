@@ -959,7 +959,7 @@ void TMXSceneObject::LoadChunkCollision(uint32_t chunk_idx, std::shared_ptr<scen
 	if (!collision_polys.empty())
 	{
 		Clipper2Lib::ClipperD clip;
-		clip.PreserveCollinear = false;
+		clip.PreserveCollinear(false);
 		clip.AddSubject(collision_polys);
 
 		// Union all the polygons.

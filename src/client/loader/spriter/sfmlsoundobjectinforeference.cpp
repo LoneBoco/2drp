@@ -5,25 +5,27 @@ namespace tdrp::loader::spriter
 
 SfmlSoundObjectInfoReference::SfmlSoundObjectInfoReference(sf::SoundBuffer &buffer)
 {
-	sound.setBuffer(buffer);
+	sound = std::make_optional(sf::Sound{ buffer });
 }
 
 void SfmlSoundObjectInfoReference::playTrigger()
 {
-	if (getTriggerCount())
+	if (sound && getTriggerCount())
 	{
-		sound.play();
+		sound.value().play();
 	}
 }
 
 void SfmlSoundObjectInfoReference::setPlaybackVolume()
 {
-	sound.setVolume(static_cast<float>(100 * getVolume()));
+	if (sound.has_value())
+		sound.value().setVolume(static_cast<float>(100 * getVolume()));
 }
 
 void SfmlSoundObjectInfoReference::setPlaybackPanning()
 {
-	sound.setPosition({ static_cast<float>(100 * getPanning()), 0, 0 });
+	if (sound.has_value())
+		sound.value().setPosition({ static_cast<float>(100 * getPanning()), 0, 0 });
 }
 
 }

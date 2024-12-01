@@ -7,6 +7,7 @@
 #include "engine/scene/SceneObject.h"
 
 #include <PlayRho/PlayRho.hpp>
+#include <SFML/Graphics/Sprite.hpp>
 
 
 namespace tdrp::render::component
@@ -84,6 +85,9 @@ Rectf RenderComponent::GetBoundingBox() const
 
 void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
+	if (!m_sprite.has_value())
+		return;
+
 	if (auto so = m_owner.lock())
 	{
 		if (so->GetType() != SceneObjectType::STATIC)
@@ -95,8 +99,8 @@ void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, st
 		auto pos = so->GetPosition();
 		auto scale = so->GetScale();
 
-		m_sprite.setPosition({ pos.x, pos.y });
-		m_sprite.setScale({ scale.x, scale.y });
+		m_sprite.value().setPosition({ pos.x, pos.y });
+		m_sprite.value().setScale({ scale.x, scale.y });
 
 		// Draw the bounding box first to avoid a weird SFML bug.
 		if (Settings->GetAs<bool>("Debug.drawstaticbbox"))
@@ -113,7 +117,7 @@ void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, st
 			Window::RenderPhysics(window, so);
 		}
 
-		window.draw(m_sprite);
+		window.draw(m_sprite.value());
 	}
 }
 
@@ -130,7 +134,7 @@ void RenderComponent::load_image(const std::string& image)
 
 		if (auto texture = m_texture.lock())
 		{
-			m_sprite.setTexture(*texture, true);
+			m_sprite = std::make_optional<sf::Sprite>(*texture);
 		}
 	}
 }
@@ -149,13 +153,13 @@ void RenderComponent::image_property_update(uint16_t attribute_id)
 	}
 }
 
-std::any RenderComponent::provide_size()
+std::any RenderComponent::provide_size() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Vector2df>(box.size);
 }
 
-std::any RenderComponent::provide_boundingbox()
+std::any RenderComponent::provide_boundingbox() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Rectf>(box);

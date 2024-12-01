@@ -1,7 +1,7 @@
 #pragma once
 
 #include <spriterengine/override/spriterfiledocumentwrapper.h>
-#include <nlohmann-json/json.hpp>
+#include <nlohmann/json.hpp>
 
 using json = nlohmann::json;
 

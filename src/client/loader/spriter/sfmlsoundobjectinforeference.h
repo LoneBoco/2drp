@@ -18,7 +18,7 @@ private:
 	void setPlaybackVolume() override;
 	void setPlaybackPanning() override;
 
-	sf::Sound sound;
+	std::optional<sf::Sound> sound;
 };
 
 }

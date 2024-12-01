@@ -6,8 +6,7 @@ namespace tdrp::script
 
 std::unordered_map<std::string, std::string> Script::scripts{};
 
-
-void log(const char* message)
+static void log(const char* message)
 {
 	log::PrintLine("[LUA] {}", message);
 }
@@ -75,7 +74,7 @@ Script::Script()
 {
 	lua = std::make_unique<sol::state>();
 
-	lua->open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math, sol::lib::jit);
+	lua->open_libraries(sol::lib::base, sol::lib::string, sol::lib::table, sol::lib::math);
 	sol::set_default_exception_handler(*lua, &DefaultExceptionHandler);
 
 	script::modules::bind_events(*lua);

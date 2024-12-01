@@ -62,9 +62,7 @@ void GaniAnimation::Load(const filesystem::path& image)
 					if (auto b = buffer.lock())
 					{
 						// Load the sound buffer into a sound.
-						sf::Sound s;
-						s.setBuffer(*b);
-
+						sf::Sound s{ *b };
 						m_sounds[sound] = std::make_shared<sf::Sound>(std::move(s));
 					}
 				}
@@ -80,10 +78,11 @@ void GaniAnimation::Load(const filesystem::path& image)
 					if (auto t = texture.lock())
 					{
 						m_textures[index] = texture;
-						if (auto existing_sprite = m_sprites.find(index); existing_sprite != std::end(m_sprites))
+						if (auto existing_sprite = m_sprites.find(index); existing_sprite != std::end(m_sprites) && existing_sprite->second.has_value())
 						{
-							existing_sprite->second.setTexture(*t);
-							existing_sprite->second.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
+							auto& existing = existing_sprite->second.value();
+							existing.setTexture(*t);
+							existing.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
 						}
 						else m_sprites.emplace(std::make_pair(index, sf::Sprite{ *t, { { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } } }));
 					}
@@ -165,10 +164,10 @@ void GaniAnimation::Render(sf::RenderTarget& window, std::chrono::milliseconds e
 			for (const auto& sprite : cur_frame.Sprites[direction])
 			{
 				auto sprite_iter = m_sprites.find(sprite.Index);
-				if (sprite_iter == std::end(m_sprites))
+				if (sprite_iter == std::end(m_sprites) || !sprite_iter->second.has_value())
 					continue;
 
-				auto& s = sprite_iter->second;
+				auto& s = sprite_iter->second.value();
 
 				auto so_pos = so->GetPosition();
 				s.setPosition({ so_pos.x + sprite.X, so_pos.y + sprite.Y });
@@ -270,7 +269,7 @@ void GaniAnimation::UpdateAttribute(const uint16_t attribute_id)
 	{
 		const auto& attr = so->Attributes.Get(attribute_id);
 
-		const auto name = attr->Name;
+		const auto& name = attr->Name;
 		if (boost::iequals(name, "SPRITES")
 			|| boost::iequals(name, "HEAD")
 			|| boost::iequals(name, "BODY")
@@ -327,10 +326,10 @@ void GaniAnimation::recalculate_bounding_box()
 			for (const auto& sprite : dir)
 			{
 				auto it = m_sprites.find(sprite.Index);
-				if (it == std::end(m_sprites))
+				if (it == std::end(m_sprites) || !it->second.has_value())
 					continue;
 
-				const auto& sp = it->second;
+				const auto& sp = it->second.value();
 
 				if (sprite.X < topleft.x)
 					topleft.x = static_cast<float>(sprite.X);
@@ -338,10 +337,10 @@ void GaniAnimation::recalculate_bounding_box()
 					topleft.y = static_cast<float>(sprite.Y);
 
 				const auto& sp_box = sp.getGlobalBounds();
-				if (sprite.X + sp_box.width > bottomright.x)
-					bottomright.x = sprite.X + sp_box.width;
-				if (sprite.Y + sp_box.height > bottomright.y)
-					bottomright.y = sprite.Y + sp_box.height;
+				if (sprite.X + sp_box.size.x > bottomright.x)
+					bottomright.x = sprite.X + sp_box.size.x;
+				if (sprite.Y + sp_box.size.y > bottomright.y)
+					bottomright.y = sprite.Y + sp_box.size.y;
 			}
 		}
 	}
@@ -373,15 +372,14 @@ void GaniAnimation::swap_images(const std::string& attribute, const std::string&
 						if (auto it = m_sprites.find(index); it != std::end(m_sprites))
 						{
 							auto& s = it->second;
-							s.setTexture(*texture);
-							s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
+							s.value().setTexture(*texture);
+							s.value().setTextureRect({{sprite.Source.pos.x, sprite.Source.pos.y}, {sprite.Source.size.x, sprite.Source.size.y}});
 						}
 						else
 						{
-							sf::Sprite s;
-							s.setTexture(*texture);
+							sf::Sprite s{ *texture };
 							s.setTextureRect({ { sprite.Source.pos.x, sprite.Source.pos.y }, { sprite.Source.size.x, sprite.Source.size.y } });
-							m_sprites[index] = std::move(s);
+							m_sprites[index] = std::make_optional<sf::Sprite>(std::move(s));
 						}
 					}
 				}

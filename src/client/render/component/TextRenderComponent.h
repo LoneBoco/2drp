@@ -43,8 +43,8 @@ protected:
 	void load_font(const std::string& name);
 	void load_text(const std::string& text);
 	void property_update(uint16_t attribute_id);
-	std::any provide_size();
-	std::any provide_boundingbox();
+	std::any provide_size() const;
+	std::any provide_boundingbox() const;
 
 protected:
 	INJECT(settings::ProgramSettings, Settings);
@@ -53,7 +53,7 @@ protected:
 	EventHandle m_handle_text_change;
 	std::weak_ptr<SceneObject> m_owner;
 	std::shared_ptr<sf::Font> m_font;
-	sf::Text m_text;
+	std::optional<sf::Text> m_text;
 	std::string m_font_name;
 	bool m_good_font = false;
 };

@@ -45,7 +45,7 @@ protected:
 
 protected:
 	std::unordered_map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	std::unordered_map<size_t, sf::Sprite> m_sprites;
+	std::unordered_map<size_t, std::optional<sf::Sprite>> m_sprites;
 	std::unordered_map<std::string, std::shared_ptr<sf::Sound>> m_sounds;
 	std::weak_ptr<loader::GaniAnimation> m_animation;
 	std::size_t m_current_frame = 0;

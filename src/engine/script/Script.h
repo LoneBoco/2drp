@@ -55,14 +55,17 @@ public:
 
 		scripts.insert(std::make_pair(std::string{ module_name }, script));
 
-		me->LuaEnvironment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
-		environments.insert(me->LuaEnvironment);
+		auto environment = std::make_shared<sol::environment>(*lua, sol::create, lua->globals());
+		me->LuaEnvironment = environment;
+		environments.insert(environment);
 
-		(*me->LuaEnvironment)["MODULENAME"] = module_name;
-		(*me->LuaEnvironment)["Me"] = me;
-		sol::protected_function_result pfr = lua->safe_script(script, *me->LuaEnvironment);
+		(*environment)["MODULENAME"] = module_name;
+		(*environment)["Me"] = me;
+
+		sol::protected_function_result pfr = lua->safe_script(script, *environment);
+		auto* state = pfr.lua_state();
 		if (!pfr.valid())
-			ErrorHandler(pfr.lua_state(), std::move(pfr), module_name);
+			ErrorHandler(state, std::move(pfr), module_name);
 	}
 
 public:

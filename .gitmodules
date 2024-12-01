@@ -1,55 +1,9 @@
-[submodule "dependencies/bzip2"]
-	path = dependencies/bzip2
-	url = https://github.com/WardF/libbzip2.git
-[submodule "dependencies/zlib"]
-	path = dependencies/zlib
-	url = https://github.com/madler/zlib.git
 [submodule "dependencies/mathfu"]
 	path = dependencies/mathfu
 	url = https://github.com/google/mathfu.git
-[submodule "dependencies/enet"]
-	path = dependencies/enet
-	url = https://github.com/lsalzman/enet.git
-[submodule "dependencies/pugixml"]
-	path = dependencies/pugixml
-	url = https://github.com/zeux/pugixml.git
 [submodule "dependencies/BabyDI"]
 	path = dependencies/BabyDI
 	url = https://github.com/LoneBoco/BabyDI.git
-[submodule "dependencies/SFML"]
-	path = dependencies/SFML
-	url = https://github.com/SFML/SFML.git
-[submodule "dependencies/luajit-2.0"]
-	path = dependencies/luajit-2.0
-	url = https://luajit.org/git/luajit-2.0.git
-	branch = v2.1
-[submodule "dependencies/sol2"]
-	path = dependencies/sol2
-	url = https://github.com/ThePhD/sol2.git
-[submodule "dependencies/SpriterPlusPlus"]
-	path = dependencies/SpriterPlusPlus
-	url = https://github.com/LoneBoco/SpriterPlusPlus.git
-[submodule "dependencies/tmxlite"]
-	path = dependencies/tmxlite
-	url = https://github.com/fallahn/tmxlite.git
-[submodule "dependencies/PlayRho"]
-	path = dependencies/PlayRho
-	url = https://github.com/louis-langholtz/PlayRho.git
-[submodule "dependencies/protobuf"]
-	path = dependencies/protobuf
-	url = https://github.com/protocolbuffers/protobuf.git
-[submodule "dependencies/RmlUi"]
-	path = dependencies/RmlUi
-	url = https://github.com/LoneBoco/RmlUi.git
-[submodule "dependencies/RmlSolLua"]
-	path = dependencies/RmlSolLua
-	url = https://github.com/LoneBoco/RmlSolLua.git
-[submodule "dependencies/freetype-windows-binaries"]
-	path = dependencies/freetype-windows-binaries
-	url = https://github.com/ubawurinna/freetype-windows-binaries.git
-[submodule "dependencies/Clipper2"]
-	path = dependencies/Clipper2
-	url = https://github.com/AngusJohnson/Clipper2.git
 [submodule "dependencies/polypartition"]
 	path = dependencies/polypartition
 	url = https://github.com/LoneBoco/polypartition.git

@@ -52,11 +52,11 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 
 		// Create vertex array.
 		{
-			auto tile_size = tiled_so->Tileset->TileDimensions;
-			auto tile_count = tiled_so->Dimension;
+			const auto& tile_size = tiled_so->Tileset->TileDimensions;
+			const auto& tile_count = tiled_so->Dimension;
 
 			vertices.setPrimitiveType(sf::PrimitiveType::Triangles);
-			vertices.resize(tile_count.x * tile_count.y * 6);
+			vertices.resize(static_cast<size_t>(tile_count.x) * tile_count.y * 6);
 
 			for (size_t i = 0; i < tiled_so->TileData.size(); i += 2)
 			{
@@ -115,8 +115,8 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 			{
 				int x = i % sprite_count_x;
 				int y = i / sprite_count_x;
-				int width = std::min(sf::Texture::getMaximumSize(), sprite_pixels_x - (sf::Texture::getMaximumSize() * x));
-				int height = std::min(sf::Texture::getMaximumSize(), sprite_pixels_y - (sf::Texture::getMaximumSize() * y));
+				uint32_t width = std::min(sf::Texture::getMaximumSize(), sprite_pixels_x - (sf::Texture::getMaximumSize() * x));
+				uint32_t height = std::min(sf::Texture::getMaximumSize(), sprite_pixels_y - (sf::Texture::getMaximumSize() * y));
 				width = tdrp::math::next_power_of_two(width);
 				height = tdrp::math::next_power_of_two(height);
 
@@ -125,7 +125,7 @@ void TileMapRenderComponent::OnAttached(ComponentEntity& owner)
 				state.texture = tileset.get();
 
 				auto texture = std::make_shared<sf::RenderTexture>();
-				auto success = texture->create(width, height);
+				auto success = texture->resize({ width, height });
 				if (!success) continue;
 
 				texture->clear();
@@ -157,9 +157,9 @@ Rectf TileMapRenderComponent::GetBoundingBox() const
 
 		if (auto tiled_so = std::dynamic_pointer_cast<TiledSceneObject>(so))
 		{
-			auto tile_size = tiled_so->Tileset->TileDimensions;
-			auto tile_count = tiled_so->Dimension;
-			auto scale = so->GetScale();
+			const auto& tile_size = tiled_so->Tileset->TileDimensions;
+			const auto& tile_count = tiled_so->Dimension;
+			const auto& scale = so->GetScale();
 
 			return Rectf{ pos.x, pos.y, tile_count.x * tile_size.x * scale.x, tile_count.x * tile_size.x * scale.y };
 		}

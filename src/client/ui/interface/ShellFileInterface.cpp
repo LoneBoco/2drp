@@ -120,4 +120,14 @@ size_t ShellFileInterface::Tell(Rml::FileHandle file)
 	return it->second->GetReadPosition();
 }
 
+// Returns the length of the file.
+size_t ShellFileInterface::Length(Rml::FileHandle file)
+{
+	auto it = m_files.find(file);
+	if (it == std::end(m_files))
+		return 0;
+
+	return it->second->Size();
+}
+
 } // end namespace tdrp::ui

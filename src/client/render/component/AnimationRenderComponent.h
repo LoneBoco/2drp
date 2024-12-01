@@ -61,9 +61,6 @@ protected:
 	EventHandle m_handle_attributes;
 	std::weak_ptr<SceneObject> m_owner;
 	std::unique_ptr<animation::IAnimationSystem> m_animation;
-	//std::map<size_t, std::weak_ptr<sf::Texture>> m_textures;
-	//std::map<size_t, std::weak_ptr<sf::Sound>> m_sounds;
-	//sf::Sprite m_sprite;
 };
 
 } // end namespace tdrp::render::component

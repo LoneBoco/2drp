@@ -1,4 +1,4 @@
-#include <RmlUi/Lua.h>
+//#include <RmlUi/Lua.h>
 #include <RmlUi/Debugger.h>
 #include <RmlSolLua/RmlSolLua.h>
 
@@ -405,6 +405,7 @@ void UIManager::bindDataModels(Rml::Context* context)
 			m_item_handles.insert(std::make_pair(context->GetName(), mhandle));
 
 			// Item type.
+			/*
 			constructor.RegisterScalar<item::ItemType>(
 				[](const item::ItemType& type, Rml::Variant& variant)
 				{
@@ -424,6 +425,7 @@ void UIManager::bindDataModels(Rml::Context* context)
 					else type = item::ItemType::SINGLE;
 				}
 			);
+			*/
 
 			// Attributes.
 			{

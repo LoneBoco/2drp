@@ -398,7 +398,8 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Media
-/media/packages/*
+media/packages/*
 #!/media/packages/login/
-!/media/packages/adventure/
-/src/engine/network/packets/
+!media/packages/adventure/
+src/engine/network/packets/
+dependencies/fc/
