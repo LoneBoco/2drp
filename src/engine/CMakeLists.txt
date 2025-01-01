@@ -1,3 +1,82 @@
+set(ENGINE_SOURCES
+	"component/Component.h"
+	"events/Events.cpp"
+	"events/Events.h"
+	"filesystem/watch/FileWatch.h"
+	"filesystem/watch/FileWatchOS_Linux.cpp"
+	"filesystem/watch/FileWatchOS_OSX.cpp"
+	"filesystem/watch/FileWatchOS_Poll.cpp"
+	"filesystem/watch/FileWatchOS_Windows.cpp"
+	"filesystem/common.h"
+	"filesystem/File.cpp"
+	"filesystem/File.h"
+	"filesystem/FileSystem.cpp"
+	"filesystem/FileSystem.h"
+	"filesystem/Log.cpp"
+	"filesystem/Log.h"
+	"filesystem/ProgramSettings.cpp"
+	"filesystem/ProgramSettings.h"
+	"helper/base64.h"
+	"helper/flags.h"
+	"helper/math.h"
+	"item/Item.h"
+	"loader/LevelLoader.cpp"
+	"loader/Loader.h"
+	"loader/PackageLoader.cpp"
+	"network/construct/Attributes.h"
+	"network/construct/Class.h"
+	"network/construct/SceneObject.h"
+	"network/construct/Tileset.h"
+	"network/DownloadManager.cpp"
+	"network/DownloadManager.h"
+	"network/Network.cpp"
+	"network/Network.h"
+	"network/Packet.h"
+	"network/PacketHandler.cpp"
+	"network/PacketHandler.h"
+	"network/PacketsInc.h"
+	"os/Utils.h"
+	"os/Windows.cpp"
+	"package/Package.cpp"
+	"package/Package.h"
+	"physics/Physics.cpp"
+	"physics/Physics.h"
+	"resources/Resource.h"
+	"scene/ObjectAttributes.cpp"
+	"scene/ObjectAttributes.h"
+	"scene/ObjectClass.h"
+	"scene/ObjectProperties.cpp"
+	"scene/ObjectProperties.h"
+	"scene/Scene.cpp"
+	"scene/Scene.h"
+	"scene/SceneObject.cpp"
+	"scene/SceneObject.h"
+	"scene/Tileset.h"
+	"script/helpers/AttributeHelper.cpp"
+	"script/helpers/AttributeHelper.h"
+	"script/modules/Attributes.cpp"
+	"script/modules/bind.h"
+	"script/modules/Event.cpp"
+	"script/modules/Item.cpp"
+	"script/modules/Physics.cpp"
+	"script/modules/Player.cpp"
+	"script/modules/Scene.cpp"
+	"script/modules/SceneObject.cpp"
+	"script/modules/Server.cpp"
+	"script/modules/Vector.cpp"
+	"script/Function.h"
+	"script/Script.cpp"
+	"script/Script.h"
+	"server/Account.cpp"
+	"server/Account.h"
+	"server/Player.cpp"
+	"server/Player.h"
+	"server/Server.cpp"
+	"server/Server.h"
+	"common.h"
+	"Enum.h"
+)
+
 # Find all .proto files in the network/proto directory.
 file(GLOB PROTO_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/network/proto/*.proto")
 
@@ -29,92 +108,8 @@ add_custom_target(generate_protos ALL DEPENDS ${GENERATED_PROTO_FILES})
 add_library(2drp_engine)
 
 # Add the sources.
-target_sources(2drp_engine
-	PUBLIC
-		component/Component.h
-		events/Events.cpp
-		events/Events.h
-		filesystem/watch/FileWatch.h
-		filesystem/watch/FileWatchOS_Linux.cpp
-		filesystem/watch/FileWatchOS_OSX.cpp
-		filesystem/watch/FileWatchOS_Poll.cpp
-		filesystem/watch/FileWatchOS_Windows.cpp
-		filesystem/common.h
-		filesystem/File.cpp
-		filesystem/File.h
-		filesystem/FileSystem.cpp
-		filesystem/FileSystem.h
-		filesystem/Log.cpp
-		filesystem/Log.h
-		filesystem/ProgramSettings.cpp
-		filesystem/ProgramSettings.h
-		helper/base64.h
-		helper/flags.h
-		helper/math.h
-		item/Item.h
-		loader/LevelLoader.cpp
-		loader/Loader.h
-		loader/PackageLoader.cpp
-		network/construct/Attributes.h
-		network/construct/Class.h
-		network/construct/SceneObject.h
-		network/construct/Tileset.h
-		${PROTO_FILES}
-		${GENERATED_PROTO_FILES}
-		network/DownloadManager.cpp
-		network/DownloadManager.h
-		network/Network.cpp
-		network/Network.h
-		network/Packet.h
-		network/PacketHandler.cpp
-		network/PacketHandler.h
-		network/PacketsInc.h
-		os/Utils.h
-		os/Windows.cpp
-		package/Package.cpp
-		package/Package.h
-		physics/Physics.cpp
-		physics/Physics.h
-		resources/Resource.h
-		scene/ObjectAttributes.cpp
-		scene/ObjectAttributes.h
-		scene/ObjectClass.h
-		scene/ObjectProperties.cpp
-		scene/ObjectProperties.h
-		scene/Scene.cpp
-		scene/Scene.h
-		scene/SceneObject.cpp
-		scene/SceneObject.h
-		scene/Tileset.h
-		script/helpers/AttributeHelper.cpp
-		script/helpers/AttributeHelper.h
-		script/modules/Attributes.cpp
-		script/modules/bind.h
-		script/modules/Event.cpp
-		script/modules/Item.cpp
-		script/modules/Physics.cpp
-		script/modules/Player.cpp
-		script/modules/Scene.cpp
-		script/modules/SceneObject.cpp
-		script/modules/Server.cpp
-		script/modules/Vector.cpp
-		script/Function.h
-		script/Script.cpp
-		script/Script.h
-		server/Account.cpp
-		server/Account.h
-		server/Player.cpp
-		server/Player.h
-		server/Server.cpp
-		server/Server.h
-		common.h
-		Enum.h
-)
-target_sources(2drp_engine
-	PUBLIC FILE_SET HEADERS
-		BASE_DIRS
-			../
-)
+target_sources(2drp_engine PUBLIC ${ENGINE_SOURCES} ${PROTO_FILES} ${GENERATED_PROTO_FILES})
+target_sources(2drp_engine PUBLIC FILE_SET HEADERS BASE_DIRS "../")
 
 # BabyDI.
 target_sources(2drp_engine PUBLIC "${DEPENDENCY_DIRECTORY}/BabyDI/include/BabyDI.hpp")
@@ -123,14 +118,16 @@ target_sources(2drp_engine PUBLIC "${DEPENDENCY_DIRECTORY}/BabyDI/include/BabyDI
 target_sources(2drp_engine
 	PRIVATE
 		"${DEPENDENCY_DIRECTORY}/polypartition/src/polypartition.cpp"
-		"${DEPENDENCY_DIRECTORY}/polypartition/src/polypartition.h")
+		"${DEPENDENCY_DIRECTORY}/polypartition/src/polypartition.h"
+)
 
 # Include directories for submodule libraries.
-target_include_directories(2drp_engine PUBLIC
-	"${DEPENDENCY_DIRECTORY}/mathfu/include/"
-	"${DEPENDENCY_DIRECTORY}/mathfu/dependencies/vectorial/include/"
-	"${DEPENDENCY_DIRECTORY}/BabyDI/include/"
-	"${DEPENDENCY_DIRECTORY}/polypartition/src/"
+target_include_directories(2drp_engine
+	PUBLIC
+		"${DEPENDENCY_DIRECTORY}/mathfu/include/"
+		"${DEPENDENCY_DIRECTORY}/mathfu/dependencies/vectorial/include/"
+		"${DEPENDENCY_DIRECTORY}/BabyDI/include/"
+		"${DEPENDENCY_DIRECTORY}/polypartition/src/"
 )
 
 # Include Lua.
@@ -187,11 +184,11 @@ include_directories("${PlayRho_SOURCE_DIR}")
 # Link everything together.
 target_link_libraries(2drp_engine
 	PUBLIC
-	${Boost_LIBRARIES}
-	${LUA_LINK_LIBRARIES}
-	ZipLib
-	enet
-	PlayRho::PlayRho
+		${Boost_LIBRARIES}
+		${LUA_LINK_LIBRARIES}
+		ZipLib
+		enet
+		PlayRho::PlayRho
 )
 
 # Ensure the protoc target is built before 2drp_engine.

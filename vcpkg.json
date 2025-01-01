@@ -2,6 +2,8 @@
   "dependencies": [
     "bzip2",
     "clipper2",
+    "libflac",
+    "lua",
     "nlohmann-json",
     "pkgconf",
     "protobuf",
@@ -16,6 +18,6 @@
     "tmxlite",
     "zlib",
     "zstd",
-    "lua"
+    "libvorbis"
   ]
 }

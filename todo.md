@@ -32,7 +32,6 @@
 
 ### Maintenance
 
-- Switch to cmake.
 - Investigate Cap'n Proto for a protobuf replacement.
 - Make a better distinction between server functions that send packets and those which force changes to the server state.
 	- This is so host servers can use functions when getting packets.  Give and Remove vs Set?  Send vs Set?

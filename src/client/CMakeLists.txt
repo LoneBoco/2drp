@@ -1,98 +1,96 @@
+set(CLIENT_SOURCES 
+	"game/Camera.cpp"
+	"game/Camera.h"
+	"game/Game.cpp"
+	"game/Game.h"
+	"loader/gani/GaniLoader.cpp"
+	"loader/gani/GaniLoader.h"
+	"loader/spriter/filefactory.cpp"
+	"loader/spriter/filefactory.h"
+	"loader/spriter/jsonspriterfileattributewrapper.cpp"
+	"loader/spriter/jsonspriterfileattributewrapper.h"
+	"loader/spriter/jsonspriterfiledocumentwrapper.cpp"
+	"loader/spriter/jsonspriterfiledocumentwrapper.h"
+	"loader/spriter/jsonspriterfileelementwrapper.cpp"
+	"loader/spriter/jsonspriterfileelementwrapper.h"
+	"loader/spriter/objectfactory.cpp"
+	"loader/spriter/objectfactory.h"
+	"loader/spriter/pugixmlspriterfileattributewrapper.cpp"
+	"loader/spriter/pugixmlspriterfileattributewrapper.h"
+	"loader/spriter/pugixmlspriterfiledocumentwrapper.cpp"
+	"loader/spriter/pugixmlspriterfiledocumentwrapper.h"
+	"loader/spriter/pugixmlspriterfileelementwrapper.cpp"
+	"loader/spriter/pugixmlspriterfileelementwrapper.h"
+	"loader/spriter/sfmlatlasfile.cpp"
+	"loader/spriter/sfmlatlasfile.h"
+	"loader/spriter/sfmlboneinstanceinfo.cpp"
+	"loader/spriter/sfmlboneinstanceinfo.h"
+	"loader/spriter/sfmlboxinstanceinfo.cpp"
+	"loader/spriter/sfmlboxinstanceinfo.h"
+	"loader/spriter/sfmlimagefile.cpp"
+	"loader/spriter/sfmlimagefile.h"
+	"loader/spriter/sfmlpointinstanceinfo.cpp"
+	"loader/spriter/sfmlpointinstanceinfo.h"
+	"loader/spriter/sfmlsoundfile.cpp"
+	"loader/spriter/sfmlsoundfile.h"
+	"loader/spriter/sfmlsoundobjectinforeference.cpp"
+	"loader/spriter/sfmlsoundobjectinforeference.h"
+	"loader/ui/UILoader.cpp"
+	"loader/ui/UILoader.h"
+	"loader/ResourceLoaders.h"
+	"loader/SFMListream.h"
+	"network/ServerPacketHandler.cpp"
+	"network/ServerPacketHandler.h"
+	"render/component/Animation/GaniAnimation.cpp"
+	"render/component/Animation/GaniAnimation.h"
+	"render/component/Animation/IAnimationSystem.h"
+	"render/component/Animation/SpriterAnimation.cpp"
+	"render/component/Animation/SpriterAnimation.h"
+	"render/component/helper/SceneObject.h"
+	"render/component/AnimationRenderComponent.cpp"
+	"render/component/AnimationRenderComponent.h"
+	"render/component/Renderable.h"
+	"render/component/RenderComponent.cpp"
+	"render/component/RenderComponent.h"
+	"render/component/TextRenderComponent.cpp"
+	"render/component/TextRenderComponent.h"
+	"render/component/TileMapRenderComponent.cpp"
+	"render/component/TileMapRenderComponent.h"
+	"render/component/TMXRenderComponent.cpp"
+	"render/component/TMXRenderComponent.h"
+	"render/Window.cpp"
+	"render/Window.h"
+	"script/Script.cpp"
+	"script/Script.h"
+	"ui/interface/RmlUi_Backend.h"
+	"ui/interface/RmlUi_Backend_SFML_GL2.cpp"
+	"ui/interface/RmlUi_Include_Windows.h"
+	"ui/interface/RmlUi_Include_Xlib.h"
+	"ui/interface/RmlUi_Platform_SFML.cpp"
+	"ui/interface/RmlUi_Platform_SFML.h"
+	"ui/interface/RmlUi_Renderer_GL2.cpp"
+	"ui/interface/RmlUi_Renderer_GL2.h"
+	"ui/interface/ShellFileInterface.cpp"
+	"ui/interface/ShellFileInterface.h"
+	"ui/UIManager.cpp"
+	"ui/UIManager.h"
+	"BabyDI.Configuration.h"
+	"main.cpp"
+)
+
 # Create the library target.
 add_executable(2drp)
 
 # Add the sources.
-target_sources(2drp
-	PUBLIC
-		game/Camera.cpp
-		game/Camera.h
-		game/Game.cpp
-		game/Game.h
-		loader/gani/GaniLoader.cpp
-		loader/gani/GaniLoader.h
-		loader/spriter/filefactory.cpp
-		loader/spriter/filefactory.h
-		loader/spriter/jsonspriterfileattributewrapper.cpp
-		loader/spriter/jsonspriterfileattributewrapper.h
-		loader/spriter/jsonspriterfiledocumentwrapper.cpp
-		loader/spriter/jsonspriterfiledocumentwrapper.h
-		loader/spriter/jsonspriterfileelementwrapper.cpp
-		loader/spriter/jsonspriterfileelementwrapper.h
-		loader/spriter/objectfactory.cpp
-		loader/spriter/objectfactory.h
-		loader/spriter/pugixmlspriterfileattributewrapper.cpp
-		loader/spriter/pugixmlspriterfileattributewrapper.h
-		loader/spriter/pugixmlspriterfiledocumentwrapper.cpp
-		loader/spriter/pugixmlspriterfiledocumentwrapper.h
-		loader/spriter/pugixmlspriterfileelementwrapper.cpp
-		loader/spriter/pugixmlspriterfileelementwrapper.h
-		loader/spriter/sfmlatlasfile.cpp
-		loader/spriter/sfmlatlasfile.h
-		loader/spriter/sfmlboneinstanceinfo.cpp
-		loader/spriter/sfmlboneinstanceinfo.h
-		loader/spriter/sfmlboxinstanceinfo.cpp
-		loader/spriter/sfmlboxinstanceinfo.h
-		loader/spriter/sfmlimagefile.cpp
-		loader/spriter/sfmlimagefile.h
-		loader/spriter/sfmlpointinstanceinfo.cpp
-		loader/spriter/sfmlpointinstanceinfo.h
-		loader/spriter/sfmlsoundfile.cpp
-		loader/spriter/sfmlsoundfile.h
-		loader/spriter/sfmlsoundobjectinforeference.cpp
-		loader/spriter/sfmlsoundobjectinforeference.h
-		loader/ui/UILoader.cpp
-		loader/ui/UILoader.h
-		loader/ResourceLoaders.h
-		loader/SFMListream.h
-		network/ServerPacketHandler.cpp
-		network/ServerPacketHandler.h
-		render/component/Animation/GaniAnimation.cpp
-		render/component/Animation/GaniAnimation.h
-		render/component/Animation/IAnimationSystem.h
-		render/component/Animation/SpriterAnimation.cpp
-		render/component/Animation/SpriterAnimation.h
-		render/component/helper/SceneObject.h
-		render/component/AnimationRenderComponent.cpp
-		render/component/AnimationRenderComponent.h
-		render/component/Renderable.h
-		render/component/RenderComponent.cpp
-		render/component/RenderComponent.h
-		render/component/TextRenderComponent.cpp
-		render/component/TextRenderComponent.h
-		render/component/TileMapRenderComponent.cpp
-		render/component/TileMapRenderComponent.h
-		render/component/TMXRenderComponent.cpp
-		render/component/TMXRenderComponent.h
-		render/Window.cpp
-		render/Window.h
-		script/Script.cpp
-		script/Script.h
-		ui/interface/RmlUi_Backend.h
-		ui/interface/RmlUi_Backend_SFML_GL2.cpp
-		ui/interface/RmlUi_Include_Windows.h
-		ui/interface/RmlUi_Include_Xlib.h
-		ui/interface/RmlUi_Platform_SFML.cpp
-		ui/interface/RmlUi_Platform_SFML.h
-		ui/interface/RmlUi_Renderer_GL2.cpp
-		ui/interface/RmlUi_Renderer_GL2.h
-		ui/interface/ShellFileInterface.cpp
-		ui/interface/ShellFileInterface.h
-		ui/UIManager.cpp
-		ui/UIManager.h
-		BabyDI.Configuration.h
-		main.cpp
-)
-target_sources(2drp
-	PUBLIC FILE_SET HEADERS
-		BASE_DIRS
-			../
-)
+target_sources(2drp PUBLIC ${CLIENT_SOURCES})
+target_sources(2drp PUBLIC FILE_SET HEADERS BASE_DIRS "../")
 
 # Include directories for submodule header libraries.
-target_include_directories(2drp PUBLIC
-	"${DEPENDENCY_DIRECTORY}/mathfu/include/"
-	"${DEPENDENCY_DIRECTORY}/mathfu/dependencies/vectorial/include/"
-	"${DEPENDENCY_DIRECTORY}/BabyDI/include/"
+target_include_directories(2drp
+	PUBLIC
+		"${DEPENDENCY_DIRECTORY}/mathfu/include/"
+		"${DEPENDENCY_DIRECTORY}/mathfu/dependencies/vectorial/include/"
+		"${DEPENDENCY_DIRECTORY}/BabyDI/include/"
 )
 
 # Include Lua.
@@ -113,14 +111,22 @@ FetchContent_Declare(RmlSolLua
 FetchContent_MakeAvailable(RmlSolLua)
 target_include_directories(2drp PUBLIC "${RmlSolLua_SOURCE_DIR}/include")
 
+# Dependency: Vorbis.
+find_package(Vorbis CONFIG REQUIRED)
+target_link_libraries(2drp PRIVATE Vorbis::vorbis Vorbis::vorbisfile Vorbis::vorbisenc)
+
+# Dependency: FLAC.
+find_package(FLAC CONFIG REQUIRED)
+target_link_libraries(2drp PRIVATE FLAC::FLAC)
+
 # Dependency: SFML.
 set(SFML_BUILD_NETWORK OFF)
 set(SFML_USE_STATIC_STD_LIBS TRUE)
-#set(SFML_USE_SYSTEM_DEPS ON)
+set(SFML_USE_SYSTEM_DEPS ON)
 target_compile_definitions(2drp PUBLIC SFML_STATIC)
 FetchContent_Declare(Sfml
 	GIT_REPOSITORY https://github.com/SFML/SFML.git
-	GIT_TAG master GIT_SHALLOW TRUE
+	GIT_TAG 3.0.x GIT_SHALLOW TRUE
 	OVERRIDE_FIND_PACKAGE)
 FetchContent_MakeAvailable(Sfml)
 target_include_directories(2drp PUBLIC "${SFML_SOURCE_DIR}/include")
@@ -140,14 +146,14 @@ target_include_directories(2drp PUBLIC "${SPRITER_PLUS_PLUS_SOURCE_DIR}")
 # Link it up.
 target_link_libraries(2drp
 	PUBLIC
-	${LUA_LINK_LIBRARIES}
-	2drp_engine
-	RmlSolLua
-	SFML::System
-	SFML::Window
-	SFML::Graphics
-	SFML::Audio
-	spriterengine
+		${LUA_LINK_LIBRARIES}
+		2drp_engine
+		RmlSolLua
+		SFML::System
+		SFML::Window
+		SFML::Graphics
+		SFML::Audio
+		spriterengine
 )
 
 #[[file(GLOB SUBDIRS "${CMAKE_SOURCE_DIR}/media/*")
