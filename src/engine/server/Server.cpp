@@ -115,10 +115,6 @@ Server::Server()
 	m_network.AddReceiveCallback(std::bind(network::handlers::network_receive_server, std::ref(*this), _1, _2, _3, _4));
 	m_network.BindServer(this);
 
-	// Set up the default player.
-	m_player->BindServer(this);
-	m_player_list[0] = m_player;
-
 	// Bind the accounts directory.
 	FileSystem.Bind(fs::FileCategory::ACCOUNTS, filesystem::path("accounts") / GetUniqueId());
 }
@@ -147,10 +143,9 @@ bool Server::LoadPackage(const std::string& package_name)
 		throw std::runtime_error("!! TODO: Implement package swap (connecting to different server).");
 
 	// Load the package.
+	log::PrintLine(":: Loading package: {}", package_name);
 	auto [load_success, package] = Loader::LoadPackageIntoServer(*this, package_name);
 	m_package = package;
-
-	log::PrintLine(":: Loading package: {}", package_name);
 
 	// Sanity check for starting scene.
 	if (package->GetStartingScene().empty())
@@ -187,8 +182,12 @@ bool Server::LoadPackage(const std::string& package_name)
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine("   Loading server control script.");
-		Script->RunScript("servercontrol", m_server_control_script, this);
+		log::PrintLine("   Loading server scripts.");
+		for (const auto& [name, script] : m_server_scripts)
+		{
+			log::PrintLine("   - {}.", name);
+			Script->RunScript(name, script, this);
+		}
 	}
 
 	// Run our started script.
@@ -218,6 +217,7 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	m_network.Initialize(peers, port);
 
 	// Log the player in.
+	SetPlayerNumber(0);
 	ProcessPlayerLogin(0, "host");
 	ProcessPlayerJoin(0);
 
@@ -245,6 +245,7 @@ bool Server::SinglePlayer()
 	log::PrintLine(":: Starting as single player server.");
 
 	// Log the player in.
+	SetPlayerNumber(0);
 	ProcessPlayerLogin(0, "singleplayer");
 	ProcessPlayerJoin(0);
 
@@ -484,12 +485,6 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 	log::PrintLine("-> Sending login allowed.");
 
-	// Send client control script.
-	log::PrintLine("-> Sending client control script to player {}.", player_id);
-	packet::ClientControlScript client_control;
-	client_control.set_script(m_client_control_script);
-	Send(player_id, PACKETID(Packets::CLIENTCONTROLSCRIPT), network::Channel::RELIABLE, client_control);
-
 	// Send classes.
 	for (const auto& [name, oc] : m_object_classes)
 	{
@@ -502,9 +497,12 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 		Send(player_id, PACKETID(Packets::SCENETILESETADD), network::Channel::RELIABLE, network::constructTilesetAddPacket(tileset));
 
 	// Send client scripts.
-	for (const auto& name : player->Account.ClientScripts)
+	for (const auto& [name, script_pair] : m_client_scripts)
 	{
-		AddPlayerClientScript(name, player);
+		// Send when required (first pair) or when the player has the script.
+		bool send = script_pair.first || player->Account.ClientScripts.contains(script_pair.second);
+		if (send)
+			AddPlayerClientScript(name, player);
 	}
 
 	// Send owned items.
@@ -556,7 +554,7 @@ void Server::SetPlayerNumber(const uint16_t player_number)
 {
 	log::PrintLine(":: Assigned player number {}.", player_number);
 
-	if (IsGuest())
+	if (IsGuest() || player_number == 0)
 	{
 		auto player = std::make_shared<Player>(player_number);
 		player->BindServer(this);
@@ -641,44 +639,50 @@ bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void Server::LoadClientScript(const filesystem::path& file)
+void Server::LoadServerScript(const std::string& name, const std::string& script)
 {
-	auto name = file.stem().string();
+	auto it = m_server_scripts.find(name);
+	if (it == std::end(m_server_scripts))
+	{
+		log::PrintLine(":: Adding server script \"{}\".", name);
+		m_server_scripts[name] = script;
+	}
+	else
+	{
+		log::PrintLine(":: Replacing server script \"{}\".", name);
+		m_server_scripts[name] = script;
+	}
 
-	std::string script;
-	auto f = FileSystem.GetFile(fs::FileCategory::ASSETS, file);
-	if (f && f->Opened())
-		script = f->ReadAsString();
-
-	LoadClientScript(name, script);
+	// TODO: Proper script replacement.
+	Script->RunScript(name, script, this);
 }
 
-void Server::LoadClientScript(const std::string& name, const std::string& script)
+void Server::LoadClientScript(const std::string& name, const std::string& script, bool required)
 {
 	auto it = m_client_scripts.find(name);
 	if (it == std::end(m_client_scripts))
 	{
 		log::PrintLine(":: Adding client script \"{}\".", name);
-		m_client_scripts[name] = script;
+		m_client_scripts[name] = std::make_pair(required, script);
 	}
 	else
 	{
 		log::PrintLine(":: Replacing client script \"{}\".", name);
-		m_client_scripts[name] = script;
+		m_client_scripts[name] = std::make_pair(required, script);
+	}
 
-		// Send the changes to all players who have this script.
-		if (IsHost())
+	// Send the changes to all players who have this script.
+	if (IsHost())
+	{
+		for (auto& player : m_player_list)
 		{
-			for (auto& player : m_player_list)
+			if (required || player.second->Account.ClientScripts.contains(name))
 			{
-				if (player.second->Account.ClientScripts.contains(name))
-				{
-					packet::ClientScriptAdd packet;
-					packet.set_name(name);
-					packet.set_script(script);
+				packet::ClientScriptAdd packet;
+				packet.set_name(name);
+				packet.set_script(script);
 
-					Send(player.first, PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
-				}
+				Send(player.first, PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
 			}
 		}
 	}
@@ -717,11 +721,13 @@ void Server::AddPlayerClientScript(const std::string& name, PlayerPtr player)
 	if (it == std::end(m_client_scripts))
 		return;
 
-	player->Account.AddClientScript(name);
+	// If not a required script, register it to the account.
+	if (!it->second.first)
+		player->Account.AddClientScript(name);
 
 	if (IsHost())
 	{
-		const auto& script = it->second;
+		const auto& script = it->second.second;
 
 		packet::ClientScriptAdd packet;
 		packet.set_name(name);

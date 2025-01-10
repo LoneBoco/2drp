@@ -23,6 +23,7 @@ enum class FileCategory : uint8_t
 	CONFIG,
 	ITEMS,
 	LEVELS,
+	SCRIPTS,
 	UI,
 	ACCOUNTS,
 

@@ -12,20 +12,18 @@
 		<classes file="classes.xml" />
 		<tilesets />
 	</scene>
-	<scripts>
-		<control>
-			<server file="server.lua" />
-			<client>
-				<file>client.lua</file>
-			</client>
-		</control>
-		<clientscripts />
-	</scripts>
+	<requiredscripts>
+		<server file="server.lua" />
+		<client>
+			<file>client.lua</file>
+		</client>
+	</requiredscripts>
 	<filesystem>
 		<assets directory="assets" />
 		<config directory="config" />
 		<items directory="items" />
 		<levels directory="levels" />
+		<scripts directory="scripts" />
 		<ui directory="ui" />
 	</filesystem>
 </package>

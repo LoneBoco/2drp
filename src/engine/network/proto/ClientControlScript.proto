@@ -1,7 +1,0 @@
-syntax = "proto3";
-
-package tdrp.packet;
-
-message ClientControlScript {
-	string script = 1;
-}

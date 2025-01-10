@@ -96,12 +96,12 @@ public:
 	scene::ScenePtr GetOrCreateScene(const std::string& name) noexcept;
 
 public:
-	void LoadClientScript(const filesystem::path& file);
-	void LoadClientScript(const std::string& name, const std::string& script);
+	void LoadServerScript(const std::string& name, const std::string& script);
+	void LoadClientScript(const std::string& name, const std::string& script, bool required);
 	void EraseClientScript(const std::string& name);
 	void AddPlayerClientScript(const std::string& name, PlayerPtr player);
 	void RemovePlayerClientScript(const std::string& name, PlayerPtr player);
-	std::unordered_map<std::string, std::string>& GetClientScriptMap();
+	std::unordered_map<std::string, std::pair<bool, std::string>>& GetClientScriptMap();
 
 public:
 	bool AddItemDefinition(item::ItemDefinitionUPtr&& item);
@@ -199,10 +199,9 @@ protected:
 	std::unordered_map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
 	std::unordered_map<std::string, std::shared_ptr<scene::Tileset>> m_tilesets;
 	std::unordered_map<std::string, scene::ScenePtr> m_scenes;
-	std::unordered_map<std::string, std::string> m_client_scripts;
+	std::unordered_map<std::string, std::string> m_server_scripts;
+	std::unordered_map<std::string, std::pair<bool, std::string>> m_client_scripts;
 	std::unordered_map<ItemID, item::ItemDefinitionUPtr> m_item_definitions;
-	std::string m_server_control_script;
-	std::string m_client_control_script;
 
 	std::unordered_map<uint16_t, PlayerPtr> m_player_list;
 
@@ -296,7 +295,7 @@ inline network::Network& Server::GetNetwork()
 	return m_network;
 }
 
-inline std::unordered_map<std::string, std::string>& Server::GetClientScriptMap()
+inline std::unordered_map<std::string, std::pair<bool, std::string>>& Server::GetClientScriptMap()
 {
 	return m_client_scripts;
 }

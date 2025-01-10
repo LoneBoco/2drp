@@ -25,7 +25,6 @@ namespace tdrp::handlers
 void handle(Game& game, const packet::LoginStatus& packet);
 void handle(Game& game, const packet::ServerInfo& packet);
 void handle(Game& game, const packet::SwitchScene& packet);
-void handle(Game& game, const packet::ClientControlScript& packet);
 void handle(Game& game, const packet::ClientScriptAdd& packet);
 void handle(Game& game, const packet::ClientScriptDelete& packet);
 void handle(Game& game, const packet::SceneObjectNew& packet);
@@ -53,9 +52,6 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 			break;
 		case Packets::SWITCHSCENE:
 			HANDLE(packet::SwitchScene);
-			break;
-		case Packets::CLIENTCONTROLSCRIPT:
-			HANDLE(packet::ClientControlScript);
 			break;
 		case Packets::CLIENTSCRIPTADD:
 			HANDLE(packet::ClientScriptAdd);
@@ -122,24 +118,15 @@ void handle(Game& game, const packet::SwitchScene& packet)
 	}
 }
 
-void handle(Game& game, const packet::ClientControlScript& packet)
-{
-	const auto& script = packet.script();
-
-	log::PrintLine(":: Setting client control script.");
-	std::for_each(std::begin(game.BoundScriptFunctions), std::end(game.BoundScriptFunctions), [](tdrp::script::Function* function) { function->Remove("clientcontrol"); });
-	game.Script->RunScript("clientcontrol", script, &game);
-	game.OnCreated.Run("clientcontrol");
-}
-
 void handle(Game& game, const packet::ClientScriptAdd& packet)
 {
 	const auto& name = packet.name();
 	const auto& script = packet.script();
+	const auto& required = packet.required();
 
 	if (!game.Server.IsHost())
 	{
-		game.Server.LoadClientScript(name, script);
+		game.Server.LoadClientScript(name, script, required);
 		game.Server.AddPlayerClientScript(name, game.GetCurrentPlayer());
 	}
 

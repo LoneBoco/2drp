@@ -21,6 +21,8 @@
 - Ownership needs to be changed. The client might receive a scene object with an owner it doesn't recognize.
 - Player ids identified by the network need rework for co-op games.
 - Need a way to get player data, including player number.
+	- Create a player object that stores flags, has a player number, and is networked.
+	- Player information is sent on login.  Can be configured to be sent all at once or as needed.
 - Ability to swap packages for when a player connects to a server.
 - Send important files to the client, like UI files.
 - Have the client request files it does not have, like font files, and not break while waiting.

@@ -5,4 +5,5 @@ package tdrp.packet;
 message ClientScriptAdd {
 	string name = 1;
 	string script = 2;
+	bool required = 3;
 }

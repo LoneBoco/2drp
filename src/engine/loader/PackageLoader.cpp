@@ -46,7 +46,7 @@ namespace tdrp::helper
 			if (!file.empty())
 			{
 				// Load script from file.
-				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
+				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file);
 				script->append(scriptfile->ReadAsString());
 				script->append("\n");
 			}
@@ -130,7 +130,7 @@ namespace tdrp::helper
 		auto readFile = [&](const std::string_view& file)
 		{
 			if (file.empty()) return;
-			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
+			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file);
 			if (scriptfile) scripts.push_back(std::make_pair(std::string{ scriptfile->FilePath().stem().string() }, std::move(scriptfile->ReadAsString())));
 		};
 
@@ -224,7 +224,7 @@ namespace tdrp::helper
 			if (!node_clientscript.empty())
 			{
 				if (auto attrib_file = node_clientscript.attribute("file"); attrib_file)
-					clientscript = readFile(fs::FileCategory::ASSETS, attrib_file.as_string());
+					clientscript = readFile(fs::FileCategory::SCRIPTS, attrib_file.as_string());
 				else
 					clientscript = node_clientscript.text().as_string();
 			}
@@ -330,6 +330,7 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 			auto node_config = node_filesystem.child("config");
 			auto node_items = node_filesystem.child("items");
 			auto node_levels = node_filesystem.child("levels");
+			auto node_scripts = node_filesystem.child("scripts");
 			auto node_ui = node_filesystem.child("ui");
 
 			if (!node_assets.empty())
@@ -340,6 +341,8 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 				helper::LoadFileSystem(server, fs::FileCategory::ITEMS, root_dir, node_items);
 			if (!node_levels.empty())
 				helper::LoadFileSystem(server, fs::FileCategory::LEVELS, root_dir, node_levels);
+			if (!node_scripts.empty())
+				helper::LoadFileSystem(server, fs::FileCategory::SCRIPTS, root_dir, node_scripts);
 			if (!node_ui.empty())
 				helper::LoadFileSystem(server, fs::FileCategory::UI, root_dir, node_ui);
 
@@ -391,27 +394,19 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		}
 
 		// Load the script details.
-		if (const auto& node_scripts = node_package.child("scripts"); !node_scripts.empty())
+		if (const auto& node_scripts = node_package.child("requiredscripts"); !node_scripts.empty())
 		{
-			// Control scripts.
-			if (const auto& node_control = node_scripts.child("control"); !node_control.empty())
-			{
-				// Load client scripts.
-				std::vector<script_pair> clientcontrolscripts;
-				std::vector<script_pair> servercontrolscripts;
-				helper::LoadScripts(server, clientcontrolscripts, package, "client", node_control);
-				helper::LoadScripts(server, servercontrolscripts, package, "server", node_control);
-				std::for_each(std::begin(clientcontrolscripts), std::end(clientcontrolscripts), [&server](const script_pair& pair) { server.m_client_control_script += pair.second; server.m_client_control_script += "\n"; });
-				std::for_each(std::begin(servercontrolscripts), std::end(servercontrolscripts), [&server](const script_pair& pair) { server.m_server_control_script += pair.second; server.m_server_control_script += "\n"; });
-			}
+			// Load server scripts.
+			std::vector<script_pair> serverscripts;
+			helper::LoadScripts(server, serverscripts, package, "server", node_scripts);
+			for (const auto& [name, script] : serverscripts)
+				server.LoadServerScript(name, script);
 
 			// Load client scripts.
 			std::vector<script_pair> clientscripts;
-			helper::LoadScripts(server, clientscripts, package, "clientscripts", node_package);
+			helper::LoadScripts(server, clientscripts, package, "client", node_scripts);
 			for (const auto& [name, script] : clientscripts)
-			{
-				server.LoadClientScript(name, script);
-			}
+				server.LoadClientScript(name, script, true);
 		}
 
 		// Load items.
@@ -445,6 +440,7 @@ bool Loader::LoadPackageFileSystemIntoServer(server::Server& server, const std::
 		auto node_config = node_filesystem.child("config");
 		auto node_items = node_filesystem.child("items");
 		auto node_levels = node_filesystem.child("levels");
+		auto node_scripts = node_filesystem.child("scripts");
 		auto node_ui = node_filesystem.child("ui");
 
 		if (!node_assets.empty())
@@ -455,6 +451,8 @@ bool Loader::LoadPackageFileSystemIntoServer(server::Server& server, const std::
 			helper::LoadFileSystem(server, fs::FileCategory::ITEMS, root_dir, node_items);
 		if (!node_levels.empty())
 			helper::LoadFileSystem(server, fs::FileCategory::LEVELS, root_dir, node_levels);
+		if (!node_scripts.empty())
+			helper::LoadFileSystem(server, fs::FileCategory::SCRIPTS, root_dir, node_scripts);
 		if (!node_ui.empty())
 			helper::LoadFileSystem(server, fs::FileCategory::UI, root_dir, node_ui);
 
