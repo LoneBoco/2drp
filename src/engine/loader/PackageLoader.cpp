@@ -46,9 +46,11 @@ namespace tdrp::helper
 			if (!file.empty())
 			{
 				// Load script from file.
-				auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file);
-				script->append(scriptfile->ReadAsString());
-				script->append("\n");
+				if (auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file); scriptfile != nullptr)
+				{
+					script->append(scriptfile->ReadAsString());
+					script->append("\n");
+				}
 			}
 			else
 			{
@@ -88,8 +90,7 @@ namespace tdrp::helper
 			std::string_view attrib_file = node_classes.attribute("file").as_string();
 			if (!attrib_file.empty())
 			{
-				auto classes = server.FileSystem.GetFile(fs::FileCategory::CONFIG, attrib_file);
-				if (classes != nullptr)
+				if (auto classes = server.FileSystem.GetFile(fs::FileCategory::CONFIG, attrib_file); classes != nullptr)
 				{
 					pugi::xml_document doc;
 					doc.load(*classes);
@@ -130,8 +131,8 @@ namespace tdrp::helper
 		auto readFile = [&](const std::string_view& file)
 		{
 			if (file.empty()) return;
-			auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file);
-			if (scriptfile) scripts.push_back(std::make_pair(std::string{ scriptfile->FilePath().stem().string() }, std::move(scriptfile->ReadAsString())));
+			if (auto scriptfile = server.FileSystem.GetFile(fs::FileCategory::SCRIPTS, file); scriptfile)
+				scripts.push_back(std::make_pair(std::string{ scriptfile->FilePath().stem().string() }, std::move(scriptfile->ReadAsString())));
 		};
 
 		auto readDirectory = [&](const std::string_view& directory)
@@ -187,8 +188,7 @@ namespace tdrp::helper
 		auto readFile = [&](fs::FileCategory category, const std::string_view& filename) -> std::string
 		{
 			if (filename.empty()) return {};
-			auto file = server.FileSystem.GetFile(category, filename);
-			if (file)
+			if (auto file = server.FileSystem.GetFile(category, filename); file)
 				return file->ReadAsString();
 			else return {};
 		};
@@ -259,8 +259,7 @@ namespace tdrp::helper
 			tileset_file = parent_node.text().get();
 
 		// Load our tilesets.
-		auto tilesets = server.FileSystem.GetFile(fs::FileCategory::ASSETS, tileset_file);
-		if (tilesets != nullptr)
+		if (auto tilesets = server.FileSystem.GetFile(fs::FileCategory::ASSETS, tileset_file); tilesets != nullptr)
 		{
 			pugi::xml_document doc;
 			doc.load(*tilesets);

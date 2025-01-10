@@ -27,6 +27,7 @@
 - Send important files to the client, like UI files.
 - Have the client request files it does not have, like font files, and not break while waiting.
 - Improve networked physics.
+- Check on file downloads.
 
 ### Optimization
 
