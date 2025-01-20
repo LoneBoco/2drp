@@ -4,6 +4,8 @@
 #include <filesystem>
 #include <format>
 
+#include "engine/common.h"
+
 #include "engine/os/Utils.h"
 
 #include "engine/server/Server.h"
@@ -23,6 +25,7 @@ using tdrp::network::Packets;
 
 namespace tdrp::server
 {
+constexpr std::string_view SCRIPT_INSTANCE_NAME = "Server";
 
 static std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Message& message)
 {
@@ -96,7 +99,7 @@ Server::Server()
 	: m_connecting(false), m_server_type(ServerType::HOST), m_server_flags(0), m_sceneobject_counter(0), m_server_name("PEER"), m_max_players(8)
 {
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
-	Script = script_manager->CreateScriptInstance("Server");
+	Script = script_manager->CreateScriptInstance(std::string{ SCRIPT_INSTANCE_NAME });
 	Script->BindIntoMe(
 		[this](sol::state& lua) { lua["Server"] = this; }
 	);
@@ -140,7 +143,7 @@ bool Server::Initialize(const ServerType type, const uint16_t flags)
 bool Server::LoadPackage(const std::string& package_name)
 {
 	if (m_package != nullptr)
-		throw std::runtime_error("!! TODO: Implement package swap (connecting to different server).");
+		throw std::runtime_error("!! Tried to load a package when one is already loaded!  Destroy the old Server and make a new one.");
 
 	// Load the package.
 	log::PrintLine(":: Loading package: {}", package_name);
@@ -287,6 +290,10 @@ void Server::Shutdown()
 
 	// Clear the scenes.
 	m_scenes.clear();
+
+	// Delete us from the script instance.
+	auto script_manager = BabyDI::Get<script::ScriptManager>();
+	script_manager->EraseScriptInstance(std::string{ SCRIPT_INSTANCE_NAME });
 
 	// Erase script instance.
 	SCRIPT_ME_ERASE;

@@ -183,6 +183,11 @@ void bind_camera(sol::state& lua)
 
 namespace functions
 {
+	static server::Server* GetServer(Game& self)
+	{
+		return self.Server.get();
+	}
+
 	static ObjectAttributes* GetFlags(Game& self)
 	{
 		auto player = self.GetCurrentPlayer();
@@ -211,7 +216,7 @@ void bind_game(sol::state& lua)
 
 		"Camera", sol::readonly_property(&Game::Camera),
 		"Player", sol::readonly_property(&Game::GetCurrentPlayer),
-		"Server", sol::readonly_property(&Game::Server),
+		"Server", sol::readonly_property(&functions::GetServer),
 		"Flags", sol::readonly_property(&functions::GetFlags),
 
 		"OnCreated", sol::writeonly_property(&Game::SetOnCreated),

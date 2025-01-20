@@ -19,7 +19,7 @@ void TextRenderComponent::Initialize(ComponentEntity& owner)
 	{
 		// Re-acquire our scene object from the server so it is properly reference counted by shared_ptr.
 		auto game = BabyDI::Get<tdrp::Game>();
-		m_owner = game->Server.GetSceneObjectById(p_so->ID);
+		m_owner = game->Server->GetSceneObjectById(p_so->ID);
 
 		// Bind our provider.
 		owner.RegisterProvider("Size", std::bind(&TextRenderComponent::provide_size, this));
@@ -157,7 +157,7 @@ void TextRenderComponent::load_font(const std::string& name)
 	else
 	{
 		auto game = BabyDI::Get<tdrp::Game>();
-		auto filepath = game->Server.FileSystem.GetFilePath(fs::FileCategory::ASSETS, name);
+		auto filepath = game->Server->FileSystem.GetFilePath(fs::FileCategory::ASSETS, name);
 		if (filepath.empty())
 			return;
 

@@ -490,7 +490,7 @@ void UIManager::bindDataModels(Rml::Context* context)
 			}
 
 			auto game = BabyDI::Get<tdrp::Game>();
-			constructor.Bind("items", &game->Server.GetPlayer()->Account.Items);
+			constructor.Bind("items", &game->Server->GetPlayer()->Account.Items);
 		}
 	}
 }

@@ -19,7 +19,7 @@ void RenderComponent::Initialize(ComponentEntity& owner)
 	{
 		// Re-acquire our scene object from the server so it is properly reference counted by shared_ptr.
 		auto game = BabyDI::Get<tdrp::Game>();
-		m_owner = game->Server.GetSceneObjectById(p_so->ID);
+		m_owner = game->Server->GetSceneObjectById(p_so->ID);
 
 		// Bind our provider.
 		owner.RegisterProvider("Size", std::bind(&RenderComponent::provide_size, this));

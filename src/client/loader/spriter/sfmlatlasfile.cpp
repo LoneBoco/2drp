@@ -39,8 +39,8 @@ void SfmlAtlasFile::initializeFile()
 	auto id = resources->FindId<sf::Texture>(filename.string());
 	if (id == 0)
 	{
-		auto base = game->Server.GetPackage()->GetBasePath();
-		auto file = game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, filename);
+		auto base = game->Server->GetPackage()->GetBasePath();
+		auto file = game->Server->FileSystem.GetFile(fs::FileCategory::ASSETS, filename);
 
 		if (file)
 		{

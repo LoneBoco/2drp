@@ -2,10 +2,10 @@
 
 #include <unordered_map>
 
+#include "engine/common.h"
+
 #include "client/game/Camera.h"
 #include "client/ui/UIManager.h"
-
-#include "engine/common.h"
 
 #include "engine/filesystem/FileSystem.h"
 #include "engine/network/Network.h"
@@ -61,6 +61,7 @@ public:
 	Game& operator=(Game&& other) = delete;
 
 	void Initialize();
+	void CreateServer();
 
 public:
 	void Update();
@@ -70,19 +71,19 @@ public:
 	chrono::clock::duration GetTick() const;
 
 public:
-	void SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius);
-	void SendLevelEvent(const std::string& name, const std::string& data);
-	void SendServerEvent(const std::string& name, const std::string& data);
+	void SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius) const;
+	void SendLevelEvent(const std::string& name, const std::string& data) const;
+	void SendServerEvent(const std::string& name, const std::string& data) const;
 
 public:
 	GameState State = GameState::INITIALIZING;
-	server::Server Server;
-	camera::Camera Camera;
+	std::unique_ptr<server::Server> Server;
 	script::ScriptPtr Script;
 	ui::UIManagerPtr UI;
+	camera::Camera Camera;
 
 public:
-	server::PlayerPtr GetCurrentPlayer();
+	server::PlayerPtr GetCurrentPlayer() const;
 
 public:
 	std::list<std::shared_ptr<sf::Sound>> PlayingSounds;
@@ -99,9 +100,9 @@ inline chrono::clock::duration Game::GetTick() const
 	return m_tick_current - m_tick_previous;
 }
 
-inline server::PlayerPtr Game::GetCurrentPlayer()
+inline server::PlayerPtr Game::GetCurrentPlayer() const
 {
-	return Server.GetPlayer();
+	return Server->GetPlayer();
 }
 
 } // end namespace tdrp

@@ -25,7 +25,7 @@ std::size_t LoadSound(const filesystem::path& file)
 	if (id == 0)
 	{
 		// Sound buffer doesn't exist yet, load it.
-		auto f = game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
+		auto f = game->Server->FileSystem.GetFile(fs::FileCategory::ASSETS, file);
 		if (f)
 		{
 			auto buffer = std::make_shared<sf::SoundBuffer>();
@@ -55,7 +55,7 @@ std::size_t LoadTexture(const filesystem::path& file)
 	if (id == 0)
 	{
 		// Texture doesn't exist yet, load it.
-		auto f = game->Server.FileSystem.GetFile(fs::FileCategory::ASSETS, file);
+		auto f = game->Server->FileSystem.GetFile(fs::FileCategory::ASSETS, file);
 		if (f)
 		{
 			auto texture = std::make_shared<sf::Texture>();

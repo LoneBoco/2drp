@@ -26,7 +26,7 @@ void SpriterAnimation::Load(const filesystem::path& image)
 		auto id = resources->FindId<SpriterEngine::SpriterModel>(filename);
 		if (id == 0)
 		{
-			auto filepath = game->Server.FileSystem.GetFilePath(fs::FileCategory::ASSETS, filename);
+			auto filepath = game->Server->FileSystem.GetFilePath(fs::FileCategory::ASSETS, filename);
 			if (!filepath.empty())
 			{
 				auto spritermodel = std::make_shared<SpriterEngine::SpriterModel>(new loader::spriter::FileFactory(window->GetRenderWindow()), new loader::spriter::ObjectFactory(window->GetRenderWindow()));

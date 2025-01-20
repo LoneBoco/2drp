@@ -33,18 +33,26 @@ Game::Game()
 
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
 	Script = script_manager->CreateScriptInstance("Game");
+	CreateServer();
+}
 
-	using namespace std::placeholders;
-	Server.GetNetwork().AddClientReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
+Game::~Game()
+{
+	log::PrintLine(":: Shutting down game.");
 
-	Server.OnSceneObjectAdd = &handlers::AddRenderComponent;
+	Server->Shutdown();
+
+	// Erase script instance.
+	SCRIPT_ME_ERASE;
+
+	// Erase our script instance.
+	auto script_manager = BabyDI::Get<script::ScriptManager>();
+	script_manager->EraseScriptInstance("Game");
 }
 
 void Game::Initialize()
 {
-	// Get the package.
 	auto settings = BabyDI::Get<tdrp::settings::ProgramSettings>();
-	std::string package{ settings->Get("game.package", "login") };
 
 	// Calculate the type of server to initialize.
 	auto server_type = server::ServerType::HOST;
@@ -59,13 +67,12 @@ void Game::Initialize()
 	else flags = FLAGS<uint16_t>(server::ServerFlags::SINGLEPLAYER);
 
 	// Initialize the server.
-	if (!Server.Initialize(server_type, flags))
+	if (!Server->Initialize(server_type, flags))
 		throw std::runtime_error("Unable to start the server.");
 
 	// Bind game script classes.
 	Script->BindIntoMe(
 		&bind_client,
-		[this](sol::state& lua) { lua["Server"] = &this->Server; },
 		[this](sol::state& lua) { lua["Game"] = this; }
 	);
 
@@ -81,23 +88,24 @@ void Game::Initialize()
 
 		std::string host{ settings->Get("network.server") };
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		Server.Connect(host, port);
+		Server->Connect(host, port);
 		return;
 	}
 
 	// Load the package.
-	Server.LoadPackage(package);
+	std::string package{ settings->Get("game.package", "login") };
+	Server->LoadPackage(package);
 
 	// Hosted.
 	if (settings->Exists("game.networked") && settings->Exists("game.hosting"))
 	{
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
-		Server.Host(port);
+		Server->Host(port);
 	}
 	// Singleplayer.
 	else
 	{
-		Server.SinglePlayer();
+		Server->SinglePlayer();
 	}
 
 	// Load the game UI.
@@ -112,18 +120,24 @@ void Game::Initialize()
 	OnConnected.RunAll();
 }
 
-Game::~Game()
+void Game::CreateServer()
 {
-	log::PrintLine(":: Shutting down game.");
+	using namespace std::placeholders;
 
-	Server.Shutdown();
+	// If we already have a server, shut it down.
+	if (Server != nullptr)
+	{
+		Server->Shutdown();
+		Server.reset();
+	}
 
-	// Erase script instance.
-	SCRIPT_ME_ERASE;
+	// Create the server.
+	Server = std::make_unique<server::Server>();
+	Server->GetNetwork().AddClientReceiveCallback(std::bind(handlers::network_receive_client, std::ref(*this), _1, _2, _3, _4));
+	Server->OnSceneObjectAdd = &handlers::AddRenderComponent;
 
-	// Erase our script instance.
-	auto script_manager = BabyDI::Get<script::ScriptManager>();
-	script_manager->EraseScriptInstance("Game");
+	// Bind Server into the script system.
+	Script->GetLuaState().set("Server", Server.get());
 }
 
 void Game::Update()
@@ -134,11 +148,11 @@ void Game::Update()
 
 	auto tick_in_ms = std::chrono::duration_cast<std::chrono::milliseconds>(GetTick());
 
-	Server.PreUpdate();
+	Server->PreUpdate();
 
 	if (State == GameState::LOADING)
 	{
-		if (!Server.DownloadManager.FilesInQueue && !Server.FileSystem.IsSearchingForFiles())
+		if (!Server->DownloadManager.FilesInQueue && !Server->FileSystem.IsSearchingForFiles())
 		{
 			// Load the UI.
 			UI->ToggleContextVisibility("loading", false);
@@ -148,7 +162,7 @@ void Game::Update()
 			State = GameState::PLAYING;
 			
 			// Send the finished loading packet.
-			Server.Send(0, network::PACKETID(network::Packets::CLIENTREADY), network::Channel::RELIABLE);
+			Server->Send(0, network::PACKETID(network::Packets::CLIENTREADY), network::Channel::RELIABLE);
 
 			// Run our OnConnected callback.
 			OnConnected.RunAll();
@@ -162,7 +176,7 @@ void Game::Update()
 	}
 
 	// Update the server last so attributes are sent after all scripts are done.
-	Server.Update(tick_in_ms);
+	Server->Update(tick_in_ms);
 
 	// Update camera after everything has been drawn.
 	Camera.Update(tick_in_ms);
@@ -221,24 +235,24 @@ void Game::Render(sf::RenderWindow* window)
 	}
 }
 
-void Game::SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius)
+void Game::SendEvent(const std::string& name, const std::string& data, Vector2df origin, float radius) const
 {
 	auto player = GetCurrentPlayer();
 	auto scene = player->GetCurrentScene().lock();
-	Server.SendEvent(scene, player, name, data, origin, radius);
+	Server->SendEvent(scene, player, name, data, origin, radius);
 }
 
-void Game::SendLevelEvent(const std::string& name, const std::string& data)
+void Game::SendLevelEvent(const std::string& name, const std::string& data) const
 {
 	auto player = GetCurrentPlayer();
 	auto scene = player->GetCurrentScene().lock();
-	Server.SendEvent(scene, player, name, data);
+	Server->SendEvent(scene, player, name, data);
 }
 
-void Game::SendServerEvent(const std::string& name, const std::string& data)
+void Game::SendServerEvent(const std::string& name, const std::string& data) const
 {
 	auto player = GetCurrentPlayer();
-	Server.SendEvent(nullptr, player, name, data);
+	Server->SendEvent(nullptr, player, name, data);
 }
 
 /////////////////////////////

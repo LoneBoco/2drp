@@ -156,7 +156,7 @@ void TMXRenderComponent::Initialize(ComponentEntity& owner)
 	{
 		// Re-acquire our scene object from the server so it is properly reference counted by shared_ptr.
 		auto game = BabyDI::Get<tdrp::Game>();
-		auto so = game->Server.GetSceneObjectById(p_so->ID);
+		auto so = game->Server->GetSceneObjectById(p_so->ID);
 		if (so->GetType() == SceneObjectType::TMX)
 		{
 			auto so_tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
@@ -241,10 +241,10 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect,
 			if (!chunk.has_value())
 			{
 				auto game = BabyDI::Get<tdrp::Game>();
-				if (game->Server.IsGuest())
+				if (game->Server->IsGuest())
 				{
 					so_chunk.ChunkRequested = true;
-					game->Server.RequestSceneObjectChunkData(so, chunk_idx);
+					game->Server->RequestSceneObjectChunkData(so, chunk_idx);
 				}
 				continue;
 			}

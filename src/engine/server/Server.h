@@ -203,7 +203,7 @@ protected:
 	std::unordered_map<std::string, std::pair<bool, std::string>> m_client_scripts;
 	std::unordered_map<ItemID, item::ItemDefinitionUPtr> m_item_definitions;
 
-	std::unordered_map<uint16_t, PlayerPtr> m_player_list;
+	std::unordered_map<PlayerID, PlayerPtr> m_player_list;
 
 	std::string m_unique_id;
 	std::string m_server_name;

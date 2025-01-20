@@ -110,7 +110,7 @@ void handle(Game& game, const packet::SwitchScene& packet)
 	auto player = game.GetCurrentPlayer();
 	if (player)
 	{
-		auto scene = game.Server.GetOrCreateScene(scene_name);
+		auto scene = game.Server->GetOrCreateScene(scene_name);
 		player->SwitchScene(scene);
 		game.OnSceneSwitch.RunAll(scene);
 
@@ -124,10 +124,10 @@ void handle(Game& game, const packet::ClientScriptAdd& packet)
 	const auto& script = packet.script();
 	const auto& required = packet.required();
 
-	if (!game.Server.IsHost())
+	if (!game.Server->IsHost())
 	{
-		game.Server.LoadClientScript(name, script, required);
-		game.Server.AddPlayerClientScript(name, game.GetCurrentPlayer());
+		game.Server->LoadClientScript(name, script, required);
+		game.Server->AddPlayerClientScript(name, game.GetCurrentPlayer());
 	}
 
 	log::PrintLine("<- Adding client script {}.", name);
@@ -139,9 +139,9 @@ void handle(Game& game, const packet::ClientScriptDelete& packet)
 {
 	const auto& name = packet.name();
 
-	if (!game.Server.IsHost())
+	if (!game.Server->IsHost())
 	{
-		game.Server.RemovePlayerClientScript(name, game.GetCurrentPlayer());
+		game.Server->RemovePlayerClientScript(name, game.GetCurrentPlayer());
 	}
 
 	log::PrintLine("<- Destroying client script {}.", name);
@@ -152,11 +152,11 @@ void handle(Game& game, const packet::SceneObjectNew& packet)
 {
 	const auto sceneobject = packet.id();
 
-	if (auto so = game.Server.GetSceneObjectById(sceneobject); so != nullptr)
+	if (auto so = game.Server->GetSceneObjectById(sceneobject); so != nullptr)
 	{
 		// Inform the client we added a scene object.
-		if (game.Server.OnSceneObjectAdd != nullptr)
-			game.Server.OnSceneObjectAdd(so);
+		if (game.Server->OnSceneObjectAdd != nullptr)
+			game.Server->OnSceneObjectAdd(so);
 	}
 }
 
@@ -166,9 +166,9 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet)
 	const auto old_player_id = packet.old_player_id();
 	const auto new_player_id = packet.new_player_id();
 
-	auto so = game.Server.GetSceneObjectById(sceneobject_id);
-	auto old_player = game.Server.GetPlayerById(old_player_id);
-	auto new_player = game.Server.GetPlayerById(new_player_id);
+	auto so = game.Server->GetSceneObjectById(sceneobject_id);
+	auto old_player = game.Server->GetPlayerById(old_player_id);
+	auto new_player = game.Server->GetPlayerById(new_player_id);
 
 	if (new_player == game.GetCurrentPlayer())
 	{
@@ -181,7 +181,7 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet)
 void handle(Game& game, const packet::SceneObjectChunkData& packet)
 {
 	const auto sceneobject = packet.id();
-	auto so = game.Server.GetSceneObjectById(sceneobject);
+	auto so = game.Server->GetSceneObjectById(sceneobject);
 	if (!so) return;
 
 	// Currently, only TMX scene objects are supported.
@@ -233,7 +233,7 @@ void handle(Game& game, const packet::SendEvent& packet)
 	const auto& radius = packet.radius();
 	
 	auto player = game.GetCurrentPlayer();
-	auto scene = game.Server.GetScene(pscene);
+	auto scene = game.Server->GetScene(pscene);
 	if (player && scene && scene == player->GetCurrentScene().lock())
 	{
 		// Draw event.
