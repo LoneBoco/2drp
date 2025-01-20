@@ -41,6 +41,7 @@ set(ENGINE_SOURCES
 	"package/Package.h"
 	"physics/Physics.cpp"
 	"physics/Physics.h"
+	"resources/IdGenerator.h"
 	"resources/Resource.h"
 	"scene/ObjectAttributes.cpp"
 	"scene/ObjectAttributes.h"

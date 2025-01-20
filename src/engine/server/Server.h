@@ -8,6 +8,7 @@
 #include "engine/network/Network.h"
 #include "engine/network/DownloadManager.h"
 #include "engine/item/Item.h"
+#include "engine/resources/IdGenerator.h"
 #include "engine/scene/ObjectClass.h"
 #include "engine/scene/Scene.h"
 #include "engine/scene/Tileset.h"
@@ -193,7 +194,7 @@ protected:
 	ServerType m_server_type;
 	uint16_t m_server_flags;
 
-	SceneObjectID m_sceneobject_counter;
+	IdGenerator<SceneObjectID> m_sceneobject_ids;
 
 	std::shared_ptr<package::Package> m_package;
 	std::unordered_map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
@@ -259,7 +260,7 @@ inline std::shared_ptr<package::Package> Server::GetPackage() const
 
 inline const SceneObjectID Server::GetNextSceneObjectID()
 {
-	return ++m_sceneobject_counter;
+	return m_sceneobject_ids.GetNextId();
 }
 
 inline const bool Server::IsSinglePlayer() const

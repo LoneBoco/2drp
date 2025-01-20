@@ -96,7 +96,7 @@ static bool _sendDeleteSceneObjectToPlayers(Server& server, const SceneObjectPtr
 /////////////////////////////
 
 Server::Server()
-	: m_connecting(false), m_server_type(ServerType::HOST), m_server_flags(0), m_sceneobject_counter(0), m_server_name("PEER"), m_max_players(8)
+	: m_connecting(false), m_server_type(ServerType::HOST), m_server_flags(0), m_server_name("PEER"), m_max_players(8)
 {
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
 	Script = script_manager->CreateScriptInstance(std::string{ SCRIPT_INSTANCE_NAME });
