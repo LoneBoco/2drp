@@ -87,6 +87,9 @@ public:
 	FileSystem& operator=(const FileSystem& other) = delete;
 	FileSystem& operator=(FileSystem&& other) = delete;
 
+	//! Resets the file system.
+	void Reset();
+
 	//! Binds to a directory.
 	//! \param directory The directory to bind to.
 	//! \param exclude_dirs A list of directories to exclude.  Will be pattern matched like *exclude_dir*

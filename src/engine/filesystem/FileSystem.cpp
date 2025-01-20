@@ -332,6 +332,20 @@ bool FileSystem::isExcluded(const std::list<filesystem::path>& exclude_list, con
 	return true;
 }
 
+/////////////////////////////
+
+void FileSystem::Reset()
+{
+	m_watcher.RemoveAll();
+	
+	// Clear our saved filesystem.
+	{
+		std::scoped_lock guard(m_file_mutex);
+		for (auto& category : m_categories)
+			category.clear();
+	}
+}
+
 bool FileSystem::HasFile(FileCategory category, const filesystem::path& file) const
 {
 	if (filesystem::exists(file))
