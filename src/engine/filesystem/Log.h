@@ -31,7 +31,7 @@ inline bool& get_wrote_newline()
 
 
 template <typename ...Args>
-void Print(const std::string_view& fmt, const Args&... args)
+void Print(std::string_view fmt, const Args&... args)
 {
 	std::ostringstream text;
 
@@ -45,6 +45,8 @@ void Print(const std::string_view& fmt, const Args&... args)
 	text << std::vformat(fmt, std::make_format_args(args...));
 
 	auto s = text.str();
+	if (s.size() == 0)
+		return;
 
 	if (get_file().is_open())
 		get_file() << s;
@@ -56,19 +58,19 @@ void Print(const std::string_view& fmt, const Args&... args)
 }
 
 template <typename ...Args>
-void PrintLine(const std::string_view& fmt, const Args&... args)
+void PrintLine(std::string_view fmt, const Args&... args)
 {
 	Print(fmt, args...);
 	Print("\n");
 }
 
 template <uint32_t N>
-constexpr std::string_view Indent()
+constexpr std::string Indent()
 {
 	if constexpr (N == 0)
 	{
 		static std::array<char, 1> result = { '\0' };
-		return std::string_view{ result.data() };
+		return std::string{ result.data() };
 	}
 	else
 	{
@@ -76,7 +78,7 @@ constexpr std::string_view Indent()
 		std::array<char, size> result;
 		result.fill(' ');
 		result.back() = '\0';
-		return std::string_view{ result.data() };
+		return std::string{ result.data() };
 	}
 }
 

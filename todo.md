@@ -18,20 +18,23 @@
 
 ### Networking
 
+- Create a player object that stores flags, has a player number, and is networked.
+- Send players on login.
 - Ownership needs to be changed. The client might receive a scene object with an owner it doesn't recognize.
-- Player ids identified by the network need rework for co-op games.
-- Need a way to get player data, including player number.
-	- Create a player object that stores flags, has a player number, and is networked.
-	- Player information is sent on login.  Can be configured to be sent all at once or as needed.
+	- This should be better now, but might need to be reconsidered.  There is a hack on Server::GetPlayerById right now.
 - Ability to swap packages for when a player connects to a server.
+    - Currently created some code to let the client re-create the server.  Might need to do the same for the game's scripting and UI stuff.
 - Send important files to the client, like UI files.
 - Have the client request files it does not have, like font files, and not break while waiting.
-- Improve networked physics.
 - Check on file downloads.
+- Improve networked physics.
+	- When we change a scene object's velocity, it causes an X/Y change too, which causes a jump on other clients when you start moving.
+	- Might need to come up with another solution on changing X/Y positions while using velocity.  Using it for prediction?  Interpolation?
 
 ### Optimization
 
 - One physics body per chunk.
+- Gani idle animation is constantly "dirty" so it causes constant network traffic.
 
 ### Maintenance
 
