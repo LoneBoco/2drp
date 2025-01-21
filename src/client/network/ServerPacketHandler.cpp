@@ -87,7 +87,6 @@ void network_receive_client(Game& game, const uint16_t id, const uint16_t packet
 void handle(Game& game, const packet::LoginStatus& packet)
 {
 	const auto success = packet.success();
-	const auto& msg = packet.message();
 }
 
 void handle(Game& game, const packet::ServerInfo& packet)
@@ -130,7 +129,6 @@ void handle(Game& game, const packet::ClientScriptAdd& packet)
 		game.Server->AddPlayerClientScript(name, game.GetCurrentPlayer());
 	}
 
-	log::PrintLine("<- Adding client script {}.", name);
 	game.Script->RunScript(name, script, &game);
 	game.OnCreated.Run(name);
 }

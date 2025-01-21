@@ -82,6 +82,8 @@ void Game::Initialize()
 	// If we are connecting to a server, connect now.
 	if (settings->Exists("game.networked") && settings->Exists("network.server"))
 	{
+		Server->SetLoginCredentials("guest", "", "guest");
+
 		// TODO: Make this configurable.
 		// TODO: Built-in loading UI for when we have no package or anything.
 		//UI->LoadContext("loading");
@@ -99,12 +101,15 @@ void Game::Initialize()
 	// Hosted.
 	if (settings->Exists("game.networked") && settings->Exists("game.hosting"))
 	{
+		Server->SetLoginCredentials("host", "", "host");
+
 		uint16_t port = settings->GetAs<uint16_t>("network.port");
 		Server->Host(port);
 	}
 	// Singleplayer.
 	else
 	{
+		Server->SetLoginCredentials("singleplayer", "", "singleplayer");
 		Server->SinglePlayer();
 	}
 
@@ -162,7 +167,7 @@ void Game::Update()
 			State = GameState::PLAYING;
 			
 			// Send the finished loading packet.
-			Server->Send(0, network::PACKETID(network::Packets::CLIENTREADY), network::Channel::RELIABLE);
+			Server->Send(network::PACKETID(network::Packets::CLIENTREADY), network::Channel::RELIABLE);
 
 			// Run our OnConnected callback.
 			OnConnected.RunAll();

@@ -17,7 +17,7 @@ void DownloadManager::AddToQueue(const std::string& file)
 	m_download_list.push_back(file);
 	FilesInQueue = true;
 
-	m_server->Send(0, network::PACKETID(network::Packets::FILEREQUEST), network::Channel::RELIABLE, request);
+	m_server->Send(network::PACKETID(network::Packets::FILEREQUEST), network::Channel::RELIABLE, request);
 }
 
 void DownloadManager::AddToQueue(std::list<std::string>&& batch)
@@ -33,7 +33,7 @@ void DownloadManager::AddToQueue(std::list<std::string>&& batch)
 	m_download_list.splice(std::end(m_download_list), batch);
 	FilesInQueue = true;
 
-	m_server->Send(0, network::PACKETID(network::Packets::FILEREQUEST), network::Channel::RELIABLE, request);
+	m_server->Send(network::PACKETID(network::Packets::FILEREQUEST), network::Channel::RELIABLE, request);
 }
 
 void DownloadManager::InformComplete(const std::string& file)

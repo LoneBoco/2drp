@@ -37,7 +37,7 @@ static std::vector<uint8_t> _serializeMessageToVector(const google::protobuf::Me
 	return result;
 }
 
-inline static bool _toSelf(server::Server* server, const uint16_t player_id)
+inline static bool _toSelf(server::Server* server, const PlayerID player_id)
 {
 	if (!server)
 		return false;
@@ -45,7 +45,7 @@ inline static bool _toSelf(server::Server* server, const uint16_t player_id)
 	if (server->IsSinglePlayer())
 		return true;
 
-	if (server->GetServerType() == server::ServerType::HOST && player_id == network::HOSTID)
+	if (server->GetServerType() == server::ServerType::HOST && player_id == server->GetPlayer()->GetPlayerId())
 		return true;
 
 	return false;
@@ -104,7 +104,7 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 	const uint32_t bandwidth_upstream = 0;
 
 	if (port == 0)
-		m_host = std::unique_ptr<ENetHost, enet_host_deleter>(enet_host_create(nullptr, peers, channels, bandwidth_downstream, bandwidth_upstream));
+		m_enet = std::unique_ptr<ENetHost, enet_host_deleter>(enet_host_create(nullptr, peers, channels, bandwidth_downstream, bandwidth_upstream));
 	else
 	{
 		ENetAddress address{};
@@ -112,10 +112,10 @@ bool Network::Initialize(const size_t peers, const uint16_t port)
 		address.host = ENET_HOST_ANY;
 		address.port = port;
 
-		m_host = std::unique_ptr<ENetHost, enet_host_deleter>(enet_host_create(&address, peers, channels, bandwidth_downstream, bandwidth_upstream));
+		m_enet = std::unique_ptr<ENetHost, enet_host_deleter>(enet_host_create(&address, peers, channels, bandwidth_downstream, bandwidth_upstream));
 	}
 	
-	if (m_host == nullptr)
+	if (m_enet == nullptr)
 		return false;
 
 	return true;
@@ -140,7 +140,7 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 			return false;
 		}
 
-		ENetPeer* peer = enet_host_connect(m_host.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
+		ENetPeer* peer = enet_host_connect(m_enet.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
 		if (peer == nullptr)
 		{
 			log::PrintLine("!! Network connect - Failed to connect to host.");
@@ -148,13 +148,14 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 		}
 
 		ENetEvent event;
-		if (enet_host_service(m_host.get(), &event, 5000) > 0)
+		if (enet_host_service(m_enet.get(), &event, 5000) > 0)
 		{
 			if (event.type == ENET_EVENT_TYPE_CONNECT)
 			{
 				log::PrintLine(":: Network connect - Established link to host.");
 				m_peers.clear();
-				m_peers[0] = peer;
+				m_player_id_map.clear();
+				register_player_and_peer(HOST_PLAYER, peer);
 				return true;
 			}
 		}
@@ -172,10 +173,12 @@ void Network::Disconnect()
 	if (m_peers.size() == 0)
 		return;
 
-	for (auto it = m_peers.rbegin(); it != m_peers.rend(); ++it)
+	for (const auto& [id, peer_pair] : m_peers)
 	{
-		enet_peer_disconnect_now(it->second, 0);
+		enet_peer_disconnect_now(peer_pair.first, 0);
 	}
+	m_player_id_map.clear();
+	m_peers.clear();
 
 	// Make sure the disconnect gets sent.
 	Update();
@@ -185,50 +188,74 @@ void Network::Disconnect()
 	// If we aren't disconnecting after a certain time, force with enet_peer_reset.
 }
 
-void Network::DisconnectPeer(const uint16_t player_id)
+void Network::DisconnectPeer(const PlayerID player_id)
 {
-	if (m_peers.size() == 0)
+	if (m_peers.size() == 0 || m_player_id_map.size() == 0)
 		return;
 
-	enet_peer_disconnect_later(m_peers.at(player_id), 0);
+	if (auto pair = get_peer_from_player(player_id); pair.has_value())
+	{
+		auto& [peer, host_id] = pair.value();
+		m_player_id_map.erase(player_id);
+		m_peers.erase(host_id);
+		enet_peer_disconnect_later(peer, 0);
+	}
 }
 
 /////////////////////////////
 
 void Network::Update()
 {
-	if (!m_host) return;
-	//if (m_host->connectedPeers == 0) return;
+	if (!m_enet) return;
 
 	ENetEvent event;
-	while (enet_host_service(m_host.get(), &event, 0) > 0)
+	while (enet_host_service(m_enet.get(), &event, 0) > 0)
 	{
 		// Ignore NONE events.
 		if (event.type == ENET_EVENT_TYPE_NONE)
 			continue;
 
-		// Get our peer id.
-		// Add 1 to get the proper player id.
-		uint16_t id = event.peer->outgoingPeerID + 1;
-		if (m_server && m_server->IsHost())
-			id = event.peer->incomingPeerID + 1;
+		// Get the unique id of the peer.
+		auto id = event.peer->connectID;
 
 		// Callbacks.
 		switch (event.type)
 		{
 			case ENET_EVENT_TYPE_CONNECT:
+				m_peers[id] = std::make_pair(event.peer, static_cast<PlayerID>(NO_PLAYER));
+
+				// Store the connectID in the peer user data since the connectID will be 0 when we get the disconnect event.
+				event.peer->data = reinterpret_cast<void*>(static_cast<intptr_t>(id));
+
 				_executeCallbacks(m_connect_cb, id);
-				m_peers[id] = event.peer;
 				break;
 
 			case ENET_EVENT_TYPE_DISCONNECT:
-				m_peers.erase(id);
-				_executeCallbacks(m_disconnect_cb, id);
+				if (event.peer->data != nullptr)
+				{
+					uint32_t connectID = static_cast<int>(reinterpret_cast<intptr_t>(event.peer->data));
+					if (auto peer_iter = m_peers.find(connectID); peer_iter != m_peers.end())
+					{
+						// Get the player id.
+						auto player_id = peer_iter->second.second;
+
+						// Erase the peer from our lists.
+						m_peers.erase(connectID);
+						m_player_id_map.erase(player_id);
+
+						// Inform about the disconnect.
+						_executeCallbacks(m_disconnect_cb, player_id);
+					}
+				}
 				break;
 
 			case ENET_EVENT_TYPE_RECEIVE:
-				if (event.packet != nullptr && event.packet->dataLength >= 2)
+				// Check if the peer is known and that we have a valid packet size.
+				if (auto peer_iter = m_peers.find(id); peer_iter != m_peers.end() && event.packet != nullptr && event.packet->dataLength >= 2)
 				{
+					// Get the player id.
+					auto player_id = peer_iter->second.second;
+
 					// The first two bytes make up the packet id.
 					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
 					// log::PrintLine("-- Packet {}", packet_id);
@@ -237,11 +264,11 @@ void Network::Update()
 					// Otherwise, if we are the host, attempt to handle client packets.
 					// Finally, if not handled, pass it to the normal receive callback.
 					if (packet_id == PACKETID(Packets::LOGIN) && !m_login_cb.empty())
-						_executeCallbacks(m_login_cb, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+						_executeCallbacks(m_login_cb, player_id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 					else
 					{
-						_executeCallbacks(m_receive_cb, id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
-						ExecuteClientReceiveCallback(id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+						_executeCallbacks(m_receive_cb, player_id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
+						ExecuteClientReceiveCallback(player_id, packet_id, event.packet->data + 2, event.packet->dataLength - 2);
 					}
 				}
 
@@ -253,7 +280,17 @@ void Network::Update()
 
 /////////////////////////////
 
-void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel)
+void Network::Send(const uint16_t packet_id, const Channel channel)
+{
+	Send(HOST_PLAYER, packet_id, channel);
+}
+
+void Network::Send(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
+{
+	Send(HOST_PLAYER, packet_id, channel, message);
+}
+
+void Network::Send(const PlayerID player_id, const uint16_t packet_id, const Channel channel)
 {
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
@@ -262,24 +299,25 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 		return;
 	}
 
-	if (m_host == nullptr) return;
+	if (m_enet == nullptr) return;
 
-	auto peer = m_peers.find(player_id);
-	if (peer == m_peers.end() || peer->second == nullptr)
-		return;
+	auto pair = get_peer_from_player(player_id);
+	if (!pair.has_value()) return;
 
+	auto& [peer, host_id] = pair.value();
 	ENetPacket* packet = construct_packet(channel, packet_id);
 	if (packet == nullptr) return;
 
-	auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 	if (success != 0)
 	{
-		enet_packet_destroy(packet);
 		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
+		enet_packet_destroy(packet);
+		check_for_error(player_id, peer);
 	}
 }
 
-void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
+void Network::Send(const PlayerID player_id, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
 	// Check for a network bypass.
 	if (_toSelf(m_server, player_id))
@@ -289,26 +327,27 @@ void Network::Send(const uint16_t player_id, const uint16_t packet_id, const Cha
 		return;
 	}
 
-	if (m_host == nullptr) return;
+	if (m_enet == nullptr) return;
 
-	auto peer = m_peers.find(player_id);
-	if (peer == m_peers.end() || peer->second == nullptr)
-		return;
+	auto pair = get_peer_from_player(player_id);
+	if (!pair.has_value()) return;
 
+	auto& [peer, host_id] = pair.value();
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
 
-	auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+	auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 	if (success != 0)
 	{
-		enet_packet_destroy(packet);
 		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
+		enet_packet_destroy(packet);
+		check_for_error(player_id, peer);
 	}
 }
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 {
-	if (m_host == nullptr) return;
+	if (m_enet == nullptr) return;
 
 	// Check for a network bypass.
 	// Broadcast shouldn't need this.
@@ -322,17 +361,17 @@ void Network::Broadcast(const uint16_t packet_id, const Channel channel)
 	ENetPacket* packet = construct_packet(channel, packet_id);
 	if (packet == nullptr) return;
 
-	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
+	enet_host_broadcast(m_enet.get(), static_cast<uint8_t>(channel), packet);
 }
 
 void Network::Broadcast(const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message)
 {
-	if (m_host == nullptr) return;
+	if (m_enet == nullptr) return;
 
 	ENetPacket* packet = construct_packet(channel, packet_id, &message);
 	if (packet == nullptr) return;
 
-	enet_host_broadcast(m_host.get(), static_cast<uint8_t>(channel), packet);
+	enet_host_broadcast(m_enet.get(), static_cast<uint8_t>(channel), packet);
 }
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
@@ -343,11 +382,11 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 	if (m_server && m_server->IsGuest())
 	{
 		assert(false);
-		//Send(network::HOSTID, packet_id, channel);
+		//Send(packet_id, channel);
 		return {};
 	}
 
-	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id), exclude);
+	return sendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id), exclude);
 }
 
 std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
@@ -358,32 +397,39 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 	if (m_server && m_server->IsGuest())
 	{
 		assert(false);
-		//Send(network::HOSTID, packet_id, channel, message);
+		//Send(packet_id, channel, message);
 		return {};
 	}
 
-	return SendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
+	return sendToScene(scene, location, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
 }
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const std::set<server::PlayerPtr>& exclude)
 {
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
-	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id), exclude);
+	return broadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id), exclude);
 }
 
 int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, const google::protobuf::Message& message, const std::set<server::PlayerPtr>& exclude)
 {
 	// Network bypass is in the SendToScene function that iterates through the scene players.
 
-	return BroadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
+	return broadcastToScene(scene, packet_id, channel, construct_packet(channel, packet_id, &message), exclude);
 }
 
 /////////////////////////////
 
-std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
+void Network::ExecuteClientReceiveCallback(const PlayerID player_id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
 {
-	if (m_host == nullptr) return {};
+	_executeCallbacks(m_client_receive_cb, player_id, packet_id, packet_data, packet_length);
+}
+
+/////////////////////////////
+
+std::vector<server::PlayerPtr> Network::sendToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const Vector2df location, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
+{
+	if (m_enet == nullptr) return {};
 
 	std::vector<server::PlayerPtr> result;
 	
@@ -440,16 +486,14 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 						ExecuteClientReceiveCallback(player_id, packet_id, packet->data + 2, packet->dataLength - 2);
 					}
 					// Send the packet.
-					else if (m_host != nullptr)
+					else if (auto pair = get_peer_from_player(player_id); m_enet != nullptr && pair.has_value())
 					{
-						auto peer = m_peers.find(player_id);
-						if (peer == std::end(m_peers) || peer->second == nullptr)
-							continue;
-
-						auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+						auto& [peer, host_id] = pair.value();
+						auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 						if (success != 0)
 						{
 							log::PrintLine("** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
+							check_for_error(player_id, peer);
 							continue;
 						}
 					}
@@ -465,9 +509,9 @@ std::vector<server::PlayerPtr> Network::SendToScene(const std::shared_ptr<tdrp::
 	return result;
 }
 
-int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
+int Network::broadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, const uint16_t packet_id, const Channel channel, _ENetPacket* packet, const std::set<server::PlayerPtr>& exclude)
 {
-	if (m_host == nullptr) return 0;
+	if (m_enet == nullptr) return 0;
 	if (packet == nullptr) return 0;
 	int count = 0;
 	auto original_ref_count = packet->referenceCount;
@@ -489,16 +533,14 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 					ExecuteClientReceiveCallback(player_id, packet_id, packet->data + 2, packet->dataLength - 2);
 				}
 				// Send the packet.
-				else if (m_host != nullptr)
+				else if (auto pair = get_peer_from_player(player_id); m_enet != nullptr && pair.has_value())
 				{
-					auto peer = m_peers.find(player_id);
-					if (peer == std::end(m_peers) || peer->second == nullptr)
-						continue;
-
-					auto success = enet_peer_send(peer->second, static_cast<uint8_t>(channel), packet);
+					auto& [peer, host_id] = pair.value();
+					auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 					if (success != 0)
 					{
 						log::PrintLine("** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
+						check_for_error(player_id, peer);
 						continue;
 					}
 				}
@@ -513,7 +555,18 @@ int Network::BroadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 	return count;
 }
 
-/////////////////////////////
+void Network::check_for_error(PlayerID player_id, _ENetPeer* peer)
+{
+	// Disconnected?
+	if (peer->state == ENET_PEER_STATE_DISCONNECTED)
+	{
+		DisconnectPeer(player_id);
+		return;
+		// _executeCallbacks(m_disconnect_cb, player_id);
+	}
+
+	log::PrintLine("!! Some unknown enet error occurred.");
+}
 
 _ENetPacket* Network::construct_packet(const Channel channel, const uint16_t packet_id, const google::protobuf::Message* message)
 {
@@ -531,9 +584,28 @@ _ENetPacket* Network::construct_packet(const Channel channel, const uint16_t pac
 	return packet;
 }
 
-void Network::ExecuteClientReceiveCallback(const uint16_t player_id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
+std::optional<std::pair<ENetPeer*, uint32_t>> Network::get_peer_from_player(const PlayerID player_id) const
 {
-	_executeCallbacks(m_client_receive_cb, player_id, packet_id, packet_data, packet_length);
+	auto iter = m_player_id_map.find(player_id);
+	if (iter == std::end(m_player_id_map))
+		return std::nullopt;
+
+	auto peer_iter = m_peers.find(iter->second);
+	if (peer_iter == std::end(m_peers))
+		return std::nullopt;
+
+	auto pair = std::make_pair(peer_iter->second.first, peer_iter->first);
+	return std::make_optional(std::move(pair));
+}
+
+void Network::register_player_and_peer(const PlayerID player_id, _ENetPeer* peer)
+{
+	if (peer == nullptr) return;
+	m_player_id_map[player_id] = peer->connectID;
+	m_peers[peer->connectID] = std::make_pair(peer, player_id);
+
+	// Store the connectID in the peer user data since the connectID will be 0 when we get the disconnect event.
+	peer->data = reinterpret_cast<void*>(static_cast<intptr_t>(peer->connectID));
 }
 
 } // end namespace tdrp::network

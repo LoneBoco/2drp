@@ -65,6 +65,7 @@ using AttributeID = uint16_t;
 using ItemID = uint16_t;
 using PlayerID = uint16_t;
 
+inline constexpr PlayerID HOST_PLAYER = 0;
 inline constexpr PlayerID NO_PLAYER = ~0;
 
 } // end namespace tdrp

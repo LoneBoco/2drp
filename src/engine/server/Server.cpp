@@ -1,4 +1,3 @@
-#include <chrono>
 #include <iostream>
 #include <unordered_set>
 #include <filesystem>
@@ -98,6 +97,9 @@ static bool _sendDeleteSceneObjectToPlayers(Server& server, const SceneObjectPtr
 Server::Server()
 	: m_connecting(false), m_server_type(ServerType::HOST), m_server_flags(0), m_server_name("PEER"), m_max_players(8)
 {
+	// Start player ids at 1.
+	m_player_ids.SetNextUnusedId(1);
+
 	auto script_manager = BabyDI::Get<script::ScriptManager>();
 	Script = script_manager->CreateScriptInstance(std::string{ SCRIPT_INSTANCE_NAME });
 	Script->BindIntoMe(
@@ -185,10 +187,10 @@ bool Server::LoadPackage(const std::string& package_name)
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine("   Loading server scripts.");
+		log::PrintLine("   Loading server scripts:");
 		for (const auto& [name, script] : m_server_scripts)
 		{
-			log::PrintLine("   - {}.", name);
+			log::PrintLine("     {}", name);
 			Script->RunScript(name, script, this);
 		}
 	}
@@ -220,9 +222,10 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	m_network.Initialize(peers, port);
 
 	// Log the player in.
-	SetPlayerNumber(0);
-	ProcessPlayerLogin(0, "host");
-	ProcessPlayerJoin(0);
+	auto id = GetNextPlayerID();
+	SetPlayerNumber(id);
+	ProcessPlayerLogin(id, "host");
+	ProcessPlayerJoin(id);
 
 	return true;
 }
@@ -248,9 +251,10 @@ bool Server::SinglePlayer()
 	log::PrintLine(":: Starting as single player server.");
 
 	// Log the player in.
-	SetPlayerNumber(0);
-	ProcessPlayerLogin(0, "singleplayer");
-	ProcessPlayerJoin(0);
+	auto id = GetNextPlayerID();
+	SetPlayerNumber(id);
+	ProcessPlayerLogin(id, "singleplayer");
+	ProcessPlayerJoin(id);
 
 	return true;
 }
@@ -317,14 +321,13 @@ void Server::PreUpdate()
 
 				packet::Login packet;
 				packet.set_method(packet::Login_Method_PEER2PEER);
-				/*
-				packet.set_account("test");
-				packet.set_passwordhash("testpass");
+				packet.set_account(m_credential_account);
+				packet.set_passwordhash(m_credential_password_hash);
+				packet.set_nickname(m_credential_nickname);
 				packet.set_type(0);
 				packet.set_version("first");
-				*/
 
-				Send(network::HOSTID, PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
+				Send(PACKETID(Packets::LOGIN), network::Channel::RELIABLE, packet);
 			}
 			else
 			{
@@ -462,26 +465,10 @@ void Server::Update(const std::chrono::milliseconds& tick)
 	FileSystem.Update();
 }
 
-void Server::ProcessPlayerJoin(const uint16_t player_id)
-{
-	auto player = GetPlayerById(player_id);
-
-	// Switch to the starting scene.
-	auto scene = GetScene(player->Account.LastKnownScene);
-	if (scene == nullptr)
-		scene = GetOrCreateScene(GetPackage()->GetStartingScene());
-
-	log::PrintLine("-> Sending player {} to scene {}.", player_id, scene->GetName());
-	player->SwitchScene(scene);
-
-	// Call the OnPlayerJoin script function.
-	OnPlayerJoin.RunAll(player);
-}
-
 void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& account)
 {
 	// Load account.
-	log::PrintLine(":: Loading account {}.", account);
+	log::PrintLine(":: Loading account {} for player {}.", account, player_id);
 	auto player = GetPlayerById(player_id);
 	player->Account.Load(account);
 
@@ -489,6 +476,7 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	packet::LoginStatus login_status;
 	login_status.set_player_id(player_id);
 	login_status.set_success(true);
+	login_status.set_host_player_id(m_player->GetPlayerId());
 	Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 	log::PrintLine("-> Sending login allowed.");
 
@@ -557,17 +545,49 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	Send(player_id, PACKETID(Packets::SERVERINFO), network::Channel::RELIABLE, server_info);
 }
 
+void Server::ProcessPlayerJoin(const uint16_t player_id)
+{
+	auto player = GetPlayerById(player_id);
+
+	// Switch to the starting scene.
+	auto scene = GetScene(player->Account.LastKnownScene);
+	if (scene == nullptr)
+		scene = GetOrCreateScene(GetPackage()->GetStartingScene());
+
+	log::PrintLine("-> Sending player {} to scene {}.", player_id, scene->GetName());
+	player->SwitchScene(scene);
+
+	// Call the OnPlayerJoin script function.
+	OnPlayerJoin.RunAll(player);
+}
+
+/////////////////////////////
+
 void Server::SetPlayerNumber(const uint16_t player_number)
 {
 	log::PrintLine(":: Assigned player number {}.", player_number);
 
-	if (IsGuest() || player_number == 0)
+	//if (IsGuest() || player_number == 0)
 	{
 		auto player = std::make_shared<Player>(player_number);
 		player->BindServer(this);
 		m_player_list[player_number] = player;
 		m_player = player;
 	}
+}
+
+void Server::SetLoginCredentials(std::string_view account, std::string_view password_hash, std::string_view nickname)
+{
+	m_credential_account = account;
+	m_credential_password_hash = password_hash;
+	m_credential_nickname = nickname;
+}
+
+void Server::SetLoginCredentials(std::string_view nickname)
+{
+	m_credential_account = "guest";
+	m_credential_password_hash = "guest";
+	m_credential_nickname = nickname;
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1347,7 +1367,7 @@ void Server::RequestSceneObjectChunkData(SceneObjectPtr sceneobject, uint32_t ch
 	packet.set_index(chunk_idx);
 	
 	log::PrintLine("-> Requesting chunk {} data for scene object {}.", chunk_idx, sceneobject->ID);
-	Send(network::HOSTID, PACKETID(Packets::SCENEOBJECTREQUESTCHUNKDATA), network::Channel::RELIABLE, packet);
+	Send(PACKETID(Packets::SCENEOBJECTREQUESTCHUNKDATA), network::Channel::RELIABLE, packet);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1488,20 +1508,30 @@ SceneObjectPtr Server::GetSceneObjectById(SceneObjectID id)
 
 /////////////////////////////
 
-void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel)
+void Server::Send(const uint16_t packet_id, const network::Channel channel)
 {
-	m_network.Send(peer_id, packet_id, channel);
+	m_network.Send(packet_id, channel);
 }
 
-void Server::Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message)
+void Server::Send(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message)
 {
-	m_network.Send(peer_id, packet_id, channel, message);
+	m_network.Send(packet_id, channel, message);
+}
+
+void Server::Send(const uint16_t player_id, const uint16_t packet_id, const network::Channel channel)
+{
+	m_network.Send(player_id, packet_id, channel);
+}
+
+void Server::Send(const uint16_t player_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message)
+{
+	m_network.Send(player_id, packet_id, channel, message);
 }
 
 void Server::Broadcast(const uint16_t packet_id, const network::Channel channel)
 {
 	if (IsSinglePlayer() || !IsHost())
-		m_network.Send(network::HOSTID, packet_id, channel);
+		m_network.Send(packet_id, channel);
 	else
 		m_network.Broadcast(packet_id, channel);
 }
@@ -1509,7 +1539,7 @@ void Server::Broadcast(const uint16_t packet_id, const network::Channel channel)
 void Server::Broadcast(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message)
 {
 	if (IsSinglePlayer() || !IsHost())
-		m_network.Send(network::HOSTID, packet_id, channel, message);
+		m_network.Send(packet_id, channel, message);
 	else
 		m_network.Broadcast(packet_id, channel, message);
 }
@@ -1518,7 +1548,7 @@ std::vector<server::PlayerPtr> Server::SendToScene(const scene::ScenePtr scene, 
 {
 	if (IsSinglePlayer() || !IsHost())
 	{
-		m_network.Send(network::HOSTID, packet_id, channel);
+		m_network.Send(packet_id, channel);
 		return {};
 	}
 	else
@@ -1529,7 +1559,7 @@ std::vector<server::PlayerPtr> Server::SendToScene(const scene::ScenePtr scene, 
 {
 	if (IsSinglePlayer() || !IsHost())
 	{
-		m_network.Send(network::HOSTID, packet_id, channel, message);
+		m_network.Send(packet_id, channel, message);
 		return {};
 	}
 	else
@@ -1540,7 +1570,7 @@ int Server::BroadcastToScene(const scene::ScenePtr scene, const uint16_t packet_
 {
 	if (IsSinglePlayer() || !IsHost())
 	{
-		m_network.Send(network::HOSTID, packet_id, channel);
+		m_network.Send(packet_id, channel);
 		return 1;
 	}
 	else
@@ -1551,7 +1581,7 @@ int Server::BroadcastToScene(const scene::ScenePtr scene, const uint16_t packet_
 {
 	if (IsSinglePlayer() || !IsHost())
 	{
-		m_network.Send(network::HOSTID, packet_id, channel, message);
+		m_network.Send(packet_id, channel, message);
 		return 1;
 	}
 	else
@@ -1560,21 +1590,25 @@ int Server::BroadcastToScene(const scene::ScenePtr scene, const uint16_t packet_
 
 /////////////////////////////
 
-void Server::network_connect(const uint16_t id)
+void Server::network_connect(const uint32_t id)
 {
-	log::PrintLine("<- Connection from player {}.", id);
-	auto player = std::make_shared<Player>(id);
+	auto player_id = GetNextPlayerID();
+	m_network.MapPlayerToPeer(player_id, id);
+	log::PrintLine("<- Connection from player {} ({}).", player_id, id);
+
+	auto player = std::make_shared<Player>(player_id);
 	player->BindServer(this);
-	m_player_list[id] = player;
+	m_player_list[player_id] = player;
 }
 
-void Server::network_disconnect(const uint16_t id)
+void Server::network_disconnect(const PlayerID player_id)
 {
-	auto player = GetPlayerById(id);
+	auto player = GetPlayerById(player_id);
 	if (!player) return;
 
 	// Erase the player from the player list so packets don't get sent to them.
-	m_player_list.erase(id);
+	m_player_list.erase(player_id);
+	m_player_ids.FreeId(player_id);
 
 	// Call the OnPlayerLeave script function.
 	OnPlayerLeave.RunAll(player);
@@ -1584,57 +1618,53 @@ void Server::network_disconnect(const uint16_t id)
 		player->Account.Save();
 
 	// TODO: Send disconnection packet to peers.
-	log::PrintLine("<- Disconnection from player {}.", id);
+	log::PrintLine("<- Disconnection from player {}.", player_id);
 
 	SCRIPT_THEM_ERASE(player);
 }
 
-void Server::network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
+void Server::network_login(const PlayerID player_id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length)
 {
 	if (packet_id != PACKETID(Packets::LOGIN))
 		return;
 
-	auto player = GetPlayerById(id);
-	log::PrintLine("<- Received login packet from player {}.", id);
+	auto player = GetPlayerById(player_id);
+	log::PrintLine("<- Received login packet from player {}.", player_id);
 
 	packet::Login packet;
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
 	const auto& method = packet.method();
 	const auto& account = packet.account();
 	const auto& passwordhash = packet.passwordhash();
+	const auto& nickname = packet.nickname();
 	const auto& type = packet.type();
 	const auto& version = packet.version();
 
-	// TODO: This is a temporary override while we work on the account system.
-	std::string login_account = account;
+	// If this is a peer-to-peer connection, allow the player through.
+	if (method == packet::Login_Method_PEER2PEER)
+	{
+		ProcessPlayerLogin(player_id, nickname);
+		return;
+	}
 
 	// TODO: Properly handle account verification for servers that use it.
-	// Load the account.
-	if (method == packet::Login_Method_DEDICATED)
-	{
-		login_account = "dedicated";
-	}
-	else
-	{
-		login_account = (id == network::HOSTID && IsHost()) ? "host" : "guest" + std::to_string(id);
-	}
 
 	// Login failure.
 	if (false)
 	{
 		packet::LoginStatus login_status;
-		login_status.set_player_id(id);
+		login_status.set_player_id(player_id);
 		login_status.set_success(false);
 		login_status.set_message("Invalid username or password.");
-		Send(id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
+		Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
 		log::PrintLine("-> Sending login status - failure.");
 
-		m_network.DisconnectPeer(id);
+		m_network.DisconnectPeer(player_id);
 		return;
 	}
 
 	// Log in the player.
-	ProcessPlayerLogin(id, login_account);
+	ProcessPlayerLogin(player_id, account);
 }
 
 } // end namespace tdrp::server

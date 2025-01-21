@@ -207,7 +207,19 @@ void handle(Server& server, const uint16_t playerId, const packet::LoginStatus& 
 
 	if (success)
 	{
-		log::PrintLine("<- Login successful.  Player id: {}", player_id);
+		log::Print("<- Login successful.  Player id: {}", player_id);
+
+		// Map the host player id.
+		if (packet.has_host_player_id())
+		{
+			log::Print(", host player id: {}", packet.host_player_id());
+			auto& network = server.GetNetwork();
+			const auto host_player_id = packet.host_player_id();
+			if (auto host_peer = network.GetPeerIdForPlayer(host_player_id); host_peer.has_value())
+				network.MapPlayerToPeer(host_player_id, host_peer.value());
+		}
+
+		log::PrintLine("");
 		server.SetPlayerNumber(player_id);
 	}
 	else

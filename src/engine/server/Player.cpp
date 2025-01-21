@@ -44,7 +44,7 @@ std::weak_ptr<SceneObject> Player::SwitchControlledSceneObject(std::shared_ptr<S
 		packet::SceneObjectControl packet;
 		packet.set_player_id(m_player_id);
 		packet.set_sceneobject_id(new_scene_object->ID);
-		m_server->Send(network::HOSTID, network::PACKETID(network::Packets::SCENEOBJECTCONTROL), network::Channel::RELIABLE, packet);
+		m_server->Send(network::PACKETID(network::Packets::SCENEOBJECTCONTROL), network::Channel::RELIABLE, packet);
 	}
 
 	log::PrintLine(":: Player {} taking control of scene object {}.", m_player_id, new_scene_object->ID);

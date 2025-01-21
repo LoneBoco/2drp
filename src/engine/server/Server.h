@@ -76,14 +76,16 @@ public:
 	void Update(const std::chrono::milliseconds& tick);
 
 public:
-	void ProcessPlayerJoin(const uint16_t player_id);
 	void ProcessPlayerLogin(const uint16_t player_id, const std::string& account);
+	void ProcessPlayerJoin(const uint16_t player_id);
 
 public:
 	void SetUniqueId(const std::string& id);
 	void SetServerName(const std::string& name);
 	void SetMaxPlayers(const uint32_t max_players);
 	void SetPlayerNumber(const uint16_t player_number);
+	void SetLoginCredentials(std::string_view account, std::string_view password_hash, std::string_view nickname = {});
+	void SetLoginCredentials(std::string_view nickname);
 	const std::string& GetUniqueId() const;
 	const std::string& GetServerName() const;
 	const uint16_t GetMaxPlayers() const;
@@ -146,16 +148,19 @@ public:
 
 public:
 	const SceneObjectID GetNextSceneObjectID();
+	const PlayerID GetNextPlayerID();
 	const bool IsSinglePlayer() const;
 	const bool IsHost() const;
 	const bool IsGuest() const;
 	const ServerType GetServerType() const;
-	PlayerPtr GetPlayerById(uint16_t id);
+	PlayerPtr GetPlayerById(PlayerID id);
 	SceneObjectPtr GetSceneObjectById(SceneObjectID id);
 
 public:
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel);
-	void Send(const uint16_t peer_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
+	void Send(const uint16_t packet_id, const network::Channel channel);
+	void Send(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
+	void Send(const uint16_t player_id, const uint16_t packet_id, const network::Channel channel);
+	void Send(const uint16_t player_id, const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
 	void Broadcast(const uint16_t packet_id, const network::Channel channel);
 	void Broadcast(const uint16_t packet_id, const network::Channel channel, const google::protobuf::Message& message);
 	std::vector<server::PlayerPtr> SendToScene(const scene::ScenePtr scene, const Vector2df location, uint16_t packet_id, const network::Channel channel, const std::set<PlayerPtr>& exclude = {});
@@ -180,9 +185,9 @@ public:
 	sceneobject_add_cb OnSceneObjectRemove;
 
 protected:
-	void network_connect(const uint16_t id);
-	void network_disconnect(const uint16_t id);
-	void network_login(const uint16_t id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length);
+	void network_connect(const uint32_t id);
+	void network_disconnect(const PlayerID player_id);
+	void network_login(const PlayerID player_id, const uint16_t packet_id, const uint8_t* const packet_data, const size_t packet_length);
 
 protected:
 	network::Network m_network;
@@ -195,6 +200,7 @@ protected:
 	uint16_t m_server_flags;
 
 	IdGenerator<SceneObjectID> m_sceneobject_ids;
+	IdGenerator<PlayerID> m_player_ids;
 
 	std::shared_ptr<package::Package> m_package;
 	std::unordered_map<std::string, std::shared_ptr<ObjectClass>> m_object_classes;
@@ -203,7 +209,6 @@ protected:
 	std::unordered_map<std::string, std::string> m_server_scripts;
 	std::unordered_map<std::string, std::pair<bool, std::string>> m_client_scripts;
 	std::unordered_map<ItemID, item::ItemDefinitionUPtr> m_item_definitions;
-
 	std::unordered_map<PlayerID, PlayerPtr> m_player_list;
 
 	std::string m_unique_id;
@@ -211,6 +216,9 @@ protected:
 	uint16_t m_max_players;
 
 	PlayerPtr m_player = std::make_shared<Player>(0);
+	std::string m_credential_account;
+	std::string m_credential_password_hash;
+	std::string m_credential_nickname;
 };
 
 inline bool Server::IsShuttingDown() const noexcept
@@ -263,6 +271,11 @@ inline const SceneObjectID Server::GetNextSceneObjectID()
 	return m_sceneobject_ids.GetNextId();
 }
 
+inline const PlayerID Server::GetNextPlayerID()
+{
+	return m_player_ids.GetNextId();
+}
+
 inline const bool Server::IsSinglePlayer() const
 {
 	return HASFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
@@ -283,11 +296,20 @@ inline const ServerType Server::GetServerType() const
 	return m_server_type;
 }
 
-inline PlayerPtr Server::GetPlayerById(uint16_t id)
+inline PlayerPtr Server::GetPlayerById(PlayerID id)
 {
 	auto iter = m_player_list.find(id);
 	if (iter == std::end(m_player_list))
+	{
+		if (IsHost())
 		return nullptr;
+
+		// TODO: Hack for guests.  We should get a proper player list from the server.
+		auto player = std::make_shared<Player>(id);
+		player->BindServer(this);
+		m_player_list[id] = player;
+		return player;
+	}
 	return iter->second;
 }
 
