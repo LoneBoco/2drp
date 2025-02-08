@@ -113,7 +113,7 @@ void handle(Game& game, const packet::SwitchScene& packet)
 		player->SwitchScene(scene);
 		game.OnSceneSwitch.RunAll(scene);
 
-		log::PrintLine("<- Switched to scene {}.", scene_name);
+		log::PrintLine(log::game, "<- [SwitchScene][C] Switched to scene {}.", scene_name);
 	}
 }
 
@@ -142,7 +142,7 @@ void handle(Game& game, const packet::ClientScriptDelete& packet)
 		game.Server->RemovePlayerClientScript(name, game.GetCurrentPlayer());
 	}
 
-	log::PrintLine("<- Destroying client script {}.", name);
+	log::PrintLine(log::game, "<- [ClientScriptDelete][C] Destroying client script: {}", name);
 	game.OnDestroyed.Run(name);
 }
 
@@ -170,7 +170,7 @@ void handle(Game& game, const packet::SceneObjectOwnership& packet)
 
 	if (new_player == game.GetCurrentPlayer())
 	{
-		log::PrintLine("<- SceneObjectOwnership [C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
+		log::PrintLine(log::game, "<- [SceneObjectOwnership][C]: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
 		if (so != nullptr)
 			game.OnGainedOwnership.RunAll(so);
 	}
@@ -193,7 +193,7 @@ void handle(Game& game, const packet::SceneObjectChunkData& packet)
 	if (render == nullptr)
 		return;
 
-	log::PrintLine("<- Loading chunk data for scene object {}.", sceneobject);
+	// log::PrintLine(log::game, "<- [SceneObjectChunkData][C] Loading chunk data for scene object {}.", sceneobject);
 
 	// Load the chunk data.
 	// The position and size is recorded by the client and the client will ask the server for tiles when it needs them.

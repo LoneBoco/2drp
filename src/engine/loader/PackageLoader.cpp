@@ -34,6 +34,8 @@ namespace tdrp::helper
 		std::string classname = node_class.attribute("name").as_string();
 		auto pc = std::make_shared<ObjectClass>(classname);
 
+		log::PrintLine(log::game, classname);
+
 		// Script.
 		for (const auto& node_script : node_class.children("script"))
 		{
@@ -71,7 +73,10 @@ namespace tdrp::helper
 
 			auto type = Attribute::TypeFromString(attrtype);
 			if (type == AttributeType::INVALID)
-				log::PrintLine("!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
+			{
+				auto indent = log::game.indent();
+				log::PrintLine(log::game, "!! Attribute type was invalid, skipping: {}.{}", classname, attrname);
+			}
 			else
 			{
 				auto attrib = pc->Attributes.AddAttribute(attrname, type, attrvalue);
@@ -101,6 +106,9 @@ namespace tdrp::helper
 			}
 			else
 			{
+				log::PrintLine(log::game, "Loading object classes:");
+				auto indent = log::game.indent();
+
 				for (const auto& node_class : node_classes.children("class"))
 				{
 					std::string_view attrib_file = node_class.attribute("file").as_string();
@@ -215,7 +223,7 @@ namespace tdrp::helper
 
 			if (node_id.empty())
 			{
-				log::PrintLine("!! Item {} is missing an id, skipping.", node_name.text().as_string());
+				log::PrintLine(log::game, "!! Item {} is missing an id, skipping.", node_name.text().as_string());
 				return nullptr;
 			}
 
@@ -243,6 +251,9 @@ namespace tdrp::helper
 			return item;
 		};
 
+		log::PrintLine(log::game, "Loading items:");
+		auto indent = log::game.indent();
+
 		for (const auto& file : server.FileSystem.GetFiles(fs::FileCategory::ITEMS))
 		{
 			auto item = loadItem(file);
@@ -257,6 +268,9 @@ namespace tdrp::helper
 			tileset_file = attr_file.as_string();
 		if (!parent_node.text().empty())
 			tileset_file = parent_node.text().get();
+
+		log::PrintLine(log::game, "Loading tilesets from: {}", tileset_file);
+		auto indent = log::game.indent();
 
 		// Load our tilesets.
 		if (auto tilesets = server.FileSystem.GetFile(fs::FileCategory::ASSETS, tileset_file); tilesets != nullptr)
@@ -396,16 +410,24 @@ std::pair<bool, std::shared_ptr<package::Package>> Loader::LoadPackageIntoServer
 		if (const auto& node_scripts = node_package.child("requiredscripts"); !node_scripts.empty())
 		{
 			// Load server scripts.
-			std::vector<script_pair> serverscripts;
-			helper::LoadScripts(server, serverscripts, package, "server", node_scripts);
-			for (const auto& [name, script] : serverscripts)
-				server.LoadServerScript(name, script);
+			log::PrintLine(log::game, "Loading server scripts:");
+			{
+				auto indent = log::game.indent();
+				std::vector<script_pair> serverscripts;
+				helper::LoadScripts(server, serverscripts, package, "server", node_scripts);
+				for (const auto& [name, script] : serverscripts)
+					server.LoadServerScript(name, script);
+			}
 
 			// Load client scripts.
-			std::vector<script_pair> clientscripts;
-			helper::LoadScripts(server, clientscripts, package, "client", node_scripts);
-			for (const auto& [name, script] : clientscripts)
-				server.LoadClientScript(name, script, true);
+			log::PrintLine(log::game, "Loading client scripts:");
+			{
+				auto indent = log::game.indent();
+				std::vector<script_pair> clientscripts;
+				helper::LoadScripts(server, clientscripts, package, "client", node_scripts);
+				for (const auto& [name, script] : clientscripts)
+					server.LoadClientScript(name, script, true);
+			}
 		}
 
 		// Load items.

@@ -35,7 +35,7 @@ Window::Window(const char* title)
 
 Window::~Window()
 {
-	log::PrintLine(":: Closing window.");
+	log::PrintLine(log::game, ":: Closing window.");
 }
 
 constinit auto rml_events = std::variant<

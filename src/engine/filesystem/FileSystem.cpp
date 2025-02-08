@@ -90,7 +90,7 @@ void FileSystem::bind(FileCategory category, const filesystem::path& directory, 
 				archive_entry->FileSize = file.file_size();
 				archive_entry->ModifiedTime = file.last_write_time();
 
-				log::PrintLine("-- [FS] Found archive {}.", path.filename().string());
+				log::PrintLine(log::game, "-- [FS] Found archive {}.", path.filename().string());
 				directoryGroup->Archives.insert(std::make_pair(path.filename(), std::move(archive_entry)));
 
 				auto entry = std::make_unique<FileEntry>(FileEntryType::ARCHIVE, path);
@@ -221,7 +221,7 @@ void FileSystem::bind(FileCategory category, const filesystem::path& directory, 
 			archive_entry->FileSize = filesystem::file_size(dir / file);
 			archive_entry->ModifiedTime = filesystem::last_write_time(dir / file);
 
-			log::PrintLine("-- [FS] -- file {}.", file.string());
+			log::PrintLine(log::game, "-- [FS] -- file {}.", file.string());
 			directoryGroup->Archives.insert(std::make_pair(file, std::move(archive_entry)));
 
 			// Collecting entries from our new version of this archive.
@@ -270,7 +270,7 @@ void FileSystem::bind(FileCategory category, const filesystem::path& directory, 
 				{
 					// This is bad.  We added another zip file somewhere with the same name as an existing one.
 					// TODO: What to do?  Ignore?  Error?
-					log::PrintLine("!! File watcher identified a duplicate archive file: {}.", file.string());
+					log::PrintLine(log::game, "!! File watcher identified a duplicate archive file: {}.", file.string());
 				}
 				else
 				{

@@ -1,3 +1,4 @@
+#include "engine/filesystem/Log.h"
 #include "engine/script/Script.h"
 #include "engine/script/modules/bind.h"
 
@@ -8,7 +9,7 @@ std::unordered_map<std::string, std::string> Script::scripts{};
 
 static void log(const char* message)
 {
-	log::PrintLine("[LUA] {}", message);
+	log::PrintLine(log::game, "[LUA] {}", message);
 }
 
 sol::protected_function_result Script::ErrorHandler(lua_State* state, sol::protected_function_result pfr, std::string_view module_name)
@@ -57,14 +58,14 @@ sol::protected_function_result Script::ErrorHandler(lua_State* state, sol::prote
 			}
 		}
 
-		log::PrintLine("[LUA][ERROR][MODULE {}] {}", module_name, error);
+		log::PrintLine(log::game, "[LUA][ERROR][MODULE {}] {}", module_name, error);
 	}
 	return pfr;
 }
 
 int Script::DefaultExceptionHandler(lua_State* state, sol::optional<const std::exception&> ex, sol::string_view what)
 {
-	log::PrintLine("[LUA][ERROR] An exception has occured: {}", what);
+	log::PrintLine(log::game, "[LUA][ERROR] An exception has occured: {}", what);
 	lua_pushlstring(state, what.data(), what.size());
 	return 1;
 }
@@ -101,7 +102,7 @@ Script::~Script()
 
 ScriptManager::~ScriptManager()
 {
-	log::PrintLine(":: Shutting down scripting system.");
+	log::PrintLine(log::game, ":: Shutting down scripting system.");
 	try
 	{
 		// An object gets deleted somewhere and Lua can't handle it.

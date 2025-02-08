@@ -182,7 +182,7 @@ static AttributePtr load_attribute_from_packet(const packet::Attribute& packet_a
 
 void handle_ready(Server& server, const uint16_t playerId)
 {
-	log::PrintLine("<- Client {} is ready.", playerId);
+	log::PrintLine(log::game, "<- Client {} is ready.", playerId);
 	server.ProcessPlayerJoin(playerId);
 }
 
@@ -191,7 +191,7 @@ void handle_ready(Server& server, const uint16_t playerId)
 void handle(Server& server, const uint16_t playerId, const packet::Error& packet)
 {
 	auto& error = packet.message();
-	log::PrintLine("Error: {}", error);
+	log::PrintLine(log::game, "Error: {}", error);
 }
 
 void handle(Server& server, const uint16_t playerId, const packet::Login& packet)
@@ -207,24 +207,24 @@ void handle(Server& server, const uint16_t playerId, const packet::LoginStatus& 
 
 	if (success)
 	{
-		log::Print("<- Login successful.  Player id: {}", player_id);
+		log::Print(log::game, "<- Login successful.  Player id: {}", player_id);
 
 		// Map the host player id.
 		if (packet.has_host_player_id())
 		{
-			log::Print(", host player id: {}", packet.host_player_id());
+			log::Print(log::game, ", host player id: {}", packet.host_player_id());
 			auto& network = server.GetNetwork();
 			const auto host_player_id = packet.host_player_id();
 			if (auto host_peer = network.GetPeerIdForPlayer(host_player_id); host_peer.has_value())
 				network.MapPlayerToPeer(host_player_id, host_peer.value());
 		}
 
-		log::PrintLine("");
+		log::PrintLine(log::game, "");
 		server.SetPlayerNumber(player_id);
 	}
 	else
 	{
-		log::PrintLine("<- Login failed: {}", msg);
+		log::PrintLine(log::game, "<- Login failed: {}", msg);
 		// TODO: Disconnect.
 	}
 }
@@ -325,7 +325,7 @@ void handle(Server& server, const uint16_t playerId, const packet::FileTransfer&
 
 	if (server.DefaultDownloadPath.empty())
 	{
-		log::PrintLine("** [ERROR] Received TransferFile but no default download path set.");
+		log::PrintLine(log::game, "** [ERROR] Received TransferFile but no default download path set.");
 		return;
 	}
 
@@ -366,7 +366,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ClassAdd& pac
 	const auto& script_client = packet.scriptclient();
 	const auto& script_server = packet.scriptserver();
 
-	log::PrintLine(":: Adding class {}.", name);
+	log::PrintLine(log::game, ":: Adding class {}.", name);
 
 	auto c = server.GetObjectClass(name);
 	c->ClientScript = script_client;
@@ -404,7 +404,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ClassDelete& 
 {
 	const auto& name = packet.name();
 
-	log::PrintLine("!! Deleting class {}", name);
+	log::PrintLine(log::game, "!! Deleting class {}", name);
 
 	server.DeleteObjectClass(name);
 }
@@ -425,7 +425,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 	auto scene = server.GetScene(pscene);
 	if (!scene)
 	{
-		log::PrintLine("** ERROR: Attempted to add scene object to scene \"{}\" but the scene does not exist.", pscene);
+		log::PrintLine(log::game, "** ERROR: Attempted to add scene object to scene \"{}\" but the scene does not exist.", pscene);
 		return;
 	}
 
@@ -433,12 +433,12 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectNe
 	if (so != nullptr)
 	{
 		if (!server.IsHost())
-			log::PrintLine("!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
-		else log::PrintLine("!! Scene object {} ({}) already exists when it shouldn't!", pid, pclass);
+			log::PrintLine(log::game, "!! Scene object {} ({}) already exists, skipping add.", pid, pclass);
+		else log::PrintLine(log::game, "!! Scene object {} ({}) already exists when it shouldn't!", pid, pclass);
 	}
 	else
 	{
-		log::PrintLine(":: Adding scene object {} ({}).", pid, pclass);
+		log::PrintLine(log::game, ":: Adding scene object {} ({}).", pid, pclass);
 
 		// Create the scene object.
 		so = server.CreateSceneObject(type, pclass, pid);
@@ -623,7 +623,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectDe
 	const auto pid = packet.id();
 
 	if (!server.IsShuttingDown())
-		log::PrintLine("<- Deleting scene object {}", pid);
+		log::PrintLine(log::game, "<- Deleting scene object {}", pid);
 
 	server.DeleteSceneObject(pid);
 }
@@ -634,7 +634,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectOw
 	const auto old_player_id = packet.old_player_id();
 	const auto new_player_id = packet.new_player_id();
 
-	// log::PrintLine("<- SceneObjectOwnership: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
+	// log::PrintLine(log::game, "<- SceneObjectOwnership: Player {} takes ownership of {} from player {}.", new_player_id, sceneobject_id, old_player_id);
 
 	auto so = server.GetSceneObjectById(sceneobject_id);
 	auto old_player = server.GetPlayerById(old_player_id);
@@ -666,7 +666,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCo
 	if (!so->IsOwnedBy(player))
 		return;
 
-	// log::PrintLine("<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
+	// log::PrintLine(log::game, "<-- SceneObjectControl: Player {} takes control of {}.", player_id, sceneobject_id);
 
 	player->SwitchControlledSceneObject(so);
 }
@@ -680,7 +680,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectUn
 		const auto& oid = packet.id(i);
 		player->FollowedSceneObjects.erase(oid);
 
-		log::PrintLine("<- Removing scene object {} from player {}.", oid, playerId);
+		log::PrintLine(log::game, "<- Removing scene object {} from player {}.", oid, playerId);
 	}
 }
 
@@ -698,7 +698,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectSh
 	//if (!so->IsOwnedBy(player))
 		//return;
 
-	log::PrintLine("<- Received collision data for scene object {}.", sceneobject);
+	log::PrintLine(log::game, "<- Received collision data for scene object {}.", sceneobject);
 	readCollisionShapesFromPacket(so, packet, so->IsOwnedBy(server.GetPlayer()));
 }
 
@@ -720,7 +720,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectCh
 	Vector2di chunk_position{ packet.pos_x(), packet.pos_y() };
 	Vector2du chunk_dimensions{ packet.width(), packet.height() };
 
-	log::PrintLine("<- Received chunk {} data for scene object {}.", chunk_idx, sceneobject);
+	log::PrintLine(log::game, "<- Received chunk {} data for scene object {}.", chunk_idx, sceneobject);
 	tmx->LoadChunkData(chunk_idx, max_chunks, std::move(chunk_position), std::move(chunk_dimensions));
 	tmx->RenderOrder = static_cast<tmx::RenderOrder>(packet.render_order());
 }
@@ -741,7 +741,7 @@ void handle(Server& server, const uint16_t playerId, const packet::SceneObjectRe
 	if (chunk_idx >= tmx->Chunks.size())
 		return;
 
-	log::PrintLine("<- Received request for chunk {} data for scene object {}.", chunk_idx, sceneobject);
+	log::PrintLine(log::game, "<- Received request for chunk {} data for scene object {}.", chunk_idx, sceneobject);
 
 	// Record the chunk details.
 	const auto& chunk = tmx->Chunks.at(chunk_idx);
@@ -847,21 +847,21 @@ void handle(Server& server, const uint16_t playerId, const packet::SendEvent& pa
 		const auto radius = packet.radius();
 		Vector2df origin{ x, y };
 
-		log::PrintLine("<- Event '{}' from player {} to scene '{}' at ({}, {}):{} with data: {}", name, sender, pscene, x, y, radius, data);
+		log::PrintLine(log::game, "<- Event '{}' from player {} to scene '{}' at ({}, {}):{} with data: {}", name, sender, pscene, x, y, radius, data);
 
 		// Perform the event.
 		auto hits = server.ProcessSendEvent(scene, player, name, data, origin, radius);
-		log::PrintLine("   -- hits: {}", hits);
+		log::PrintLine(log::game, "   -- hits: {}", hits);
 	}
 	else
 	{
 		if (scene)
-			log::PrintLine("<- Level event '{}' from player {} to scene '{}' with data: {}", name, sender, pscene, data);
-		else log::PrintLine("<- Server event '{}' from player {} with data: {}", name, sender, data);
+			log::PrintLine(log::game, "<- Level event '{}' from player {} to scene '{}' with data: {}", name, sender, pscene, data);
+		else log::PrintLine(log::game, "<- Server event '{}' from player {} with data: {}", name, sender, data);
 
 		// Perform the event.
 		auto hits = server.ProcessSendEvent(scene, player, name, data);
-		if (scene) log::PrintLine("   -- hits: {}", hits);
+		if (scene) log::PrintLine(log::game, "   -- hits: {}", hits);
 	}
 }
 
@@ -944,7 +944,7 @@ void handle(Server& server, const uint16_t playerId, const packet::ItemAdd& pack
 	size_t old_count = 0;
 	if (auto stackable = std::dynamic_pointer_cast<item::ItemStackable>(item); stackable)
 	{
-		log::PrintLine("Setting item count to {}", count);
+		log::PrintLine(log::game, "Setting item count to {}", count);
 		old_count = stackable->Count;
 		stackable->Count = count;
 	}

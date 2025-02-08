@@ -131,14 +131,14 @@ namespace tdrp::helper
 					auto centers = helper::string_split_to_numbers<float>(center.as_string());
 					if (centers.size() < 2)
 					{
-						log::PrintLine("!! Collision box requires two values for center, skipping shape. ({}){}", scriptclass, id);
+						log::PrintLine(log::game, "!! Collision box requires two values for center, skipping shape. ({}){}", scriptclass, id);
 						continue;
 					}
 
 					auto radii = helper::string_split_to_numbers<float>(radius.as_string());
 					if (radii.empty())
 					{
-						log::PrintLine("!! Collision box requires at least one value for radius, skipping shape. ({}){}", scriptclass, id);
+						log::PrintLine(log::game, "!! Collision box requires at least one value for radius, skipping shape. ({}){}", scriptclass, id);
 						continue;
 					}
 
@@ -211,7 +211,7 @@ namespace tdrp::helper
 					auto centers = helper::string_split_to_numbers<float>(center.as_string());
 					if (centers.size() < 2)
 					{
-						log::PrintLine("!! Collision circle requires two values for center, skipping shape. ({}){}", scriptclass, id);
+						log::PrintLine(log::game, "!! Collision circle requires two values for center, skipping shape. ({}){}", scriptclass, id);
 						continue;
 					}
 
@@ -233,7 +233,7 @@ namespace tdrp::helper
 
 	static void addToScene(server::Server& server, scene::ScenePtr& scene, SceneObjectPtr& so)
 	{
-		log::PrintLine("[LOAD] Loaded scene object {} ({}).", so->ID, so->GetClass()->GetName());
+		log::PrintLine(log::game, "[LOAD] Loaded scene object {} ({}).", so->ID, so->GetClass()->GetName());
 		server.AddSceneObject(so);
 		server.SwitchSceneObjectScene(so, scene);
 	}
@@ -247,7 +247,7 @@ namespace tdrp::helper
 		// TODO: Throw error.
 		if (tileset.empty() || tiledata.empty())
 		{
-			log::PrintLine("** TileMap object requires a <tileset> or <tiledata> node, skipping. ({}){}", so->GetClass()->GetName(), so->ID);
+			log::PrintLine(log::game, "** TileMap object requires a <tileset> or <tiledata> node, skipping. ({}){}", so->GetClass()->GetName(), so->ID);
 			return false;
 		}
 
@@ -318,7 +318,7 @@ namespace tdrp::helper
 		auto tmx = std::make_shared<tmx::Map>();
 		if (!tmx->load(file))
 		{
-			log::PrintLine("** ERROR: Failed to load .tmx file. ({}){}", so->GetClass()->GetName(), so->ID);
+			log::PrintLine(log::game, "** ERROR: Failed to load .tmx file. ({}){}", so->GetClass()->GetName(), so->ID);
 			return false;
 		}
 
@@ -328,7 +328,7 @@ namespace tdrp::helper
 		{
 			if (tileset.getTileCount() == 0)
 			{
-				log::PrintLine("!! ERROR: Could not load tileset '{}', skipping.", tileset.getImagePath());
+				log::PrintLine(log::game, "!! ERROR: Could not load tileset '{}', skipping.", tileset.getImagePath());
 				continue;
 			}
 
@@ -352,15 +352,24 @@ namespace tdrp::helper
 		}
 
 		// Add the tilesets to the server.
-		for (const auto& [gid, tileset] : tilesets)
+		log::PrintLine(log::game, "Loading tilesets:");
 		{
-			filesystem::path name{ tileset->File };
-			server.AddTileset(name.filename().string(), tileset);
+			auto indent = log::game.indent();
+			for (const auto& [gid, tileset] : tilesets)
+			{
+				filesystem::path name{ tileset->File };
+				server.AddTileset(name.filename().string(), tileset);
+			}
 		}
 
-		// Look through all of our layers.
+		log::PrintLine(log::game, "Loading TMX tiles:");
+		auto indent = log::game.indent();
+
 		std::shared_ptr<TMXSceneObject> current_so = tmx_so;
 		const auto& layers = tmx->getLayers();
+		log::PrintLine(log::game, "Layers: {}", layers.size());
+
+		// Look through all of our layers.
 		for (auto layer_num = 0; layer_num < layers.size(); ++layer_num)
 		{
 			const auto& layer = layers.at(layer_num);
@@ -377,7 +386,10 @@ namespace tdrp::helper
 			if (!current_so->LoadMap(tmx, tilesets))
 				return false;
 
-			log::PrintLine("TMX [{}] Loaded Map {}, layer {}.", so->ID, file, layer_num);
+			auto bounds = current_so->GetBounds();
+			bounds.pos -= current_so->GetPosition();
+			log::PrintLine(log::game, "[{}] SceneObject ID: {}, Size: ({})", layer_num, current_so->ID, bounds);
+			// log::PrintLine(log::game, "TMX [{}] Loaded Map {}, layer {}.", so->ID, file, layer_num);
 
 			// Load all the chunk collisions.
 			const auto& tilelayer = layer->getLayerAs<tmx::TileLayer>();
@@ -443,6 +455,9 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 			scene->m_transmission_distance = n_transmission.attribute("distance").as_uint(2000);
 	}
 
+	log::PrintLine(log::game, "Loading scene: {}", scene_name);
+	auto indent = log::game.indent();
+
 	// Load our chunks.
 	for (auto& f : filesystem::directory_iterator(level))
 	{
@@ -502,7 +517,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)
-							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, so->ID, name);
+							log::PrintLine(log::game, "!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, so->ID, name);
 						else
 						{
 							auto soprop = so->Properties.Get(name);
@@ -523,7 +538,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 
 						auto attrtype = Attribute::TypeFromString(type);
 						if (attrtype == AttributeType::INVALID)
-							log::PrintLine("!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, so->ID, name);
+							log::PrintLine(log::game, "!! Attribute type was invalid, skipping: ({}){}.{}", scriptclass, so->ID, name);
 						else
 						{
 							auto soattrib = so->Attributes.AddAttribute(name, Attribute::TypeFromString(type), value);
@@ -581,7 +596,7 @@ std::shared_ptr<tdrp::scene::Scene> Loader::CreateScene(server::Server& server, 
 						const auto& tmx = object.child("tmx");
 						if (tmx.empty())
 						{
-							log::PrintLine("** ERROR: TMX object requires a <tmx> node, skipping sceneobject. ({}){}", scriptclass, so->ID);
+							log::PrintLine(log::game, "** ERROR: TMX object requires a <tmx> node, skipping sceneobject. ({}){}", scriptclass, so->ID);
 							continue;
 						}
 

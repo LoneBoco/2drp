@@ -15,6 +15,8 @@ namespace tdrp::loader::helper
 {
 	static void loadContext(pugi::xml_node& node, ui::UIManager* manager, std::vector<ui::UIContextDataDocument>& documents)
 	{
+		auto indent = log::game.indent();
+
 		// Load documents into the context.
 		for (auto& node_document : node.children("document"))
 		{
@@ -24,7 +26,7 @@ namespace tdrp::loader::helper
 			bool show = node_document.attribute("show").as_bool(false);
 			documents.emplace_back(ui::UIContextDataDocument{ .ShowOnLoad = show, .Filename = file });
 
-			log::PrintLine("         Document: {}", file);
+			log::PrintLine(log::game, "Document: {}", file);
 		}
 	}
 } // end namespace tdrp::loader::helper
@@ -48,7 +50,10 @@ size_t UILoader::Load(ui::UIManager* manager)
 	if (!contexts) return 0;
 
 	// Load our file.
+	log::PrintLine(log::game, ":: [UI] Loading \"contexts.xml\".");
 	{
+		auto indent = log::game.indent();
+
 		pugi::xml_document infodoc;
 		infodoc.load(*contexts);
 
@@ -58,8 +63,6 @@ size_t UILoader::Load(ui::UIManager* manager)
 		// Determine file version.
 		auto version = n_contexts.attribute("version").as_int(1);
 
-		log::PrintLine("[UI] Gathering UI data...");
-
 		// Load our fonts.
 		for (auto& fonts : n_contexts.children("font"))
 		{
@@ -68,7 +71,7 @@ size_t UILoader::Load(ui::UIManager* manager)
 			{
 				auto fallback = fonts.attribute("fallback").as_bool(false);
 				Rml::LoadFontFace(file, fallback);
-				log::PrintLine("       Loaded font: {}", file);
+				log::PrintLine(log::game, "Loaded font: {}", file);
 			}
 		}
 
@@ -82,7 +85,7 @@ size_t UILoader::Load(ui::UIManager* manager)
 			if (auto attr = context.attribute("load-on"); !attr.empty())
 				data.LoadOn = attr.as_string();
 
-			log::PrintLine("       Registered context: {}", name);
+			log::PrintLine(log::game, "Registered context: {}", name);
 
 			// Load the context.
 			helper::loadContext(context, manager, data.Documents);

@@ -24,7 +24,7 @@ void Account::Load(const std::string& name)
 	auto file = server->FileSystem.GetFile(fs::FileCategory::ACCOUNTS, (name + ".txt"));
 	if (!file)
 	{
-		log::PrintLine(":: Account {} does not exist.", name);
+		log::PrintLine(log::game, ":: Account {} does not exist.", name);
 		return;
 	}
 
@@ -40,7 +40,7 @@ void Account::Load(const std::string& name)
 			std::string attrvalue = node_attribute.attribute("value").as_string();
 			auto type = Attribute::TypeFromString(attrtype);
 			if (type == AttributeType::INVALID)
-				log::PrintLine("!! Player {}: {} {} was invalid.", name, description, attrname);
+				log::PrintLine(log::game, "!! Player {}: {} {} was invalid.", name, description, attrname);
 			container.AddAttribute(attrname, type, attrvalue);
 		}
 	};
@@ -132,7 +132,7 @@ void Account::Save()
 
 	if (m_name.empty())
 	{
-		log::PrintLine("!! Failed to save account - name was empty.");
+		log::PrintLine(log::game, "!! Failed to save account - name was empty.");
 		return;
 	}
 
@@ -214,7 +214,7 @@ void Account::Save()
 	auto filename{ basepath / (m_name + ".txt") };
 	doc.save_file(filename.c_str(), "\t");
 
-	log::PrintLine(":: Saved account {}.", m_name);
+	log::PrintLine(log::game, ":: Saved account {}.", m_name);
 }
 
 void Account::AddClientScript(const std::string& name)

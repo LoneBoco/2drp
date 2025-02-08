@@ -38,7 +38,7 @@ Game::Game()
 
 Game::~Game()
 {
-	log::PrintLine(":: Shutting down game.");
+	log::PrintLine(log::game, ":: Shutting down game.");
 
 	Server->Shutdown();
 

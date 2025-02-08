@@ -136,14 +136,14 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 		address.port = port;
 		if (enet_address_set_host(&address, hostname.c_str()) != 0)
 		{
-			log::PrintLine("!! Network connect - Failed to determine host address.");
+			log::PrintLine(log::game, "!! Network connect - Failed to determine host address.");
 			return false;
 		}
 
 		ENetPeer* peer = enet_host_connect(m_enet.get(), &address, static_cast<size_t>(Channel::COUNT), 0);
 		if (peer == nullptr)
 		{
-			log::PrintLine("!! Network connect - Failed to connect to host.");
+			log::PrintLine(log::game, "!! Network connect - Failed to connect to host.");
 			return false;
 		}
 
@@ -152,7 +152,7 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 		{
 			if (event.type == ENET_EVENT_TYPE_CONNECT)
 			{
-				log::PrintLine(":: Network connect - Established link to host.");
+				log::PrintLine(log::game, ":: Network connect - Established link to host.");
 				m_peers.clear();
 				m_player_id_map.clear();
 				register_player_and_peer(HOST_PLAYER, peer);
@@ -160,7 +160,7 @@ std::future<bool> Network::Connect(const std::string& hostname, const uint16_t p
 			}
 		}
 
-		log::PrintLine("!! Network connect - Failure to establish link to host.");
+		log::PrintLine(log::game, "!! Network connect - Failure to establish link to host.");
 		enet_peer_reset(peer);
 		return false;
 	});
@@ -258,7 +258,7 @@ void Network::Update()
 
 					// The first two bytes make up the packet id.
 					uint16_t packet_id = static_cast<uint16_t>((event.packet->data[0] & 0xFF) | (event.packet->data[1] << 8));
-					// log::PrintLine("-- Packet {}", packet_id);
+					// log::PrintLine(log::game, "-- Packet {}", packet_id);
 
 					// If login packet, call the login callback.
 					// Otherwise, if we are the host, attempt to handle client packets.
@@ -311,7 +311,7 @@ void Network::Send(const PlayerID player_id, const uint16_t packet_id, const Cha
 	auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 	if (success != 0)
 	{
-		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
+		log::PrintLine(log::game, "** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
 		enet_packet_destroy(packet);
 		check_for_error(player_id, peer);
 	}
@@ -339,7 +339,7 @@ void Network::Send(const PlayerID player_id, const uint16_t packet_id, const Cha
 	auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 	if (success != 0)
 	{
-		log::PrintLine("** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
+		log::PrintLine(log::game, "** ERROR: Failure to send packet {} to player {}.", packet_id, player_id);
 		enet_packet_destroy(packet);
 		check_for_error(player_id, peer);
 	}
@@ -492,7 +492,7 @@ std::vector<server::PlayerPtr> Network::sendToScene(const std::shared_ptr<tdrp::
 						auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 						if (success != 0)
 						{
-							log::PrintLine("** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
+							log::PrintLine(log::game, "** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
 							check_for_error(player_id, peer);
 							continue;
 						}
@@ -539,7 +539,7 @@ int Network::broadcastToScene(const std::shared_ptr<tdrp::scene::Scene> scene, c
 					auto success = enet_peer_send(peer, static_cast<uint8_t>(channel), packet);
 					if (success != 0)
 					{
-						log::PrintLine("** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
+						log::PrintLine(log::game, "** ERROR: Failure to send packet {} to player {} in scene \"{}\".", packet_id, player_id, scene->GetName());
 						check_for_error(player_id, peer);
 						continue;
 					}
@@ -565,7 +565,7 @@ void Network::check_for_error(PlayerID player_id, _ENetPeer* peer)
 		// _executeCallbacks(m_disconnect_cb, player_id);
 	}
 
-	log::PrintLine("!! Some unknown enet error occurred.");
+	log::PrintLine(log::game, "!! Some unknown enet error occurred.");
 }
 
 _ENetPacket* Network::construct_packet(const Channel channel, const uint16_t packet_id, const google::protobuf::Message* message)

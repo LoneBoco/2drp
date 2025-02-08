@@ -253,7 +253,7 @@ bool keyup(int key)
 
 void logF(const char* message)
 {
-	log::PrintLine(":: [SCRIPT] {}", message);
+	log::PrintLine(log::game, ":: [SCRIPT] {}", message);
 }
 
 /*

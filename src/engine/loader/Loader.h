@@ -2,6 +2,7 @@
 
 #include <unordered_map>
 #include "engine/common.h"
+#include "engine/filesystem/common.h"
 
 
 namespace tdrp::server

@@ -528,12 +528,12 @@ void SceneObject::AttachTo(std::shared_ptr<SceneObject> other)
 	// If we are attaching, set our position offset to 0,0.
 	if (other == nullptr)
 	{
-		log::PrintLine(":: Detaching scene object {}.", ID);
+		log::PrintLine(log::game, ":: Detaching scene object {}.", ID);
 		SetPosition(other->GetPosition() + GetPosition());
 	}
 	else
 	{
-		log::PrintLine(":: Attaching scene object {} to {}.", ID, other->ID);
+		log::PrintLine(log::game, ":: Attaching scene object {} to {}.", ID, other->ID);
 		SetPosition({ 0, 0 });
 	}
 
@@ -846,7 +846,7 @@ void TMXSceneObject::CalculateLevelSize() noexcept
 	m_calculated_level_bounds.size.x *= tilesize_x;
 	m_calculated_level_bounds.size.y *= tilesize_y;
 
-	log::PrintLine("TMX [{}] Calculated level size as ({}, {}, {}, {}).", ID, m_calculated_level_bounds.pos.x, m_calculated_level_bounds.pos.y, m_calculated_level_bounds.size.x, m_calculated_level_bounds.size.y);
+	// log::PrintLine(log::game, "TMX [{}] Calculated level size as ({}, {}, {}, {}).", ID, m_calculated_level_bounds.pos.x, m_calculated_level_bounds.pos.y, m_calculated_level_bounds.size.x, m_calculated_level_bounds.size.y);
 }
 
 void TMXSceneObject::CalculateChunksToRender(const Rectf& window, std::vector<uint32_t>& chunks_to_render) const noexcept
@@ -995,7 +995,7 @@ void TMXSceneObject::LoadChunkCollision(uint32_t chunk_idx, std::shared_ptr<scen
 	if (!HasPhysicsBody())
 		ConstructPhysicsBodiesFromConfiguration();
 
-	log::PrintLine("TMX [{}] Loaded collision for chunk {}.", ID, chunk_idx);
+	// log::PrintLine(log::game, "TMX [{}] Loaded collision for chunk {}.", ID, chunk_idx);
 }
 
 void TMXSceneObject::SetChunkCollision(uint32_t chunk_idx, const physics::BodyConfiguration& config) noexcept

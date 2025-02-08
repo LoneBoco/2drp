@@ -138,7 +138,7 @@ bool Server::Initialize(const ServerType type, const uint16_t flags)
 	m_server_type = type;
 	m_server_flags = flags;
 
-	log::PrintLine(":: Initialized server.");
+	log::PrintLine(log::game, ":: Initialized server.");
 	return true;
 }
 
@@ -147,8 +147,10 @@ bool Server::LoadPackage(const std::string& package_name)
 	if (m_package != nullptr)
 		throw std::runtime_error("!! Tried to load a package when one is already loaded!  Destroy the old Server and make a new one.");
 
+	log::PrintLine(log::game, ":: Loading package: {}", package_name);
+	auto indent = log::game.indent();
+
 	// Load the package.
-	log::PrintLine(":: Loading package: {}", package_name);
 	auto [load_success, package] = Loader::LoadPackageIntoServer(*this, package_name);
 	m_package = package;
 
@@ -159,7 +161,8 @@ bool Server::LoadPackage(const std::string& package_name)
 	// Load everything from the package into the server.
 	if (HASFLAG(m_server_flags, ServerFlags::PRELOAD_EVERYTHING))
 	{
-		log::PrintLine("   Loading all scenes in package.");
+		log::PrintLine(log::game, "Loading all scenes in package.");
+		auto indent = log::game.indent();
 
 		// Load all scenes.
 		for (const std::filesystem::path& directory : FileSystem.GetDirectories(fs::FileCategory::LEVELS))
@@ -176,7 +179,7 @@ bool Server::LoadPackage(const std::string& package_name)
 	// Load only the starting scene into the server.
 	else
 	{
-		log::PrintLine("   Loading the starting scene: {}.", package->GetStartingScene());
+		log::PrintLine(log::game, "Loading the starting scene: {}.", package->GetStartingScene());
 
 		// Load our starting scene.
 		if (auto path = FileSystem.GetDirectoryPath(fs::FileCategory::LEVELS, package->GetStartingScene()); !path.empty())
@@ -187,10 +190,11 @@ bool Server::LoadPackage(const std::string& package_name)
 	// Load server script.
 	if (IsHost())
 	{
-		log::PrintLine("   Loading server scripts:");
+		log::PrintLine(log::game, "Loading server scripts:");
+		auto indent = log::game.indent();
 		for (const auto& [name, script] : m_server_scripts)
 		{
-			log::PrintLine("     {}", name);
+			log::PrintLine(log::game, "{}", name);
 			Script->RunScript(name, script, this);
 		}
 	}
@@ -205,7 +209,7 @@ bool Server::HostDedicated(const uint16_t port, const size_t peers)
 	m_server_type = ServerType::DEDICATED;
 	UNSETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 
-	log::PrintLine(":: Hosting on port {} for {} peers.", port, peers);
+	log::PrintLine(log::game, ":: Hosting on port {} for {} peers.", port, peers);
 
 	m_network.Initialize(peers, port);
 	return true;
@@ -216,7 +220,7 @@ bool Server::Host(const uint16_t port, const size_t peers)
 	m_server_type = ServerType::HOST;
 	UNSETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 
-	log::PrintLine(":: Hosting on port {} for {} peers.", port, peers);
+	log::PrintLine(log::game, ":: Hosting on port {} for {} peers.", port, peers);
 
 	// Initialize our network and connect.
 	m_network.Initialize(peers, port);
@@ -235,7 +239,7 @@ bool Server::Connect(const std::string& hostname, const uint16_t port)
 	m_server_type = ServerType::GUEST;
 	m_server_flags = 0;
 
-	log::PrintLine(":: Connecting to {} on port {}.", hostname, port);
+	log::PrintLine(log::game, ":: Connecting to {} on port {}.", hostname, port);
 
 	m_network.Initialize();
 	m_connecting = true;
@@ -248,7 +252,7 @@ bool Server::SinglePlayer()
 	m_server_type = ServerType::HOST;
 	SETFLAG(m_server_flags, ServerFlags::SINGLEPLAYER);
 
-	log::PrintLine(":: Starting as single player server.");
+	log::PrintLine(log::game, ":: Starting as single player server.");
 
 	// Log the player in.
 	auto id = GetNextPlayerID();
@@ -317,7 +321,7 @@ void Server::PreUpdate()
 			bool success = m_connecting_future.get();
 			if (success)
 			{
-				log::PrintLine(":: Connection was successful, sending login packet.");
+				log::PrintLine(log::game, ":: Connection was successful, sending login packet.");
 
 				packet::Login packet;
 				packet.set_method(packet::Login_Method_PEER2PEER);
@@ -331,7 +335,7 @@ void Server::PreUpdate()
 			}
 			else
 			{
-				log::PrintLine("!! Connection failed.");
+				log::PrintLine(log::game, "!! Connection failed.");
 				m_network.Disconnect();
 			}
 		}
@@ -389,7 +393,7 @@ void Server::Update(const std::chrono::milliseconds& tick)
 				if (!_sendNewSceneObjectToPlayer(*this, player, item))
 					return;
 
-				log::PrintLine("-> Sending scene object {} via range to player {}.", item->ID, player->GetPlayerId());
+				log::PrintLine(log::game, "-> Sending scene object {} via range to player {}.", item->ID, player->GetPlayerId());
 				new_objects.insert(item->ID);
 			});
 
@@ -468,7 +472,7 @@ void Server::Update(const std::chrono::milliseconds& tick)
 void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& account)
 {
 	// Load account.
-	log::PrintLine(":: Loading account {} for player {}.", account, player_id);
+	log::PrintLine(log::game, ":: Loading account {} for player {}.", account, player_id);
 	auto player = GetPlayerById(player_id);
 	player->Account.Load(account);
 
@@ -478,7 +482,7 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 	login_status.set_success(true);
 	login_status.set_host_player_id(m_player->GetPlayerId());
 	Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-	log::PrintLine("-> Sending login allowed.");
+	log::PrintLine(log::game, "-> [LOGINSTATUS] Sending login allowed.");
 
 	// Send classes.
 	for (const auto& [name, oc] : m_object_classes)
@@ -518,7 +522,7 @@ void Server::ProcessPlayerLogin(const uint16_t player_id, const std::string& acc
 		if (auto variant = std::dynamic_pointer_cast<item::ItemVariant>(item); variant)
 			network::assignAllAttributesToPacket(packetAdd, variant->VariantAttributes, &packet::ItemAdd::add_variant_attributes);
 
-		log::PrintLine("-> Sending weapon {} (base {}, type {}) to player {}.", item->ID, item->ItemBaseID, static_cast<uint8_t>(item->Type), player->GetPlayerId());
+		log::PrintLine(log::game, "-> [ITEMADD] Sending weapon {} (base {}, type {}) to player {}.", item->ID, item->ItemBaseID, static_cast<uint8_t>(item->Type), player->GetPlayerId());
 		Send(player->GetPlayerId(), network::PACKETID(network::Packets::ITEMADD), network::Channel::RELIABLE, packetAdd);
 	}
 
@@ -554,7 +558,7 @@ void Server::ProcessPlayerJoin(const uint16_t player_id)
 	if (scene == nullptr)
 		scene = GetOrCreateScene(GetPackage()->GetStartingScene());
 
-	log::PrintLine("-> Sending player {} to scene {}.", player_id, scene->GetName());
+	log::PrintLine(log::game, "-> Sending player {} to scene {}.", player_id, scene->GetName());
 	player->SwitchScene(scene);
 
 	// Call the OnPlayerJoin script function.
@@ -565,7 +569,7 @@ void Server::ProcessPlayerJoin(const uint16_t player_id)
 
 void Server::SetPlayerNumber(const uint16_t player_number)
 {
-	log::PrintLine(":: Assigned player number {}.", player_number);
+	log::PrintLine(log::game, ":: Assigned player number {}.", player_number);
 
 	//if (IsGuest() || player_number == 0)
 	{
@@ -653,7 +657,7 @@ bool Server::SwitchPlayerScene(PlayerPtr& player, scene::ScenePtr& new_scene)
 		if (!_sendNewSceneObjectToPlayer(*this, player, sceneobject))
 			continue;
 
-		log::PrintLine("-> Sending scene object {} via scene switch.", sceneobject->ID);
+		log::PrintLine(log::game, "-> Sending scene object {} via scene switch.", sceneobject->ID);
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 
 		// If there is no owning player, take ownership.
@@ -671,12 +675,18 @@ void Server::LoadServerScript(const std::string& name, const std::string& script
 	auto it = m_server_scripts.find(name);
 	if (it == std::end(m_server_scripts))
 	{
-		log::PrintLine(":: Adding server script \"{}\".", name);
+		if (log::game.not_indented())
+			log::Print(log::game, ":: Adding server script: ");
+
+		log::PrintLine(log::game, name);
 		m_server_scripts[name] = script;
 	}
 	else
 	{
-		log::PrintLine(":: Replacing server script \"{}\".", name);
+		if (log::game.not_indented())
+			log::Print(log::game, ":: Replacing server script: ");
+
+		log::PrintLine(log::game, name);
 		m_server_scripts[name] = script;
 	}
 
@@ -689,12 +699,18 @@ void Server::LoadClientScript(const std::string& name, const std::string& script
 	auto it = m_client_scripts.find(name);
 	if (it == std::end(m_client_scripts))
 	{
-		log::PrintLine(":: Adding client script \"{}\".", name);
+		if (log::game.not_indented())
+			log::Print(log::game, ":: Adding client script: ");
+
+		log::PrintLine(log::game, name);
 		m_client_scripts[name] = std::make_pair(required, script);
 	}
 	else
 	{
-		log::PrintLine(":: Replacing client script \"{}\".", name);
+		if (log::game.not_indented())
+			log::Print(log::game, ":: Replacing client script: ");
+
+		log::PrintLine(log::game, name);
 		m_client_scripts[name] = std::make_pair(required, script);
 	}
 
@@ -721,7 +737,7 @@ void Server::EraseClientScript(const std::string& name)
 	if (it == std::end(m_client_scripts))
 		return;
 
-	log::PrintLine(":: Erasing client script \"{}\".", name);
+	log::PrintLine(log::game, ":: Erasing client script \"{}\".", name);
 	m_client_scripts.erase(it);
 
 	// Send the changes to all players who have this script.
@@ -760,7 +776,7 @@ void Server::AddPlayerClientScript(const std::string& name, PlayerPtr player)
 		packet.set_name(name);
 		packet.set_script(script);
 
-		log::PrintLine("-> Sending client script \"{}\" to player {}.", name, player->GetPlayerId());
+		log::PrintLine(log::game, "-> [CLIENTSCRIPTADD] Sending client script \"{}\" to player {}.", name, player->GetPlayerId());
 		Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTADD), network::Channel::RELIABLE, packet);
 	}
 }
@@ -780,7 +796,7 @@ void Server::RemovePlayerClientScript(const std::string& name, PlayerPtr player)
 		packet::ClientScriptDelete packet;
 		packet.set_name(name);
 
-		log::PrintLine("-> Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
+		log::PrintLine(log::game, "-> [CLIENTSCRIPTDELETE] Removing client script \"{}\" from player {}.", name, player->GetPlayerId());
 		Send(player->GetPlayerId(), PACKETID(Packets::CLIENTSCRIPTDELETE), network::Channel::RELIABLE, packet);
 	}
 }
@@ -796,11 +812,14 @@ bool Server::AddItemDefinition(item::ItemDefinitionUPtr&& item)
 	const auto&& [iter, success] = m_item_definitions.emplace(std::make_pair(item->BaseID, std::move(item)));
 	if (success)
 	{
-		log::PrintLine(":: Loaded item {}.{}.", baseID, name);
+		if (log::game.not_indented())
+			log::Print(log::game, ":: Loaded item: ");
+
+		log::PrintLine(log::game, "{}.{}", baseID, name);
 		Script->RunScript(std::format("item_{}", baseID), iter->second->ClientScript, iter->second.get());
 		iter->second->OnCreated.RunAll();
 	}
-	else log::PrintLine("!! Failed to add item {}.{}. Item with the same ID already exists.", baseID, name);
+	else log::PrintLine(log::game, "!! Failed to add item {}.{}. Item with the same ID already exists.", baseID, name);
 
 	return success;
 }
@@ -813,7 +832,7 @@ void Server::SendItemDefinition(server::PlayerPtr player, ItemID baseId)
 
 	if (auto baseItem = GetItemDefinition(baseId); baseItem)
 	{
-		log::PrintLine("-> Sending item definition {}.{} to player {}.", baseId, baseItem->Name, player->GetPlayerId());
+		log::PrintLine(log::game, "-> Sending item definition {}.{} to player {}.", baseId, baseItem->Name, player->GetPlayerId());
 		player->AddKnownItemDefinition(baseId);
 
 		// Only send item definitions if we are the host.
@@ -1165,7 +1184,7 @@ SceneObjectPtr Server::CreateSceneObject(SceneObjectType type, const std::string
 		so = std::make_shared<tdrp::TextSceneObject>(oc, soid);
 		break;
 	default:
-		log::PrintLine("!! CreateSceneObject requires a valid scene object type.");
+		log::PrintLine(log::game, "!! CreateSceneObject requires a valid scene object type.");
 		return nullptr;
 	}
 
@@ -1337,7 +1356,7 @@ bool Server::SwitchSceneObjectOwnership(SceneObjectPtr sceneobject, PlayerPtr pl
 	if (!player->FollowedSceneObjects.contains(sceneobject->ID))
 	{
 		if (_sendNewSceneObjectToPlayer(*this, player, sceneobject))
-			log::PrintLine("-> Sending scene object {} via ownership change.", sceneobject->ID);
+			log::PrintLine(log::game, "-> Sending scene object {} via ownership change.", sceneobject->ID);
 
 		player->FollowedSceneObjects.insert(sceneobject->ID);
 	}
@@ -1366,7 +1385,7 @@ void Server::RequestSceneObjectChunkData(SceneObjectPtr sceneobject, uint32_t ch
 	packet.set_id(sceneobject->ID);
 	packet.set_index(chunk_idx);
 	
-	log::PrintLine("-> Requesting chunk {} data for scene object {}.", chunk_idx, sceneobject->ID);
+	log::PrintLine(log::game, "-> Requesting chunk {} data for scene object {}.", chunk_idx, sceneobject->ID);
 	Send(PACKETID(Packets::SCENEOBJECTREQUESTCHUNKDATA), network::Channel::RELIABLE, packet);
 }
 
@@ -1406,7 +1425,10 @@ bool Server::AddTileset(const std::string& name, scene::TilesetPtr tileset)
 
 	m_tilesets[name] = tileset;
 
-	log::PrintLine(":: Adding tileset {}.", name);
+	if (log::game.not_indented())
+		log::Print(log::game, ":: Adding tileset: ");
+
+	log::PrintLine(log::game, name);
 
 	// Broadcast to players if we are the host.
 	if (IsHost())
@@ -1435,12 +1457,12 @@ int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string
 	// Send the packet.
 	if (scene)
 	{
-		log::PrintLine("-> Sending level event '{}' to scene '{}' with data: {}", name, scene->GetName(), data);
+		log::PrintLine(log::game, "-> Sending level event '{}' to scene '{}' with data: {}", name, scene->GetName(), data);
 		BroadcastToScene(scene, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });
 	}
 	else
 	{
-		log::PrintLine("-> Sending server event '{}' with data: {}", name, data);
+		log::PrintLine(log::game, "-> Sending server event '{}' with data: {}", name, data);
 		Broadcast(network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet);
 	}
 
@@ -1464,7 +1486,7 @@ int Server::SendEvent(scene::ScenePtr scene, PlayerPtr player, const std::string
 	// Process the event.
 	int count = ProcessSendEvent(scene, player, name, data, origin, radius);
 
-	log::PrintLine("-> [{}] Event '{}' ({:.2f}, {:.2f})-{}: {} hits, data: {}", scene->GetName(), name, origin.x, origin.y, radius, count, data);
+	log::PrintLine(log::game, "-> [{}] Event '{}' ({:.2f}, {:.2f})-{}: {} hits, data: {}", scene->GetName(), name, origin.x, origin.y, radius, count, data);
 
 	// Send the packet.
 	SendToScene(scene, origin, network::PACKETID(Packets::SENDEVENT), network::Channel::RELIABLE, packet, { m_player });
@@ -1594,7 +1616,7 @@ void Server::network_connect(const uint32_t id)
 {
 	auto player_id = GetNextPlayerID();
 	m_network.MapPlayerToPeer(player_id, id);
-	log::PrintLine("<- Connection from player {} ({}).", player_id, id);
+	log::PrintLine(log::game, "<- Connection from player {} ({}).", player_id, id);
 
 	auto player = std::make_shared<Player>(player_id);
 	player->BindServer(this);
@@ -1618,7 +1640,7 @@ void Server::network_disconnect(const PlayerID player_id)
 		player->Account.Save();
 
 	// TODO: Send disconnection packet to peers.
-	log::PrintLine("<- Disconnection from player {}.", player_id);
+	log::PrintLine(log::game, "<- Disconnection from player {}.", player_id);
 
 	SCRIPT_THEM_ERASE(player);
 }
@@ -1629,7 +1651,7 @@ void Server::network_login(const PlayerID player_id, const uint16_t packet_id, c
 		return;
 
 	auto player = GetPlayerById(player_id);
-	log::PrintLine("<- Received login packet from player {}.", player_id);
+	log::PrintLine(log::game, "<- Received login packet from player {}.", player_id);
 
 	packet::Login packet;
 	packet.ParseFromArray(packet_data, static_cast<int>(packet_length));
@@ -1657,7 +1679,7 @@ void Server::network_login(const PlayerID player_id, const uint16_t packet_id, c
 		login_status.set_success(false);
 		login_status.set_message("Invalid username or password.");
 		Send(player_id, PACKETID(Packets::LOGINSTATUS), network::Channel::RELIABLE, login_status);
-		log::PrintLine("-> Sending login status - failure.");
+		log::PrintLine(log::game, "-> Sending login status - failure.");
 
 		m_network.DisconnectPeer(player_id);
 		return;

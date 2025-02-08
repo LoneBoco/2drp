@@ -152,6 +152,9 @@ namespace tdrp::ui
 
 UIManager::UIManager()
 {
+	log::PrintLine(log::game, ":: Creating UIManager.");
+	auto indent = log::game.indent();
+
 	// Bind Rml.
 	{
 		Backend::Initialize(window->GetRenderWindow());
@@ -166,6 +169,7 @@ UIManager::UIManager()
 
 		Rml::Initialise();
 	}
+	log::PrintLine(log::game, "Initialized RmlUi.");
 
 	// Create debugger context.
 	{
@@ -174,6 +178,7 @@ UIManager::UIManager()
 		m_debugger_host = Rml::CreateContext("debugger", size, RenderInterface);
 		Rml::Debugger::Initialise(m_debugger_host);
 	}
+	log::PrintLine(log::game, "Created debugger context.");
 
 	// Bind Lua.
 	{
@@ -198,12 +203,10 @@ UIManager::UIManager()
 			}
 		);
 
-		log::PrintLine("[UI] Loaded Lua into UI.");
-
 		// Load the UI bindings into the game's script state.
 		Rml::SolLua::RegisterLua(&game->Script->GetLuaState());
-		log::PrintLine("[UI] Loaded Lua into Game.");
 	}
+	log::PrintLine(log::game, "Loaded Lua context for UI.");
 }
 
 UIManager::~UIManager()
@@ -353,18 +356,18 @@ void UIManager::LoadContext(std::string_view name)
 		auto* document = context->LoadDocument(document_config.Filename);
 		if (document == nullptr) continue;
 
-		log::Print("[UI] Loaded document \"{}\"", document_config.Filename);
+		log::Print(log::game, ":: [UI] Loaded document \"{}\"", document_config.Filename);
 
 		// Show the document.
 		// If we want it hidden, hide it afterwards.
 		document->Show();
 		if (!document_config.ShowOnLoad)
 		{
-			log::Print(" (hidden)");
+			log::Print(log::game, " (hidden)");
 			document->Hide();
 		}
 
-		log::PrintLine(".");
+		log::PrintLine(log::game, ".");
 	}
 }
 

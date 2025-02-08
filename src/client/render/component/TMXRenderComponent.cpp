@@ -329,7 +329,7 @@ std::optional<TMXRenderComponent::Chunk> TMXRenderComponent::RenderChunkToTextur
 	render_chunk.Sprite = std::make_optional<sf::Sprite>(render_texture->getTexture());
 	render_chunk.RenderTexture = render_texture;
 
-	log::PrintLine("TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
+	// log::PrintLine(log::game, "TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
 	return std::make_optional(std::move(render_chunk));
 }
 
@@ -378,7 +378,7 @@ void TMXRenderComponent::RenderChunkToTexture(uint32_t chunk_idx, const std::spa
 	render_chunk.Sprite = std::make_optional<sf::Sprite>(render_texture->getTexture());
 	render_chunk.RenderTexture = render_texture;
 
-	log::PrintLine("TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
+	// log::PrintLine(log::game, "TMX [{}] Rendered texture for chunk {}.", so->ID, chunk_idx);
 
 	if (m_chunks.size() <= chunk_idx)
 	{

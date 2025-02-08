@@ -76,7 +76,7 @@ public:
 	ResourceManager() = default;
 	~ResourceManager()
 	{
-		log::PrintLine(":: Erasing resources.");
+		log::PrintLine(log::game, ":: Erasing resources.");
 	}
 
 	ResourceManager(const ResourceManager& other) = delete;
