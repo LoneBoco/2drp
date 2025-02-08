@@ -154,6 +154,12 @@ Attribute& Attribute::operator=(const double value)
 	return Set(value);
 }
 
+bool Attribute::operator==(const Attribute& other) const
+{
+	if (ID != other.ID) return false;
+	return m_value == other.m_value;
+}
+
 const AttributeType Attribute::GetType() const
 {
 	return GetAttributeType(m_value);

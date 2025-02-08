@@ -83,6 +83,15 @@ public:
 		});
 	}
 	
+	//! Processes all dirty attributes and returns if any were dirty.
+	bool ProcessAllDirty() const
+	{
+		bool result = false;
+		for (auto& [id, attr] : m_properties)
+			result = attr->ProcessDirty() || result;
+		return result;
+	}
+
 	//! Clears all the dirty flags and doesn't dispatch any events.
 	void ClearAllDirty();
 

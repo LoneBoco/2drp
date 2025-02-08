@@ -74,6 +74,7 @@ public:
 public:
 	void PreUpdate();
 	void Update(const std::chrono::milliseconds& tick);
+	std::chrono::milliseconds GetCurrentTick() const noexcept;
 
 public:
 	void ProcessPlayerLogin(const uint16_t player_id, const std::string& account);
@@ -193,7 +194,7 @@ protected:
 	network::Network m_network;
 
 	bool m_shutting_down = false;
-	bool m_connecting;
+	bool m_connecting = false;
 	std::future<bool> m_connecting_future;
 
 	ServerType m_server_type;
@@ -213,13 +214,20 @@ protected:
 
 	std::string m_unique_id;
 	std::string m_server_name;
-	uint16_t m_max_players;
+	uint16_t m_max_players = 8;
 
 	PlayerPtr m_player = std::make_shared<Player>(0);
 	std::string m_credential_account;
 	std::string m_credential_password_hash;
 	std::string m_credential_nickname;
+
+	std::chrono::milliseconds m_current_tick = 0ms;
 };
+
+inline std::chrono::milliseconds Server::GetCurrentTick() const noexcept
+{
+	return m_current_tick;
+}
 
 inline bool Server::IsShuttingDown() const noexcept
 {

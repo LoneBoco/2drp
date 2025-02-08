@@ -51,6 +51,17 @@ public:
 	Attribute& operator=(const int64_t value);
 	Attribute& operator=(const double value);
 
+	bool operator==(const Attribute& other) const;
+
+	auto operator<=>(is_numeric auto b)
+	{
+		return GetAs<decltype(b)>() <=> b;
+	}
+	auto operator<=>(const std::string& b)
+	{
+		return GetAs<std::string>().compare(b);
+	}
+
 	template <typename T>
 	std::optional<T> Get() const
 	{
@@ -261,6 +272,15 @@ public:
 		{
 			return v.second->Dirty;
 		});
+	}
+
+	//! Processes all dirty attributes and returns if any were dirty.
+	bool ProcessAllDirty() const
+	{
+		bool result = false;
+		for (auto& [id, attr] : m_attributes)
+			result = attr->ProcessDirty() || result;
+		return result;
 	}
 
 	//! Clears all the dirty flags and doesn't dispatch any events.

@@ -351,6 +351,7 @@ void Server::PreUpdate()
 void Server::Update(const std::chrono::milliseconds& tick)
 {
 	auto tick_count = tick.count();
+	m_current_tick = tick;
 
 	// Run server update script.
 	OnServerTick.RunAll(tick_count);

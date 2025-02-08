@@ -341,7 +341,7 @@ void SceneObject::SetVelocity(const Vector2df& velocity)
 	{
 		auto& world = scene->Physics.GetWorld();
 		SetHybridBodyMoving(velocity.x != 0.0f || velocity.y != 0.0f);
-		playrho::d2::SetVelocity(world, m_physics_body.value(), {velocity.x, velocity.y});
+		playrho::d2::SetVelocity(world, m_physics_body.value(), { velocity.x, velocity.y });
 	}
 }
 
