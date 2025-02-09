@@ -1,6 +1,6 @@
 #include <ranges>
 
-#include "client/render/component/Animation/GaniAnimation.h"
+#include "client/component/render/animation/GaniAnimation.h"
 
 #include "client/game/Game.h"
 #include "client/loader/gani/GaniLoader.h"
@@ -11,7 +11,7 @@
 #include "engine/scene/SceneObject.h"
 #include "engine/resources/Resource.h"
 
-namespace tdrp::render::component::animation
+namespace tdrp::component::render::animation
 {
 
 void GaniAnimation::Load(const filesystem::path& image)
@@ -390,4 +390,4 @@ void GaniAnimation::swap_images(const std::string& attribute, const std::string&
 	}
 }
 
-} // end namespace tdrp::render::component::animation
+} // end namespace tdrp::component::render::animation

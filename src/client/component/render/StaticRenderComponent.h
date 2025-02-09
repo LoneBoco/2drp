@@ -6,7 +6,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "client/render/component/Renderable.h"
+#include "client/component/render/Renderable.h"
 
 #include "engine/common.h"
 #include "engine/component/Component.h"
@@ -15,22 +15,22 @@
 #include "engine/scene/SceneObject.h"
 #include "engine/filesystem/ProgramSettings.h"
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
-class RenderComponent : public IRenderableComponent, public Component
+class StaticRenderComponent : public IRenderableComponent, public Component
 {
-	COMPONENT_ENABLE(RenderComponent)
+	COMPONENT_ENABLE(StaticRenderComponent)
 
 public:
-	RenderComponent() = default;
-	~RenderComponent() override = default;
+	StaticRenderComponent() = default;
+	~StaticRenderComponent() override = default;
 
-	RenderComponent(const RenderComponent& other) = delete;
-	RenderComponent(RenderComponent&& other) = delete;
-	RenderComponent& operator=(const RenderComponent& other) = delete;
-	RenderComponent& operator=(RenderComponent&& other) = delete;
-	bool operator==(const RenderComponent& other) = delete;
+	StaticRenderComponent(const StaticRenderComponent& other) = delete;
+	StaticRenderComponent(StaticRenderComponent&& other) = delete;
+	StaticRenderComponent& operator=(const StaticRenderComponent& other) = delete;
+	StaticRenderComponent& operator=(StaticRenderComponent&& other) = delete;
+	bool operator==(const StaticRenderComponent& other) = delete;
 
 public:
 	virtual void Initialize(ComponentEntity& owner) override;

@@ -1,5 +1,5 @@
 #include "client/game/Game.h"
-#include "client/render/component/RenderComponent.h"
+#include "client/component/render/StaticRenderComponent.h"
 #include "client/loader/SFMListream.h"
 #include "client/loader/ResourceLoaders.h"
 
@@ -10,10 +10,10 @@
 #include <SFML/Graphics/Sprite.hpp>
 
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
-void RenderComponent::Initialize(ComponentEntity& owner)
+void StaticRenderComponent::Initialize(ComponentEntity& owner)
 {
 	if (auto p_so = dynamic_cast<SceneObject*>(&owner))
 	{
@@ -22,12 +22,12 @@ void RenderComponent::Initialize(ComponentEntity& owner)
 		m_owner = game->Server->GetSceneObjectById(p_so->ID);
 
 		// Bind our provider.
-		owner.RegisterProvider("Size", std::bind(&RenderComponent::provide_size, this));
-		owner.RegisterProvider("BoundingBox", std::bind(&RenderComponent::provide_boundingbox, this));
+		owner.RegisterProvider("Size", std::bind(&StaticRenderComponent::provide_size, this));
+		owner.RegisterProvider("BoundingBox", std::bind(&StaticRenderComponent::provide_boundingbox, this));
 	}
 }
 
-void RenderComponent::OnAttached(ComponentEntity& owner)
+void StaticRenderComponent::OnAttached(ComponentEntity& owner)
 {
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 
@@ -40,18 +40,17 @@ void RenderComponent::OnAttached(ComponentEntity& owner)
 			load_image(so->GetImage());
 		}
 
-		m_handle_image_change = so->Properties.Get(Property::IMAGE)->UpdateDispatch.Subscribe(std::bind(&RenderComponent::image_property_update, this, std::placeholders::_1));
+		m_handle_image_change = so->Properties.Get(Property::IMAGE)->UpdateDispatch.Subscribe(std::bind(&StaticRenderComponent::image_property_update, this, std::placeholders::_1));
 	}
 }
 
-void RenderComponent::OnDetached(ComponentEntity& owner)
+void StaticRenderComponent::OnDetached(ComponentEntity& owner)
 {
-
 }
 
 /////////////////////////////
 
-Rectf RenderComponent::GetBoundingBox() const
+Rectf StaticRenderComponent::GetBoundingBox() const
 {
 	if (auto so = m_owner.lock())
 	{
@@ -83,7 +82,7 @@ Rectf RenderComponent::GetBoundingBox() const
 	return Rectf{};
 }
 
-void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
+void StaticRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed)
 {
 	if (!m_sprite.has_value())
 		return;
@@ -114,7 +113,7 @@ void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, st
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
 
-			Window::RenderPhysics(window, so);
+			tdrp::render::Window::RenderPhysics(window, so);
 		}
 
 		window.draw(m_sprite.value());
@@ -123,7 +122,7 @@ void RenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect, st
 
 ///////////////////////////////////////////////////////////////////////////////
 
-void RenderComponent::load_image(const std::string& image)
+void StaticRenderComponent::load_image(const std::string& image)
 {
 	auto resources = BabyDI::Get<tdrp::ResourceManager>();
 	auto id = loader::LoadTexture(image);
@@ -139,7 +138,7 @@ void RenderComponent::load_image(const std::string& image)
 	}
 }
 
-void RenderComponent::image_property_update(uint16_t attribute_id)
+void StaticRenderComponent::image_property_update(uint16_t attribute_id)
 {
 	if (PropertyById(attribute_id) != Property::IMAGE)
 		return;
@@ -153,16 +152,16 @@ void RenderComponent::image_property_update(uint16_t attribute_id)
 	}
 }
 
-std::any RenderComponent::provide_size() const
+std::any StaticRenderComponent::provide_size() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Vector2df>(box.size);
 }
 
-std::any RenderComponent::provide_boundingbox() const
+std::any StaticRenderComponent::provide_boundingbox() const
 {
 	auto box = GetBoundingBox();
 	return std::make_any<Rectf>(box);
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

@@ -5,8 +5,8 @@
 
 #include "client/game/Game.h"
 
-#include "client/render/component/RenderComponent.h"
-#include "client/render/component/helper/SceneObject.h"
+#include "client/component/render/Renderable.h"
+#include "client/component/render/helper/SceneObject.h"
 #include "client/network/ServerPacketHandler.h"
 #include "client/script/Script.h"
 #include "client/loader/ui/UILoader.h"
@@ -230,7 +230,7 @@ void Game::Render(sf::RenderWindow* window)
 			const auto& viewRect = Camera.GetViewRect();
 			for (const auto& so : within_camera)
 			{
-				auto comp = so->GetComponentDerivedFrom<render::component::IRenderableComponent>();
+				auto comp = so->GetComponentDerivedFrom<component::render::IRenderableComponent>();
 				if (auto render = comp.lock())
 				{
 					render->Render(*window, viewRect, std::chrono::duration_cast<std::chrono::milliseconds>(GetTick()));

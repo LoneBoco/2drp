@@ -1,4 +1,4 @@
-#include "client/render/component/Animation/SpriterAnimation.h"
+#include "client/component/render/animation/SpriterAnimation.h"
 
 #include "client/game/Game.h"
 
@@ -11,7 +11,7 @@
 #include "client/loader/spriter/objectfactory.h"
 
 
-namespace tdrp::render::component::animation
+namespace tdrp::component::render::animation
 {
 
 void SpriterAnimation::Load(const filesystem::path& image)
@@ -231,4 +231,4 @@ void SpriterAnimation::UpdateAttribute(const uint16_t attribute_id)
 	}
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render::animation

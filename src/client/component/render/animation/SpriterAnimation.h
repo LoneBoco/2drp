@@ -5,9 +5,9 @@
 #include "engine/common.h"
 
 #include "client/render/Window.h"
-#include "client/render/component/Animation/IAnimationSystem.h"
+#include "client/component/render/animation/IAnimationSystem.h"
 
-namespace tdrp::render::component::animation
+namespace tdrp::component::render::animation
 {
 
 class SpriterAnimation : public IAnimationSystem
@@ -45,4 +45,4 @@ protected:
 	std::weak_ptr<SpriterEngine::SpriterModel> m_model;
 };
 
-} // end namespace tdrp::render::component::animation
+} // end namespace tdrp::component::render::animation

@@ -12,10 +12,10 @@
 #include "engine/scene/SceneObject.h"
 #include "engine/filesystem/ProgramSettings.h"
 
-#include "client/render/component/Renderable.h"
-#include "client/render/component/Animation/IAnimationSystem.h"
+#include "client/component/render/Renderable.h"
+#include "client/component/render/animation/IAnimationSystem.h"
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 class AnimationRenderComponent : public IRenderableComponent, public Component
@@ -63,4 +63,4 @@ protected:
 	std::unique_ptr<animation::IAnimationSystem> m_animation;
 };
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

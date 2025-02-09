@@ -12,7 +12,7 @@ namespace tdrp
 	class SceneObject;
 }
 
-namespace tdrp::render::component::animation
+namespace tdrp::component::render::animation
 {
 
 class IAnimationSystem
@@ -46,4 +46,4 @@ protected:
 	std::weak_ptr<SceneObject> m_owner;
 };
 
-} // end namespace tdrp::render::component::animation
+} // end namespace tdrp::component::render::animation

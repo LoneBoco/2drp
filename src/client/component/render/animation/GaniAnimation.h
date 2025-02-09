@@ -5,10 +5,10 @@
 
 #include "engine/common.h"
 
-#include "client/render/component/Animation/IAnimationSystem.h"
+#include "client/component/render/animation/IAnimationSystem.h"
 #include "client/loader/gani/GaniLoader.h"
 
-namespace tdrp::render::component::animation
+namespace tdrp::component::render::animation
 {
 
 class GaniAnimation : public IAnimationSystem
@@ -57,4 +57,4 @@ protected:
 	bool m_count_full_first_frame = true;
 };
 
-} // end namespace tdrp::render::component::animation
+} // end namespace tdrp::component::render::animation

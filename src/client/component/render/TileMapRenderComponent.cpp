@@ -1,5 +1,5 @@
 #include "client/game/Game.h"
-#include "client/render/component/TileMapRenderComponent.h"
+#include "client/component/render/TileMapRenderComponent.h"
 #include "client/loader/SFMListream.h"
 #include "client/loader/ResourceLoaders.h"
 
@@ -7,7 +7,7 @@
 #include "engine/scene/SceneObject.h"
 
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 void TileMapRenderComponent::Initialize(ComponentEntity& owner)
@@ -193,4 +193,4 @@ void TileMapRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewR
 	}
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

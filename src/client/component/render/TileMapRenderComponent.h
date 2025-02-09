@@ -3,14 +3,14 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "client/render/component/Renderable.h"
+#include "client/component/render/Renderable.h"
 
 #include "engine/common.h"
 #include "engine/component/Component.h"
 #include "engine/resources/Resource.h"
 #include "engine/scene/SceneObject.h"
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 class TileMapRenderComponent : public IRenderableComponent, public Component
@@ -46,4 +46,4 @@ protected:
 	//sf::Shader m_shader;
 };
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

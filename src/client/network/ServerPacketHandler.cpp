@@ -3,11 +3,7 @@
 #include "client/network/ServerPacketHandler.h"
 
 #include "client/game/Game.h"
-#include "client/render/component/RenderComponent.h"
-#include "client/render/component/TileMapRenderComponent.h"
-#include "client/render/component/TMXRenderComponent.h"
-#include "client/render/component/AnimationRenderComponent.h"
-#include "client/render/component/TextRenderComponent.h"
+#include "client/component/render/TMXRenderComponent.h"
 #include "client/loader/ui/UILoader.h"
 
 #include "engine/scene/SceneObject.h"
@@ -189,7 +185,7 @@ void handle(Game& game, const packet::SceneObjectChunkData& packet)
 	auto tmx = std::dynamic_pointer_cast<TMXSceneObject>(so);
 
 	// Get the render component.
-	auto render = tmx->GetComponent<render::component::TMXRenderComponent>().lock();
+	auto render = tmx->GetComponent<component::render::TMXRenderComponent>().lock();
 	if (render == nullptr)
 		return;
 

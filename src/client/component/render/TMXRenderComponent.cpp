@@ -5,7 +5,7 @@
 #include <tmxlite/TileLayer.hpp>
 
 #include "client/game/Game.h"
-#include "client/render/component/TMXRenderComponent.h"
+#include "client/component/render/TMXRenderComponent.h"
 #include "client/loader/SFMListream.h"
 #include "client/loader/ResourceLoaders.h"
 
@@ -13,7 +13,7 @@
 #include "engine/scene/SceneObject.h"
 
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 // Get the tile position based on the render order.
@@ -265,7 +265,7 @@ void TMXRenderComponent::Render(sf::RenderTarget& window, const Rectf& viewRect,
 
 		if (Settings->GetAs<bool>("Debug.drawtmxbbox"))
 		{
-			Window::RenderPhysics(window, so);
+			tdrp::render::Window::RenderPhysics(window, so);
 		}
 	}
 }
@@ -388,4 +388,4 @@ void TMXRenderComponent::RenderChunkToTexture(uint32_t chunk_idx, const std::spa
 	m_chunks[chunk_idx] = std::make_optional(std::move(render_chunk));
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

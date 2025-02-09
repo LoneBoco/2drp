@@ -3,7 +3,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "client/render/component/Renderable.h"
+#include "client/component/render/Renderable.h"
 
 #include "engine/common.h"
 #include "engine/component/Component.h"
@@ -16,7 +16,7 @@ namespace tmx
 	class Map;
 }
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 class TMXRenderComponent : public IRenderableComponent, public Component
@@ -67,4 +67,4 @@ protected:
 	std::vector<uint32_t> m_chunks_to_render;
 };
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

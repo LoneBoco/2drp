@@ -5,7 +5,7 @@
 #include <SFML/Graphics.hpp>
 #include <SFML/Audio.hpp>
 
-#include "client/render/component/Renderable.h"
+#include "client/component/render/Renderable.h"
 
 #include "engine/common.h"
 #include "engine/component/Component.h"
@@ -13,7 +13,7 @@
 #include "engine/scene/SceneObject.h"
 #include "engine/filesystem/ProgramSettings.h"
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 class TextRenderComponent : public IRenderableComponent, public Component
@@ -58,4 +58,4 @@ protected:
 	bool m_good_font = false;
 };
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

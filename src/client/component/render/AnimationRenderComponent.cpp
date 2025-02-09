@@ -1,8 +1,8 @@
 #include "client/game/Game.h"
 
-#include "client/render/component/AnimationRenderComponent.h"
-#include "client/render/component/Animation/SpriterAnimation.h"
-#include "client/render/component/Animation/GaniAnimation.h"
+#include "client/component/render/AnimationRenderComponent.h"
+#include "client/component/render/animation/SpriterAnimation.h"
+#include "client/component/render/animation/GaniAnimation.h"
 
 #include "engine/filesystem/File.h"
 #include "engine/scene/SceneObject.h"
@@ -12,7 +12,7 @@
 #include "client/loader/spriter/objectfactory.h"
 
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 void AnimationRenderComponent::Initialize(ComponentEntity& owner)
@@ -118,7 +118,7 @@ void AnimationRenderComponent::Render(sf::RenderTarget& window, const Rectf& vie
 			shape.setSize({ bbox.size.x, bbox.size.y });
 			window.draw(shape);
 
-			Window::RenderPhysics(window, so);
+			tdrp::render::Window::RenderPhysics(window, so);
 		}
 
 		if (m_animation)
@@ -269,4 +269,4 @@ std::any AnimationRenderComponent::provide_animation()
 	return m_animation->GetAnimation();
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

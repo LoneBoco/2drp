@@ -1,7 +1,7 @@
 #include <math.h>
 
 #include "client/game/Game.h"
-#include "client/render/component/TextRenderComponent.h"
+#include "client/component/render/TextRenderComponent.h"
 #include "client/loader/SFMListream.h"
 #include "client/loader/ResourceLoaders.h"
 
@@ -10,7 +10,7 @@
 #include "engine/resources/Resource.h"
 
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 void TextRenderComponent::Initialize(ComponentEntity& owner)
@@ -226,4 +226,4 @@ std::any TextRenderComponent::provide_boundingbox() const
 	return std::make_any<Rectf>(box);
 }
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render

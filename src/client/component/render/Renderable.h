@@ -7,7 +7,7 @@
 #include "engine/common.h"
 #include "engine/component/Component.h"
 
-namespace tdrp::render::component
+namespace tdrp::component::render
 {
 
 class IRenderableComponent
@@ -18,4 +18,4 @@ public:
 	virtual void Render(sf::RenderTarget& window, const Rectf& viewRect, std::chrono::milliseconds elapsed) = 0;
 };
 
-} // end namespace tdrp::render::component
+} // end namespace tdrp::component::render
